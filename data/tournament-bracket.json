@@ -1,0 +1,30 @@
+{
+  "title": "Trashguy Tournament",
+  "rounds": [
+    {
+      "id": "round-1",
+      "name": "Quarterfinals",
+      "matches": [
+        { "id": "m1", "player1": "Player A", "player2": "Player B", "winner": "" },
+        { "id": "m2", "player1": "Player C", "player2": "Player D", "winner": "" },
+        { "id": "m3", "player1": "Player E", "player2": "Player F", "winner": "" },
+        { "id": "m4", "player1": "Player G", "player2": "Player H", "winner": "" }
+      ]
+    },
+    {
+      "id": "round-2",
+      "name": "Semifinals",
+      "matches": [
+        { "id": "m5", "player1": "Winner QF1", "player2": "Winner QF2", "winner": "" },
+        { "id": "m6", "player1": "Winner QF3", "player2": "Winner QF4", "winner": "" }
+      ]
+    },
+    {
+      "id": "round-3",
+      "name": "Final",
+      "matches": [
+        { "id": "m7", "player1": "Winner SF1", "player2": "Winner SF2", "winner": "" }
+      ]
+    }
+  ]
+}
