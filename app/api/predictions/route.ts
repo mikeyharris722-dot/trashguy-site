@@ -166,13 +166,46 @@ async function resolveProfile(
   };
 }
 
+async function getOpenHunt() {
+  const { data, error } = await supabaseAdmin
+    .from("hunts")
+    .select("id, status")
+    .eq("status", "open")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    return { hunt: null, error: error.message };
+  }
+
+  return { hunt: data, error: null };
+}
+
 export async function GET() {
   try {
+    const openHuntResult = await getOpenHunt();
+
+    if (openHuntResult.error) {
+      return NextResponse.json({
+        success: true,
+        predictions: [],
+        note: openHuntResult.error,
+      });
+    }
+
+    if (!openHuntResult.hunt?.id) {
+      return NextResponse.json({
+        success: true,
+        predictions: [],
+      });
+    }
+
     const { data, error } = await supabaseAdmin
       .from("predictions")
       .select("id, profile_id, guess_amount, created_at, updated_at")
-      .order("updated_at", { ascending: false })
-      .limit(50);
+      .eq("hunt_id", openHuntResult.hunt.id)
+      .order("updated_at", { ascending: false });
 
     if (error) {
       return NextResponse.json({
@@ -262,29 +295,28 @@ export async function POST(req: NextRequest) {
 
     const profileId = profileResult.profileId;
 
-    const { data: activeHunt, error: huntError } = await supabaseAdmin
-      .from("hunts")
-      .select("id, status")
-      .eq("status", "open")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const openHuntResult = await getOpenHunt();
 
-    if (huntError) {
-      return NextResponse.json({ error: huntError.message }, { status: 500 });
+    if (openHuntResult.error) {
+      return NextResponse.json(
+        { error: openHuntResult.error },
+        { status: 500 }
+      );
     }
 
-    if (!activeHunt?.id) {
+    if (!openHuntResult.hunt?.id) {
       return NextResponse.json(
         { error: "No open hunt found." },
         { status: 400 }
       );
     }
 
+    const huntId = openHuntResult.hunt.id;
+
     const { data: existing, error: existingError } = await supabaseAdmin
       .from("predictions")
       .select("id")
-      .eq("hunt_id", activeHunt.id)
+      .eq("hunt_id", huntId)
       .eq("profile_id", profileId)
       .maybeSingle();
 
@@ -317,7 +349,7 @@ export async function POST(req: NextRequest) {
     const { data, error } = await supabaseAdmin
       .from("predictions")
       .insert({
-        hunt_id: activeHunt.id,
+        hunt_id: huntId,
         profile_id: profileId,
         guess_amount: guessAmount,
         created_at: new Date().toISOString(),
