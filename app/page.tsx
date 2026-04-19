@@ -327,24 +327,31 @@ export default function Home() {
       const affiliates = Array.isArray(data?.affiliates) ? data.affiliates : [];
 
       const normalized: LeaderboardPlayer[] = affiliates
-        .map((player: any, index: number) => ({
-          rank: index + 1,
-          username:
-            player.username ||
-            player.name ||
-            player.display_name ||
-            `Player ${index + 1}`,
-          wagered: Number(
-            player.wagered_amount ||
-              player.wagered ||
-              player.amount_wagered ||
-              player.total_wagered ||
-              0
-          ),
-        }))
-        .sort((a, b) => b.wagered - a.wagered)
-        .slice(0, 10)
-        .map((player, index) => ({ ...player, rank: index + 1 }));
+  .map((player: any, index: number): LeaderboardPlayer => ({
+    rank: index + 1,
+    username:
+      player.username ||
+      player.name ||
+      player.display_name ||
+      `Player ${index + 1}`,
+    wagered: Number(
+      player.wagered_amount ||
+        player.wagered ||
+        player.amount_wagered ||
+        player.total_wagered ||
+        0
+    ),
+  }))
+  .sort(
+    (a: LeaderboardPlayer, b: LeaderboardPlayer) => b.wagered - a.wagered
+  )
+  .slice(0, 10)
+  .map(
+    (player: LeaderboardPlayer, index: number): LeaderboardPlayer => ({
+      ...player,
+      rank: index + 1,
+    })
+  );
 
       if (normalized.length > 0) {
         setLeaderboardData(normalized);
