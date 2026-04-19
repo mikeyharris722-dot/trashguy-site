@@ -36,23 +36,9 @@ const fallbackHunts = [
   },
 ];
 
-const initialPredictions: PredictionItem[] = [];
-{predictions.length === 0 ? (
-  <div className="px-5 py-6 text-white/50">No predictions yet.</div>
-) : (
-  predictions.map((entry) => (
-    <div
-      key={entry.id}
-      className="grid grid-cols-[1fr_160px_120px] border-b border-white/5 px-5 py-4 last:border-b-0"
-    >
-      <div className="font-semibold text-white/90">{entry.username}</div>
-      <div className="text-right font-black text-emerald-200">
-        {formatMoney(entry.guess)}
-      </div>
-      <div className="text-right text-white/45">{entry.createdAt}</div>
-    </div>
-  ))
-)}
+const initialPredictions: PredictionItem[] = [
+  
+];
 
 const defaultBracket = {
   title: "Trashguy Tournament",
