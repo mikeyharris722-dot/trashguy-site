@@ -862,13 +862,13 @@ const handlePredictionSubmit = async () => {
 
   const rankedWinners = useMemo(() => {
     if (latestWinners.length > 0) {
-      return latestWinners.map((winner) => ({
-        id: `${winner.profile_id}-${winner.placement}`,
-        username: winner.profile_id,
-        guess: winner.guess_amount,
-        distance: winner.distance,
-      }));
-    }
+  return latestWinners.map((winner: any) => ({
+    id: `${winner.profile_id}-${winner.placement}`,
+    username: winner.username || winner.profile_id,
+    guess: winner.guess_amount,
+    distance: winner.distance,
+  }));
+}
 
     const result = Number(finalResult || 0);
     if (!result) return [];

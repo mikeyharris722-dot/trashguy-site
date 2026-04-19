@@ -96,7 +96,7 @@ export async function PATCH(
         );
       }
 
-      const winners = (predictions || [])
+      const baseWinners = (predictions || [])
         .map((p) => ({
           profile_id: p.profile_id,
           guess_amount: Number(p.guess_amount),
@@ -115,10 +115,10 @@ export async function PATCH(
 
       await supabase.from("prediction_results").delete().eq("hunt_id", id);
 
-      if (winners.length > 0) {
+      if (baseWinners.length > 0) {
         const { error: winnersError } = await supabase
           .from("prediction_results")
-          .insert(winners);
+          .insert(baseWinners);
 
         if (winnersError) {
           return NextResponse.json(
@@ -127,6 +127,38 @@ export async function PATCH(
           );
         }
       }
+
+      const winnerProfileIds = baseWinners
+        .map((winner) => winner.profile_id)
+        .filter(Boolean);
+
+      let usernameMap: Record<string, string> = {};
+
+      if (winnerProfileIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .in("id", winnerProfileIds);
+
+        if (profilesError) {
+          return NextResponse.json(
+            { error: profilesError.message },
+            { status: 500 }
+          );
+        }
+
+        usernameMap = Object.fromEntries(
+          (profiles || []).map((profile: any) => [
+            profile.id,
+            profile.username || profile.id,
+          ])
+        );
+      }
+
+      const winners = baseWinners.map((winner) => ({
+        ...winner,
+        username: usernameMap[winner.profile_id] || winner.profile_id,
+      }));
 
       return NextResponse.json({
         success: true,
