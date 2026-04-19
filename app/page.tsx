@@ -660,7 +660,7 @@ const handlePredictionSubmit = async () => {
         },
         body: JSON.stringify({
           title: "Live Hunt",
-          casino: "Rainbet",
+          casino: "Roulobets",
           startAmount: 10000,
         }),
       });
