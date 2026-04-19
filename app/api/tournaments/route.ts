@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
-const ADMIN_USERS = ["trashguy__", "trashguy", "parz"];
+const ADMIN_USERS = ["trashguy__", "trashguy", "parz", "parzwz"];
 
 const defaultBracket = {
   title: "Trashguy Tournament",
