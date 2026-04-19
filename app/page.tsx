@@ -71,7 +71,12 @@ const defaultBracket = {
   ],
 };
 
-const ADMIN_USERS = ["trashguy__", "trashguy", "parz"];
+const ADMIN_USERS = [
+  "trashguy__",
+  "trashguy",
+  "parz",
+  "parzwz",
+];
 
 function formatMoney(value: number) {
   return `$${Number(value || 0).toLocaleString()}`;
