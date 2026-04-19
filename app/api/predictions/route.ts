@@ -42,6 +42,47 @@ function getTwitchUsername(user: any) {
   );
 }
 
+async function ensureProfileExists(userId: string, username: string) {
+  const { data: existingProfile, error: existingProfileError } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (existingProfileError) {
+    return { ok: false, error: existingProfileError.message };
+  }
+
+  if (existingProfile?.id) {
+    return { ok: true, error: null };
+  }
+
+  const tryUsernameInsert = await supabaseAdmin.from("profiles").insert({
+    id: userId,
+    username,
+  });
+
+  if (!tryUsernameInsert.error) {
+    return { ok: true, error: null };
+  }
+
+  const tryIdOnlyInsert = await supabaseAdmin.from("profiles").insert({
+    id: userId,
+  });
+
+  if (!tryIdOnlyInsert.error) {
+    return { ok: true, error: null };
+  }
+
+  return {
+    ok: false,
+    error:
+      tryIdOnlyInsert.error?.message ||
+      tryUsernameInsert.error?.message ||
+      "Failed to create profile row.",
+  };
+}
+
 export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
@@ -58,9 +99,29 @@ export async function GET() {
       });
     }
 
+    const profileIds = Array.from(
+      new Set((data || []).map((row) => row.profile_id).filter(Boolean))
+    );
+
+    let usernameMap: Record<string, string> = {};
+
+    if (profileIds.length > 0) {
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, username")
+        .in("id", profileIds);
+
+      usernameMap = Object.fromEntries(
+        (profiles || []).map((profile: any) => [
+          profile.id,
+          profile.username || profile.id,
+        ])
+      );
+    }
+
     const predictions = (data || []).map((row) => ({
       id: row.id,
-      username: row.profile_id,
+      username: usernameMap[row.profile_id] || row.profile_id,
       guess: Number(row.guess_amount || 0),
       created_at: row.updated_at || row.created_at,
     }));
@@ -98,6 +159,15 @@ export async function POST(req: NextRequest) {
 
     const userId = auth.user.id;
     const username = getTwitchUsername(auth.user);
+
+    const profileCheck = await ensureProfileExists(userId, username);
+
+    if (!profileCheck.ok) {
+      return NextResponse.json(
+        { error: profileCheck.error || "Failed to create profile." },
+        { status: 500 }
+      );
+    }
 
     const { data: activeHunt, error: huntError } = await supabaseAdmin
       .from("hunts")
