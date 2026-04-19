@@ -1,53 +1,52 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+);
+
+export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.BONUSHUNT_API_KEY;
+    const body = await req.json();
+    const { title, casino, startAmount } = body;
 
-    if (!apiKey) {
-      return NextResponse.json({
-        success: true,
-        hunts: [],
-        note: "Missing BONUSHUNT_API_KEY"
-      });
+    if (!title || !casino || !startAmount) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
-    const res = await fetch("https://bonushunt.gg/api/public/hunts?limit=10", {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
+    const { data, error } = await supabase
+      .from("hunts")
+      .insert({
+        title,
+        casino,
+        start_amount: Number(startAmount),
+        status: "open",
+        created_at: new Date().toISOString(),
+        opened_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      hunt: data,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Unknown error",
       },
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-
-      return NextResponse.json({
-        success: true,
-        hunts: [],
-        note: `BonusHunt API error: ${text}`
-      });
-    }
-
-    const data = await res.json();
-
-    const hunts = Array.isArray(data?.hunts)
-      ? data.hunts
-      : Array.isArray(data)
-      ? data
-      : [];
-
-    return NextResponse.json({
-      success: true,
-      hunts
-    });
-  } catch (error: any) {
-    return NextResponse.json({
-      success: true,
-      hunts: [],
-      note: error?.message || "Failed to load hunts"
-    });
+      { status: 500 }
+    );
   }
 }
