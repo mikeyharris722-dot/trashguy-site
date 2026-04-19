@@ -60,23 +60,63 @@ function getTwitchUserId(user: any) {
   );
 }
 
-async function ensureProfileExists(
+async function resolveProfile(
   userId: string,
   username: string,
   twitchUserId: string
 ) {
-  const { data: existingProfile, error: existingProfileError } = await supabaseAdmin
+  const byId = await supabaseAdmin
     .from("profiles")
-    .select("id")
+    .select("id, username, twitch_user_id")
     .eq("id", userId)
     .maybeSingle();
 
-  if (existingProfileError) {
-    return { ok: false, error: existingProfileError.message };
+  if (byId.error) {
+    return { ok: false, error: byId.error.message, profileId: null as string | null };
   }
 
-  if (existingProfile?.id) {
-    return { ok: true, error: null };
+  if (byId.data?.id) {
+    return { ok: true, error: null, profileId: byId.data.id };
+  }
+
+  if (twitchUserId) {
+    const byTwitchUserId = await supabaseAdmin
+      .from("profiles")
+      .select("id, username, twitch_user_id")
+      .eq("twitch_user_id", twitchUserId)
+      .maybeSingle();
+
+    if (byTwitchUserId.error) {
+      return {
+        ok: false,
+        error: byTwitchUserId.error.message,
+        profileId: null as string | null,
+      };
+    }
+
+    if (byTwitchUserId.data?.id) {
+      return { ok: true, error: null, profileId: byTwitchUserId.data.id };
+    }
+  }
+
+  if (username) {
+    const byUsername = await supabaseAdmin
+      .from("profiles")
+      .select("id, username, twitch_user_id")
+      .eq("username", username)
+      .maybeSingle();
+
+    if (byUsername.error) {
+      return {
+        ok: false,
+        error: byUsername.error.message,
+        profileId: null as string | null,
+      };
+    }
+
+    if (byUsername.data?.id) {
+      return { ok: true, error: null, profileId: byUsername.data.id };
+    }
   }
 
   const insertPayload = {
@@ -85,15 +125,45 @@ async function ensureProfileExists(
     twitch_user_id: twitchUserId,
   };
 
-  const { error: insertError } = await supabaseAdmin
+  const { data: inserted, error: insertError } = await supabaseAdmin
     .from("profiles")
-    .insert(insertPayload);
+    .insert(insertPayload)
+    .select("id")
+    .single();
 
-  if (insertError) {
-    return { ok: false, error: insertError.message };
+  if (!insertError && inserted?.id) {
+    return { ok: true, error: null, profileId: inserted.id };
   }
 
-  return { ok: true, error: null };
+  if (username) {
+    const retryByUsername = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .maybeSingle();
+
+    if (!retryByUsername.error && retryByUsername.data?.id) {
+      return { ok: true, error: null, profileId: retryByUsername.data.id };
+    }
+  }
+
+  if (twitchUserId) {
+    const retryByTwitchId = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("twitch_user_id", twitchUserId)
+      .maybeSingle();
+
+    if (!retryByTwitchId.error && retryByTwitchId.data?.id) {
+      return { ok: true, error: null, profileId: retryByTwitchId.data.id };
+    }
+  }
+
+  return {
+    ok: false,
+    error: insertError?.message || "Failed to resolve profile.",
+    profileId: null as string | null,
+  };
 }
 
 export async function GET() {
@@ -181,14 +251,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const profileCheck = await ensureProfileExists(userId, username, twitchUserId);
+    const profileResult = await resolveProfile(userId, username, twitchUserId);
 
-    if (!profileCheck.ok) {
+    if (!profileResult.ok || !profileResult.profileId) {
       return NextResponse.json(
-        { error: profileCheck.error || "Failed to create profile." },
+        { error: profileResult.error || "Failed to resolve profile." },
         { status: 500 }
       );
     }
+
+    const profileId = profileResult.profileId;
 
     const { data: activeHunt, error: huntError } = await supabaseAdmin
       .from("hunts")
@@ -213,7 +285,7 @@ export async function POST(req: NextRequest) {
       .from("predictions")
       .select("id")
       .eq("hunt_id", activeHunt.id)
-      .eq("profile_id", userId)
+      .eq("profile_id", profileId)
       .maybeSingle();
 
     if (existingError) {
@@ -246,7 +318,7 @@ export async function POST(req: NextRequest) {
       .from("predictions")
       .insert({
         hunt_id: activeHunt.id,
-        profile_id: userId,
+        profile_id: profileId,
         guess_amount: guessAmount,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
