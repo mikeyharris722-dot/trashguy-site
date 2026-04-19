@@ -3,14 +3,48 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
+
+const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+const supabaseAuth = createClient(supabaseUrl, publishableKey);
+
+async function getSignedInUser(request: NextRequest) {
+  const authHeader = request.headers.get("authorization") || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+
+  if (!token) {
+    return { user: null, error: "Missing auth token." };
+  }
+
+  const { data, error } = await supabaseAuth.auth.getUser(token);
+
+  if (error || !data?.user) {
+    return { user: null, error: "Invalid Twitch session." };
+  }
+
+  return { user: data.user, error: null };
+}
+
+function getTwitchUsername(user: any) {
+  const identityData =
+    user?.identities?.[0]?.identity_data as Record<string, unknown> | undefined;
+
+  return (
+    (user?.user_metadata?.preferred_username as string | undefined) ||
+    (user?.user_metadata?.user_name as string | undefined) ||
+    (identityData?.preferred_username as string | undefined) ||
+    (identityData?.user_name as string | undefined) ||
+    (user?.user_metadata?.name as string | undefined) ||
+    (identityData?.name as string | undefined) ||
+    "viewer"
+  );
+}
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("predictions")
       .select("id, profile_id, guess_amount, created_at, updated_at")
       .order("updated_at", { ascending: false })
@@ -46,21 +80,29 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await getSignedInUser(req);
+
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error }, { status: 401 });
+    }
+
     const body = await req.json();
-    const username = String(body?.username || "").trim();
     const guessAmount = Number(body?.guessAmount || 0);
 
-    if (!username || !guessAmount || Number.isNaN(guessAmount)) {
+    if (!guessAmount || Number.isNaN(guessAmount)) {
       return NextResponse.json(
-        { error: "Missing username or guessAmount" },
+        { error: "Missing or invalid guessAmount" },
         { status: 400 }
       );
     }
 
-    const { data: activeHunt, error: huntError } = await supabase
+    const userId = auth.user.id;
+    const username = getTwitchUsername(auth.user);
+
+    const { data: activeHunt, error: huntError } = await supabaseAdmin
       .from("hunts")
       .select("id, status")
-      .in("status", ["open"])
+      .eq("status", "open")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -76,18 +118,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const payload = {
-      hunt_id: activeHunt.id,
-      profile_id: username,
-      guess_amount: guessAmount,
-      updated_at: new Date().toISOString(),
-    };
-
-    const { data: existing, error: existingError } = await supabase
+    const { data: existing, error: existingError } = await supabaseAdmin
       .from("predictions")
       .select("id")
       .eq("hunt_id", activeHunt.id)
-      .eq("profile_id", username)
+      .eq("profile_id", userId)
       .maybeSingle();
 
     if (existingError) {
@@ -95,7 +130,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (existing?.id) {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("predictions")
         .update({
           guess_amount: guessAmount,
@@ -112,14 +147,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         prediction: data,
+        username,
       });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("predictions")
       .insert({
-        ...payload,
+        hunt_id: activeHunt.id,
+        profile_id: userId,
+        guess_amount: guessAmount,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -131,6 +170,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       prediction: data,
+      username,
     });
   } catch (error) {
     return NextResponse.json(

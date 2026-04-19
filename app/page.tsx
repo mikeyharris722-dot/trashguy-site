@@ -564,64 +564,74 @@ export default function Home() {
     }
   };
 
-  const handlePredictionSubmit = async () => {
-    if (!isTwitchConnected || predictionStatus !== "open") return;
+ const handlePredictionSubmit = async () => {
+  if (!isTwitchConnected || predictionStatus !== "open") return;
 
-    const guess = Number(predictionInput || 0);
-    if (!guess) {
-      setPredictionMessage("Enter a valid guess.");
+  const guess = Number(predictionInput || 0);
+  if (!guess) {
+    setPredictionMessage("Enter a valid guess.");
+    return;
+  }
+
+  try {
+    const { data: sessionData } = await supabaseBrowser.auth.getSession();
+    const token = sessionData.session?.access_token;
+
+    if (!token) {
+      setPredictionMessage("Twitch session missing. Please log in again.");
       return;
     }
 
-    try {
-      const res = await fetch("/api/predictions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: viewerName,
-          guessAmount: guess,
-        }),
-      });
+    const res = await fetch("/api/predictions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        guessAmount: guess,
+      }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (!res.ok) {
-        setPredictionMessage(data?.error || "Failed to save prediction.");
-        return;
+    if (!res.ok) {
+      setPredictionMessage(data?.error || "Failed to save prediction.");
+      return;
+    }
+
+    const savedUsername = data?.username || viewerName;
+
+    setPredictions((current) => {
+      const existing = current.find(
+        (entry) => entry.username.toLowerCase() === savedUsername.toLowerCase()
+      );
+
+      if (existing) {
+        return current.map((entry) =>
+          entry.username.toLowerCase() === savedUsername.toLowerCase()
+            ? { ...entry, guess, createdAt: "just now" }
+            : entry
+        );
       }
 
-      setPredictions((current) => {
-        const existing = current.find(
-          (entry) => entry.username.toLowerCase() === viewerName.toLowerCase()
-        );
+      return [
+        {
+          id: `p-${Date.now()}`,
+          username: savedUsername,
+          guess,
+          createdAt: "just now",
+        },
+        ...current,
+      ];
+    });
 
-        if (existing) {
-          return current.map((entry) =>
-            entry.username.toLowerCase() === viewerName.toLowerCase()
-              ? { ...entry, guess, createdAt: "just now" }
-              : entry
-          );
-        }
-
-        return [
-          {
-            id: `p-${Date.now()}`,
-            username: viewerName,
-            guess,
-            createdAt: "just now",
-          },
-          ...current,
-        ];
-      });
-
-      setPredictionInput("");
-      setPredictionMessage("Prediction saved.");
-    } catch {
-      setPredictionMessage("Failed to save prediction.");
-    }
-  };
+    setPredictionInput("");
+    setPredictionMessage("Prediction saved.");
+  } catch {
+    setPredictionMessage("Failed to save prediction.");
+  }
+};
 
   const handleStartHunt = async () => {
     try {
@@ -1012,12 +1022,12 @@ export default function Home() {
 
                   <div className="aspect-video w-full overflow-hidden rounded-[1.25rem] border border-emerald-300/20">
                     <iframe
-                      src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1"
-                      height="100%"
-                      width="100%"
-                      allowFullScreen
-                      className="rounded-[1.25rem]"
-                    ></iframe>
+  src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app"
+  height="100%"
+  width="100%"
+  allowFullScreen
+  className="rounded-[1.25rem]"
+></iframe>
                   </div>
                 </Panel>
               </section>
