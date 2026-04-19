@@ -1049,7 +1049,7 @@ const handlePredictionSubmit = async () => {
 
                   <div className="aspect-video w-full overflow-hidden rounded-[1.25rem] border border-emerald-300/20">
                     <iframe
-  src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=https://trashguy.me/"
+  src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
   height="100%"
   width="100%"
   allowFullScreen
