@@ -575,21 +575,28 @@ const handlePredictionSubmit = async () => {
   }
 
   try {
+    // 🔑 Get Twitch session from Supabase
     const { data: sessionData, error: sessionError } =
       await supabaseBrowser.auth.getSession();
 
-    if (sessionError || !sessionData.session?.access_token) {
-      setPredictionMessage("Twitch session missing. Please log in again.");
+    if (sessionError || !sessionData.session) {
+      setPredictionMessage("Not logged in. Please reconnect Twitch.");
       return;
     }
 
     const token = sessionData.session.access_token;
 
+    if (!token) {
+      setPredictionMessage("Missing auth token. Please reconnect Twitch.");
+      return;
+    }
+
+    // 🚀 Send prediction with Bearer token
     const res = await fetch("/api/predictions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`, // ✅ THIS FIXES EVERYTHING
       },
       body: JSON.stringify({
         guessAmount: guess,
@@ -605,9 +612,11 @@ const handlePredictionSubmit = async () => {
 
     const savedUsername = data?.username || viewerName;
 
+    // ✅ Update UI instantly
     setPredictions((current) => {
       const existing = current.find(
-        (entry) => entry.username.toLowerCase() === savedUsername.toLowerCase()
+        (entry) =>
+          entry.username.toLowerCase() === savedUsername.toLowerCase()
       );
 
       if (existing) {
@@ -631,7 +640,7 @@ const handlePredictionSubmit = async () => {
 
     setPredictionInput("");
     setPredictionMessage("Prediction saved.");
-  } catch {
+  } catch (err) {
     setPredictionMessage("Failed to save prediction.");
   }
 };
