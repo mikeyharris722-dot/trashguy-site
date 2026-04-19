@@ -1,52 +1,53 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
-);
-
-export async function POST(req: NextRequest) {
+export async function GET() {
   try {
-    const body = await req.json();
-    const { title, casino, startAmount } = body;
+    const apiKey = process.env.BONUSHUNT_API_KEY;
 
-    if (!title || !casino || !startAmount) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+    if (!apiKey) {
+      return NextResponse.json({
+        success: true,
+        hunts: [],
+        note: "Missing BONUSHUNT_API_KEY",
+      });
     }
 
-    const { data, error } = await supabase
-      .from("hunts")
-      .insert({
-        title,
-        casino,
-        start_amount: Number(startAmount),
-        status: "open",
-        created_at: new Date().toISOString(),
-        opened_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+    const res = await fetch("https://bonushunt.gg/api/public/hunts?limit=10", {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+      cache: "no-store",
+    });
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!res.ok) {
+      const text = await res.text();
+
+      return NextResponse.json({
+        success: true,
+        hunts: [],
+        note: `BonusHunt API error: ${text}`,
+      });
     }
+
+    const data = await res.json();
+
+    const hunts = Array.isArray(data?.hunts)
+      ? data.hunts
+      : Array.isArray(data)
+      ? data
+      : [];
 
     return NextResponse.json({
       success: true,
-      hunt: data,
+      hunts,
     });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+  } catch (error: any) {
+    return NextResponse.json({
+      success: true,
+      hunts: [],
+      note: error?.message || "Failed to load hunts",
+    });
   }
 }
