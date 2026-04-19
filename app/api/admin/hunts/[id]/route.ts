@@ -10,10 +10,10 @@ const supabase = createClient(
 
 export async function PATCH(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await params;
     const body = await req.json();
     const { action, finalAmount } = body;
 
@@ -83,10 +83,17 @@ export async function PATCH(
         );
       }
 
-      const { data: predictions } = await supabase
+      const { data: predictions, error: predictionsError } = await supabase
         .from("predictions")
         .select("guess_amount, profile_id")
         .eq("hunt_id", id);
+
+      if (predictionsError) {
+        return NextResponse.json(
+          { error: predictionsError.message },
+          { status: 500 }
+        );
+      }
 
       const winners = (predictions || [])
         .map((p) => ({
@@ -108,7 +115,16 @@ export async function PATCH(
       await supabase.from("prediction_results").delete().eq("hunt_id", id);
 
       if (winners.length > 0) {
-        await supabase.from("prediction_results").insert(winners);
+        const { error: winnersError } = await supabase
+          .from("prediction_results")
+          .insert(winners);
+
+        if (winnersError) {
+          return NextResponse.json(
+            { error: winnersError.message },
+            { status: 500 }
+          );
+        }
       }
 
       return NextResponse.json({
