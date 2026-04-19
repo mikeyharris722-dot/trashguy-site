@@ -42,7 +42,29 @@ function getTwitchUsername(user: any) {
   );
 }
 
-async function ensureProfileExists(userId: string, username: string) {
+function getTwitchUserId(user: any) {
+  const identity = Array.isArray(user?.identities)
+    ? user.identities.find((item: any) => item?.provider === "twitch") || user.identities[0]
+    : undefined;
+
+  const identityData =
+    identity?.identity_data as Record<string, unknown> | undefined;
+
+  return (
+    (identityData?.provider_id as string | undefined) ||
+    (identity?.id as string | undefined) ||
+    (user?.user_metadata?.provider_id as string | undefined) ||
+    (user?.user_metadata?.sub as string | undefined) ||
+    (user?.id as string | undefined) ||
+    ""
+  );
+}
+
+async function ensureProfileExists(
+  userId: string,
+  username: string,
+  twitchUserId: string
+) {
   const { data: existingProfile, error: existingProfileError } = await supabaseAdmin
     .from("profiles")
     .select("id")
@@ -57,30 +79,21 @@ async function ensureProfileExists(userId: string, username: string) {
     return { ok: true, error: null };
   }
 
-  const tryUsernameInsert = await supabaseAdmin.from("profiles").insert({
+  const insertPayload = {
     id: userId,
     username,
-  });
-
-  if (!tryUsernameInsert.error) {
-    return { ok: true, error: null };
-  }
-
-  const tryIdOnlyInsert = await supabaseAdmin.from("profiles").insert({
-    id: userId,
-  });
-
-  if (!tryIdOnlyInsert.error) {
-    return { ok: true, error: null };
-  }
-
-  return {
-    ok: false,
-    error:
-      tryIdOnlyInsert.error?.message ||
-      tryUsernameInsert.error?.message ||
-      "Failed to create profile row.",
+    twitch_user_id: twitchUserId,
   };
+
+  const { error: insertError } = await supabaseAdmin
+    .from("profiles")
+    .insert(insertPayload);
+
+  if (insertError) {
+    return { ok: false, error: insertError.message };
+  }
+
+  return { ok: true, error: null };
 }
 
 export async function GET() {
@@ -159,8 +172,16 @@ export async function POST(req: NextRequest) {
 
     const userId = auth.user.id;
     const username = getTwitchUsername(auth.user);
+    const twitchUserId = getTwitchUserId(auth.user);
 
-    const profileCheck = await ensureProfileExists(userId, username);
+    if (!twitchUserId) {
+      return NextResponse.json(
+        { error: "Missing Twitch user id." },
+        { status: 500 }
+      );
+    }
+
+    const profileCheck = await ensureProfileExists(userId, username, twitchUserId);
 
     if (!profileCheck.ok) {
       return NextResponse.json(
