@@ -235,7 +235,7 @@ export default function Home() {
   const [predictionMessage, setPredictionMessage] = useState("");
 
   const [isAdmin, setIsAdmin] = useState(false);
-  const [adminName, setAdminName] = useState("Parz");
+  const [adminName, setAdminName] = useState("Trashguy");
   const [finalResult, setFinalResult] = useState("");
   const [adminMessage, setAdminMessage] = useState("");
   const [latestWinners, setLatestWinners] = useState<WinnerItem[]>([]);
