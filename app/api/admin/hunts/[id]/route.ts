@@ -10,10 +10,11 @@ const supabase = createClient(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<Record<string, string>> }
 ) {
   try {
-    const { id } = await params;
+    const params = await context.params;
+    const id = params.id;
     const body = await req.json();
     const { action, finalAmount } = body;
 
