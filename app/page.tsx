@@ -564,23 +564,26 @@ export default function Home() {
     }
   };
 
- const handlePredictionSubmit = async () => {
+const handlePredictionSubmit = async () => {
   if (!isTwitchConnected || predictionStatus !== "open") return;
 
   const guess = Number(predictionInput || 0);
-  if (!guess) {
+
+  if (!guess || Number.isNaN(guess)) {
     setPredictionMessage("Enter a valid guess.");
     return;
   }
 
   try {
-    const { data: sessionData } = await supabaseBrowser.auth.getSession();
-    const token = sessionData.session?.access_token;
+    const { data: sessionData, error: sessionError } =
+      await supabaseBrowser.auth.getSession();
 
-    if (!token) {
+    if (sessionError || !sessionData.session?.access_token) {
       setPredictionMessage("Twitch session missing. Please log in again.");
       return;
     }
+
+    const token = sessionData.session.access_token;
 
     const res = await fetch("/api/predictions", {
       method: "POST",
