@@ -832,33 +832,45 @@ const handlePredictionSubmit = async () => {
     }));
   };
 
-  const saveBracket = async () => {
-    try {
-      setBracketMessage("");
+ const saveBracket = async () => {
+  try {
+    setBracketMessage("");
 
-      const token = await getAccessToken();
+    const { data: sessionData, error: sessionError } =
+      await supabaseBrowser.auth.getSession();
 
-      const res = await fetch("/api/tournaments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ bracket }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setBracketMessage(data?.error || "Failed to save bracket.");
-        return;
-      }
-
-      setBracketMessage("Bracket saved.");
-    } catch {
-      setBracketMessage("Failed to save bracket.");
+    if (sessionError || !sessionData.session?.access_token) {
+      setBracketMessage("Missing Twitch session. Please log in again.");
+      return;
     }
-  };
+
+    const token = sessionData.session.access_token;
+
+    const res = await fetch("/api/tournaments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ bracket }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setBracketMessage(data?.error || "Failed to save bracket.");
+      return;
+    }
+
+    if (data?.bracket) {
+      setBracket(data.bracket);
+    }
+
+    setBracketMessage("Bracket saved.");
+  } catch {
+    setBracketMessage("Failed to save bracket.");
+  }
+};
 
   const resetBracket = async () => {
     setBracket(defaultBracket);
