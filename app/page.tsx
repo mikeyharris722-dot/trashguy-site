@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 const socials = [
@@ -36,10 +36,6 @@ const fallbackHunts = [
   },
 ];
 
-const initialPredictions: PredictionItem[] = [
-
-];
-
 const defaultBracket = {
   title: "Trashguy Tournament",
   rounds: [
@@ -69,12 +65,65 @@ const defaultBracket = {
   ],
 };
 
-const ADMIN_USERS = [
-  "trashguy__",
-  "trashguy",
-  "parz",
-  "parzwz",
-];
+const ADMIN_USERS = ["trashguy__", "trashguy", "parz", "parzwz"];
+
+type LeaderboardPlayer = {
+  rank: number;
+  username: string;
+  wagered: number;
+};
+
+type HuntItem = {
+  id: string;
+  title: string;
+  casino: string;
+  startCost: number;
+  totalWinnings: number;
+  profitLoss: number;
+  profitLossPercentage: number;
+  isOpening: boolean;
+};
+
+type PredictionItem = {
+  id: string;
+  username: string;
+  guess: number;
+  createdAt: string | null;
+};
+
+type WinnerItem = {
+  profile_id: string;
+  guess_amount: number;
+  distance: number;
+  placement: number;
+  username?: string;
+};
+
+type LiveStatus = {
+  isLive: boolean;
+  title: string;
+  gameName: string;
+  viewerCount: number;
+  startedAt: string;
+};
+
+type BracketMatch = {
+  id: string;
+  player1: string;
+  player2: string;
+  winner: string;
+};
+
+type BracketRound = {
+  id: string;
+  name: string;
+  matches: BracketMatch[];
+};
+
+type BracketData = {
+  title: string;
+  rounds: BracketRound[];
+};
 
 function formatMoney(value: number) {
   return `$${Number(value || 0).toLocaleString()}`;
@@ -84,7 +133,7 @@ function formatTimeAgo(value?: string | null) {
   if (!value) return "just now";
 
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
+  if (Number.isNaN(parsed.getTime())) return "just now";
 
   const seconds = Math.floor((Date.now() - parsed.getTime()) / 1000);
 
@@ -93,6 +142,120 @@ function formatTimeAgo(value?: string | null) {
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
 
   return `${Math.floor(seconds / 86400)}d ago`;
+}
+
+function nextPowerOfTwo(value: number) {
+  let power = 1;
+  while (power < value) {
+    power *= 2;
+  }
+  return power;
+}
+
+function getRoundName(roundIndex: number, totalRounds: number) {
+  const roundsFromEnd = totalRounds - roundIndex;
+
+  if (roundsFromEnd === 1) return "Final";
+  if (roundsFromEnd === 2) return "Semifinals";
+  if (roundsFromEnd === 3) return "Quarterfinals";
+  if (roundsFromEnd === 4) return "Round of 16";
+
+  return `Round ${roundIndex + 1}`;
+}
+
+function createBracketFromTeamCount(teamCount: number, title: string): BracketData {
+  const safeCount = Math.max(2, Math.floor(teamCount));
+  const bracketSize = nextPowerOfTwo(safeCount);
+  const totalRounds = Math.log2(bracketSize);
+
+  const teamNames = Array.from({ length: bracketSize }, (_, index) =>
+    index < safeCount ? `Team ${index + 1}` : "BYE"
+  );
+
+  const rounds: BracketRound[] = [];
+  let matchCounter = 1;
+
+  for (let roundIndex = 0; roundIndex < totalRounds; roundIndex++) {
+    const roundName = getRoundName(roundIndex, totalRounds);
+    const matchCount = bracketSize / Math.pow(2, roundIndex + 1);
+
+    const matches: BracketMatch[] = Array.from({ length: matchCount }, (_, matchIndex) => {
+      if (roundIndex === 0) {
+        return {
+          id: `m${matchCounter++}`,
+          player1: teamNames[matchIndex * 2] || "",
+          player2: teamNames[matchIndex * 2 + 1] || "",
+          winner: "",
+        };
+      }
+
+      return {
+        id: `m${matchCounter++}`,
+        player1: "",
+        player2: "",
+        winner: "",
+      };
+    });
+
+    rounds.push({
+      id: `round-${roundIndex + 1}`,
+      name: roundName,
+      matches,
+    });
+  }
+
+  return {
+    title: title.trim() || "Trashguy Tournament",
+    rounds,
+  };
+}
+
+function cloneBracket(bracket: BracketData): BracketData {
+  return {
+    ...bracket,
+    rounds: bracket.rounds.map((round) => ({
+      ...round,
+      matches: round.matches.map((match) => ({ ...match })),
+    })),
+  };
+}
+
+function maybeAutoAdvanceClassic8(bracket: BracketData): BracketData {
+  const next = cloneBracket(bracket);
+
+  if (
+    next.rounds.length !== 3 ||
+    next.rounds[0].matches.length !== 4 ||
+    next.rounds[1].matches.length !== 2 ||
+    next.rounds[2].matches.length !== 1
+  ) {
+    return next;
+  }
+
+  const qf = next.rounds[0].matches;
+  const sf = next.rounds[1].matches;
+  const final = next.rounds[2].matches[0];
+
+  sf[0].player1 = qf[0].winner || "Winner QF1";
+  sf[0].player2 = qf[1].winner || "Winner QF2";
+  sf[1].player1 = qf[2].winner || "Winner QF3";
+  sf[1].player2 = qf[3].winner || "Winner QF4";
+
+  if (![sf[0].player1, sf[0].player2].includes(sf[0].winner)) {
+    sf[0].winner = "";
+  }
+  if (![sf[1].player1, sf[1].player2].includes(sf[1].winner)) {
+    sf[1].winner = "";
+  }
+
+  final.player1 = sf[0].winner || "Winner SF1";
+  final.player2 = sf[1].winner || "Winner SF2";
+
+  if (![final.player1, final.player2].includes(final.winner)) {
+    final.winner = "";
+  }
+
+  return next;
 }
 
 function Panel({
@@ -131,63 +294,6 @@ function SectionLabel({
   );
 }
 
-type LeaderboardPlayer = {
-  rank: number;
-  username: string;
-  wagered: number;
-};
-
-type HuntItem = {
-  id: string;
-  title: string;
-  casino: string;
-  startCost: number;
-  totalWinnings: number;
-  profitLoss: number;
-  profitLossPercentage: number;
-  isOpening: boolean;
-};
-
-type PredictionItem = {
-  id: string;
-  username: string;
-  guess: number;
-  createdAt: string;
-};
-
-type WinnerItem = {
-  profile_id: string;
-  guess_amount: number;
-  distance: number;
-  placement: number;
-};
-
-type LiveStatus = {
-  isLive: boolean;
-  title: string;
-  gameName: string;
-  viewerCount: number;
-  startedAt: string;
-};
-
-type BracketMatch = {
-  id: string;
-  player1: string;
-  player2: string;
-  winner: string;
-};
-
-type BracketRound = {
-  id: string;
-  name: string;
-  matches: BracketMatch[];
-};
-
-type BracketData = {
-  title: string;
-  rounds: BracketRound[];
-};
-
 function extractTwitchIdentity(user: any) {
   const identityData =
     user?.identities?.[0]?.identity_data as Record<string, unknown> | undefined;
@@ -221,6 +327,55 @@ function extractTwitchIdentity(user: any) {
   };
 }
 
+function MatchCard({
+  match,
+  compact = false,
+}: {
+  match: BracketMatch;
+  compact?: boolean;
+}) {
+  const isWinner1 = match.winner && match.winner === match.player1;
+  const isWinner2 = match.winner && match.winner === match.player2;
+
+  return (
+    <div
+      className={`rounded-[1.35rem] border border-white/10 bg-black/35 ${
+        compact ? "p-3" : "p-4"
+      }`}
+    >
+      <div className="space-y-2">
+        <div
+          className={`rounded-xl border px-4 py-3 font-semibold ${
+            isWinner1
+              ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-200"
+              : "border-white/10 bg-black/20 text-white"
+          }`}
+        >
+          {match.player1 || "TBD"}
+        </div>
+
+        <div className="text-center text-[10px] uppercase tracking-[0.24em] text-white/30">
+          vs
+        </div>
+
+        <div
+          className={`rounded-xl border px-4 py-3 font-semibold ${
+            isWinner2
+              ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-200"
+              : "border-white/10 bg-black/20 text-white"
+          }`}
+        >
+          {match.player2 || "TBD"}
+        </div>
+      </div>
+
+      <div className="mt-3 text-sm font-bold uppercase tracking-[0.2em] text-emerald-300">
+        {match.winner ? `Winner: ${match.winner}` : "No winner yet"}
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [activeSection, setActiveSection] = useState("home");
 
@@ -229,9 +384,10 @@ export default function Home() {
   const [viewerAvatar, setViewerAvatar] = useState("");
   const [isTwitchConnected, setIsTwitchConnected] = useState(false);
 
+  const [predictionSortMode, setPredictionSortMode] = useState<"newest" | "highest">("newest");
   const [predictionInput, setPredictionInput] = useState("");
   const [predictionStatus, setPredictionStatus] = useState<"open" | "locked">("open");
-  const [predictions, setPredictions] = useState<PredictionItem[]>(initialPredictions);
+  const [predictions, setPredictions] = useState<PredictionItem[]>([]);
   const [predictionMessage, setPredictionMessage] = useState("");
 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -257,11 +413,46 @@ export default function Home() {
   const [liveLoading, setLiveLoading] = useState(true);
 
   const [bracket, setBracket] = useState<BracketData>(defaultBracket);
+  const [generatorTeamCount, setGeneratorTeamCount] = useState("8");
   const [bracketLoading, setBracketLoading] = useState(true);
   const [bracketMessage, setBracketMessage] = useState("");
 
+  const predictionClockRef = useRef<NodeJS.Timeout | null>(null);
+
   const normalizedViewer = viewerName.trim().toLowerCase();
   const adminAllowed = ADMIN_USERS.includes(normalizedViewer);
+
+  const sortedPredictionsForTab = useMemo(() => {
+  const next = [...predictions];
+
+  if (predictionSortMode === "highest") {
+    return next.sort((a, b) => b.guess - a.guess);
+  }
+
+  return next.sort((a, b) => {
+    const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return bTime - aTime;
+  });
+}, [predictions, predictionSortMode]);
+
+const currentPredictionEntry = useMemo(() => {
+  return predictions.find(
+    (entry) => entry.username.trim().toLowerCase() === viewerName.trim().toLowerCase()
+  );
+}, [predictions, viewerName]);
+
+const currentPredictionHunt = useMemo(() => {
+  const openHunt = huntsData.find((hunt) => hunt.isOpening);
+  return openHunt || huntsData[0] || null;
+}, [huntsData]);
+
+const currentPredictionCount = predictions.length;
+
+const currentPredictionAvgX =
+  currentPredictionHunt?.startCost && currentPredictionHunt.startCost > 0
+    ? ((currentPredictionHunt.totalWinnings || 0) / currentPredictionHunt.startCost).toFixed(2)
+    : "0.00";
 
   useEffect(() => {
     if (!adminAllowed) {
@@ -286,15 +477,15 @@ export default function Home() {
     </button>
   );
 
-  const getAccessToken = async () => {
+  const getAccessToken = useCallback(async () => {
     const {
       data: { session },
     } = await supabaseBrowser.auth.getSession();
 
     return session?.access_token || "";
-  };
+  }, []);
 
-  const loadHunts = async () => {
+  const loadHunts = useCallback(async () => {
     try {
       const res = await fetch("/api/hunts", { cache: "no-store" });
       const data = await res.json();
@@ -305,10 +496,12 @@ export default function Home() {
         id: hunt.id || `hunt-${index}`,
         title: hunt.title || `Bonus Hunt ${index + 1}`,
         casino: hunt.casino || "Unknown Casino",
-        startCost: Number(hunt.startCost || 0),
-        totalWinnings: Number(hunt?.stats?.totalWinnings || 0),
-        profitLoss: Number(hunt?.stats?.profitLoss || 0),
-        profitLossPercentage: Number(hunt?.stats?.profitLossPercentage || 0),
+        startCost: Number(hunt.startCost || hunt.start_amount || 0),
+        totalWinnings: Number(hunt?.stats?.totalWinnings || hunt.totalWinnings || 0),
+        profitLoss: Number(hunt?.stats?.profitLoss || hunt.profitLoss || 0),
+        profitLossPercentage: Number(
+          hunt?.stats?.profitLossPercentage || hunt.profitLossPercentage || 0
+        ),
         isOpening: Boolean(hunt.isOpening),
       }));
 
@@ -320,9 +513,9 @@ export default function Home() {
     } finally {
       setHuntsLoading(false);
     }
-  };
+  }, []);
 
-  const loadLeaderboard = async () => {
+  const loadLeaderboard = useCallback(async () => {
     try {
       const res = await fetch("/api/leaderboard", { cache: "no-store" });
       const data = await res.json();
@@ -330,31 +523,27 @@ export default function Home() {
       const affiliates = Array.isArray(data?.affiliates) ? data.affiliates : [];
 
       const normalized: LeaderboardPlayer[] = affiliates
-  .map((player: any, index: number): LeaderboardPlayer => ({
-    rank: index + 1,
-    username:
-      player.username ||
-      player.name ||
-      player.display_name ||
-      `Player ${index + 1}`,
-    wagered: Number(
-      player.wagered_amount ||
-        player.wagered ||
-        player.amount_wagered ||
-        player.total_wagered ||
-        0
-    ),
-  }))
-  .sort(
-    (a: LeaderboardPlayer, b: LeaderboardPlayer) => b.wagered - a.wagered
-  )
-  .slice(0, 10)
-  .map(
-    (player: LeaderboardPlayer, index: number): LeaderboardPlayer => ({
-      ...player,
-      rank: index + 1,
-    })
-  );
+        .map((player: any, index: number): LeaderboardPlayer => ({
+          rank: index + 1,
+          username:
+            player.username ||
+            player.name ||
+            player.display_name ||
+            `Player ${index + 1}`,
+          wagered: Number(
+            player.wagered_amount ||
+              player.wagered ||
+              player.amount_wagered ||
+              player.total_wagered ||
+              0
+          ),
+        }))
+        .sort((a: LeaderboardPlayer, b: LeaderboardPlayer) => b.wagered - a.wagered)
+        .slice(0, 10)
+        .map((player: LeaderboardPlayer, index: number): LeaderboardPlayer => ({
+          ...player,
+          rank: index + 1,
+        }));
 
       if (normalized.length > 0) {
         setLeaderboardData(normalized);
@@ -364,42 +553,47 @@ export default function Home() {
     } finally {
       setLeaderboardLoading(false);
     }
-  };
+  }, []);
 
-  const loadPredictions = async () => {
+  const loadPredictions = useCallback(async () => {
     try {
       const res = await fetch("/api/predictions", { cache: "no-store" });
       if (!res.ok) return;
 
       const data = await res.json();
-      const raw =
-        Array.isArray(data?.predictions) ? data.predictions :
-        Array.isArray(data) ? data :
-        [];
+      const raw = Array.isArray(data?.predictions)
+        ? data.predictions
+        : Array.isArray(data)
+          ? data
+          : [];
 
-      const normalized: PredictionItem[] = raw.map((entry: any, index: number) => ({
-        id:
-          entry.id?.toString() ||
-          entry.profile_id?.toString() ||
-          `prediction-${index}`,
-        username:
-          entry.username ||
-          entry.profile_id ||
-          entry.user_name ||
-          `viewer-${index + 1}`,
-        guess: Number(entry.guess ?? entry.guessAmount ?? entry.guess_amount ?? 0),
-        createdAt: formatTimeAgo(entry.created_at || entry.updated_at || "just now"),
-      }));
+      const normalized: PredictionItem[] = raw
+        .map((entry: any, index: number) => ({
+          id:
+            entry.id?.toString() ||
+            entry.profile_id?.toString() ||
+            `prediction-${index}`,
+          username:
+            entry.username ||
+            entry.profile_id ||
+            entry.user_name ||
+            `viewer-${index + 1}`,
+          guess: Number(entry.guess ?? entry.guessAmount ?? entry.guess_amount ?? 0),
+          createdAt: entry.created_at || entry.updated_at || null,
+        }))
+        .sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        });
 
-      if (normalized.length > 0) {
-        setPredictions(normalized);
-      }
+      setPredictions(normalized);
     } catch (error) {
       console.error("Predictions failed to load", error);
     }
-  };
+  }, []);
 
-  const loadLiveStatus = async () => {
+  const loadLiveStatus = useCallback(async () => {
     try {
       const res = await fetch("/api/twitch/live", { cache: "no-store" });
       if (!res.ok) {
@@ -421,9 +615,9 @@ export default function Home() {
     } finally {
       setLiveLoading(false);
     }
-  };
+  }, []);
 
-  const loadBracket = async () => {
+  const loadBracket = useCallback(async () => {
     try {
       const res = await fetch("/api/tournaments", { cache: "no-store" });
       if (!res.ok) {
@@ -433,14 +627,14 @@ export default function Home() {
 
       const data = await res.json();
       if (data?.bracket?.rounds?.length) {
-        setBracket(data.bracket);
+        setBracket(maybeAutoAdvanceClassic8(data.bracket));
       }
     } catch (error) {
       console.error("Bracket failed to load", error);
     } finally {
       setBracketLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadLeaderboard();
@@ -458,7 +652,7 @@ export default function Home() {
       clearInterval(predictionTimer);
       clearInterval(huntTimer);
     };
-  }, []);
+  }, [loadBracket, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -526,6 +720,65 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    if (predictionClockRef.current) {
+      clearInterval(predictionClockRef.current);
+    }
+
+    predictionClockRef.current = setInterval(() => {
+      setPredictions((current) => [...current]);
+    }, 30000);
+
+    return () => {
+      if (predictionClockRef.current) {
+        clearInterval(predictionClockRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const channel = supabaseBrowser
+      .channel("trashguy-live-updates")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "predictions" },
+        () => {
+          loadPredictions();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hunts" },
+        (payload: any) => {
+          const nextRow = payload?.new;
+
+          if (nextRow?.id) {
+            setAdminHuntId(nextRow.id);
+          }
+
+          if (nextRow?.status === "open") {
+            setPredictionStatus("open");
+          } else if (nextRow?.status === "locked" || nextRow?.status === "completed") {
+            setPredictionStatus("locked");
+          }
+
+          loadPredictions();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tournaments" },
+        () => {
+          loadBracket();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabaseBrowser.removeChannel(channel);
+    };
+  }, [loadBracket, loadPredictions]);
+
   const handleTwitchLogin = async () => {
     try {
       setPredictionMessage("");
@@ -567,86 +820,95 @@ export default function Home() {
     }
   };
 
-const handlePredictionSubmit = async () => {
-  if (!isTwitchConnected || predictionStatus !== "open") return;
+  const handlePredictionSubmit = async () => {
+    if (!isTwitchConnected || predictionStatus !== "open") return;
 
-  const guess = Number(predictionInput || 0);
+    const guess = Number(predictionInput || 0);
 
-  if (!guess || Number.isNaN(guess)) {
-    setPredictionMessage("Enter a valid guess.");
-    return;
-  }
-
-  try {
-    // 🔑 Get Twitch session from Supabase
-    const { data: sessionData, error: sessionError } =
-      await supabaseBrowser.auth.getSession();
-
-    if (sessionError || !sessionData.session) {
-      setPredictionMessage("Not logged in. Please reconnect Twitch.");
+    if (!guess || Number.isNaN(guess)) {
+      setPredictionMessage("Enter a valid guess.");
       return;
     }
 
-    const token = sessionData.session.access_token;
+    try {
+      const { data: sessionData, error: sessionError } =
+        await supabaseBrowser.auth.getSession();
 
-    if (!token) {
-      setPredictionMessage("Missing auth token. Please reconnect Twitch.");
-      return;
-    }
-
-    // 🚀 Send prediction with Bearer token
-    const res = await fetch("/api/predictions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // ✅ THIS FIXES EVERYTHING
-      },
-      body: JSON.stringify({
-        guessAmount: guess,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setPredictionMessage(data?.error || "Failed to save prediction.");
-      return;
-    }
-
-    const savedUsername = data?.username || viewerName;
-
-    // ✅ Update UI instantly
-    setPredictions((current) => {
-      const existing = current.find(
-        (entry) =>
-          entry.username.toLowerCase() === savedUsername.toLowerCase()
-      );
-
-      if (existing) {
-        return current.map((entry) =>
-          entry.username.toLowerCase() === savedUsername.toLowerCase()
-            ? { ...entry, guess, createdAt: "just now" }
-            : entry
-        );
+      if (sessionError || !sessionData.session) {
+        setPredictionMessage("Not logged in. Please reconnect Twitch.");
+        return;
       }
 
-      return [
-        {
-          id: `p-${Date.now()}`,
-          username: savedUsername,
-          guess,
-          createdAt: "just now",
-        },
-        ...current,
-      ];
-    });
+      const token = sessionData.session.access_token;
 
-    setPredictionInput("");
-    setPredictionMessage("Prediction saved.");
-  } catch (err) {
-    setPredictionMessage("Failed to save prediction.");
-  }
-};
+      if (!token) {
+        setPredictionMessage("Missing auth token. Please reconnect Twitch.");
+        return;
+      }
+
+      const res = await fetch("/api/predictions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          guessAmount: guess,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPredictionMessage(data?.error || "Failed to save prediction.");
+        return;
+      }
+
+      const savedUsername = data?.username || viewerName;
+      const savedId =
+        data?.prediction?.id?.toString() || `${savedUsername.toLowerCase()}-${Date.now()}`;
+      const savedAt =
+        data?.prediction?.updated_at ||
+        data?.prediction?.created_at ||
+        new Date().toISOString();
+
+      setPredictions((current) => {
+        const existingIndex = current.findIndex(
+          (entry) =>
+            entry.id === savedId ||
+            entry.username.toLowerCase() === savedUsername.toLowerCase()
+        );
+
+        if (existingIndex >= 0) {
+          const next = [...current];
+          next[existingIndex] = {
+            ...next[existingIndex],
+            id: savedId,
+            username: savedUsername,
+            guess,
+            createdAt: savedAt,
+          };
+          return next;
+        }
+
+        return [
+          {
+            id: savedId,
+            username: savedUsername,
+            guess,
+            createdAt: savedAt,
+          },
+          ...current,
+        ];
+      });
+
+      setPredictionInput("");
+      setPredictionMessage("Prediction saved.");
+      loadPredictions();
+    } catch {
+      setPredictionMessage("Failed to save prediction.");
+    }
+  };
 
   const handleStartHunt = async () => {
     try {
@@ -674,8 +936,11 @@ const handlePredictionSubmit = async () => {
 
       setAdminHuntId(data?.hunt?.id || "");
       setPredictionStatus("open");
+      setLatestWinners([]);
+      setFinalResult("");
       setAdminMessage("New hunt started.");
       loadHunts();
+      loadPredictions();
     } catch {
       setAdminMessage("Failed to start hunt.");
     }
@@ -710,6 +975,7 @@ const handlePredictionSubmit = async () => {
 
       setPredictionStatus("locked");
       setAdminMessage("Predictions locked.");
+      loadPredictions();
     } catch {
       setAdminMessage("Failed to lock predictions.");
     }
@@ -744,6 +1010,7 @@ const handlePredictionSubmit = async () => {
 
       setPredictionStatus("open");
       setAdminMessage("Predictions opened.");
+      loadPredictions();
     } catch {
       setAdminMessage("Failed to open predictions.");
     }
@@ -809,66 +1076,120 @@ const handlePredictionSubmit = async () => {
     }));
   };
 
-  const updateMatch = (
+  const updateMatchField = (
     roundId: string,
     matchId: string,
-    field: "player1" | "player2" | "winner",
+    field: "player1" | "player2",
     value: string
   ) => {
-    setBracket((current) => ({
-      ...current,
-      rounds: current.rounds.map((round) =>
-        round.id !== roundId
-          ? round
-          : {
-              ...round,
-              matches: round.matches.map((match) =>
-                match.id === matchId ? { ...match, [field]: value } : match
-              ),
-            }
-      ),
-    }));
+    setBracket((current) =>
+      maybeAutoAdvanceClassic8({
+        ...current,
+        rounds: current.rounds.map((round) =>
+          round.id !== roundId
+            ? round
+            : {
+                ...round,
+                matches: round.matches.map((match) =>
+                  match.id === matchId ? { ...match, [field]: value } : match
+                ),
+              }
+        ),
+      })
+    );
   };
 
- const saveBracket = async () => {
-  try {
-    setBracketMessage("");
+  const selectMatchWinner = (
+    roundId: string,
+    matchId: string,
+    winner: string
+  ) => {
+    setBracket((current) =>
+      maybeAutoAdvanceClassic8({
+        ...current,
+        rounds: current.rounds.map((round) =>
+          round.id !== roundId
+            ? round
+            : {
+                ...round,
+                matches: round.matches.map((match) =>
+                  match.id === matchId ? { ...match, winner } : match
+                ),
+              }
+        ),
+      })
+    );
+  };
 
-    const { data: sessionData, error: sessionError } =
-      await supabaseBrowser.auth.getSession();
+  const clearMatchWinner = (roundId: string, matchId: string) => {
+    setBracket((current) =>
+      maybeAutoAdvanceClassic8({
+        ...current,
+        rounds: current.rounds.map((round) =>
+          round.id !== roundId
+            ? round
+            : {
+                ...round,
+                matches: round.matches.map((match) =>
+                  match.id === matchId ? { ...match, winner: "" } : match
+                ),
+              }
+        ),
+      })
+    );
+  };
 
-    if (sessionError || !sessionData.session?.access_token) {
-      setBracketMessage("Missing Twitch session. Please log in again.");
+  const handleGenerateBracket = () => {
+    const count = Number(generatorTeamCount);
+
+    if (!count || Number.isNaN(count) || count < 2) {
+      setBracketMessage("Enter at least 2 teams.");
       return;
     }
 
-    const token = sessionData.session.access_token;
+    setBracket(createBracketFromTeamCount(count, bracket.title || "Trashguy Tournament"));
+    setBracketMessage("Bracket generated locally. Click Save Bracket to keep it.");
+  };
 
-    const res = await fetch("/api/tournaments", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ bracket }),
-    });
+  const saveBracket = async () => {
+    try {
+      setBracketMessage("");
 
-    const data = await res.json();
+      const { data: sessionData, error: sessionError } =
+        await supabaseBrowser.auth.getSession();
 
-    if (!res.ok) {
-      setBracketMessage(data?.error || "Failed to save bracket.");
-      return;
+      if (sessionError || !sessionData.session?.access_token) {
+        setBracketMessage("Missing Twitch session. Please log in again.");
+        return;
+      }
+
+      const token = sessionData.session.access_token;
+
+      const res = await fetch("/api/tournaments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ bracket }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setBracketMessage(data?.error || "Failed to save bracket.");
+        return;
+      }
+
+      if (data?.bracket) {
+        setBracket(maybeAutoAdvanceClassic8(data.bracket));
+      }
+
+      setBracketMessage("Bracket saved.");
+    } catch {
+      setBracketMessage("Failed to save bracket.");
     }
-
-    if (data?.bracket) {
-      setBracket(data.bracket);
-    }
-
-    setBracketMessage("Bracket saved.");
-  } catch {
-    setBracketMessage("Failed to save bracket.");
-  }
-};
+  };
 
   const resetBracket = async () => {
     setBracket(defaultBracket);
@@ -877,13 +1198,13 @@ const handlePredictionSubmit = async () => {
 
   const rankedWinners = useMemo(() => {
     if (latestWinners.length > 0) {
-  return latestWinners.map((winner: any) => ({
-    id: `${winner.profile_id}-${winner.placement}`,
-    username: winner.username || winner.profile_id,
-    guess: winner.guess_amount,
-    distance: winner.distance,
-  }));
-}
+      return latestWinners.map((winner: any) => ({
+        id: `${winner.profile_id}-${winner.placement}`,
+        username: winner.username || winner.profile_id,
+        guess: winner.guess_amount,
+        distance: winner.distance,
+      }));
+    }
 
     const result = Number(finalResult || 0);
     if (!result) return [];
@@ -1039,9 +1360,7 @@ const handlePredictionSubmit = async () => {
                 <Panel className="border-fuchsia-300/20 shadow-[0_0_40px_rgba(217,70,239,0.08)]">
                   <SectionLabel color="fuchsia">Live Stream</SectionLabel>
                   <h2 className="mt-3 text-3xl font-black">WATCH TRASHGUY LIVE</h2>
-                  <p className="mt-4 text-white/65">
-                    Live Twitch embed for your site.
-                  </p>
+                  <p className="mt-4 text-white/65">Live Twitch embed for your site.</p>
 
                   <div className="mt-6 mb-3 text-xs uppercase tracking-[0.26em] text-emerald-300">
                     {liveStatus.isLive ? "Live stream" : "Channel player"}
@@ -1049,12 +1368,12 @@ const handlePredictionSubmit = async () => {
 
                   <div className="aspect-video w-full overflow-hidden rounded-[1.25rem] border border-emerald-300/20">
                     <iframe
-  src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
-  height="100%"
-  width="100%"
-  allowFullScreen
-  className="rounded-[1.25rem]"
-></iframe>
+                      src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
+                      height="100%"
+                      width="100%"
+                      allowFullScreen
+                      className="rounded-[1.25rem]"
+                    />
                   </div>
                 </Panel>
               </section>
@@ -1098,7 +1417,6 @@ const handlePredictionSubmit = async () => {
             {activeSection === "hunts" && (
               <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
                 <Panel className="border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.10),transparent_28%)]" />
                   <div className="relative z-10">
                     <SectionLabel>Bonus Hunts</SectionLabel>
                     <h2 className="mt-3 text-4xl font-black tracking-wide">LIVE & RECENT HUNTS</h2>
@@ -1110,7 +1428,7 @@ const handlePredictionSubmit = async () => {
                         huntsData.map((hunt) => (
                           <div
                             key={hunt.id}
-                            className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5 shadow-[0_0_25px_rgba(16,185,129,0.05)]"
+                            className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5"
                           >
                             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                               <div>
@@ -1189,7 +1507,7 @@ const handlePredictionSubmit = async () => {
                       Twitch login required
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-white/75">
-                      Entries auto-refresh on the page
+                      Entries update live on the page
                     </div>
                   </div>
                 </Panel>
@@ -1197,128 +1515,244 @@ const handlePredictionSubmit = async () => {
             )}
 
             {activeSection === "predictions" && (
-              <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-                <Panel className="border-fuchsia-300/25 shadow-[0_0_65px_rgba(217,70,239,0.10)]">
-                  <SectionLabel color="fuchsia">Predictions</SectionLabel>
-                  <h2 className="mt-3 text-4xl font-black tracking-wide">SUBMIT YOUR GUESS</h2>
-                  <p className="mt-4 text-white/65">
-                    One active entry per Twitch user. You can edit it until predictions are
-                    locked.
-                  </p>
+  <section className="grid gap-6 2xl:grid-cols-[1fr_1.35fr]">
+    <Panel className="border-fuchsia-300/25 shadow-[0_0_65px_rgba(217,70,239,0.10)]">
+      <SectionLabel color="fuchsia">Live Bonus Hunt</SectionLabel>
 
-                  <div className="mt-8 space-y-4">
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                        Connected account
-                      </div>
+      <div className="mt-3 flex items-center justify-between gap-4">
+        <h2 className="text-4xl font-black tracking-wide">
+          {currentPredictionHunt?.title || "Latest Hunt"}
+        </h2>
 
-                      {isTwitchConnected ? (
-                        <div className="mt-3 flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-                          {viewerAvatar ? (
-                            <img
-                              src={viewerAvatar}
-                              alt={viewerDisplayName}
-                              className="h-14 w-14 rounded-full border border-white/10 object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-black/40 text-lg font-black text-emerald-300">
-                              {viewerDisplayName.charAt(0).toUpperCase()}
-                            </div>
-                          )}
+        <div
+          className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] ${
+            predictionStatus === "open"
+              ? "border-emerald-300/30 bg-emerald-400/10 text-emerald-200"
+              : "border-white/10 bg-black/30 text-white/65"
+          }`}
+        >
+          {predictionStatus === "open" ? "Open" : "Locked"}
+        </div>
+      </div>
 
-                          <div>
-                            <div className="text-lg font-black text-white">{viewerDisplayName}</div>
-                            <div className="text-white/45">@{viewerName}</div>
-                          </div>
+      <div className="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-3">
+        <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
+          <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
+            Start
+          </div>
+          <div className="mt-2 text-2xl font-black text-white">
+            {formatMoney(currentPredictionHunt?.startCost || 0)}
+          </div>
+        </div>
+
+        <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
+          <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
+            Won
+          </div>
+          <div className="mt-2 text-2xl font-black text-white">
+            {formatMoney(currentPredictionHunt?.totalWinnings || 0)}
+          </div>
+        </div>
+
+        <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
+          <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
+            Bonuses
+          </div>
+          <div className="mt-2 text-2xl font-black text-white">0</div>
+        </div>
+
+        <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
+          <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
+            Avg
+          </div>
+          <div className="mt-2 text-2xl font-black text-white">{currentPredictionAvgX}x</div>
+        </div>
+
+        <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
+          <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
+            Req
+          </div>
+          <div className="mt-2 text-2xl font-black text-white">---</div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+  <div className="rounded-[1.3rem] border border-white/10 bg-black/35 p-6 min-h-[170px]">
+    <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
+      Best Slot
+    </div>
+    <div className="mt-4 text-center text-3xl font-black text-white">---</div>
+
+    <div className="mt-5 flex flex-wrap justify-center gap-2">
+      <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
+        Win $0
+      </div>
+      <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
+        X 0.00x
+      </div>
+    </div>
+  </div>
+
+  <div className="rounded-[1.3rem] border border-white/10 bg-black/35 p-6 min-h-[170px]">
+    <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
+      Highest X
+    </div>
+    <div className="mt-4 text-center text-3xl font-black text-white">---</div>
+
+    <div className="mt-5 flex flex-wrap justify-center gap-2">
+      <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
+        Win $0
+      </div>
+      <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
+        X 0.00x
+      </div>
+    </div>
+  </div>
+</div>
+    </Panel>
+
+    <Panel className="border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
+      <div className="mb-4 text-center text-4xl font-black tracking-wide">Predictions</div>
+
+      <div className="grid gap-6 2xl:grid-cols-[0.95fr_1.15fr]">
+        <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-6">
+          <div className="mb-4 flex flex-wrap gap-2">
+            <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-white/65">
+              {currentPredictionCount} Entries
+            </div>
+            <div
+              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] ${
+                predictionStatus === "open"
+                  ? "border-emerald-300/30 bg-emerald-400/10 text-emerald-200"
+                  : "border-white/10 bg-black/30 text-white/65"
+              }`}
+            >
+              {predictionStatus === "open" ? "Open" : "None"}
+            </div>
+          </div>
+
+          <div className="text-center text-[11px] font-bold uppercase tracking-[0.28em] text-white/45">
+            Your Entry
+          </div>
+
+          <div className="mt-4 text-center text-4xl font-black">
+            {currentPredictionEntry ? formatMoney(currentPredictionEntry.guess) : "--"}
+          </div>
+
+          <div className="mt-4 rounded-[1.1rem] border border-dashed border-white/10 bg-black/20 p-4 text-white/75">
+            {predictionStatus === "open"
+              ? "Prediction session is open."
+              : "No prediction session is open yet."}
+          </div>
+
+          <div className="mt-5 rounded-[1.3rem] border border-white/10 bg-black/20 p-6">
+  <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-white/45">
+    Submit Prediction
+  </div>
+
+  <input
+    value={predictionInput}
+    onChange={(e) => setPredictionInput(e.target.value.replace(/[^0-9]/g, ""))}
+    placeholder="Enter final hunt balance"
+    className="mt-4 w-full rounded-xl border border-white/10 bg-black/40 px-5 py-4 text-lg text-white outline-none focus:border-emerald-300/40"
+  />
+
+  <div className="mt-5 grid gap-4 grid-cols-1 sm:grid-cols-2">
+    <button
+      onClick={isTwitchConnected ? handleLogout : handleTwitchLogin}
+      className="rounded-xl min-h-[64px] border border-white/10 bg-black/30 px-4 py-3 font-semibold text-white flex items-center justify-center transition hover:bg-white/5"
+    >
+      {isTwitchConnected ? "Logout" : "Connect Twitch"}
+    </button>
+
+    <button
+      onClick={handlePredictionSubmit}
+      disabled={!isTwitchConnected || predictionStatus !== "open"}
+      className="rounded-xl min-h-[64px] border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 font-semibold text-emerald-200 flex items-center justify-center transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      Save Prediction
+    </button>
+  </div>
+
+  {predictionMessage && (
+    <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3 text-sm text-white/75">
+      {predictionMessage}
+    </div>
+  )}
+</div>
+        </div>
+
+        <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-6">
+          <div className="mb-4 flex items-center justify-end gap-2">
+            <button
+              onClick={() => setPredictionSortMode("highest")}
+              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] transition ${
+                predictionSortMode === "highest"
+                  ? "border-white/30 bg-white/10 text-white"
+                  : "border-white/10 bg-black/30 text-white/65 hover:text-white"
+              }`}
+            >
+              Highest
+            </button>
+            <button
+              onClick={() => setPredictionSortMode("newest")}
+              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] transition ${
+                predictionSortMode === "newest"
+                  ? "border-white/30 bg-white/10 text-white"
+                  : "border-white/10 bg-black/30 text-white/65 hover:text-white"
+              }`}
+            >
+              Newest
+            </button>
+          </div>
+
+          <div className="h-[520px] overflow-y-auto rounded-[1.1rem] border border-white/10 bg-black/20">
+            {sortedPredictionsForTab.length === 0 ? (
+              <div className="flex h-full items-center justify-center text-white/45">
+                No entries.
+              </div>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {sortedPredictionsForTab.map((entry, index) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center justify-between gap-4 px-5 py-4"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/30 text-xs font-black text-emerald-300">
+                          {index + 1}
                         </div>
-                      ) : (
-                        <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-white/65">
-                          Connect Twitch to enter predictions.
+                        <div className="truncate font-semibold text-white">
+                          {entry.username}
                         </div>
-                      )}
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                        Prediction
                       </div>
-                      <input
-                        value={predictionInput}
-                        onChange={(e) => setPredictionInput(e.target.value.replace(/[^0-9]/g, ""))}
-                        placeholder="Enter final hunt balance"
-                        className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                      />
-                    </div>
-
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <button
-                        onClick={isTwitchConnected ? handleLogout : handleTwitchLogin}
-                        className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 font-semibold text-emerald-200 transition hover:bg-emerald-400/20"
-                      >
-                        {isTwitchConnected ? "Logout Twitch" : "Connect Twitch"}
-                      </button>
-                      <button
-                        onClick={handlePredictionSubmit}
-                        disabled={!isTwitchConnected || predictionStatus !== "open"}
-                        className="rounded-2xl border border-fuchsia-300/25 bg-fuchsia-400/10 px-5 py-4 font-semibold text-fuchsia-200 transition hover:bg-fuchsia-400/20 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Save Prediction
-                      </button>
-                    </div>
-
-                    {predictionMessage && (
-                      <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/75 break-words">
-                        {predictionMessage}
+                      <div className="mt-1 pl-11 text-xs uppercase tracking-[0.18em] text-white/35">
+                        {formatTimeAgo(entry.createdAt)}
                       </div>
-                    )}
-                  </div>
-                </Panel>
-
-                <Panel className="border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <SectionLabel>Entries</SectionLabel>
-                      <h2 className="mt-3 text-4xl font-black tracking-wide">LIVE ENTRIES</h2>
-                    </div>
-                    <button
-                      onClick={loadPredictions}
-                      className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-white/70 hover:text-white"
-                    >
-                      Refresh
-                    </button>
-                  </div>
-
-                  <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
-                    <div className="grid grid-cols-[1fr_160px_120px] border-b border-white/10 bg-white/5 px-5 py-4 text-sm font-bold uppercase tracking-[0.24em] text-white/65">
-                      <div>User</div>
-                      <div className="text-right">Guess</div>
-                      <div className="text-right">Updated</div>
                     </div>
 
-                    {predictions.map((entry) => (
-                      <div
-                        key={entry.id}
-                        className="grid grid-cols-[1fr_160px_120px] border-b border-white/5 px-5 py-4 last:border-b-0"
-                      >
-                        <div className="font-semibold text-white/90">{entry.username}</div>
-                        <div className="text-right font-black text-emerald-200">
-                          {formatMoney(entry.guess)}
-                        </div>
-                        <div className="text-right text-white/45">{entry.createdAt}</div>
+                    <div className="text-right">
+                      <div className="text-lg font-black text-emerald-200">
+                        {formatMoney(entry.guess)}
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </Panel>
-              </section>
+                ))}
+              </div>
             )}
+          </div>
+        </div>
+      </div>
+    </Panel>
+  </section>
+)}
 
             {activeSection === "tournaments" && (
               <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
                 <Panel className="border-fuchsia-300/25 shadow-[0_0_65px_rgba(217,70,239,0.10)]">
                   <SectionLabel color="fuchsia">Tournaments</SectionLabel>
-                  <h2 className="mt-3 text-4xl font-black tracking-wide">
-                    {bracket.title}
-                  </h2>
+                  <h2 className="mt-3 text-4xl font-black tracking-wide">{bracket.title}</h2>
 
                   {bracketLoading ? (
                     <div className="mt-8 text-white/60">Loading bracket...</div>
@@ -1329,48 +1763,13 @@ const handlePredictionSubmit = async () => {
                           key={round.id}
                           className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5"
                         >
-                          <div className="text-xs font-bold uppercase tracking-[0.24em] text-fuchsia-300">
+                          <div className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-fuchsia-300">
                             {round.name}
                           </div>
 
-                          <div className="mt-4 space-y-4">
+                          <div className="space-y-4">
                             {round.matches.map((match) => (
-                              <div
-                                key={match.id}
-                                className="rounded-2xl border border-white/10 bg-white/5 p-4"
-                              >
-                                <div className="space-y-2">
-                                  <div
-                                    className={`rounded-xl border px-4 py-3 font-semibold ${
-                                      match.winner === match.player1
-                                        ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-200"
-                                        : "border-white/10 bg-black/20 text-white"
-                                    }`}
-                                  >
-                                    {match.player1}
-                                  </div>
-
-                                  <div className="text-center text-xs uppercase tracking-[0.22em] text-white/30">
-                                    vs
-                                  </div>
-
-                                  <div
-                                    className={`rounded-xl border px-4 py-3 font-semibold ${
-                                      match.winner === match.player2
-                                        ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-200"
-                                        : "border-white/10 bg-black/20 text-white"
-                                    }`}
-                                  >
-                                    {match.player2}
-                                  </div>
-                                </div>
-
-                                {match.winner && (
-                                  <div className="mt-3 text-sm font-bold uppercase tracking-[0.22em] text-emerald-300">
-                                    Winner: {match.winner}
-                                  </div>
-                                )}
-                              </div>
+                              <MatchCard key={match.id} match={match} />
                             ))}
                           </div>
                         </div>
@@ -1385,18 +1784,18 @@ const handlePredictionSubmit = async () => {
                     {adminAllowed ? "EDITABLE" : "VIEW ONLY"}
                   </h2>
                   <p className="mt-4 text-white/65">
-                    Approved Twitch accounts can edit the bracket in the admin panel and save it live.
+                    Generate a new bracket, edit teams, and save it live from the admin panel.
                   </p>
 
                   <div className="mt-8 space-y-3">
                     <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-white/75">
-                      Real save/load bracket
+                      Generate 4 / 8 / 16 team brackets
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-white/75">
-                      Winner field per matchup
+                      Edit team names after generating
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-white/75">
-                      Updates visible on the tournaments page
+                      Classic 8-team bracket auto-advances winners
                     </div>
                   </div>
                 </Panel>
@@ -1531,6 +1930,48 @@ const handlePredictionSubmit = async () => {
                       />
                     </div>
 
+                    <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
+                      <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
+                        Generate bracket
+                      </div>
+
+                      <div className="mt-3 grid gap-3 md:grid-cols-[160px_1fr]">
+                        <input
+                          value={generatorTeamCount}
+                          onChange={(e) => setGeneratorTeamCount(e.target.value.replace(/[^0-9]/g, ""))}
+                          placeholder="How many teams?"
+                          disabled={!isAdmin}
+                          className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
+                        />
+
+                        <button
+                          onClick={handleGenerateBracket}
+                          disabled={!isAdmin}
+                          className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-3 font-semibold text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-40"
+                        >
+                          Generate Bracket
+                        </button>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {[4, 8, 16].map((count) => (
+                          <button
+                            key={count}
+                            type="button"
+                            disabled={!isAdmin}
+                            onClick={() => {
+                              setGeneratorTeamCount(String(count));
+                              setBracket(createBracketFromTeamCount(count, bracket.title || "Trashguy Tournament"));
+                              setBracketMessage("Bracket generated locally. Click Save Bracket to keep it.");
+                            }}
+                            className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+                          >
+                            {count} Teams
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {bracket.rounds.map((round) => (
                       <div
                         key={round.id}
@@ -1552,11 +1993,20 @@ const handlePredictionSubmit = async () => {
                               key={match.id}
                               className="rounded-2xl border border-white/10 bg-white/5 p-4"
                             >
+                              <div className="mb-3 flex items-center justify-between gap-3">
+                                <div className="text-xs font-bold uppercase tracking-[0.24em] text-fuchsia-300">
+                                  {match.id.toUpperCase()}
+                                </div>
+                                <div className="text-xs uppercase tracking-[0.22em] text-white/35">
+                                  {match.winner ? `Winner: ${match.winner}` : "No winner selected"}
+                                </div>
+                              </div>
+
                               <div className="grid gap-3">
                                 <input
                                   value={match.player1}
                                   onChange={(e) =>
-                                    updateMatch(round.id, match.id, "player1", e.target.value)
+                                    updateMatchField(round.id, match.id, "player1", e.target.value)
                                   }
                                   disabled={!isAdmin}
                                   className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
@@ -1564,20 +2014,49 @@ const handlePredictionSubmit = async () => {
                                 <input
                                   value={match.player2}
                                   onChange={(e) =>
-                                    updateMatch(round.id, match.id, "player2", e.target.value)
+                                    updateMatchField(round.id, match.id, "player2", e.target.value)
                                   }
                                   disabled={!isAdmin}
                                   className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
                                 />
-                                <input
-                                  value={match.winner}
-                                  onChange={(e) =>
-                                    updateMatch(round.id, match.id, "winner", e.target.value)
-                                  }
-                                  placeholder="Winner"
+                              </div>
+
+                              <div className="mt-4 grid gap-2 md:grid-cols-3">
+                                <button
+                                  onClick={() => selectMatchWinner(round.id, match.id, match.player1)}
+                                  disabled={!isAdmin || !match.player1.trim()}
+                                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-40 ${
+                                    match.winner === match.player1
+                                      ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-200"
+                                      : "border-white/10 bg-black/30 text-white"
+                                  }`}
+                                >
+                                  Pick {match.player1 || "Player 1"}
+                                </button>
+
+                                <button
+                                  onClick={() => selectMatchWinner(round.id, match.id, match.player2)}
+                                  disabled={!isAdmin || !match.player2.trim()}
+                                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-40 ${
+                                    match.winner === match.player2
+                                      ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-200"
+                                      : "border-white/10 bg-black/30 text-white"
+                                  }`}
+                                >
+                                  Pick {match.player2 || "Player 2"}
+                                </button>
+
+                                <button
+                                  onClick={() => clearMatchWinner(round.id, match.id)}
                                   disabled={!isAdmin}
-                                  className="rounded-xl border border-emerald-300/20 bg-black/40 px-4 py-3 text-emerald-200 outline-none disabled:opacity-40"
-                                />
+                                  className="rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
+                                >
+                                  Clear Winner
+                                </button>
+                              </div>
+
+                              <div className="mt-4">
+                                <MatchCard match={match} compact />
                               </div>
                             </div>
                           ))}
@@ -1603,7 +2082,7 @@ const handlePredictionSubmit = async () => {
                     </div>
 
                     <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/75">
-                      {bracketMessage || "Save your bracket changes live from here."}
+                      {bracketMessage || "Generate a bracket, edit it, then save it live."}
                     </div>
                   </div>
                 </Panel>
