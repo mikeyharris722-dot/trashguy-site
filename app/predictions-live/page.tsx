@@ -3,6 +3,20 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
+type HuntBonusItem = {
+  id: string;
+  slotName: string;
+  provider: string;
+  slotImage?: string;
+  betSize: number;
+  payout: number;
+  multiplier: number;
+  note?: string | null;
+  order?: number;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
 type HuntItem = {
   id: string;
   title: string;
@@ -12,6 +26,22 @@ type HuntItem = {
   profitLoss: number;
   profitLossPercentage: number;
   isOpening: boolean;
+  currentOpeningSlot?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  stats?: {
+    bonusCount: number;
+    openedBonuses: number;
+    unopenedBonuses: number;
+    totalWinnings: number;
+    profitLoss: number;
+    profitLossPercentage: number;
+    averagePayoutRequired: number;
+    currentAverage: number;
+    averageBetSize: number;
+    currentAverageMultiplier: number;
+  };
+  bonuses?: HuntBonusItem[];
 };
 
 type PredictionItem = {
@@ -19,42 +49,6 @@ type PredictionItem = {
   username: string;
   guess: number;
   createdAt: string | null;
-};
-
-type HuntBonusItem = {
-  id: string;
-  slotName: string;
-  provider: string;
-  betSize: number;
-  payout: number;
-  multiplier: number;
-};
-
-type HuntDetails = {
-  id: string;
-  title: string;
-  casino: string;
-  startCost: number;
-  isOpening: boolean;
-  currentOpeningSlot: string | null;
-  createdAt: string | null;
-  stats: {
-    bonusCount: number;
-    totalWinnings: number;
-    profitLoss: number;
-    avgMultiplier: number;
-  };
-  bestSlot: {
-    slotName: string;
-    payout: number;
-    multiplier: number;
-  } | null;
-  highestX: {
-    slotName: string;
-    payout: number;
-    multiplier: number;
-  } | null;
-  bonuses: HuntBonusItem[];
 };
 
 type SortMode = "newest" | "highest";
@@ -181,11 +175,8 @@ export default function PredictionsLivePage() {
   const [sortMode, setSortMode] = useState<SortMode>("newest");
 
   const [huntsData, setHuntsData] = useState<HuntItem[]>([]);
-  const [activeHuntDetails, setActiveHuntDetails] = useState<HuntDetails | null>(null);
-
   const [huntsLoading, setHuntsLoading] = useState(true);
   const [predictionsLoading, setPredictionsLoading] = useState(true);
-  const [detailsLoading, setDetailsLoading] = useState(false);
 
   const predictionClockRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -215,30 +206,38 @@ export default function PredictionsLivePage() {
   }, [predictions, viewerName]);
 
   const entryCount = predictions.length;
+  const bonuses = activeHunt?.bonuses || [];
 
-  const avgX = activeHuntDetails?.stats?.avgMultiplier
-    ? activeHuntDetails.stats.avgMultiplier.toFixed(2)
-    : "0.00";
+  const avgX =
+    activeHunt?.stats?.currentAverageMultiplier && activeHunt.stats.currentAverageMultiplier > 0
+      ? activeHunt.stats.currentAverageMultiplier.toFixed(2)
+      : "0.00";
 
   const reqX =
-  activeHuntDetails?.startCost && activeHuntDetails.startCost > 0
-    ? (
-        1 -
-        (activeHuntDetails.stats?.totalWinnings || 0) /
-          activeHuntDetails.startCost
-      ).toFixed(2)
-    : "0.00";
+    activeHunt?.stats?.averagePayoutRequired && activeHunt.stats.averagePayoutRequired > 0
+      ? activeHunt.stats.averagePayoutRequired.toFixed(2)
+      : "---";
 
-  const bestSlotName = activeHuntDetails?.bestSlot?.slotName || "---";
-  const bestSlotWin = activeHuntDetails?.bestSlot?.payout || 0;
-  const bestSlotMultiplier = activeHuntDetails?.bestSlot?.multiplier || 0;
+  const bestBonus =
+    bonuses.length > 0
+      ? [...bonuses].sort((a, b) => b.payout - a.payout)[0]
+      : null;
+
+  const highestBonus =
+    bonuses.length > 0
+      ? [...bonuses].sort((a, b) => b.multiplier - a.multiplier)[0]
+      : null;
+
+  const bestSlotName = bestBonus?.slotName || "---";
+  const bestSlotWin = bestBonus?.payout || 0;
+  const bestSlotMultiplier = bestBonus?.multiplier || 0;
 
   const highestXText =
-    activeHuntDetails?.highestX?.multiplier && activeHuntDetails.highestX.multiplier > 0
-      ? `${activeHuntDetails.highestX.multiplier.toFixed(2)}x`
+    highestBonus?.multiplier && highestBonus.multiplier > 0
+      ? `${highestBonus.multiplier.toFixed(2)}x`
       : "---";
-  const highestXWin = activeHuntDetails?.highestX?.payout || 0;
-  const highestXMultiplier = activeHuntDetails?.highestX?.multiplier || 0;
+  const highestXWin = highestBonus?.payout || 0;
+  const highestXMultiplier = highestBonus?.multiplier || 0;
 
   const getAccessToken = useCallback(async () => {
     const {
@@ -266,6 +265,25 @@ export default function PredictionsLivePage() {
           hunt?.stats?.profitLossPercentage || hunt.profitLossPercentage || 0
         ),
         isOpening: Boolean(hunt.isOpening),
+        currentOpeningSlot: hunt.currentOpeningSlot || null,
+        createdAt: hunt.createdAt || null,
+        updatedAt: hunt.updatedAt || null,
+        stats: hunt.stats || undefined,
+        bonuses: Array.isArray(hunt.bonuses)
+          ? hunt.bonuses.map((bonus: any) => ({
+              id: bonus.id,
+              slotName: bonus.slotName || "---",
+              provider: bonus.provider || "",
+              slotImage: bonus.slotImage || "",
+              betSize: Number(bonus.betSize || 0),
+              payout: Number(bonus.payout || 0),
+              multiplier: Number(bonus.multiplier || 0),
+              note: bonus.note || null,
+              order: bonus.order ?? 0,
+              createdAt: bonus.createdAt || null,
+              updatedAt: bonus.updatedAt || null,
+            }))
+          : [],
       }));
 
       setHuntsData(normalized);
@@ -273,34 +291,6 @@ export default function PredictionsLivePage() {
       console.error("Hunts failed to load", error);
     } finally {
       setHuntsLoading(false);
-    }
-  }, []);
-
-  const loadHuntDetails = useCallback(async (huntId?: string) => {
-    if (!huntId) {
-      setActiveHuntDetails(null);
-      return;
-    }
-
-    try {
-      setDetailsLoading(true);
-
-      const res = await fetch(`/api/hunts/${huntId}`, {
-        cache: "no-store",
-      });
-
-      if (!res.ok) {
-        setActiveHuntDetails(null);
-        return;
-      }
-
-      const data = await res.json();
-      setActiveHuntDetails(data);
-    } catch (error) {
-      console.error("Failed to load hunt details", error);
-      setActiveHuntDetails(null);
-    } finally {
-      setDetailsLoading(false);
     }
   }, []);
 
@@ -403,14 +393,6 @@ export default function PredictionsLivePage() {
       clearInterval(predictionTimer);
     };
   }, [loadHunts, loadPredictions]);
-
-  useEffect(() => {
-    if (activeHunt?.id) {
-      loadHuntDetails(activeHunt.id);
-    } else {
-      setActiveHuntDetails(null);
-    }
-  }, [activeHunt?.id, loadHuntDetails]);
 
   useEffect(() => {
     if (predictionClockRef.current) {
@@ -599,54 +581,60 @@ export default function PredictionsLivePage() {
                     {activeHunt?.title || "Latest Hunt"}
                   </div>
                   <Pill active={Boolean(activeHunt?.isOpening)}>
-                    {activeHunt?.isOpening ? "Live" : "Latest"}
+                    {activeHunt?.isOpening ? "Open" : "Latest"}
                   </Pill>
                 </div>
 
                 <div className="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-3">
                   <MetricCard
                     label="Start"
-                    value={huntsLoading ? "..." : formatMoney(activeHuntDetails?.startCost || activeHunt?.startCost || 0)}
+                    value={huntsLoading ? "..." : formatMoney(activeHunt?.startCost || 0)}
                   />
                   <MetricCard
                     label="Won"
-                    value={detailsLoading ? "..." : formatMoney(activeHuntDetails?.stats?.totalWinnings || 0)}
+                    value={
+                      huntsLoading
+                        ? "..."
+                        : formatMoney(
+                            activeHunt?.stats?.totalWinnings || activeHunt?.totalWinnings || 0
+                          )
+                    }
                   />
                   <MetricCard
                     label="Bonuses"
-                    value={detailsLoading ? "..." : activeHuntDetails?.stats?.bonusCount || 0}
+                    value={huntsLoading ? "..." : activeHunt?.stats?.bonusCount || bonuses.length}
                   />
                   <MetricCard label="Avg" value={`${avgX}x`} />
-                  <MetricCard label="Req" value={`${reqX.toFixed(2)}x`} />
+                  <MetricCard label="Req" value={reqX === "---" ? "---" : `${reqX}x`} />
                 </div>
 
                 <div className="mt-4 grid gap-4 lg:grid-cols-2">
-  <div className="rounded-[1.3rem] border border-white/10 bg-black/35 p-6 min-h-[170px]">
-    <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
-      Best Slot
-    </div>
-    <div className="mt-4 text-center text-3xl font-black text-white">
-      {bestSlotName}
-    </div>
-    <div className="mt-5 flex flex-wrap justify-center gap-2">
-      <Pill>Win {formatMoney(bestSlotWin)}</Pill>
-      <Pill>X {bestSlotMultiplier ? `${bestSlotMultiplier.toFixed(2)}x` : "0.00x"}</Pill>
-    </div>
-  </div>
+                  <div className="rounded-[1.3rem] border border-white/10 bg-black/35 p-6 min-h-[170px]">
+                    <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
+                      Best Slot
+                    </div>
+                    <div className="mt-4 text-center text-3xl font-black text-white">
+                      {bestSlotName}
+                    </div>
+                    <div className="mt-5 flex flex-wrap justify-center gap-2">
+                      <Pill>Win {formatMoney(bestSlotWin)}</Pill>
+                      <Pill>X {bestSlotMultiplier ? `${bestSlotMultiplier.toFixed(2)}x` : "0.00x"}</Pill>
+                    </div>
+                  </div>
 
-  <div className="rounded-[1.3rem] border border-white/10 bg-black/35 p-6 min-h-[170px]">
-    <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
-      Highest X
-    </div>
-    <div className="mt-4 text-center text-3xl font-black text-white">
-      {highestXText}
-    </div>
-    <div className="mt-5 flex flex-wrap justify-center gap-2">
-      <Pill>Win {formatMoney(highestXWin)}</Pill>
-      <Pill>X {highestXMultiplier ? `${highestXMultiplier.toFixed(2)}x` : "0.00x"}</Pill>
-    </div>
-  </div>
-</div>
+                  <div className="rounded-[1.3rem] border border-white/10 bg-black/35 p-6 min-h-[170px]">
+                    <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
+                      Highest X
+                    </div>
+                    <div className="mt-4 text-center text-3xl font-black text-white">
+                      {highestXText}
+                    </div>
+                    <div className="mt-5 flex flex-wrap justify-center gap-2">
+                      <Pill>Win {formatMoney(highestXWin)}</Pill>
+                      <Pill>X {highestXMultiplier ? `${highestXMultiplier.toFixed(2)}x` : "0.00x"}</Pill>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="mt-4 rounded-[1.3rem] border border-white/10 bg-black/35 p-6">
                   <div className="flex items-center justify-between gap-4">
@@ -655,19 +643,18 @@ export default function PredictionsLivePage() {
                     </div>
 
                     <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-                      {activeHuntDetails?.bonuses?.length || 0} Bonus
-                      {(activeHuntDetails?.bonuses?.length || 0) === 1 ? "" : "es"}
+                      {bonuses.length} Bonus{bonuses.length === 1 ? "" : "es"}
                     </div>
                   </div>
 
                   <div className="mt-4 max-h-[260px] overflow-y-auto rounded-[1.1rem] border border-white/10 bg-black/20">
-                    {detailsLoading ? (
+                    {huntsLoading ? (
                       <div className="flex h-[180px] items-center justify-center text-white/45">
                         Loading bonus feed...
                       </div>
-                    ) : activeHuntDetails?.bonuses?.length ? (
+                    ) : bonuses.length ? (
                       <div className="divide-y divide-white/5">
-                        {activeHuntDetails.bonuses.map((bonus, index) => (
+                        {bonuses.map((bonus, index) => (
                           <div
                             key={bonus.id || index}
                             className="flex items-center justify-between gap-4 px-5 py-4"
