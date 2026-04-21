@@ -1511,13 +1511,13 @@ const handleTwitchLogin = async () => {
             )}
 
             {activeSection === "hunts" && (
-              <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-                <Panel className="border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
+              <section className="flex justify-center">
+                <Panel className="w-full max-w-6xl border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
                   <div className="relative z-10">
                     <SectionLabel>Bonus Hunts</SectionLabel>
                     <h2 className="mt-3 text-4xl font-black tracking-wide">LIVE & RECENT HUNTS</h2>
 
-                    <div className="mt-8 grid gap-4">
+                    <div className="mt-8 grid gap-6">
                       {huntsLoading ? (
                         <div className="text-white/60">Loading hunts...</div>
                       ) : (
