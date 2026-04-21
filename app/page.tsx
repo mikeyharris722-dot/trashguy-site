@@ -696,28 +696,30 @@ const currentPredictionAvgX =
     }
   }, []);
 
-  useEffect(() => {
-    loadLeaderboard();
-    loadHunts();
-    loadPredictions();
-    loadLiveStatus();
-    loadBracket();
+ // INITIAL LOAD + POLLING
+useEffect(() => {
+  loadLeaderboard();
+  loadHunts();
+  loadPredictions();
+  loadLiveStatus();
+  loadBracket();
 
-    const liveTimer = setInterval(loadLiveStatus, 60000);
-    const predictionTimer = setInterval(loadPredictions, 5000);
-    const huntTimer = setInterval(loadHunts, 5000);
+  const liveTimer = setInterval(loadLiveStatus, 60000);
+  const predictionTimer = setInterval(loadPredictions, 5000);
+  const huntTimer = setInterval(loadHunts, 5000);
 
-    return () => {
-      clearInterval(liveTimer);
-      clearInterval(predictionTimer);
-      clearInterval(huntTimer);
-    };
-  }, [loadBracket, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions]);
+  return () => {
+    clearInterval(liveTimer);
+    clearInterval(predictionTimer);
+    clearInterval(huntTimer);
+  };
+}, [loadBracket, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions]);
 
+// PREDICTION STATUS BASED ON CURRENT HUNT
 useEffect(() => {
   if (!currentPredictionHunt?.id) {
     setPredictionStatus("locked");
-    setPredictions([]); // 🔥 clears old predictions instantly
+    setPredictions([]);
     return;
   }
 
@@ -728,51 +730,26 @@ useEffect(() => {
   }
 }, [currentPredictionHunt]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const authError = params.get("error_description") || params.get("error");
+// LOAD USER SESSION
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const authError = params.get("error_description") || params.get("error");
 
-    if (authError) {
-      setPredictionMessage(decodeURIComponent(authError));
-    }
+  if (authError) {
+    setPredictionMessage(decodeURIComponent(authError));
+  }
 
-    const loadUser = async () => {
-      try {
-        const { data: sessionData, error: sessionError } =
-          await supabaseBrowser.auth.getSession();
+  const loadUser = async () => {
+    try {
+      const { data: sessionData, error: sessionError } =
+        await supabaseBrowser.auth.getSession();
 
-        if (sessionError) {
-          console.error("getSession error", sessionError);
-          return;
-        }
-
-        const user = sessionData.session?.user;
-        if (!user) {
-          setIsTwitchConnected(false);
-          setViewerName("viewer");
-          setViewerDisplayName("viewer");
-          setViewerAvatar("");
-          return;
-        }
-
-        const twitchIdentity = extractTwitchIdentity(user);
-
-        setIsTwitchConnected(true);
-        setViewerName(twitchIdentity.login);
-        setViewerDisplayName(twitchIdentity.displayName);
-        setViewerAvatar(twitchIdentity.avatarUrl);
-      } catch (error) {
-        console.error("loadUser failed", error);
+      if (sessionError) {
+        console.error("getSession error", sessionError);
+        return;
       }
-    };
 
-    loadUser();
-
-    const {
-      data: { subscription },
-    } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
-      const user = session?.user;
-
+      const user = sessionData.session?.user;
       if (!user) {
         setIsTwitchConnected(false);
         setViewerName("viewer");
@@ -787,108 +764,139 @@ useEffect(() => {
       setViewerName(twitchIdentity.login);
       setViewerDisplayName(twitchIdentity.displayName);
       setViewerAvatar(twitchIdentity.avatarUrl);
-    });
+    } catch (error) {
+      console.error("loadUser failed", error);
+    }
+  };
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  loadUser();
 
-  useEffect(() => {
+  const {
+    data: { subscription },
+  } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
+    const user = session?.user;
+
+    if (!user) {
+      setIsTwitchConnected(false);
+      setViewerName("viewer");
+      setViewerDisplayName("viewer");
+      setViewerAvatar("");
+      return;
+    }
+
+    const twitchIdentity = extractTwitchIdentity(user);
+
+    setIsTwitchConnected(true);
+    setViewerName(twitchIdentity.login);
+    setViewerDisplayName(twitchIdentity.displayName);
+    setViewerAvatar(twitchIdentity.avatarUrl);
+  });
+
+  return () => {
+    subscription.unsubscribe();
+  };
+}, []);
+
+// FORCE UI REFRESH TIMER
+useEffect(() => {
+  if (predictionClockRef.current) {
+    clearInterval(predictionClockRef.current);
+  }
+
+  predictionClockRef.current = setInterval(() => {
+    setPredictions((current) => [...current]);
+  }, 30000);
+
+  return () => {
     if (predictionClockRef.current) {
       clearInterval(predictionClockRef.current);
     }
+  };
+}, []);
 
-    predictionClockRef.current = setInterval(() => {
-      setPredictions((current) => [...current]);
-    }, 30000);
+// REALTIME UPDATES (FIXED)
+useEffect(() => {
+  const channel = supabaseBrowser
+    .channel("trashguy-live-updates")
 
-    return () => {
-      if (predictionClockRef.current) {
-        clearInterval(predictionClockRef.current);
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "predictions" },
+      () => {
+        loadPredictions();
       }
-    };
-  }, []);
+    )
 
-  useEffect(() => {
-    const channel = supabaseBrowser
-      .channel("trashguy-live-updates")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "predictions" },
-        () => {
-          loadPredictions();
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "hunts" },
+      (payload: any) => {
+        const nextRow = payload?.new;
+
+        if (nextRow?.id) {
+          setAdminHuntId(nextRow.id);
         }
-      )
-      .on(
-  "postgres_changes",
-  { event: "*", schema: "public", table: "hunts" },
-  (payload: any) => {
-    const nextRow = payload?.new;
 
-    if (nextRow?.id) {
-      setAdminHuntId(nextRow.id);
-    }
+        if (nextRow?.status === "open") {
+          setPredictionStatus("open");
+        } else if (
+          nextRow?.status === "locked" ||
+          nextRow?.status === "completed"
+        ) {
+          setPredictionStatus("locked");
+        }
 
-    if (nextRow?.status === "open") {
-      setPredictionStatus("open");
-    } else if (nextRow?.status === "locked" || nextRow?.status === "completed") {
-      setPredictionStatus("locked");
-    }
-    loadHunts();
-    loadPredictions();
+        loadHunts();
+        loadPredictions();
+      }
+    )
 
-    useEffect(() => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem("trashguy_admin_mode", String(isAdmin));
-}, [isAdmin]);
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "tournaments" },
+      () => {
+        loadBracket();
+      }
+    )
 
+    .subscribe();
+
+  return () => {
+    supabaseBrowser.removeChannel(channel);
+  };
+}, [loadBracket, loadPredictions, loadHunts]);
+
+// ADMIN MODE PERSISTENCE (FIXED POSITION)
 useEffect(() => {
   if (typeof window === "undefined") return;
   localStorage.setItem("trashguy_admin_mode", String(isAdmin));
 }, [isAdmin]);
 
-  }
-)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tournaments" },
-        () => {
-          loadBracket();
-        }
-      )
-      .subscribe();
+const handleTwitchLogin = async () => {
+  try {
+    setPredictionMessage("");
 
-    return () => {
-      supabaseBrowser.removeChannel(channel);
-    };
-  }, [loadBracket, loadPredictions, loadHunts]);
+    const { data, error } = await supabaseBrowser.auth.signInWithOAuth({
+      provider: "twitch",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
 
-  const handleTwitchLogin = async () => {
-    try {
-      setPredictionMessage("");
-
-      const { data, error } = await supabaseBrowser.auth.signInWithOAuth({
-        provider: "twitch",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) {
-        console.error("OAuth error:", error);
-        setPredictionMessage(error.message);
-        return;
-      }
-
-      if (!data?.url) {
-        setPredictionMessage("No Twitch redirect URL was returned.");
-      }
-    } catch (err: any) {
-      console.error("Login crash:", err);
-      setPredictionMessage(err?.message || "Twitch login failed.");
+    if (error) {
+      console.error("OAuth error:", error);
+      setPredictionMessage(error.message);
+      return;
     }
-  };
+
+    if (!data?.url) {
+      setPredictionMessage("No Twitch redirect URL was returned.");
+    }
+  } catch (err: any) {
+    console.error("Login crash:", err);
+    setPredictionMessage(err?.message || "Twitch login failed.");
+  }
+};
 
   const handleLogout = async () => {
   try {
