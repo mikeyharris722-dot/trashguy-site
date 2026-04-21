@@ -429,7 +429,7 @@ export default function Home() {
     return next.sort((a, b) => b.guess - a.guess);
   }
 
-  return next.sort((a, b) => {
+  return next.sort((a: any, b: any) => {
     const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return bTime - aTime;
@@ -581,7 +581,7 @@ const currentPredictionAvgX =
           guess: Number(entry.guess ?? entry.guessAmount ?? entry.guess_amount ?? 0),
           createdAt: entry.created_at || entry.updated_at || null,
         }))
-        .sort((a, b) => {
+        .sort((a: any, b: any) => {
           const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return bTime - aTime;
