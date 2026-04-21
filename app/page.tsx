@@ -23,18 +23,7 @@ const fallbackLeaderboard = [
   { rank: 10, username: "ClipFarmer", wagered: 4520 },
 ];
 
-const fallbackHunts = [
-  {
-    id: "hunt-1",
-    title: "Friday Night Hunt",
-    casino: "RouloBets",
-    startCost: 25000,
-    totalWinnings: 18730,
-    profitLoss: -6270,
-    profitLossPercentage: -25.08,
-    isOpening: true,
-  },
-];
+const fallbackHunts: HuntItem[] = [];
 
 const defaultBracket = {
   title: "Trashguy Tournament",
@@ -416,11 +405,15 @@ export default function Home() {
 
   const [predictionSortMode, setPredictionSortMode] = useState<"newest" | "highest">("newest");
   const [predictionInput, setPredictionInput] = useState("");
-  const [predictionStatus, setPredictionStatus] = useState<"open" | "locked">("open");
+  const [predictionStatus, setPredictionStatus] = useState<"open" | "locked">("locked");
   const [predictions, setPredictions] = useState<PredictionItem[]>([]);
   const [predictionMessage, setPredictionMessage] = useState("");
 
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem("trashguy_admin_mode") === "true";
+});
+
   const [adminName, setAdminName] = useState("Trashguy");
   const [finalResult, setFinalResult] = useState("");
   const [adminMessage, setAdminMessage] = useState("");
@@ -430,7 +423,7 @@ export default function Home() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardPlayer[]>(fallbackLeaderboard);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
 
-  const [huntsData, setHuntsData] = useState<HuntItem[]>(fallbackHunts);
+  const [huntsData, setHuntsData] = useState<HuntItem[]>([]);
   const [huntsLoading, setHuntsLoading] = useState(true);
 
   const [liveStatus, setLiveStatus] = useState<LiveStatus>({
@@ -467,14 +460,23 @@ export default function Home() {
 }, [predictions, predictionSortMode]);
 
 const currentPredictionEntry = useMemo(() => {
+  if (predictionStatus !== "open") return null;
+
   return predictions.find(
-    (entry) => entry.username.trim().toLowerCase() === viewerName.trim().toLowerCase()
+    (entry) =>
+      entry.username.trim().toLowerCase() ===
+      viewerName.trim().toLowerCase()
   );
-}, [predictions, viewerName]);
+}, [predictions, viewerName, predictionStatus]);
 
 const currentPredictionHunt = useMemo(() => {
-  const openHunt = huntsData.find((hunt) => hunt.isOpening);
-  return openHunt || huntsData[0] || null;
+  const sorted = [...huntsData].sort((a, b) => {
+    const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+    const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+    return bTime - aTime;
+  });
+
+  return sorted[0] || null;
 }, [huntsData]);
 
 const currentPredictionCount = predictions.length;
@@ -523,17 +525,36 @@ const currentPredictionAvgX =
       const rawHunts = Array.isArray(data?.hunts) ? data.hunts : [];
 
       const normalized: HuntItem[] = rawHunts.map((hunt: any, index: number) => ({
-        id: hunt.id || `hunt-${index}`,
-        title: hunt.title || `Bonus Hunt ${index + 1}`,
-        casino: hunt.casino || "Unknown Casino",
-        startCost: Number(hunt.startCost || hunt.start_amount || 0),
-        totalWinnings: Number(hunt?.stats?.totalWinnings || hunt.totalWinnings || 0),
-        profitLoss: Number(hunt?.stats?.profitLoss || hunt.profitLoss || 0),
-        profitLossPercentage: Number(
-          hunt?.stats?.profitLossPercentage || hunt.profitLossPercentage || 0
-        ),
-        isOpening: Boolean(hunt.isOpening),
-      }));
+  id: hunt.id || `hunt-${index}`,
+  title: hunt.title || `Hunt #${index + 1}`,
+  casino: hunt.casino || "Unknown",
+  startCost: Number(hunt.startCost || hunt.start_amount || 0),
+  totalWinnings: Number(hunt?.stats?.totalWinnings || hunt.totalWinnings || 0),
+  profitLoss: Number(hunt?.stats?.profitLoss || hunt.profitLoss || 0),
+  profitLossPercentage: Number(
+    hunt?.stats?.profitLossPercentage || hunt.profitLossPercentage || 0
+  ),
+  isOpening: Boolean(hunt.isOpening) || hunt.status === "open",
+  currentOpeningSlot: hunt.currentOpeningSlot || null,
+  createdAt: hunt.createdAt || null,
+  updatedAt: hunt.updatedAt || null,
+  stats: hunt.stats || undefined,
+  bonuses: Array.isArray(hunt.bonuses)
+    ? hunt.bonuses.map((bonus: any) => ({
+        id: bonus.id,
+        slotName: bonus.slotName || "---",
+        provider: bonus.provider || "",
+        slotImage: bonus.slotImage || "",
+        betSize: Number(bonus.betSize || 0),
+        payout: Number(bonus.payout || 0),
+        multiplier: Number(bonus.multiplier || 0),
+        note: bonus.note || null,
+        order: bonus.order ?? 0,
+        createdAt: bonus.createdAt || null,
+        updatedAt: bonus.updatedAt || null,
+      }))
+    : [],
+}));
 
       if (normalized.length > 0) {
         setHuntsData(normalized);
@@ -586,42 +607,51 @@ const currentPredictionAvgX =
   }, []);
 
   const loadPredictions = useCallback(async () => {
-    try {
-      const res = await fetch("/api/predictions", { cache: "no-store" });
-      if (!res.ok) return;
-
-      const data = await res.json();
-      const raw = Array.isArray(data?.predictions)
-        ? data.predictions
-        : Array.isArray(data)
-          ? data
-          : [];
-
-      const normalized: PredictionItem[] = raw
-        .map((entry: any, index: number) => ({
-          id:
-            entry.id?.toString() ||
-            entry.profile_id?.toString() ||
-            `prediction-${index}`,
-          username:
-            entry.username ||
-            entry.profile_id ||
-            entry.user_name ||
-            `viewer-${index + 1}`,
-          guess: Number(entry.guess ?? entry.guessAmount ?? entry.guess_amount ?? 0),
-          createdAt: entry.created_at || entry.updated_at || null,
-        }))
-        .sort((a: any, b: any) => {
-          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return bTime - aTime;
-        });
-
-      setPredictions(normalized);
-    } catch (error) {
-      console.error("Predictions failed to load", error);
+  try {
+    if (!currentPredictionHunt?.id) {
+      setPredictions([]);
+      return;
     }
-  }, []);
+
+    const res = await fetch("/api/predictions", { cache: "no-store" });
+    if (!res.ok) {
+      setPredictions([]);
+      return;
+    }
+
+    const data = await res.json();
+    const raw = Array.isArray(data?.predictions)
+      ? data.predictions
+      : Array.isArray(data)
+        ? data
+        : [];
+
+    const normalized: PredictionItem[] = raw
+      .map((entry: any, index: number) => ({
+        id:
+          entry.id?.toString() ||
+          entry.profile_id?.toString() ||
+          `prediction-${index}`,
+        username:
+          entry.username ||
+          entry.profile_id ||
+          entry.user_name ||
+          `viewer-${index + 1}`,
+        guess: Number(entry.guess ?? entry.guessAmount ?? entry.guess_amount ?? 0),
+        createdAt: entry.created_at || entry.updated_at || null,
+      }))
+      .sort((a: any, b: any) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      });
+
+    setPredictions(normalized);
+  } catch (error) {
+    console.error("Predictions failed to load", error);
+    setPredictions([]);
+  }
+}, [currentPredictionHunt?.id]);
 
   const loadLiveStatus = useCallback(async () => {
     try {
@@ -674,8 +704,8 @@ const currentPredictionAvgX =
     loadBracket();
 
     const liveTimer = setInterval(loadLiveStatus, 60000);
-    const predictionTimer = setInterval(loadPredictions, 10000);
-    const huntTimer = setInterval(loadHunts, 20000);
+    const predictionTimer = setInterval(loadPredictions, 5000);
+    const huntTimer = setInterval(loadHunts, 5000);
 
     return () => {
       clearInterval(liveTimer);
@@ -683,6 +713,20 @@ const currentPredictionAvgX =
       clearInterval(huntTimer);
     };
   }, [loadBracket, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions]);
+
+useEffect(() => {
+  if (!currentPredictionHunt?.id) {
+    setPredictionStatus("locked");
+    setPredictions([]); // 🔥 clears old predictions instantly
+    return;
+  }
+
+  if (currentPredictionHunt.isOpening) {
+    setPredictionStatus("open");
+  } else {
+    setPredictionStatus("locked");
+  }
+}, [currentPredictionHunt]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -777,24 +821,35 @@ const currentPredictionAvgX =
         }
       )
       .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "hunts" },
-        (payload: any) => {
-          const nextRow = payload?.new;
+  "postgres_changes",
+  { event: "*", schema: "public", table: "hunts" },
+  (payload: any) => {
+    const nextRow = payload?.new;
 
-          if (nextRow?.id) {
-            setAdminHuntId(nextRow.id);
-          }
+    if (nextRow?.id) {
+      setAdminHuntId(nextRow.id);
+    }
 
-          if (nextRow?.status === "open") {
-            setPredictionStatus("open");
-          } else if (nextRow?.status === "locked" || nextRow?.status === "completed") {
-            setPredictionStatus("locked");
-          }
+    if (nextRow?.status === "open") {
+      setPredictionStatus("open");
+    } else if (nextRow?.status === "locked" || nextRow?.status === "completed") {
+      setPredictionStatus("locked");
+    }
+    loadHunts();
+    loadPredictions();
 
-          loadPredictions();
-        }
-      )
+    useEffect(() => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("trashguy_admin_mode", String(isAdmin));
+}, [isAdmin]);
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("trashguy_admin_mode", String(isAdmin));
+}, [isAdmin]);
+
+  }
+)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "tournaments" },
@@ -807,7 +862,7 @@ const currentPredictionAvgX =
     return () => {
       supabaseBrowser.removeChannel(channel);
     };
-  }, [loadBracket, loadPredictions]);
+  }, [loadBracket, loadPredictions, loadHunts]);
 
   const handleTwitchLogin = async () => {
     try {
@@ -836,22 +891,25 @@ const currentPredictionAvgX =
   };
 
   const handleLogout = async () => {
-    try {
-      await supabaseBrowser.auth.signOut();
-      setIsTwitchConnected(false);
-      setViewerName("viewer");
-      setViewerDisplayName("viewer");
-      setViewerAvatar("");
-      setIsAdmin(false);
-      setActiveSection("home");
-      setPredictionMessage("Logged out.");
-    } catch {
-      setPredictionMessage("Logout failed.");
-    }
-  };
+  try {
+    await supabaseBrowser.auth.signOut();
+    setIsTwitchConnected(false);
+    setViewerName("viewer");
+    setViewerDisplayName("viewer");
+    setViewerAvatar("");
+    setIsAdmin(false);
+    setActiveSection("home");
+
+    localStorage.removeItem("trashguy_admin_mode"); // 👈 ADD THIS
+
+    setPredictionMessage("Logged out.");
+  } catch {
+    setPredictionMessage("Logout failed.");
+  }
+};
 
   const handlePredictionSubmit = async () => {
-    if (!isTwitchConnected || predictionStatus !== "open") return;
+  if (!isTwitchConnected || predictionStatus !== "open" || !currentPredictionHunt?.id) return
 
     const guess = Number(predictionInput || 0);
 
@@ -1547,221 +1605,218 @@ const currentPredictionAvgX =
            {activeSection === "predictions" && (
   <section className="grid gap-6 2xl:grid-cols-[1fr_1.35fr]">
     <Panel className="border-fuchsia-300/25 shadow-[0_0_65px_rgba(217,70,239,0.10)]">
-      <SectionLabel color="fuchsia">Live Bonus Hunt</SectionLabel>
+  <SectionLabel color="fuchsia">Live Bonus Hunt</SectionLabel>
 
-      <div className="mt-3 flex items-center justify-between gap-4">
-        <h2 className="text-4xl font-black tracking-wide">
-          {currentPredictionHunt?.title || "Latest Hunt"}
-        </h2>
+  <div className="mt-3 flex items-center justify-between gap-4">
+    <h2 className="text-4xl font-black tracking-wide">
+      {currentPredictionHunt?.title || "Latest Hunt"}
+    </h2>
 
-        <div
-          className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] ${
-            predictionStatus === "open"
-              ? "border-emerald-300/30 bg-emerald-400/10 text-emerald-200"
-              : "border-white/10 bg-black/30 text-white/65"
-          }`}
-        >
-          {predictionStatus === "open" ? "Open" : "Locked"}
-        </div>
+    <div
+      className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] ${
+        predictionStatus === "open"
+          ? "border-emerald-300/30 bg-emerald-400/10 text-emerald-200"
+          : "border-white/10 bg-black/30 text-white/65"
+      }`}
+    >
+      {predictionStatus === "open" ? "Open" : "Locked"}
+    </div>
+  </div>
+
+  <div className="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-3">
+    <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
+      <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
+        Start
+      </div>
+      <div className="mt-2 text-2xl font-black text-white">
+        {formatMoney(currentPredictionHunt?.startCost || 0)}
+      </div>
+    </div>
+
+    <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
+      <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
+        Won
+      </div>
+      <div className="mt-2 text-2xl font-black text-white">
+        {formatMoney(
+          currentPredictionHunt?.stats?.totalWinnings ||
+            currentPredictionHunt?.totalWinnings ||
+            0
+        )}
+      </div>
+    </div>
+
+    <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
+      <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
+        Bonuses
+      </div>
+      <div className="mt-2 text-2xl font-black text-white">
+        {currentPredictionHunt?.bonuses?.length || 0}
+      </div>
+    </div>
+
+    <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
+      <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
+        Avg
+      </div>
+      <div className="mt-2 text-2xl font-black text-white">
+        {currentPredictionHunt?.stats?.currentAverageMultiplier
+          ? `${Number(currentPredictionHunt.stats.currentAverageMultiplier).toFixed(2)}x`
+          : `${currentPredictionAvgX}x`}
+      </div>
+    </div>
+
+    <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
+  <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
+    Req
+  </div>
+ <div className="mt-2 text-2xl font-black text-white">
+  {currentPredictionHunt?.stats?.averagePayoutRequired &&
+  currentPredictionHunt?.stats?.averageBetSize
+    ? `${(
+        Number(currentPredictionHunt.stats.averagePayoutRequired) /
+        Number(currentPredictionHunt.stats.averageBetSize)
+      ).toFixed(2)}x`
+    : "---"}
+</div>
+</div>
+  </div>
+
+  <div className="mt-4 grid gap-4 lg:grid-cols-2">
+    <div className="rounded-[1.3rem] border border-white/10 bg-black/35 p-6 min-h-[170px]">
+      <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
+        Best Slot
+      </div>
+      <div className="mt-4 text-center text-3xl font-black text-white">
+        {currentPredictionHunt?.bonuses?.length
+          ? [...currentPredictionHunt.bonuses].sort(
+              (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
+            )[0]?.slotName || "---"
+          : "---"}
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-3">
-        <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
-          <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
-            Start
-          </div>
-          <div className="mt-2 text-2xl font-black text-white">
-            {formatMoney(currentPredictionHunt?.startCost || 0)}
-          </div>
-        </div>
-
-        <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
-          <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
-            Won
-          </div>
-          <div className="mt-2 text-2xl font-black text-white">
-            {formatMoney(
-              currentPredictionHunt?.stats?.totalWinnings ||
-                currentPredictionHunt?.totalWinnings ||
-                0
-            )}
-          </div>
-        </div>
-
-        <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
-          <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
-            Bonuses
-          </div>
-          <div className="mt-2 text-2xl font-black text-white">
-            {currentPredictionHunt?.stats?.bonusCount ||
-              currentPredictionHunt?.bonuses?.length ||
-              0}
-          </div>
-        </div>
-
-        <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
-          <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
-            Avg
-          </div>
-          <div className="mt-2 text-2xl font-black text-white">
-            {currentPredictionHunt?.stats?.currentAverageMultiplier
-              ? `${Number(
-                  currentPredictionHunt.stats.currentAverageMultiplier
-                ).toFixed(2)}x`
-              : `${currentPredictionAvgX}x`}
-          </div>
-        </div>
-
-        <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
-          <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
-            Req
-          </div>
-          <div className="mt-2 text-2xl font-black text-white">
-            {currentPredictionHunt?.stats?.averagePayoutRequired
-              ? `${Number(
-                  currentPredictionHunt.stats.averagePayoutRequired
-                ).toFixed(2)}x`
-              : "---"}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-[1.3rem] border border-white/10 bg-black/35 p-6 min-h-[170px]">
-          <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
-            Best Slot
-          </div>
-          <div className="mt-4 text-center text-3xl font-black text-white">
-            {currentPredictionHunt?.bonuses?.length
+      <div className="mt-5 flex flex-wrap justify-center gap-2">
+        <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
+          Win{" "}
+          {formatMoney(
+            currentPredictionHunt?.bonuses?.length
               ? [...currentPredictionHunt.bonuses].sort(
                   (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
-                )[0]?.slotName || "---"
-              : "---"}
-          </div>
-
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-              Win{" "}
-              {formatMoney(
-                currentPredictionHunt?.bonuses?.length
-                  ? [...currentPredictionHunt.bonuses].sort(
-                      (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
-                    )[0]?.payout || 0
-                  : 0
-              )}
-            </div>
-            <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-              X{" "}
-              {currentPredictionHunt?.bonuses?.length
-                ? `${Number(
-                    [...currentPredictionHunt.bonuses].sort(
-                      (a: any, b: any) =>
-                        Number(b.payout || 0) - Number(a.payout || 0)
-                    )[0]?.multiplier || 0
-                  ).toFixed(2)}x`
-                : "0.00x"}
-            </div>
-          </div>
+                )[0]?.payout || 0
+              : 0
+          )}
         </div>
-
-        <div className="rounded-[1.3rem] border border-white/10 bg-black/35 p-6 min-h-[170px]">
-          <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
-            Highest X
-          </div>
-          <div className="mt-4 text-center text-3xl font-black text-white">
-            {currentPredictionHunt?.bonuses?.length
-              ? `${Number(
-                  [...currentPredictionHunt.bonuses].sort(
-                    (a: any, b: any) =>
-                      Number(b.multiplier || 0) - Number(a.multiplier || 0)
-                  )[0]?.multiplier || 0
-                ).toFixed(2)}x`
-              : "---"}
-          </div>
-
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-              Win{" "}
-              {formatMoney(
-                currentPredictionHunt?.bonuses?.length
-                  ? [...currentPredictionHunt.bonuses].sort(
-                      (a: any, b: any) =>
-                        Number(b.multiplier || 0) - Number(a.multiplier || 0)
-                    )[0]?.payout || 0
-                  : 0
-              )}
-            </div>
-            <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-              X{" "}
-              {currentPredictionHunt?.bonuses?.length
-                ? `${Number(
-                    [...currentPredictionHunt.bonuses].sort(
-                      (a: any, b: any) =>
-                        Number(b.multiplier || 0) - Number(a.multiplier || 0)
-                    )[0]?.multiplier || 0
-                  ).toFixed(2)}x`
-                : "0.00x"}
-            </div>
-          </div>
+        <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
+          X{" "}
+          {currentPredictionHunt?.bonuses?.length
+            ? `${Number(
+                [...currentPredictionHunt.bonuses].sort(
+                  (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
+                )[0]?.multiplier || 0
+              ).toFixed(2)}x`
+            : "0.00x"}
         </div>
       </div>
+    </div>
 
-      <div className="mt-4 rounded-[1.3rem] border border-white/10 bg-black/35 p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
-            Live Bonus Feed
-          </div>
+    <div className="rounded-[1.3rem] border border-white/10 bg-black/35 p-6 min-h-[170px]">
+      <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
+        Highest X
+      </div>
+      <div className="mt-4 text-center text-3xl font-black text-white">
+        {currentPredictionHunt?.bonuses?.length
+          ? `${Number(
+              [...currentPredictionHunt.bonuses].sort(
+                (a: any, b: any) =>
+                  Number(b.multiplier || 0) - Number(a.multiplier || 0)
+              )[0]?.multiplier || 0
+            ).toFixed(2)}x`
+          : "---"}
+      </div>
 
-          <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-            {currentPredictionHunt?.bonuses?.length || 0} Bonus
-            {(currentPredictionHunt?.bonuses?.length || 0) === 1 ? "" : "es"}
-          </div>
+      <div className="mt-5 flex flex-wrap justify-center gap-2">
+        <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
+          Win{" "}
+          {formatMoney(
+            currentPredictionHunt?.bonuses?.length
+              ? [...currentPredictionHunt.bonuses].sort(
+                  (a: any, b: any) =>
+                    Number(b.multiplier || 0) - Number(a.multiplier || 0)
+                )[0]?.payout || 0
+              : 0
+          )}
         </div>
+        <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
+          X{" "}
+          {currentPredictionHunt?.bonuses?.length
+            ? `${Number(
+                [...currentPredictionHunt.bonuses].sort(
+                  (a: any, b: any) =>
+                    Number(b.multiplier || 0) - Number(a.multiplier || 0)
+                )[0]?.multiplier || 0
+              ).toFixed(2)}x`
+            : "0.00x"}
+        </div>
+      </div>
+    </div>
+  </div>
 
-        <div className="mt-4 max-h-[260px] overflow-y-auto rounded-[1.1rem] border border-white/10 bg-black/20">
-          {!currentPredictionHunt?.bonuses?.length ? (
-            <div className="flex h-[180px] items-center justify-center text-white/45">
-              No bonuses yet.
-            </div>
-          ) : (
-            <div className="divide-y divide-white/5">
-              {currentPredictionHunt.bonuses.map((bonus: any, index: number) => (
-                <div
-                  key={bonus.id || index}
-                  className="flex items-center justify-between gap-4 px-5 py-4"
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/30 text-xs font-black text-fuchsia-300">
-                        {index + 1}
-                      </div>
+  <div className="mt-4 rounded-[1.3rem] border border-white/10 bg-black/35 p-6">
+    <div className="flex items-center justify-between gap-4">
+      <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
+        Live Bonus Feed
+      </div>
 
-                      <div className="min-w-0">
-                        <div className="truncate font-semibold text-white">
-                          {bonus.slotName}
-                        </div>
-                        <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/35">
-                          Bet {formatMoney(Number(bonus.betSize || 0))}
-                        </div>
-                      </div>
-                    </div>
+      <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
+        {currentPredictionHunt?.bonuses?.length || 0} Bonus
+        {(currentPredictionHunt?.bonuses?.length || 0) === 1 ? "" : "es"}
+      </div>
+    </div>
+
+    <div className="mt-4 max-h-[260px] overflow-y-auto rounded-[1.1rem] border border-white/10 bg-black/20">
+      {!currentPredictionHunt?.bonuses?.length ? (
+        <div className="flex h-[180px] items-center justify-center text-white/45">
+          No bonuses yet.
+        </div>
+      ) : (
+        <div className="divide-y divide-white/5">
+          {currentPredictionHunt.bonuses.map((bonus: any, index: number) => (
+            <div
+              key={bonus.id || index}
+              className="flex items-center justify-between gap-4 px-5 py-4"
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/30 text-xs font-black text-fuchsia-300">
+                    {index + 1}
                   </div>
 
-                  <div className="text-right">
-                    <div className="font-black text-emerald-200">
-                      {formatMoney(Number(bonus.payout || 0))}
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold text-white">
+                      {bonus.slotName}
                     </div>
                     <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/35">
-                      {Number(bonus.multiplier || 0).toFixed(2)}x
+                      Bet {formatMoney(Number(bonus.betSize || 0))}
                     </div>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="text-right">
+                <div className="font-black text-emerald-200">
+                  {formatMoney(Number(bonus.payout || 0))}
+                </div>
+                <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/35">
+                  {Number(bonus.multiplier || 0).toFixed(2)}x
+                </div>
+              </div>
             </div>
-          )}
+          ))}
         </div>
-      </div>
-    </Panel>
+      )}
+    </div>
+  </div>
+</Panel>
 
     <Panel className="border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
       <div className="mb-4 text-center text-4xl font-black tracking-wide">Predictions</div>
@@ -1788,7 +1843,9 @@ const currentPredictionAvgX =
           </div>
 
           <div className="mt-4 text-center text-4xl font-black">
-            {currentPredictionEntry ? formatMoney(currentPredictionEntry.guess) : "--"}
+            {predictionStatus === "open" && currentPredictionEntry
+  ? formatMoney(currentPredictionEntry.guess)
+  : "--"}
           </div>
 
           <div className="mt-4 rounded-[1.1rem] border border-dashed border-white/10 bg-black/20 p-4 text-white/75">
@@ -1803,11 +1860,12 @@ const currentPredictionAvgX =
   </div>
 
   <input
-    value={predictionInput}
-    onChange={(e) => setPredictionInput(e.target.value.replace(/[^0-9]/g, ""))}
-    placeholder="Enter final hunt balance"
-    className="mt-4 w-full rounded-xl border border-white/10 bg-black/40 px-5 py-4 text-lg text-white outline-none focus:border-emerald-300/40"
-  />
+  value={predictionInput}
+  onChange={(e) => setPredictionInput(e.target.value.replace(/[^0-9]/g, ""))}
+  placeholder="Enter final hunt balance"
+  disabled={predictionStatus !== "open"}
+  className="mt-4 w-full rounded-xl border border-white/10 bg-black/40 px-5 py-4 text-lg text-white outline-none focus:border-emerald-300/40"
+/>
 
   <div className="mt-5 grid gap-4 grid-cols-1 sm:grid-cols-2">
     <button
@@ -1859,13 +1917,13 @@ const currentPredictionAvgX =
           </div>
 
           <div className="h-[520px] overflow-y-auto rounded-[1.1rem] border border-white/10 bg-black/20">
-            {sortedPredictionsForTab.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-white/45">
-                No entries.
-              </div>
-            ) : (
-              <div className="divide-y divide-white/5">
-                {sortedPredictionsForTab.map((entry, index) => (
+            {predictionStatus !== "open" || sortedPredictionsForTab.length === 0 ? (
+  <div className="flex h-full items-center justify-center text-white/45">
+    No entries.
+  </div>
+) : (
+  <div className="divide-y divide-white/5">
+    {sortedPredictionsForTab.map((entry, index) => (
                   <div
                     key={entry.id}
                     className="flex items-center justify-between gap-4 px-5 py-4"
