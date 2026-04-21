@@ -1584,29 +1584,6 @@ const handleTwitchLogin = async () => {
                     </div>
                   </div>
                 </Panel>
-
-                <Panel className="border-fuchsia-300/25 shadow-[0_0_65px_rgba(217,70,239,0.10)]">
-                  <SectionLabel color="fuchsia">Prediction Status</SectionLabel>
-                  <h2 className="mt-3 text-4xl font-black tracking-wide">
-                    {predictionStatus === "open" ? "OPEN NOW" : "LOCKED"}
-                  </h2>
-                  <p className="mt-4 text-white/65">
-                    One entry per Twitch account. Viewers can update their guess until you close
-                    predictions.
-                  </p>
-
-                  <div className="mt-8 space-y-3">
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-white/75">
-                      Top 2 closest guesses win
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-white/75">
-                      Twitch login required
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-white/75">
-                      Entries update live on the page
-                    </div>
-                  </div>
-                </Panel>
               </section>
             )}
 
