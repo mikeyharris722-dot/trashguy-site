@@ -403,6 +403,7 @@ export default function Home() {
   const [viewerDisplayName, setViewerDisplayName] = useState("viewer");
   const [viewerAvatar, setViewerAvatar] = useState("");
   const [isTwitchConnected, setIsTwitchConnected] = useState(false);
+  const [authLoaded, setAuthLoaded] = useState(false);
 
   const [predictionSortMode, setPredictionSortMode] = useState<"newest" | "highest">("newest");
   const [predictionInput, setPredictionInput] = useState("");
@@ -488,13 +489,17 @@ const currentPredictionAvgX =
     : "0.00";
 
   useEffect(() => {
-    if (!adminAllowed) {
-      setIsAdmin(false);
-      if (activeSection === "admin") {
-        setActiveSection("home");
-      }
+  if (!authLoaded) return;
+
+  if (!adminAllowed) {
+    setIsAdmin(false);
+    localStorage.removeItem("trashguy_admin_mode");
+
+    if (activeSection === "admin") {
+      setActiveSection("home");
     }
-  }, [adminAllowed, activeSection]);
+  }
+}, [adminAllowed, activeSection, authLoaded]);
 
   const navButton = (id: string, label: string) => (
     <button
@@ -725,36 +730,40 @@ useEffect(() => {
   }
 
   const loadUser = async () => {
-    try {
-      const { data: sessionData, error: sessionError } =
-        await supabaseBrowser.auth.getSession();
+  try {
+    const { data: sessionData, error: sessionError } =
+      await supabaseBrowser.auth.getSession();
 
-      if (sessionError) {
-        console.error("getSession error", sessionError);
-        return;
-      }
-
-      const user = sessionData.session?.user;
-      if (!user) {
-        setIsTwitchConnected(false);
-        setViewerName("viewer");
-        setViewerDisplayName("viewer");
-        setViewerAvatar("");
-        return;
-      }
-
-      const twitchIdentity = extractTwitchIdentity(user);
-
-      setIsTwitchConnected(true);
-      setViewerName(twitchIdentity.login);
-      setViewerDisplayName(twitchIdentity.displayName);
-      setViewerAvatar(twitchIdentity.avatarUrl);
-    } catch (error) {
-      console.error("loadUser failed", error);
+    if (sessionError) {
+      console.error("getSession error", sessionError);
+      setAuthLoaded(true);
+      return;
     }
-  };
 
-  loadUser();
+    const user = sessionData.session?.user;
+    if (!user) {
+      setIsTwitchConnected(false);
+      setViewerName("viewer");
+      setViewerDisplayName("viewer");
+      setViewerAvatar("");
+      setAuthLoaded(true);
+      return;
+    }
+
+    const twitchIdentity = extractTwitchIdentity(user);
+
+    setIsTwitchConnected(true);
+    setViewerName(twitchIdentity.login);
+    setViewerDisplayName(twitchIdentity.displayName);
+    setViewerAvatar(twitchIdentity.avatarUrl);
+    setAuthLoaded(true);
+  } catch (error) {
+    console.error("loadUser failed", error);
+    setAuthLoaded(true);
+  }
+};
+
+loadUser();
 
   const {
     data: { subscription },
