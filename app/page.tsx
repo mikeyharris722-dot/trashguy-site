@@ -619,16 +619,8 @@ const currentPredictionAvgX =
 
   const loadPredictions = useCallback(async () => {
   try {
-    if (!currentPredictionHunt?.id) {
-      setPredictions([]);
-      return;
-    }
-
     const res = await fetch("/api/predictions", { cache: "no-store" });
-    if (!res.ok) {
-      setPredictions([]);
-      return;
-    }
+    if (!res.ok) return;
 
     const data = await res.json();
     const raw = Array.isArray(data?.predictions)
@@ -660,9 +652,8 @@ const currentPredictionAvgX =
     setPredictions(normalized);
   } catch (error) {
     console.error("Predictions failed to load", error);
-    setPredictions([]);
   }
-}, [currentPredictionHunt?.id]);
+}, []);;
 
   const loadLiveStatus = useCallback(async () => {
     try {
@@ -725,6 +716,24 @@ useEffect(() => {
     clearInterval(huntTimer);
   };
 }, [loadBracket, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions]);
+
+useEffect(() => {
+  if (!huntsData.length) return;
+
+  if (!currentPredictionHunt?.id) {
+    setPredictionStatus("locked");
+    return;
+  }
+
+  if (currentPredictionHunt.status === "open" || currentPredictionHunt.isOpening) {
+    setPredictionStatus("open");
+  } else if (
+    currentPredictionHunt.status === "locked" ||
+    currentPredictionHunt.status === "completed"
+  ) {
+    setPredictionStatus("locked");
+  }
+}, [currentPredictionHunt, huntsData]);
 
 // LOAD USER SESSION
 useEffect(() => {
