@@ -661,7 +661,7 @@ export default function PredictionsLivePage() {
                           >
                             <div className="min-w-0">
                               <div className="flex items-center gap-3">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/30 text-xs font-black text-fuchsia-300">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/30 text-xs font-black text-[#42f5a7]">
                                   {index + 1}
                                 </div>
 
@@ -760,7 +760,7 @@ export default function PredictionsLivePage() {
                   </div>
 
                   <div className="rounded-[1.5rem] border border-violet-300/30 bg-black/30 p-6 min-w-0">
-                    <div className="mb-4 flex items-center justify-end gap-2">
+                    <div className="mb-4 flex items-center justify-between gap-2">
                       <Pill
                         onClick={() => setSortMode("highest")}
                         active={sortMode === "highest"}

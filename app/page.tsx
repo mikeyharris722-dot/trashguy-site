@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import SiteHeader from "@/components/site-header";
 
 const socials = [
   { name: "RouloBets", href: "https://roulobets.com/?r=trashguy" },
@@ -23,35 +24,50 @@ const fallbackLeaderboard = [
   { rank: 10, username: "ClipFarmer", wagered: 4520 },
 ];
 
+const leaderboardTotal = 150;
+
+const leaderboardPrizes: Record<number, number> = {
+  1: 75,
+  2: 50,
+  3: 25,
+};
+
 const fallbackHunts: HuntItem[] = [];
 
-const defaultBracket = {
-  title: "Trashguy Tournament",
+const defaultBracket: BracketData = {
+  title: "Tournament Bracket",
   rounds: [
     {
       id: "round-1",
       name: "Quarterfinals",
       matches: [
-        { id: "m1", player1: "Player A", player2: "Player B", winner: "" },
-        { id: "m2", player1: "Player C", player2: "Player D", winner: "" },
-        { id: "m3", player1: "Player E", player2: "Player F", winner: "" },
-        { id: "m4", player1: "Player G", player2: "Player H", winner: "" },
+        { id: "m1", player1: "", player2: "", winner: "" },
+        { id: "m2", player1: "", player2: "", winner: "" },
+        { id: "m3", player1: "", player2: "", winner: "" },
+        { id: "m4", player1: "", player2: "", winner: "" },
       ],
     },
     {
       id: "round-2",
       name: "Semifinals",
       matches: [
-        { id: "m5", player1: "Winner QF1", player2: "Winner QF2", winner: "" },
-        { id: "m6", player1: "Winner QF3", player2: "Winner QF4", winner: "" },
+        { id: "m5", player1: "", player2: "", winner: "" },
+        { id: "m6", player1: "", player2: "", winner: "" },
       ],
     },
     {
       id: "round-3",
       name: "Final",
-      matches: [{ id: "m7", player1: "Winner SF1", player2: "Winner SF2", winner: "" }],
+      matches: [{ id: "m7", player1: "", player2: "", winner: "" }],
     },
   ],
+};
+
+const STORAGE_KEYS = {
+  adminMode: "trashguy_admin_mode",
+  activeHuntId: "trashguy_active_hunt_id",
+  predictionStatus: "trashguy_prediction_status",
+  activeSection: "trashguy_active_section",
 };
 
 const ADMIN_USERS = ["trashguy__", "trashguy", "parz", "parzwz"];
@@ -190,7 +206,7 @@ function createBracketFromTeamCount(teamCount: number, title: string): BracketDa
   const totalRounds = Math.log2(bracketSize);
 
   const teamNames = Array.from({ length: bracketSize }, (_, index) =>
-    index < safeCount ? `Team ${index + 1}` : "BYE"
+    index < safeCount ? "" : "BYE"
   );
 
   const rounds: BracketRound[] = [];
@@ -225,10 +241,10 @@ function createBracketFromTeamCount(teamCount: number, title: string): BracketDa
     });
   }
 
-  return {
-    title: title.trim() || "Trashguy Tournament",
+  return autoAdvanceByes({
+    title: title.trim() || "Tournament Bracket",
     rounds,
-  };
+  });
 }
 
 function cloneBracket(bracket: BracketData): BracketData {
@@ -241,42 +257,60 @@ function cloneBracket(bracket: BracketData): BracketData {
   };
 }
 
-function maybeAutoAdvanceClassic8(bracket: BracketData): BracketData {
+function autoAdvanceByes(bracket: BracketData): BracketData {
   const next = cloneBracket(bracket);
 
-  if (
-    next.rounds.length !== 3 ||
-    next.rounds[0].matches.length !== 4 ||
-    next.rounds[1].matches.length !== 2 ||
-    next.rounds[2].matches.length !== 1
-  ) {
-    return next;
-  }
+  for (let roundIndex = 0; roundIndex < next.rounds.length - 1; roundIndex++) {
+    const currentRound = next.rounds[roundIndex];
+    const nextRound = next.rounds[roundIndex + 1];
 
-  const qf = next.rounds[0].matches;
-  const sf = next.rounds[1].matches;
-  const final = next.rounds[2].matches[0];
+    currentRound.matches.forEach((match, matchIndex) => {
+      const p1 = match.player1?.trim();
+      const p2 = match.player2?.trim();
 
-  sf[0].player1 = qf[0].winner || "Winner QF1";
-  sf[0].player2 = qf[1].winner || "Winner QF2";
-  sf[1].player1 = qf[2].winner || "Winner QF3";
-  sf[1].player2 = qf[3].winner || "Winner QF4";
+      let autoWinner = "";
 
-  if (![sf[0].player1, sf[0].player2].includes(sf[0].winner)) {
-    sf[0].winner = "";
-  }
-  if (![sf[1].player1, sf[1].player2].includes(sf[1].winner)) {
-    sf[1].winner = "";
-  }
+      if (p1 && p2 === "BYE") autoWinner = p1;
+      if (p2 && p1 === "BYE") autoWinner = p2;
 
-  final.player1 = sf[0].winner || "Winner SF1";
-  final.player2 = sf[1].winner || "Winner SF2";
+      if (autoWinner) {
+        match.winner = autoWinner;
 
-  if (![final.player1, final.player2].includes(final.winner)) {
-    final.winner = "";
+        const nextMatchIndex = Math.floor(matchIndex / 2);
+        const nextSlot = matchIndex % 2 === 0 ? "player1" : "player2";
+
+        if (nextRound.matches[nextMatchIndex]) {
+          nextRound.matches[nextMatchIndex][nextSlot] = autoWinner;
+        }
+      }
+    });
   }
 
   return next;
+}
+
+function autoAdvanceBracket(bracket: BracketData): BracketData {
+  const next = cloneBracket(bracket);
+
+  for (let roundIndex = 0; roundIndex < next.rounds.length - 1; roundIndex++) {
+    const currentRound = next.rounds[roundIndex];
+    const nextRound = next.rounds[roundIndex + 1];
+
+    currentRound.matches.forEach((match, matchIndex) => {
+      const nextMatchIndex = Math.floor(matchIndex / 2);
+      const nextSlot = matchIndex % 2 === 0 ? "player1" : "player2";
+
+      if (nextRound.matches[nextMatchIndex]) {
+        nextRound.matches[nextMatchIndex][nextSlot] = match.winner || "";
+      }
+    });
+  }
+
+  return autoAdvanceByes(next);
+}
+
+function maybeAutoAdvanceClassic8(bracket: BracketData): BracketData {
+  return autoAdvanceBracket(bracket);
 }
 
 function Panel({
@@ -288,9 +322,18 @@ function Panel({
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur-xl ${className}`}
+      className={[
+        "relative overflow-hidden rounded-[30px]",
+        "border border-[rgba(0,255,136,0.16)]",
+        "bg-[linear-gradient(180deg,rgba(17,17,17,0.96),rgba(8,8,8,0.96))]",
+        "shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_0_35px_rgba(0,255,136,0.08),inset_0_1px_0_rgba(255,255,255,0.03)]",
+        "backdrop-blur-xl",
+        className,
+      ].join(" ")}
     >
-      {children}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,255,136,0.10),transparent_32%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[rgba(255,255,255,0.07)]" />
+      <div className="relative z-10 p-5 sm:p-7">{children}</div>
     </div>
   );
 }
@@ -303,13 +346,13 @@ function SectionLabel({
   color?: "emerald" | "fuchsia" | "white";
 }) {
   const map = {
-    emerald: "text-emerald-300",
-    fuchsia: "text-fuchsia-300",
+    emerald: "text-[#42f5a7]",
+    fuchsia: "text-[#42f5a7]",
     white: "text-white/60",
   };
 
   return (
-    <div className={`text-sm font-bold uppercase tracking-[0.28em] ${map[color]}`}>
+    <div className={`text-[11px] font-black uppercase tracking-[0.34em] drop-shadow-[0_0_10px_rgba(0,255,136,0.25)] ${map[color]}`}>
       {children}
     </div>
   );
@@ -360,37 +403,37 @@ function MatchCard({
 
   return (
     <div
-      className={`rounded-[1.35rem] border border-white/10 bg-black/35 ${
+      className={`rounded-[1.2rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(18,18,18,0.96),rgba(8,8,8,0.98))] shadow-[0_0_18px_rgba(0,255,136,0.05)] ${
         compact ? "p-3" : "p-4"
       }`}
     >
       <div className="space-y-2">
         <div
-          className={`rounded-xl border px-4 py-3 font-semibold ${
+          className={`rounded-xl border px-4 py-3 font-semibold transition ${
             isWinner1
-              ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-200"
-              : "border-white/10 bg-black/20 text-white"
+              ? "border-[rgba(0,255,136,0.35)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8] shadow-[0_0_16px_rgba(0,255,136,0.10)]"
+              : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-white"
           }`}
         >
-          {match.player1 || "TBD"}
+          <div className="truncate">{match.player1 || ""}</div>
         </div>
 
-        <div className="text-center text-[10px] uppercase tracking-[0.24em] text-white/30">
+        <div className="text-center text-[10px] uppercase tracking-[0.24em] text-white/25">
           vs
         </div>
 
         <div
-          className={`rounded-xl border px-4 py-3 font-semibold ${
+          className={`rounded-xl border px-4 py-3 font-semibold transition ${
             isWinner2
-              ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-200"
-              : "border-white/10 bg-black/20 text-white"
+              ? "border-[rgba(0,255,136,0.35)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8] shadow-[0_0_16px_rgba(0,255,136,0.10)]"
+              : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-white"
           }`}
         >
-          {match.player2 || "TBD"}
+          <div className="truncate">{match.player2 || ""}</div>
         </div>
       </div>
 
-      <div className="mt-3 text-sm font-bold uppercase tracking-[0.2em] text-emerald-300">
+      <div className="mt-3 text-center text-[10px] font-bold uppercase tracking-[0.24em] text-white/30">
         {match.winner ? `Winner: ${match.winner}` : "No winner yet"}
       </div>
     </div>
@@ -414,7 +457,7 @@ export default function Home() {
 
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
   if (typeof window === "undefined") return false;
-  return localStorage.getItem("trashguy_admin_mode") === "true";
+  return localStorage.getItem(STORAGE_KEYS.adminMode) === "true";
 });
 
   const [adminName, setAdminName] = useState("Trashguy");
@@ -464,16 +507,26 @@ export default function Home() {
 }, [predictions, predictionSortMode]);
 
 const currentPredictionEntry = useMemo(() => {
-  if (predictionStatus !== "open") return null;
-
   return predictions.find(
     (entry) =>
       entry.username.trim().toLowerCase() ===
       viewerName.trim().toLowerCase()
   );
-}, [predictions, viewerName, predictionStatus]);
+}, [predictions, viewerName]);
 
 const currentPredictionHunt = useMemo(() => {
+  if (!huntsData.length) return null;
+
+  if (adminHuntId) {
+    const exact = huntsData.find((hunt) => hunt.id === adminHuntId);
+    if (exact) return exact;
+  }
+
+  const openPredictionHunt = huntsData.find(
+    (hunt) => hunt.prediction_status === "open" || hunt.status === "open" || hunt.isOpening
+  );
+  if (openPredictionHunt) return openPredictionHunt;
+
   const sorted = [...huntsData].sort((a, b) => {
     const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
     const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
@@ -481,7 +534,7 @@ const currentPredictionHunt = useMemo(() => {
   });
 
   return sorted[0] || null;
-}, [huntsData]);
+}, [huntsData, adminHuntId]);
 
 const currentPredictionCount = predictions.length;
 
@@ -492,16 +545,27 @@ const currentPredictionAvgX =
 
   useEffect(() => {
   if (!authLoaded) return;
+  if (!isTwitchConnected) return;
 
   if (!adminAllowed) {
     setIsAdmin(false);
-    localStorage.removeItem("trashguy_admin_mode");
+    localStorage.removeItem(STORAGE_KEYS.adminMode);
 
     if (activeSection === "admin") {
       setActiveSection("home");
     }
   }
-}, [adminAllowed, activeSection, authLoaded]);
+}, [adminAllowed, activeSection, authLoaded, isTwitchConnected]);
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  const storedAdminMode = localStorage.getItem(STORAGE_KEYS.adminMode);
+
+  if (storedAdminMode === "true") {
+    setIsAdmin(true);
+  }
+}, []);
 
   const navButton = (id: string, label: string) => (
     <button
@@ -718,15 +782,23 @@ useEffect(() => {
 }, [loadBracket, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions]);
 
 useEffect(() => {
+  if (typeof window === "undefined") return;
+
   if (!currentHuntState?.id) {
     setPredictionStatus("locked");
+    localStorage.removeItem(STORAGE_KEYS.activeHuntId);
+    localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
     return;
   }
 
+  const nextStatus =
+    currentHuntState.prediction_status === "open" ? "open" : "locked";
+
   setAdminHuntId(currentHuntState.id);
-  setPredictionStatus(
-    currentHuntState.prediction_status === "open" ? "open" : "locked"
-  );
+  setPredictionStatus(nextStatus);
+
+  localStorage.setItem(STORAGE_KEYS.activeHuntId, currentHuntState.id);
+  localStorage.setItem(STORAGE_KEYS.predictionStatus, nextStatus);
 }, [currentHuntState]);
 
 // LOAD USER SESSION
@@ -800,6 +872,100 @@ loadUser();
   };
 }, []);
 
+// RESTORE ADMIN + SECTION AFTER REFRESH
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  const storedAdminMode = localStorage.getItem(STORAGE_KEYS.adminMode);
+  const storedSection = localStorage.getItem(STORAGE_KEYS.activeSection);
+
+  if (storedAdminMode === "true") {
+    setIsAdmin(true);
+  }
+
+  if (storedSection) {
+    setActiveSection(storedSection);
+  }
+}, []);
+
+// SAVE ADMIN + ACTIVE TAB
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem(STORAGE_KEYS.adminMode, String(isAdmin));
+  localStorage.setItem(STORAGE_KEYS.activeSection, activeSection);
+}, [isAdmin, activeSection]);
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  if (huntsLoading) return;
+
+  const storedHuntId = localStorage.getItem(STORAGE_KEYS.activeHuntId);
+  const storedPredictionStatus = localStorage.getItem(STORAGE_KEYS.predictionStatus);
+
+  let resolvedHunt: HuntItem | null = null;
+
+  if (currentHuntState?.id) {
+    resolvedHunt =
+      huntsData.find((hunt) => hunt.id === currentHuntState.id) ||
+      ({
+        id: currentHuntState.id,
+        title: currentHuntState.title || "Live Hunt",
+        casino: currentHuntState.casino || "Unknown",
+        startCost: Number(currentHuntState.startCost || currentHuntState.start_amount || 0),
+        totalWinnings: Number(currentHuntState.totalWinnings || 0),
+        profitLoss: Number(currentHuntState.profitLoss || 0),
+        profitLossPercentage: Number(currentHuntState.profitLossPercentage || 0),
+        isOpening:
+          Boolean(currentHuntState.isOpening) || currentHuntState.status === "open",
+        status: currentHuntState.status || "",
+        prediction_status: currentHuntState.prediction_status || "locked",
+        currentOpeningSlot: currentHuntState.currentOpeningSlot || null,
+        createdAt: currentHuntState.createdAt || null,
+        updatedAt: currentHuntState.updatedAt || null,
+        bonuses: [],
+      } as HuntItem);
+  }
+
+  if (!resolvedHunt && storedHuntId) {
+    resolvedHunt = huntsData.find((hunt) => hunt.id === storedHuntId) || null;
+  }
+
+  if (!resolvedHunt) {
+    resolvedHunt =
+      huntsData.find(
+        (hunt) => hunt.prediction_status === "open" || hunt.status === "open" || hunt.isOpening
+      ) || null;
+  }
+
+  if (!resolvedHunt && huntsData.length) {
+    resolvedHunt = [...huntsData].sort((a, b) => {
+      const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      return bTime - aTime;
+    })[0];
+  }
+
+  if (!resolvedHunt) {
+    if (
+      storedPredictionStatus &&
+      (storedPredictionStatus === "open" || storedPredictionStatus === "locked")
+    ) {
+      setPredictionStatus(storedPredictionStatus);
+    }
+    return;
+  }
+
+  const nextStatus =
+    resolvedHunt.prediction_status === "open" ? "open" : storedPredictionStatus === "open" ? "open" : "locked";
+
+  setAdminHuntId(resolvedHunt.id);
+  setPredictionStatus(nextStatus);
+
+  localStorage.setItem(STORAGE_KEYS.activeHuntId, resolvedHunt.id);
+  localStorage.setItem(STORAGE_KEYS.predictionStatus, nextStatus);
+}, [currentHuntState, huntsLoading, huntsData]);
+
 // REALTIME UPDATES (FIXED)
 useEffect(() => {
   const channel = supabaseBrowser
@@ -839,7 +1005,7 @@ useEffect(() => {
 // ADMIN MODE PERSISTENCE (FIXED POSITION)
 useEffect(() => {
   if (typeof window === "undefined") return;
-  localStorage.setItem("trashguy_admin_mode", String(isAdmin));
+  localStorage.setItem(STORAGE_KEYS.adminMode, String(isAdmin));
 }, [isAdmin]);
 
 const handleTwitchLogin = async () => {
@@ -878,7 +1044,9 @@ const handleTwitchLogin = async () => {
     setIsAdmin(false);
     setActiveSection("home");
 
-    localStorage.removeItem("trashguy_admin_mode"); // 👈 ADD THIS
+    localStorage.removeItem(STORAGE_KEYS.adminMode);
+localStorage.removeItem(STORAGE_KEYS.activeHuntId);
+localStorage.removeItem(STORAGE_KEYS.predictionStatus);
 
     setPredictionMessage("Logged out.");
   } catch {
@@ -980,7 +1148,12 @@ const handleTwitchLogin = async () => {
   };
 
   const handleStartHunt = async () => {
-    try {
+  if (adminHuntId && predictionStatus === "open") {
+    setAdminMessage("A hunt is already active.");
+    return;
+  }
+
+  try {
       const token = await getAccessToken();
 
       const res = await fetch("/api/admin/hunts", {
@@ -1003,8 +1176,15 @@ const handleTwitchLogin = async () => {
         return;
       }
 
-      setAdminHuntId(data?.hunt?.id || "");
-      setPredictionStatus("open");
+      const newHuntId = data?.hunt?.id || "";
+
+setAdminHuntId(newHuntId);
+setPredictionStatus("open");
+
+if (typeof window !== "undefined" && newHuntId) {
+  localStorage.setItem(STORAGE_KEYS.activeHuntId, newHuntId);
+  localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
+}
       setLatestWinners([]);
       setFinalResult("");
       setAdminMessage("New hunt started.");
@@ -1043,6 +1223,13 @@ const handleTwitchLogin = async () => {
       }
 
       setPredictionStatus("locked");
+
+if (typeof window !== "undefined") {
+  localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
+  if (adminHuntId) {
+    localStorage.setItem(STORAGE_KEYS.activeHuntId, adminHuntId);
+  }
+}
       setAdminMessage("Predictions locked.");
       loadPredictions();
     } catch {
@@ -1078,6 +1265,13 @@ const handleTwitchLogin = async () => {
       }
 
       setPredictionStatus("open");
+
+if (typeof window !== "undefined") {
+  localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
+  if (adminHuntId) {
+    localStorage.setItem(STORAGE_KEYS.activeHuntId, adminHuntId);
+  }
+}
       setAdminMessage("Predictions opened.");
       loadPredictions();
     } catch {
@@ -1120,8 +1314,13 @@ const handleTwitchLogin = async () => {
       }
 
       setPredictionStatus("locked");
-      setLatestWinners(Array.isArray(data?.winners) ? data.winners : []);
-      setAdminMessage("Hunt completed and winners calculated.");
+setLatestWinners(Array.isArray(data?.winners) ? data.winners : []);
+setAdminMessage("Hunt completed and winners calculated.");
+
+if (typeof window !== "undefined") {
+  localStorage.removeItem(STORAGE_KEYS.activeHuntId);
+  localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
+}
       loadHunts();
       loadPredictions();
     } catch {
@@ -1146,67 +1345,73 @@ const handleTwitchLogin = async () => {
   };
 
   const updateMatchField = (
-    roundId: string,
-    matchId: string,
-    field: "player1" | "player2",
-    value: string
-  ) => {
-    setBracket((current) =>
-      maybeAutoAdvanceClassic8({
-        ...current,
-        rounds: current.rounds.map((round) =>
-          round.id !== roundId
-            ? round
-            : {
-                ...round,
-                matches: round.matches.map((match) =>
-                  match.id === matchId ? { ...match, [field]: value } : match
-                ),
-              }
-        ),
-      })
-    );
-  };
+  roundId: string,
+  matchId: string,
+  field: "player1" | "player2",
+  value: string
+) => {
+  setBracket((current) => {
+    const updated = {
+      ...current,
+      rounds: current.rounds.map((round) =>
+        round.id !== roundId
+          ? round
+          : {
+              ...round,
+              matches: round.matches.map((match) =>
+                match.id === matchId ? { ...match, [field]: value } : match
+              ),
+            }
+      ),
+    };
+
+    return autoAdvanceBracket(updated);
+  });
+};
 
   const selectMatchWinner = (
-    roundId: string,
-    matchId: string,
-    winner: string
-  ) => {
-    setBracket((current) =>
-      maybeAutoAdvanceClassic8({
-        ...current,
-        rounds: current.rounds.map((round) =>
-          round.id !== roundId
-            ? round
-            : {
-                ...round,
-                matches: round.matches.map((match) =>
-                  match.id === matchId ? { ...match, winner } : match
-                ),
-              }
-        ),
-      })
-    );
-  };
+  roundId: string,
+  matchId: string,
+  winner: string
+) => {
+  setBracket((current) => {
+    const updated = {
+      ...current,
+      rounds: current.rounds.map((round) =>
+        round.id !== roundId
+          ? round
+          : {
+              ...round,
+              matches: round.matches.map((match) =>
+                match.id === matchId ? { ...match, winner } : match
+              ),
+            }
+      ),
+    };
+
+    return autoAdvanceBracket(updated);
+  });
+};
 
   const clearMatchWinner = (roundId: string, matchId: string) => {
-    setBracket((current) =>
-      maybeAutoAdvanceClassic8({
-        ...current,
-        rounds: current.rounds.map((round) =>
-          round.id !== roundId
-            ? round
-            : {
-                ...round,
-                matches: round.matches.map((match) =>
-                  match.id === matchId ? { ...match, winner: "" } : match
-                ),
-              }
-        ),
-      })
-    );
-  };
+  setBracket((current) => {
+    const updated = {
+      ...current,
+      rounds: current.rounds.map((round) =>
+        round.id !== roundId
+          ? round
+          : {
+              ...round,
+              matches: round.matches.map((match) =>
+                match.id === matchId ? { ...match, winner: "" } : match
+              ),
+            }
+      ),
+    };
+
+    return autoAdvanceBracket(updated);
+  });
+};
 
   const handleGenerateBracket = () => {
     const count = Number(generatorTeamCount);
@@ -1288,91 +1493,27 @@ const handleTwitchLogin = async () => {
   }, [predictions, finalResult, latestWinners]);
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.18),transparent_28%),radial-gradient(circle_at_bottom,rgba(20,184,166,0.12),transparent_30%)]">
-        <div className="min-h-screen bg-[linear-gradient(to_bottom,rgba(0,0,0,0.82),rgba(0,0,0,0.96))]">
-          <header className="relative overflow-hidden border-b border-white/10 bg-black/80 backdrop-blur-md">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.12),transparent_35%),linear-gradient(to_bottom,rgba(255,255,255,0.02),transparent)]" />
-            <div className="absolute inset-x-0 bottom-0 h-px bg-emerald-300/30 shadow-[0_0_18px_rgba(110,231,183,0.7)]" />
+    <div className="min-h-screen bg-[#050505] text-white">
+  <div className="min-h-screen bg-[radial-gradient(circle_at_20%_10%,rgba(0,255,136,0.16),transparent_22%),radial-gradient(circle_at_80%_20%,rgba(0,255,136,0.10),transparent_18%),radial-gradient(circle_at_50%_100%,rgba(0,180,120,0.14),transparent_28%)]">
+    <div className="min-h-screen bg-[linear-gradient(to_bottom,rgba(0,0,0,0.72),rgba(0,0,0,0.96))]">
+          <SiteHeader
+  activeSection={activeSection}
+  setActiveSection={setActiveSection}
+  adminAllowed={adminAllowed}
+  isTwitchConnected={isTwitchConnected}
+  viewerAvatar={viewerAvatar}
+  viewerDisplayName={viewerDisplayName}
+  viewerName={viewerName}
+  handleTwitchLogin={handleTwitchLogin}
+  handleLogout={handleLogout}
+  liveLoading={liveLoading}
+  liveStatus={liveStatus}
+/>
 
-            <div className="relative mx-auto max-w-7xl px-6 py-10">
-              <div className="flex flex-col items-center gap-7">
-                <div className="relative">
-                  <div className="absolute inset-0 scale-125 rounded-full bg-emerald-300/10 blur-2xl" />
-                  <img
-                    src="/logo.png"
-                    alt="Trashguy"
-                    className="relative max-h-32 w-auto object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.08)]"
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                  <div
-                    className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.28em] ${
-                      liveStatus.isLive
-                        ? "border-red-400/40 bg-red-500/15 text-red-200"
-                        : "border-white/10 bg-white/5 text-white/60"
-                    }`}
-                  >
-                    {liveLoading ? "Checking stream..." : liveStatus.isLive ? "Live now" : "Offline"}
-                  </div>
-
-                  {liveStatus.isLive && liveStatus.viewerCount > 0 && (
-                    <div className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.28em] text-emerald-200">
-                      {liveStatus.viewerCount.toLocaleString()} watching
-                    </div>
-                  )}
-
-                  {isTwitchConnected ? (
-                    <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-3 py-2">
-                      {viewerAvatar ? (
-                        <img
-                          src={viewerAvatar}
-                          alt={viewerDisplayName}
-                          className="h-9 w-9 rounded-full border border-white/10 object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/40 text-sm font-black text-emerald-300">
-                          {viewerDisplayName.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="text-sm">
-                        <div className="font-bold text-white">{viewerDisplayName}</div>
-                        <div className="text-white/45">@{viewerName}</div>
-                      </div>
-                      <button
-                        onClick={handleLogout}
-                        className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-white/70 hover:text-white"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={handleTwitchLogin}
-                      className="rounded-full border border-emerald-300/25 bg-emerald-400/10 px-5 py-3 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-400/20"
-                    >
-                      Connect Twitch
-                    </button>
-                  )}
-                </div>
-
-                <nav className="relative flex flex-wrap items-center justify-center gap-8 rounded-full border border-white/10 bg-white/5 px-7 py-3 shadow-[0_0_35px_rgba(16,185,129,0.08)]">
-                  {navButton("home", "Home")}
-                  {navButton("leaderboard", "Leaderboard")}
-                  {navButton("hunts", "Bonus Hunts")}
-                  {navButton("predictions", "Predictions")}
-                  {navButton("tournaments", "Tournaments")}
-                  {adminAllowed && navButton("admin", "Admin")}
-                </nav>
-              </div>
-            </div>
-          </header>
-
-          <main className="mx-auto max-w-7xl px-6 py-10">
+          <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
             {activeSection === "home" && (
               <section className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-                <Panel className="border-emerald-300/20 shadow-[0_0_40px_rgba(16,185,129,0.08)]">
+                <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_40px_rgba(0,255,136,0.08)]">
                   <SectionLabel>Home</SectionLabel>
                   <h1 className="mt-3 text-4xl font-black tracking-wide">TRASHGUY</h1>
                   <p className="mt-4 max-w-xl text-white/65">
@@ -1400,13 +1541,13 @@ const handleTwitchLogin = async () => {
                       </div>
 
                       <a
-                        href="https://www.twitch.tv/trashguy__"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex rounded-full border border-emerald-300/25 bg-emerald-400/10 px-5 py-3 text-sm font-semibold text-emerald-200"
-                      >
-                        Open Twitch
-                      </a>
+  href="https://www.twitch.tv/trashguy__"
+  target="_blank"
+  rel="noreferrer"
+  className="inline-flex rounded-full border border-[rgba(0,255,136,0.22)] bg-[linear-gradient(180deg,rgba(0,255,136,0.18),rgba(0,255,136,0.08))] px-5 py-3 text-sm font-semibold text-[#b8ffd8] shadow-[0_0_20px_rgba(0,255,136,0.12),inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-[rgba(0,255,136,0.34)] hover:bg-[linear-gradient(180deg,rgba(0,255,136,0.22),rgba(0,255,136,0.10))]"
+>
+  Open Twitch
+</a>
                     </div>
                   </div>
 
@@ -1417,7 +1558,7 @@ const handleTwitchLogin = async () => {
                         href={social.href}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/30 px-5 py-4 transition hover:border-emerald-300/40 hover:bg-black/45"
+                        className="flex items-center justify-between rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.92),rgba(8,8,8,0.96))] px-5 py-4 transition hover:border-[rgba(0,255,136,0.28)] hover:bg-[linear-gradient(180deg,rgba(18,18,18,0.96),rgba(10,10,10,0.98))] hover:shadow-[0_0_24px_rgba(0,255,136,0.06)]"
                       >
                         <span className="font-semibold">{social.name}</span>
                         <span className="text-sm text-emerald-300">Visit</span>
@@ -1426,8 +1567,8 @@ const handleTwitchLogin = async () => {
                   </div>
                 </Panel>
 
-                <Panel className="border-fuchsia-300/20 shadow-[0_0_40px_rgba(217,70,239,0.08)]">
-                  <SectionLabel color="fuchsia">Live Stream</SectionLabel>
+                <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_40px_rgba(0,255,136,0.08)]">
+                  <SectionLabel>Live Stream</SectionLabel>
                   <h2 className="mt-3 text-3xl font-black">WATCH TRASHGUY LIVE</h2>
                   <p className="mt-4 text-white/65">Live Twitch embed for your site.</p>
 
@@ -1449,39 +1590,101 @@ const handleTwitchLogin = async () => {
             )}
 
             {activeSection === "leaderboard" && (
-              <section className="relative overflow-hidden rounded-[2rem] border border-emerald-300/25 bg-white/5 p-8 shadow-[0_0_70px_rgba(16,185,129,0.10)] backdrop-blur-xl">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.10),transparent_28%)]" />
-                <div className="relative z-10">
-                  <SectionLabel>Leaderboard</SectionLabel>
-                  <h2 className="mt-3 text-4xl font-black tracking-wide">TOP 10 PLAYERS</h2>
+  <section className="space-y-6">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,255,136,0.16)] shadow-[0_0_50px_rgba(0,255,136,0.10)]">
+      <div className="text-center">
+        <SectionLabel>Leaderboard</SectionLabel>
 
-                  <div className="mt-8 overflow-hidden rounded-[1.75rem] border border-emerald-300/35 bg-black/40 shadow-[0_0_65px_rgba(16,185,129,0.16)] ring-1 ring-emerald-300/10">
-                    <div className="grid grid-cols-[90px_1fr_160px] border-b border-emerald-300/20 bg-emerald-300/10 px-5 py-4 text-sm font-bold uppercase tracking-[0.24em] text-white/70">
-                      <div>#</div>
-                      <div>Username</div>
-                      <div className="text-right">Wagered</div>
-                    </div>
+        <h2 className="mt-4 text-[clamp(2.8rem,8vw,5.8rem)] font-black leading-[0.9] tracking-tight text-white">
+          ${leaderboardTotal}
+<br />
+LEADERBOARD
+        </h2>
 
-                    {leaderboardLoading ? (
-                      <div className="px-5 py-8 text-white/60">Loading leaderboard...</div>
-                    ) : (
-                      leaderboardData.map((player) => (
-                        <div
-                          key={`${player.rank}-${player.username}`}
-                          className="grid grid-cols-[90px_1fr_160px] items-center border-b border-white/5 px-5 py-4 text-lg transition hover:bg-white/[0.03] last:border-b-0"
-                        >
-                          <div className="font-black text-emerald-300">{player.rank}</div>
-                          <div className="font-semibold text-white/95">{player.username}</div>
-                          <div className="text-right font-black text-emerald-200">
-                            {formatMoney(player.wagered)}
-                          </div>
-                        </div>
-                      ))
-                    )}
+        <div className="mt-4 text-sm text-white/50">
+          Updated 15 mins ago
+        </div>
+
+        <div className="mt-4 text-[clamp(2rem,5vw,3.8rem)] font-black leading-none text-[#8fffd0]">
+          Ends in: 22d 19h 28m 45s
+        </div>
+
+        <div className="mx-auto mt-6 h-3 w-full max-w-4xl overflow-hidden rounded-full border border-[rgba(0,255,136,0.18)] bg-[rgba(255,255,255,0.03)]">
+          <div className="h-full w-[23%] rounded-full bg-[linear-gradient(90deg,#00ff88,#19d38a)] shadow-[0_0_20px_rgba(0,255,136,0.35)]" />
+        </div>
+      </div>
+    </Panel>
+
+    <Panel className="mx-auto max-w-5xl overflow-hidden border-[rgba(0,255,136,0.16)] shadow-[0_0_55px_rgba(0,255,136,0.10)]">
+      <div className="grid grid-cols-[82px_1fr_150px] border-b border-[rgba(0,255,136,0.12)] bg-[linear-gradient(180deg,rgba(0,255,136,0.08),rgba(0,255,136,0.03))] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.24em] text-white/45 sm:grid-cols-[100px_1fr_190px_170px] sm:px-6">
+        <div>Rank</div>
+        <div>Player</div>
+        <div className="text-right">Wagered</div>
+        <div className="hidden text-right sm:block">Prize</div>
+      </div>
+
+      {leaderboardLoading ? (
+        <div className="px-6 py-10 text-white/60">Loading leaderboard...</div>
+      ) : (
+        <div className="divide-y divide-white/5">
+          {leaderboardData.map((player) => {
+            const prize = leaderboardPrizes[player.rank] || 0;
+
+            const maskedUsername =
+              player.username.length <= 4
+                ? player.username
+                : `${player.username.slice(0, 2)}***${player.username.slice(-1)}`;
+
+            return (
+              <div
+                key={`${player.rank}-${player.username}`}
+                className="grid grid-cols-[82px_1fr_150px] items-center px-4 py-4 transition hover:bg-white/[0.02] sm:grid-cols-[100px_1fr_190px_170px] sm:px-6 sm:py-5"
+              >
+                <div className="flex items-center">
+                  <div
+                    className={`flex h-12 w-12 items-center justify-center rounded-full border text-lg font-black ${
+                      player.rank === 1
+                        ? "border-yellow-400/55 text-yellow-300 shadow-[0_0_18px_rgba(250,204,21,0.22)]"
+                        : player.rank === 2
+                        ? "border-zinc-300/40 text-zinc-200"
+                        : player.rank === 3
+                        ? "border-amber-500/50 text-amber-300"
+                        : "border-[rgba(0,255,136,0.28)] text-[#8fffd0]"
+                    }`}
+                  >
+                    {player.rank}
                   </div>
                 </div>
-              </section>
-            )}
+
+                <div className="min-w-0">
+                  <div className="truncate text-xl font-bold text-white sm:text-2xl">
+                    {maskedUsername}
+                  </div>
+
+                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/28 sm:hidden">
+                    Prize ${prize.toLocaleString()}
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-lg font-black text-white sm:text-xl">
+                    {formatMoney(player.wagered)}
+                  </div>
+                </div>
+
+                <div className="hidden text-right sm:block">
+                  <div className="text-lg font-black text-[#f5c451] sm:text-xl">
+                    ${prize.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Panel>
+  </section>
+)}
 
             {activeSection === "hunts" && (
               <section className="flex justify-center">
@@ -1561,414 +1764,447 @@ const handleTwitchLogin = async () => {
             )}
 
            {activeSection === "predictions" && (
-  <section className="grid gap-6 2xl:grid-cols-[1fr_1.35fr]">
-    <Panel className="border-fuchsia-300/25 shadow-[0_0_65px_rgba(217,70,239,0.10)]">
-  <SectionLabel color="fuchsia">Live Bonus Hunt</SectionLabel>
+  <section className="grid gap-6 2xl:grid-cols-[1.02fr_1.18fr]">
+    <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_65px_rgba(0,255,136,0.10)]">
+      <SectionLabel>Live Bonus Hunt</SectionLabel>
 
-  <div className="mt-3 flex items-center justify-between gap-4">
-    <h2 className="text-4xl font-black tracking-wide">
-      {currentPredictionHunt?.title || "Latest Hunt"}
-    </h2>
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="text-[clamp(2rem,5vw,3.6rem)] font-black leading-[0.95] tracking-tight text-white">
+            {currentPredictionHunt?.title || "Latest Hunt"}
+          </h2>
+          <div className="mt-3 text-sm text-white/45">
+            Live prediction hub for the current hunt.
+          </div>
+        </div>
 
-    <div
-      className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] ${
-        predictionStatus === "open"
-          ? "border-emerald-300/30 bg-emerald-400/10 text-emerald-200"
-          : "border-white/10 bg-black/30 text-white/65"
-      }`}
-    >
-      {predictionStatus === "open" ? "Open" : "Locked"}
+        <div
+          className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] ${
+            predictionStatus === "open"
+              ? "border-[rgba(0,255,136,0.24)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8]"
+              : "border-white/10 bg-[rgba(255,255,255,0.03)] text-white/55"
+          }`}
+        >
+          {predictionStatus === "open" ? "Open" : "Locked"}
+        </div>
+      </div>
+
+      <div className="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-3">
+        <div className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] px-5 py-5 min-h-[90px] flex flex-col justify-center">
+          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/42">
+            Start
+          </div>
+          <div className="mt-2 text-2xl font-black text-white">
+            {formatMoney(currentPredictionHunt?.startCost || 0)}
+          </div>
+        </div>
+
+        <div className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] px-5 py-5 min-h-[90px] flex flex-col justify-center">
+          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/42">
+            Won
+          </div>
+          <div className="mt-2 text-2xl font-black text-white">
+            {formatMoney(
+              currentPredictionHunt?.stats?.totalWinnings ||
+                currentPredictionHunt?.totalWinnings ||
+                0
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] px-5 py-5 min-h-[90px] flex flex-col justify-center">
+          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/42">
+            Bonuses
+          </div>
+          <div className="mt-2 text-2xl font-black text-white">
+            {currentPredictionHunt?.bonuses?.length || 0}
+          </div>
+        </div>
+
+        <div className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] px-5 py-5 min-h-[90px] flex flex-col justify-center">
+          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/42">
+            Avg
+          </div>
+          <div className="mt-2 text-2xl font-black text-white">
+            {currentPredictionHunt?.stats?.currentAverageMultiplier
+              ? `${Number(currentPredictionHunt.stats.currentAverageMultiplier).toFixed(2)}x`
+              : `${currentPredictionAvgX}x`}
+          </div>
+        </div>
+
+        <div className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] px-5 py-5 min-h-[90px] flex flex-col justify-center">
+          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/42">
+            Req
+          </div>
+          <div className="mt-2 text-2xl font-black text-white">
+            {currentPredictionHunt?.stats?.averagePayoutRequired &&
+            currentPredictionHunt?.stats?.averageBetSize
+              ? `${(
+                  Number(currentPredictionHunt.stats.averagePayoutRequired) /
+                  Number(currentPredictionHunt.stats.averageBetSize)
+                ).toFixed(2)}x`
+              : "---"}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <div className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] p-6 min-h-[185px]">
+          <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+            Best Slot
+          </div>
+
+          <div className="mt-4 text-center text-3xl font-black text-white">
+            {currentPredictionHunt?.bonuses?.length
+              ? [...currentPredictionHunt.bonuses].sort(
+                  (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
+                )[0]?.slotName || "---"
+              : "---"}
+          </div>
+
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <div className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
+              Win{" "}
+              {formatMoney(
+                currentPredictionHunt?.bonuses?.length
+                  ? [...currentPredictionHunt.bonuses].sort(
+                      (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
+                    )[0]?.payout || 0
+                  : 0
+              )}
+            </div>
+            <div className="rounded-full border border-[rgba(0,255,136,0.18)] bg-[rgba(0,255,136,0.08)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#b8ffd8]">
+              X{" "}
+              {currentPredictionHunt?.bonuses?.length
+                ? `${Number(
+                    [...currentPredictionHunt.bonuses].sort(
+                      (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
+                    )[0]?.multiplier || 0
+                  ).toFixed(2)}x`
+                : "0.00x"}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] p-6 min-h-[185px]">
+          <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+            Highest X
+          </div>
+
+          <div className="mt-4 text-center text-3xl font-black text-white">
+            {currentPredictionHunt?.bonuses?.length
+              ? `${Number(
+                  [...currentPredictionHunt.bonuses].sort(
+                    (a: any, b: any) => Number(b.multiplier || 0) - Number(a.multiplier || 0)
+                  )[0]?.multiplier || 0
+                ).toFixed(2)}x`
+              : "---"}
+          </div>
+
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <div className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
+              Win{" "}
+              {formatMoney(
+                currentPredictionHunt?.bonuses?.length
+                  ? [...currentPredictionHunt.bonuses].sort(
+                      (a: any, b: any) => Number(b.multiplier || 0) - Number(a.multiplier || 0)
+                    )[0]?.payout || 0
+                  : 0
+              )}
+            </div>
+            <div className="rounded-full border border-[rgba(0,255,136,0.18)] bg-[rgba(0,255,136,0.08)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#b8ffd8]">
+              X{" "}
+              {currentPredictionHunt?.bonuses?.length
+                ? `${Number(
+                    [...currentPredictionHunt.bonuses].sort(
+                      (a: any, b: any) => Number(b.multiplier || 0) - Number(a.multiplier || 0)
+                    )[0]?.multiplier || 0
+                  ).toFixed(2)}x`
+                : "0.00x"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.92),rgba(8,8,8,0.96))] p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+            Live Bonus Feed
+          </div>
+
+          <div className="rounded-full border border-[rgba(0,255,136,0.18)] bg-[rgba(0,255,136,0.08)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#b8ffd8]">
+            {currentPredictionHunt?.bonuses?.length || 0} Bonus
+            {(currentPredictionHunt?.bonuses?.length || 0) === 1 ? "" : "es"}
+          </div>
+        </div>
+
+        <div className="mt-4 max-h-[280px] overflow-y-auto rounded-[1.1rem] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)]">
+          {!currentPredictionHunt?.bonuses?.length ? (
+            <div className="flex h-[180px] items-center justify-center text-white/42">
+              No bonuses yet.
+            </div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {currentPredictionHunt.bonuses.map((bonus: any, index: number) => (
+                <div
+                  key={bonus.id || index}
+                  className="flex items-center justify-between gap-4 px-5 py-4"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] text-xs font-black text-[#8fffd0]">
+                        {index + 1}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="truncate font-semibold text-white">
+                          {bonus.slotName}
+                        </div>
+                        <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/35">
+                          Bet {formatMoney(Number(bonus.betSize || 0))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="font-black text-[#b8ffd8]">
+                      {formatMoney(Number(bonus.payout || 0))}
+                    </div>
+                    <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/35">
+                      {Number(bonus.multiplier || 0).toFixed(2)}x
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </Panel>
+
+    <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_65px_rgba(0,255,136,0.10)]">
+  <div className="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <SectionLabel>Predictions</SectionLabel>
+      <h2 className="mt-3 text-[clamp(2.2rem,5vw,4rem)] font-black leading-[0.95] tracking-tight text-white">
+        Community
+        <br />
+        Entries
+      </h2>
+    </div>
+
+    <div className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-5 py-3 text-xs font-bold uppercase tracking-[0.22em] text-white/60">
+      {currentPredictionCount} Entries
     </div>
   </div>
 
-  <div className="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-3">
-    <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
-      <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
-        Start
-      </div>
-      <div className="mt-2 text-2xl font-black text-white">
-        {formatMoney(currentPredictionHunt?.startCost || 0)}
-      </div>
-    </div>
+  <div className="mt-8 grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+    <div className="rounded-[1.75rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-7 flex flex-col justify-between">
+      <div className="flex flex-wrap gap-2">
+        <div className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-xs font-bold uppercase tracking-[0.20em] text-white/65">
+          {currentPredictionCount} Entries
+        </div>
 
-    <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
-      <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
-        Won
+        <div
+          className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.20em] ${
+            predictionStatus === "open"
+              ? "border-[rgba(0,255,136,0.22)] bg-[rgba(0,255,136,0.08)] text-[#b8ffd8]"
+              : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white/55"
+          }`}
+        >
+          {predictionStatus === "open" ? "Open" : "None"}
+        </div>
       </div>
-      <div className="mt-2 text-2xl font-black text-white">
-        {formatMoney(
-          currentPredictionHunt?.stats?.totalWinnings ||
-            currentPredictionHunt?.totalWinnings ||
-            0
+
+      <div className="mt-8 flex flex-col items-center justify-center">
+  <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-white/40">
+    Your Entry
+  </div>
+
+  <div className="mt-3 text-4xl font-black text-white tracking-tight">
+    {currentPredictionEntry ? formatMoney(currentPredictionEntry.guess) : "--"}
+  </div>
+</div>
+
+      <div className="mt-5 rounded-[1.2rem] border border-dashed border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.02)] p-4 text-white/70">
+        {predictionStatus === "open"
+          ? "Prediction session is open."
+          : "No prediction session is open yet."}
+      </div>
+
+      <div className="mt-6 rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)] p-6 flex flex-col gap-4">
+        <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-white/40">
+          Submit Prediction
+        </div>
+
+        <input
+          value={predictionInput}
+          onChange={(e) => setPredictionInput(e.target.value.replace(/[^0-9]/g, ""))}
+          placeholder="Enter final hunt balance"
+          disabled={predictionStatus !== "open"}
+          className="mt-4 w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-5 py-4 text-base text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] sm:text-lg"
+        />
+
+        <div className="mt-4 flex flex-col gap-3">
+          <button
+            onClick={isTwitchConnected ? handleLogout : handleTwitchLogin}
+            className="w-full rounded-xl min-h-[60px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-base font-semibold text-white transition hover:bg-white/[0.05]"
+          >
+            {isTwitchConnected ? "Logout" : "Connect Twitch"}
+          </button>
+
+          <button
+            onClick={handlePredictionSubmit}
+            disabled={!isTwitchConnected || predictionStatus !== "open"}
+            className="w-full rounded-xl min-h-[60px] border border-[rgba(0,255,136,0.22)] bg-[linear-gradient(180deg,rgba(0,255,136,0.18),rgba(0,255,136,0.08))] px-4 py-3 text-base font-semibold text-[#b8ffd8] shadow-[0_0_20px_rgba(0,255,136,0.10)] transition hover:border-[rgba(0,255,136,0.34)] hover:bg-[linear-gradient(180deg,rgba(0,255,136,0.22),rgba(0,255,136,0.10))] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Save Prediction
+          </button>
+        </div>
+
+        {predictionMessage && (
+          <div className="mt-4 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3 text-sm text-white/75">
+            {predictionMessage}
+          </div>
         )}
       </div>
     </div>
 
-    <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
-      <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
-        Bonuses
-      </div>
-      <div className="mt-2 text-2xl font-black text-white">
-        {currentPredictionHunt?.bonuses?.length || 0}
-      </div>
-    </div>
+    <div className="rounded-[1.75rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-6">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <button
+          onClick={() => setPredictionSortMode("highest")}
+          className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] transition ${
+            predictionSortMode === "highest"
+              ? "border-[rgba(0,255,136,0.22)] bg-[rgba(0,255,136,0.08)] text-[#b8ffd8]"
+              : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white/60 hover:text-white"
+          }`}
+        >
+          Highest
+        </button>
 
-    <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
-      <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
-        Avg
+        <button
+          onClick={() => setPredictionSortMode("newest")}
+          className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] transition ${
+            predictionSortMode === "newest"
+              ? "border-[rgba(0,255,136,0.22)] bg-[rgba(0,255,136,0.08)] text-[#b8ffd8]"
+              : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white/60 hover:text-white"
+          }`}
+        >
+          Newest
+        </button>
       </div>
-      <div className="mt-2 text-2xl font-black text-white">
-        {currentPredictionHunt?.stats?.currentAverageMultiplier
-          ? `${Number(currentPredictionHunt.stats.currentAverageMultiplier).toFixed(2)}x`
-          : `${currentPredictionAvgX}x`}
-      </div>
-    </div>
 
-    <div className="rounded-[1.1rem] border border-white/10 bg-black/35 px-5 py-4">
-  <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
-    Req
+      <div className="h-[560px] overflow-y-auto rounded-[1.25rem] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)]">
+        {sortedPredictionsForTab.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center px-6 text-center text-white/42">
+  <div className="text-lg font-semibold">No entries</div>
+  <div className="mt-2 text-xs uppercase tracking-[0.2em] text-white/25">
+    Waiting for predictions
   </div>
- <div className="mt-2 text-2xl font-black text-white">
-  {currentPredictionHunt?.stats?.averagePayoutRequired &&
-  currentPredictionHunt?.stats?.averageBetSize
-    ? `${(
-        Number(currentPredictionHunt.stats.averagePayoutRequired) /
-        Number(currentPredictionHunt.stats.averageBetSize)
-      ).toFixed(2)}x`
-    : "---"}
 </div>
-</div>
-  </div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {sortedPredictionsForTab.map((entry, index) => (
+              <div
+                key={entry.id}
+                className="flex items-center justify-between gap-4 px-5 py-4"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] text-xs font-black text-[#8fffd0]">
+                      {index + 1}
+                    </div>
 
-  <div className="mt-4 grid gap-4 lg:grid-cols-2">
-    <div className="rounded-[1.3rem] border border-white/10 bg-black/35 p-6 min-h-[170px]">
-      <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
-        Best Slot
-      </div>
-      <div className="mt-4 text-center text-3xl font-black text-white">
-        {currentPredictionHunt?.bonuses?.length
-          ? [...currentPredictionHunt.bonuses].sort(
-              (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
-            )[0]?.slotName || "---"
-          : "---"}
-      </div>
-
-      <div className="mt-5 flex flex-wrap justify-center gap-2">
-        <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-          Win{" "}
-          {formatMoney(
-            currentPredictionHunt?.bonuses?.length
-              ? [...currentPredictionHunt.bonuses].sort(
-                  (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
-                )[0]?.payout || 0
-              : 0
-          )}
-        </div>
-        <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-          X{" "}
-          {currentPredictionHunt?.bonuses?.length
-            ? `${Number(
-                [...currentPredictionHunt.bonuses].sort(
-                  (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
-                )[0]?.multiplier || 0
-              ).toFixed(2)}x`
-            : "0.00x"}
-        </div>
-      </div>
-    </div>
-
-    <div className="rounded-[1.3rem] border border-white/10 bg-black/35 p-6 min-h-[170px]">
-      <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
-        Highest X
-      </div>
-      <div className="mt-4 text-center text-3xl font-black text-white">
-        {currentPredictionHunt?.bonuses?.length
-          ? `${Number(
-              [...currentPredictionHunt.bonuses].sort(
-                (a: any, b: any) =>
-                  Number(b.multiplier || 0) - Number(a.multiplier || 0)
-              )[0]?.multiplier || 0
-            ).toFixed(2)}x`
-          : "---"}
-      </div>
-
-      <div className="mt-5 flex flex-wrap justify-center gap-2">
-        <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-          Win{" "}
-          {formatMoney(
-            currentPredictionHunt?.bonuses?.length
-              ? [...currentPredictionHunt.bonuses].sort(
-                  (a: any, b: any) =>
-                    Number(b.multiplier || 0) - Number(a.multiplier || 0)
-                )[0]?.payout || 0
-              : 0
-          )}
-        </div>
-        <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-          X{" "}
-          {currentPredictionHunt?.bonuses?.length
-            ? `${Number(
-                [...currentPredictionHunt.bonuses].sort(
-                  (a: any, b: any) =>
-                    Number(b.multiplier || 0) - Number(a.multiplier || 0)
-                )[0]?.multiplier || 0
-              ).toFixed(2)}x`
-            : "0.00x"}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div className="mt-4 rounded-[1.3rem] border border-white/10 bg-black/35 p-6">
-    <div className="flex items-center justify-between gap-4">
-      <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/45">
-        Live Bonus Feed
-      </div>
-
-      <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-        {currentPredictionHunt?.bonuses?.length || 0} Bonus
-        {(currentPredictionHunt?.bonuses?.length || 0) === 1 ? "" : "es"}
-      </div>
-    </div>
-
-    <div className="mt-4 max-h-[260px] overflow-y-auto rounded-[1.1rem] border border-white/10 bg-black/20">
-      {!currentPredictionHunt?.bonuses?.length ? (
-        <div className="flex h-[180px] items-center justify-center text-white/45">
-          No bonuses yet.
-        </div>
-      ) : (
-        <div className="divide-y divide-white/5">
-          {currentPredictionHunt.bonuses.map((bonus: any, index: number) => (
-            <div
-              key={bonus.id || index}
-              className="flex items-center justify-between gap-4 px-5 py-4"
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/30 text-xs font-black text-fuchsia-300">
-                    {index + 1}
-                  </div>
-
-                  <div className="min-w-0">
                     <div className="truncate font-semibold text-white">
-                      {bonus.slotName}
+                      {entry.username}
                     </div>
-                    <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/35">
-                      Bet {formatMoney(Number(bonus.betSize || 0))}
-                    </div>
+                  </div>
+
+                  <div className="mt-1 pl-12 text-xs uppercase tracking-[0.18em] text-white/35">
+                    {formatTimeAgo(entry.createdAt)}
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-lg font-black text-[#b8ffd8]">
+                    {formatMoney(entry.guess)}
                   </div>
                 </div>
               </div>
-
-              <div className="text-right">
-                <div className="font-black text-emerald-200">
-                  {formatMoney(Number(bonus.payout || 0))}
-                </div>
-                <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/35">
-                  {Number(bonus.multiplier || 0).toFixed(2)}x
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   </div>
 </Panel>
-
-    <Panel className="border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
-      <div className="mb-4 text-center text-4xl font-black tracking-wide">Predictions</div>
-
-      <div className="grid gap-6 2xl:grid-cols-[0.95fr_1.15fr]">
-        <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-6">
-          <div className="mb-4 flex flex-wrap gap-2">
-            <div className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-white/65">
-              {currentPredictionCount} Entries
-            </div>
-            <div
-              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] ${
-                predictionStatus === "open"
-                  ? "border-emerald-300/30 bg-emerald-400/10 text-emerald-200"
-                  : "border-white/10 bg-black/30 text-white/65"
-              }`}
-            >
-              {predictionStatus === "open" ? "Open" : "None"}
-            </div>
-          </div>
-
-          <div className="text-center text-[11px] font-bold uppercase tracking-[0.28em] text-white/45">
-            Your Entry
-          </div>
-
-          <div className="mt-4 text-center text-4xl font-black">
-            {predictionStatus === "open" && currentPredictionEntry
-  ? formatMoney(currentPredictionEntry.guess)
-  : "--"}
-          </div>
-
-          <div className="mt-4 rounded-[1.1rem] border border-dashed border-white/10 bg-black/20 p-4 text-white/75">
-            {predictionStatus === "open"
-              ? "Prediction session is open."
-              : "No prediction session is open yet."}
-          </div>
-
-          <div className="mt-5 rounded-[1.3rem] border border-white/10 bg-black/20 p-6">
-  <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-white/45">
-    Submit Prediction
-  </div>
-
-  <input
-  value={predictionInput}
-  onChange={(e) => setPredictionInput(e.target.value.replace(/[^0-9]/g, ""))}
-  placeholder="Enter final hunt balance"
-  disabled={predictionStatus !== "open"}
-  className="mt-4 w-full rounded-xl border border-white/10 bg-black/40 px-5 py-4 text-lg text-white outline-none focus:border-emerald-300/40"
-/>
-
-  <div className="mt-5 grid gap-4 grid-cols-1 sm:grid-cols-2">
-    <button
-      onClick={isTwitchConnected ? handleLogout : handleTwitchLogin}
-      className="rounded-xl min-h-[64px] border border-white/10 bg-black/30 px-4 py-3 font-semibold text-white flex items-center justify-center transition hover:bg-white/5"
-    >
-      {isTwitchConnected ? "Logout" : "Connect Twitch"}
-    </button>
-
-    <button
-      onClick={handlePredictionSubmit}
-      disabled={!isTwitchConnected || predictionStatus !== "open"}
-      className="rounded-xl min-h-[64px] border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 font-semibold text-emerald-200 flex items-center justify-center transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      Save Prediction
-    </button>
-  </div>
-
-  {predictionMessage && (
-    <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3 text-sm text-white/75">
-      {predictionMessage}
-    </div>
-  )}
-</div>
-        </div>
-
-        <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-6">
-          <div className="mb-4 flex items-center justify-end gap-2">
-            <button
-              onClick={() => setPredictionSortMode("highest")}
-              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] transition ${
-                predictionSortMode === "highest"
-                  ? "border-white/30 bg-white/10 text-white"
-                  : "border-white/10 bg-black/30 text-white/65 hover:text-white"
-              }`}
-            >
-              Highest
-            </button>
-            <button
-              onClick={() => setPredictionSortMode("newest")}
-              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] transition ${
-                predictionSortMode === "newest"
-                  ? "border-white/30 bg-white/10 text-white"
-                  : "border-white/10 bg-black/30 text-white/65 hover:text-white"
-              }`}
-            >
-              Newest
-            </button>
-          </div>
-
-          <div className="h-[520px] overflow-y-auto rounded-[1.1rem] border border-white/10 bg-black/20">
-            {predictionStatus !== "open" || sortedPredictionsForTab.length === 0 ? (
-  <div className="flex h-full items-center justify-center text-white/45">
-    No entries.
-  </div>
-) : (
-  <div className="divide-y divide-white/5">
-    {sortedPredictionsForTab.map((entry, index) => (
-                  <div
-                    key={entry.id}
-                    className="flex items-center justify-between gap-4 px-5 py-4"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/30 text-xs font-black text-emerald-300">
-                          {index + 1}
-                        </div>
-                        <div className="truncate font-semibold text-white">
-                          {entry.username}
-                        </div>
-                      </div>
-                      <div className="mt-1 pl-11 text-xs uppercase tracking-[0.18em] text-white/35">
-                        {formatTimeAgo(entry.createdAt)}
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <div className="text-lg font-black text-emerald-200">
-                        {formatMoney(entry.guess)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </Panel>
   </section>
 )}
 
             {activeSection === "tournaments" && (
-              <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-                <Panel className="border-fuchsia-300/25 shadow-[0_0_65px_rgba(217,70,239,0.10)]">
-                  <SectionLabel color="fuchsia">Tournaments</SectionLabel>
-                  <h2 className="mt-3 text-4xl font-black tracking-wide">{bracket.title}</h2>
+  <section className="space-y-6">
+    <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_65px_rgba(0,255,136,0.10)]">
+      <div className="text-center">
+        <SectionLabel>Tournaments</SectionLabel>
 
-                  {bracketLoading ? (
-                    <div className="mt-8 text-white/60">Loading bracket...</div>
-                  ) : (
-                    <div className="mt-8 grid gap-4 xl:grid-cols-3">
-                      {bracket.rounds.map((round) => (
-                        <div
-                          key={round.id}
-                          className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5"
-                        >
-                          <div className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-fuchsia-300">
-                            {round.name}
-                          </div>
+        <h2 className="mt-4 text-[clamp(2.3rem,7vw,5rem)] font-black leading-[0.92] tracking-tight text-white">
+          {bracket.title || "Tournament Bracket"}
+        </h2>
 
-                          <div className="space-y-4">
-                            {round.matches.map((match) => (
-                              <MatchCard key={match.id} match={match} />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Panel>
+        <div className="mt-4 inline-flex rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] px-5 py-2 text-sm font-semibold text-[#b8ffd8]">
+          Live Bracket
+        </div>
+      </div>
 
-                <Panel className="border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
-                  <SectionLabel>Bracket Status</SectionLabel>
-                  <h2 className="mt-3 text-4xl font-black tracking-wide">
-                    {adminAllowed ? "EDITABLE" : "VIEW ONLY"}
-                  </h2>
-                  <p className="mt-4 text-white/65">
-                    Generate a new bracket, edit teams, and save it live from the admin panel.
-                  </p>
+      {bracketLoading ? (
+        <div className="mt-10 text-center text-white/55">Loading bracket...</div>
+      ) : (
+        <div className="mt-10 overflow-x-auto pb-2">
+          <div className="mx-auto flex min-w-[980px] items-start justify-center gap-6">
+            {bracket.rounds.map((round, roundIndex) => {
+              const topPadding =
+                roundIndex === 0
+                  ? "pt-2"
+                  : roundIndex === 1
+                  ? "pt-14"
+                  : roundIndex === 2
+                  ? "pt-28"
+                  : "pt-40";
 
-                  <div className="mt-8 space-y-3">
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-white/75">
-                      Generate 4 / 8 / 16 team brackets
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-white/75">
-                      Edit team names after generating
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-white/75">
-                      Classic 8-team bracket auto-advances winners
+              return (
+                <div key={round.id} className={`w-[290px] shrink-0 ${topPadding}`}>
+                  <div className="mb-4 text-center">
+                    <div className="inline-flex rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-5 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[#8fffd0]">
+                      {round.name}
                     </div>
                   </div>
-                </Panel>
-              </section>
-            )}
+
+                  <div
+                    className={`space-y-6 ${
+                      roundIndex === 0
+                        ? ""
+                        : roundIndex === 1
+                        ? "pt-8"
+                        : roundIndex === 2
+                        ? "pt-16"
+                        : "pt-24"
+                    }`}
+                  >
+                    {round.matches.map((match) => (
+                      <MatchCard key={match.id} match={match} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </Panel>
+  </section>
+)}
 
             {activeSection === "admin" && adminAllowed && (
               <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
@@ -2081,202 +2317,216 @@ const handleTwitchLogin = async () => {
                   </div>
                 </Panel>
 
-                <Panel className="border-fuchsia-300/25 shadow-[0_0_65px_rgba(217,70,239,0.10)]">
-                  <SectionLabel color="fuchsia">Tournament Admin</SectionLabel>
-                  <h2 className="mt-3 text-4xl font-black tracking-wide">EDIT BRACKET</h2>
+                <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_65px_rgba(0,255,136,0.10)]">
+  <SectionLabel>Tournament Admin</SectionLabel>
+  <h2 className="mt-3 text-4xl font-black tracking-wide">EDIT BRACKET</h2>
 
-                  <div className="mt-8 grid gap-4">
-                    <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
-                      <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
-                        Bracket title
-                      </div>
-                      <input
-                        value={bracket.title}
-                        onChange={(e) => updateBracketTitle(e.target.value)}
-                        disabled={!isAdmin}
-                        className="mt-3 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
-                      />
-                    </div>
+  <div className="mt-8 grid gap-5">
+    <div className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-5">
+      <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
+        Bracket Title
+      </div>
+      <input
+        value={bracket.title}
+        onChange={(e) => updateBracketTitle(e.target.value)}
+        disabled={!isAdmin}
+        placeholder="Enter tournament title"
+        className="mt-3 w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
+      />
+    </div>
 
-                    <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
-                      <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
-                        Generate bracket
-                      </div>
+    <div className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-5">
+      <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
+        Generate New Bracket
+      </div>
 
-                      <div className="mt-3 grid gap-3 md:grid-cols-[160px_1fr]">
-                        <input
-                          value={generatorTeamCount}
-                          onChange={(e) => setGeneratorTeamCount(e.target.value.replace(/[^0-9]/g, ""))}
-                          placeholder="How many teams?"
-                          disabled={!isAdmin}
-                          className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
-                        />
+      <div className="mt-4 grid gap-3 md:grid-cols-[220px_1fr]">
+        <select
+          value={generatorTeamCount}
+          onChange={(e) => setGeneratorTeamCount(e.target.value)}
+          disabled={!isAdmin}
+          className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none disabled:opacity-40"
+        >
+          <option value="2">2 Teams</option>
+          <option value="3">3 Teams</option>
+          <option value="4">4 Teams</option>
+          <option value="5">5 Teams</option>
+          <option value="6">6 Teams</option>
+          <option value="7">7 Teams</option>
+          <option value="8">8 Teams</option>
+          <option value="9">9 Teams</option>
+          <option value="10">10 Teams</option>
+          <option value="11">11 Teams</option>
+          <option value="12">12 Teams</option>
+          <option value="13">13 Teams</option>
+          <option value="14">14 Teams</option>
+          <option value="15">15 Teams</option>
+          <option value="16">16 Teams</option>
+        </select>
 
-                        <button
-                          onClick={handleGenerateBracket}
-                          disabled={!isAdmin}
-                          className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-3 font-semibold text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-40"
-                        >
-                          Generate Bracket
-                        </button>
-                      </div>
+        <button
+          onClick={handleGenerateBracket}
+          disabled={!isAdmin}
+          className="rounded-xl border border-[rgba(0,255,136,0.22)] bg-[linear-gradient(180deg,rgba(0,255,136,0.18),rgba(0,255,136,0.08))] px-5 py-3 font-semibold text-[#b8ffd8] shadow-[0_0_20px_rgba(0,255,136,0.10)] transition hover:border-[rgba(0,255,136,0.34)] hover:bg-[linear-gradient(180deg,rgba(0,255,136,0.22),rgba(0,255,136,0.10))] disabled:opacity-40"
+        >
+          Generate Bracket
+        </button>
+      </div>
 
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {[4, 8, 16].map((count) => (
-                          <button
-                            key={count}
-                            type="button"
-                            disabled={!isAdmin}
-                            onClick={() => {
-                              setGeneratorTeamCount(String(count));
-                              setBracket(createBracketFromTeamCount(count, bracket.title || "Trashguy Tournament"));
-                              setBracketMessage("Bracket generated locally. Click Save Bracket to keep it.");
-                            }}
-                            className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
-                          >
-                            {count} Teams
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+      <div className="mt-3 text-sm text-white/45">
+        Blank team slots are created automatically. Odd team counts will include BYEs.
+      </div>
+    </div>
 
-                    {bracket.rounds.map((round) => (
-                      <div
-                        key={round.id}
-                        className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5"
-                      >
-                        <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
-                          Round name
-                        </div>
-                        <input
-                          value={round.name}
-                          onChange={(e) => updateRoundName(round.id, e.target.value)}
-                          disabled={!isAdmin}
-                          className="mt-3 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
-                        />
+    <div className="grid gap-4">
+      {bracket.rounds.map((round) => (
+        <div
+          key={round.id}
+          className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-5"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-xs font-bold uppercase tracking-[0.22em] text-[#8fffd0]">
+              {round.name}
+            </div>
 
-                        <div className="mt-5 grid gap-4">
-                          {round.matches.map((match) => (
-                            <div
-                              key={match.id}
-                              className="rounded-2xl border border-white/10 bg-white/5 p-4"
-                            >
-                              <div className="mb-3 flex items-center justify-between gap-3">
-                                <div className="text-xs font-bold uppercase tracking-[0.24em] text-fuchsia-300">
-                                  {match.id.toUpperCase()}
-                                </div>
-                                <div className="text-xs uppercase tracking-[0.22em] text-white/35">
-                                  {match.winner ? `Winner: ${match.winner}` : "No winner selected"}
-                                </div>
-                              </div>
+            <input
+              value={round.name}
+              onChange={(e) => updateRoundName(round.id, e.target.value)}
+              disabled={!isAdmin}
+              className="w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40 md:max-w-[220px]"
+            />
+          </div>
 
-                              <div className="grid gap-3">
-                                <input
-                                  value={match.player1}
-                                  onChange={(e) =>
-                                    updateMatchField(round.id, match.id, "player1", e.target.value)
-                                  }
-                                  disabled={!isAdmin}
-                                  className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
-                                />
-                                <input
-                                  value={match.player2}
-                                  onChange={(e) =>
-                                    updateMatchField(round.id, match.id, "player2", e.target.value)
-                                  }
-                                  disabled={!isAdmin}
-                                  className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
-                                />
-                              </div>
-
-                              <div className="mt-4 grid gap-2 md:grid-cols-3">
-                                <button
-                                  onClick={() => selectMatchWinner(round.id, match.id, match.player1)}
-                                  disabled={!isAdmin || !match.player1.trim()}
-                                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-40 ${
-                                    match.winner === match.player1
-                                      ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-200"
-                                      : "border-white/10 bg-black/30 text-white"
-                                  }`}
-                                >
-                                  Pick {match.player1 || "Player 1"}
-                                </button>
-
-                                <button
-                                  onClick={() => selectMatchWinner(round.id, match.id, match.player2)}
-                                  disabled={!isAdmin || !match.player2.trim()}
-                                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-40 ${
-                                    match.winner === match.player2
-                                      ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-200"
-                                      : "border-white/10 bg-black/30 text-white"
-                                  }`}
-                                >
-                                  Pick {match.player2 || "Player 2"}
-                                </button>
-
-                                <button
-                                  onClick={() => clearMatchWinner(round.id, match.id)}
-                                  disabled={!isAdmin}
-                                  className="rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
-                                >
-                                  Clear Winner
-                                </button>
-                              </div>
-
-                              <div className="mt-4">
-                                <MatchCard match={match} compact />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <button
-                        onClick={saveBracket}
-                        disabled={!isAdmin}
-                        className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 font-semibold text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-40"
-                      >
-                        Save Bracket
-                      </button>
-                      <button
-                        onClick={resetBracket}
-                        disabled={!isAdmin}
-                        className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-                      >
-                        Reset Bracket
-                      </button>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/75">
-                      {bracketMessage || "Generate a bracket, edit it, then save it live."}
-                    </div>
+          <div className="mt-5 grid gap-4">
+            {round.matches.map((match) => (
+              <div
+                key={match.id}
+                className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)] p-4"
+              >
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/35">
+                    {match.id.toUpperCase()}
                   </div>
-                </Panel>
+
+                  <div className="text-xs uppercase tracking-[0.22em] text-white/30">
+                    {match.winner ? `Winner: ${match.winner}` : "No winner selected"}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <input
+                    value={match.player1}
+                    onChange={(e) =>
+                      updateMatchField(round.id, match.id, "player1", e.target.value)
+                    }
+                    disabled={!isAdmin || match.player1 === "BYE"}
+                    placeholder=""
+                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
+                  />
+
+                  <input
+                    value={match.player2}
+                    onChange={(e) =>
+                      updateMatchField(round.id, match.id, "player2", e.target.value)
+                    }
+                    disabled={!isAdmin || match.player2 === "BYE"}
+                    placeholder=""
+                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
+                  />
+                </div>
+
+                <div className="mt-4 grid gap-2 md:grid-cols-3">
+                  <button
+                    onClick={() => selectMatchWinner(round.id, match.id, match.player1)}
+                    disabled={!isAdmin || !match.player1.trim() || match.player1 === "BYE"}
+                    className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-40 ${
+                      match.winner === match.player1
+                        ? "border-[rgba(0,255,136,0.30)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8]"
+                        : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white"
+                    }`}
+                  >
+                    Pick {match.player1 || ""}
+                  </button>
+
+                  <button
+                    onClick={() => selectMatchWinner(round.id, match.id, match.player2)}
+                    disabled={!isAdmin || !match.player2.trim() || match.player2 === "BYE"}
+                    className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-40 ${
+                      match.winner === match.player2
+                        ? "border-[rgba(0,255,136,0.30)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8]"
+                        : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white"
+                    }`}
+                  >
+                    Pick {match.player2 || ""}
+                  </button>
+
+                  <button
+                    onClick={() => clearMatchWinner(round.id, match.id)}
+                    disabled={!isAdmin}
+                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
+                  >
+                    Clear Winner
+                  </button>
+                </div>
+
+                <div className="mt-4">
+                  <MatchCard match={match} compact />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div className="grid gap-3 md:grid-cols-2">
+      <button
+        onClick={saveBracket}
+        disabled={!isAdmin}
+        className="rounded-2xl border border-[rgba(0,255,136,0.22)] bg-[linear-gradient(180deg,rgba(0,255,136,0.18),rgba(0,255,136,0.08))] px-5 py-4 font-semibold text-[#b8ffd8] shadow-[0_0_20px_rgba(0,255,136,0.10)] transition hover:border-[rgba(0,255,136,0.34)] hover:bg-[linear-gradient(180deg,rgba(0,255,136,0.22),rgba(0,255,136,0.10))] disabled:opacity-40"
+      >
+        Save Bracket
+      </button>
+
+      <button
+        onClick={resetBracket}
+        disabled={!isAdmin}
+        className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-5 py-4 font-semibold text-white disabled:opacity-40"
+      >
+        Reset Bracket
+      </button>
+    </div>
+
+    <div className="rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.03)] p-4 text-sm text-white/75">
+      {bracketMessage || "Generate a bracket, enter teams, pick winners, then save it live."}
+    </div>
+  </div>
+</Panel>
               </section>
             )}
           </main>
 
-          <footer className="relative overflow-hidden border-t border-white/10 bg-black/60 px-6 py-8">
-            <div className="absolute inset-x-0 top-0 h-px bg-emerald-300/20 shadow-[0_0_14px_rgba(110,231,183,0.55)]" />
-            <div className="mx-auto flex max-w-7xl flex-col gap-3 text-sm text-white/45 md:flex-row md:items-center md:justify-between">
-              <div>© 2026 Trashguy</div>
-              <div className="flex flex-wrap gap-4">
-                {socials.map((social) => (
-                  <a
-                    key={social.name}
-                    href={social.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-white"
-                  >
-                    {social.name}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </footer>
+          <footer className="relative overflow-hidden border-t border-[rgba(0,255,136,0.14)] bg-[linear-gradient(180deg,rgba(8,8,8,0.88),rgba(4,4,4,0.96))] px-6 py-8">
+  <div className="absolute inset-x-0 top-0 h-px bg-[rgba(0,255,136,0.22)] shadow-[0_0_14px_rgba(0,255,136,0.25)]" />
+  
+  <div className="mx-auto flex max-w-7xl flex-col gap-3 text-sm text-white/45 md:flex-row md:items-center md:justify-between">
+    <div>© 2026 Trashguy</div>
+
+    <div className="flex flex-wrap gap-4">
+      {socials.map((social) => (
+        <a
+          key={social.name}
+          href={social.href}
+          target="_blank"
+          rel="noreferrer"
+          className="transition hover:text-[#8fffd0]"
+        >
+          {social.name}
+        </a>
+      ))}
+    </div>
+  </div>
+</footer>
         </div>
       </div>
     </div>
