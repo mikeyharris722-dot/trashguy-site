@@ -170,7 +170,7 @@ export default function PredictionsLivePage() {
 
   const [predictionInput, setPredictionInput] = useState("");
   const [predictionMessage, setPredictionMessage] = useState("");
-  const [predictionStatus, setPredictionStatus] = useState<"open" | "locked">("open");
+  const [predictionStatus, setPredictionStatus] = useState<"open" | "locked">("locked");
   const [predictions, setPredictions] = useState<PredictionItem[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>("newest");
 
@@ -264,7 +264,7 @@ export default function PredictionsLivePage() {
         profitLossPercentage: Number(
           hunt?.stats?.profitLossPercentage || hunt.profitLossPercentage || 0
         ),
-        isOpening: Boolean(hunt.isOpening),
+        isOpening: Boolean(hunt.isOpening) || hunt.status === "open",
         currentOpeningSlot: hunt.currentOpeningSlot || null,
         createdAt: hunt.createdAt || null,
         updatedAt: hunt.updatedAt || null,
