@@ -1650,11 +1650,6 @@ LEADERBOARD
           {leaderboardData.map((player) => {
             const prize = leaderboardPrizes[player.rank] || 0;
 
-            const maskedUsername =
-              player.username.length <= 4
-                ? player.username
-                : `${player.username.slice(0, 2)}***${player.username.slice(-1)}`;
-
             return (
               <div
                 key={`${player.rank}-${player.username}`}
@@ -1678,7 +1673,7 @@ LEADERBOARD
 
                 <div className="min-w-0">
                   <div className="truncate text-xl font-bold text-white sm:text-2xl">
-                    {maskedUsername}
+                    {player.username}
                   </div>
 
                   <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/28 sm:hidden">
