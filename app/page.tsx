@@ -3,12 +3,29 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
+import { FaDiscord, FaYoutube, FaXTwitter } from "react-icons/fa6";
 
 const socials = [
-  { name: "RouloBets", href: "https://roulobets.com/?r=trashguy" },
-  { name: "Discord", href: "https://discord.gg/EqjwXzkDMK" },
-  { name: "Twitter / X", href: "https://x.com/trashguy__" },
-  { name: "YouTube", href: "https://www.youtube.com/@Trashguyy" },
+  {
+    name: "RouloBets",
+    href: "https://roulobets.com/?r=trashguy",
+    image: "/roulobets.png",
+  },
+  {
+    name: "Discord",
+    href: "https://discord.gg/EqjwXzkDMK",
+    icon: FaDiscord,
+  },
+  {
+    name: "Twitter / X",
+    href: "https://x.com/trashguy__",
+    icon: FaXTwitter,
+  },
+  {
+    name: "YouTube",
+    href: "https://www.youtube.com/@Trashguyy",
+    icon: FaYoutube,
+  },
 ];
 
 const fallbackLeaderboard = [
@@ -1569,19 +1586,43 @@ if (typeof window !== "undefined") {
                   </div>
 
                   <div className="mt-8 grid gap-3">
-                    {socials.map((social) => (
-                      <a
-                        key={social.name}
-                        href={social.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center justify-between rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.92),rgba(8,8,8,0.96))] px-5 py-4 transition hover:border-[rgba(0,255,136,0.28)] hover:bg-[linear-gradient(180deg,rgba(18,18,18,0.96),rgba(10,10,10,0.98))] hover:shadow-[0_0_24px_rgba(0,255,136,0.06)]"
-                      >
-                        <span className="font-semibold">{social.name}</span>
-                        <span className="text-sm text-emerald-300">Visit</span>
-                      </a>
-                    ))}
-                  </div>
+  {socials.map((social) => {
+    const Icon = social.icon;
+
+    return (
+      <a
+        key={social.name}
+        href={social.href}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-between rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.92),rgba(8,8,8,0.96))] px-5 py-4 transition hover:border-[rgba(0,255,136,0.28)] hover:bg-[linear-gradient(180deg,rgba(18,18,18,0.96),rgba(10,10,10,0.98))] hover:shadow-[0_0_24px_rgba(0,255,136,0.06)]"
+      >
+        <div className="flex items-center gap-4">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(0,255,136,0.18)] bg-[rgba(0,255,136,0.08)] shadow-[0_0_16px_rgba(0,255,136,0.08)]">
+            {social.image ? (
+              <img
+                src={social.image}
+                alt={social.name}
+                className="h-6 w-6 object-contain"
+              />
+            ) : Icon ? (
+              <Icon className="text-xl text-[#8fffd0]" />
+            ) : null}
+          </div>
+
+          <div>
+            <div className="font-semibold text-white">{social.name}</div>
+            <div className="text-xs uppercase tracking-[0.18em] text-white/30">
+              Open link
+            </div>
+          </div>
+        </div>
+
+        <span className="text-sm font-semibold text-emerald-300">Visit</span>
+      </a>
+    );
+  })}
+</div>
                 </Panel>
 
                 <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_40px_rgba(0,255,136,0.08)]">
