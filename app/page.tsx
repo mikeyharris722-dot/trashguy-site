@@ -2164,31 +2164,31 @@ LEADERBOARD
           <div className="divide-y divide-white/5">
             {sortedPredictionsForTab.map((entry, index) => (
               <div
-                key={entry.id}
-                className="flex items-center justify-between gap-4 px-5 py-4"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] text-xs font-black text-[#8fffd0]">
-                      {index + 1}
-                    </div>
+  key={entry.id}
+  className="px-5 py-4"
+>
+  <div className="flex items-start gap-3">
+    <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] text-xs font-black text-[#8fffd0]">
+      {index + 1}
+    </div>
 
-                    <div className="font-semibold text-white break-all">
-                      {entry.username}
-                    </div>
-                  </div>
+    <div className="min-w-0 flex-1">
+      <div className="truncate font-semibold text-white" title={entry.username}>
+        {entry.username}
+      </div>
 
-                  <div className="mt-1 pl-12 text-xs uppercase tracking-[0.18em] text-white/35">
-                    {formatTimeAgo(entry.createdAt)}
-                  </div>
-                </div>
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <div className="text-xs uppercase tracking-[0.18em] text-white/35">
+          {formatTimeAgo(entry.createdAt)}
+        </div>
 
-                <div className="text-right">
-                  <div className="text-lg font-black text-[#b8ffd8]">
-                    {formatMoney(entry.guess)}
-                  </div>
-                </div>
-              </div>
+        <div className="text-lg font-black text-[#b8ffd8]">
+          {formatMoney(entry.guess)}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
             ))}
           </div>
         )}
