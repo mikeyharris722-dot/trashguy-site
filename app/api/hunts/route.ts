@@ -16,11 +16,11 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         hunts: [],
+        currentHuntState: null,
         note: "Missing BONUSHUNT_API_KEY",
       });
     }
 
-    // 1) Get external BonusHunt data
     const res = await fetch("https://bonushunt.gg/api/public/hunts?limit=10", {
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -34,6 +34,7 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         hunts: [],
+        currentHuntState: null,
         note: `BonusHunt API error: ${text}`,
       });
     }
@@ -43,31 +44,29 @@ export async function GET() {
     const externalHunts = Array.isArray(data?.hunts)
       ? data.hunts
       : Array.isArray(data)
-        ? data
-        : [];
+      ? data
+      : [];
 
-    // 2) Get your local Supabase hunt state
-    const { data: localHunts, error: localError } = await supabase
-      .from("hunts")
-      .select("id, status, prediction_status, created_at, updated_at")
-      .order("created_at", { ascending: false });
+const { data: localHunts, error: localError } = await supabase
+  .from("hunts")
+  .select("id, external_hunt_id, status, prediction_status, created_at, updated_at")
+  .order("created_at", { ascending: false });
 
-    if (localError) {
-      return NextResponse.json({
-        success: true,
-        hunts: [],
-        note: localError.message,
-      });
-    }
+if (localError) {
+  return NextResponse.json({
+    success: true,
+    hunts: [],
+    currentHuntState: null,
+    note: localError.message,
+  });
+}
 
-    const localMap = new Map(
-      (localHunts || []).map((hunt: any) => [hunt.id, hunt])
-    );
+const localMap = new Map(
+  (localHunts || []).map((hunt: any) => [hunt.external_hunt_id, hunt])
+);
 
-    // 3) Merge external hunt data with local DB state
-    const hunts = externalHunts.map((hunt: any) => {
-      const local = localMap.get(hunt.id);
-
+const hunts = externalHunts.map((hunt: any) => {
+  const local = localMap.get(hunt.id);
       return {
         ...hunt,
         status: local?.status || hunt.status || "",
@@ -81,14 +80,24 @@ export async function GET() {
       };
     });
 
+    const currentHuntState =
+      hunts.find(
+        (hunt: any) =>
+          hunt?.prediction_status === "open" ||
+          hunt?.status === "open" ||
+          Boolean(hunt?.isOpening)
+      ) || null;
+
     return NextResponse.json({
       success: true,
       hunts,
+      currentHuntState,
     });
   } catch (error: any) {
     return NextResponse.json({
       success: true,
       hunts: [],
+      currentHuntState: null,
       note: error?.message || "Failed to load hunts",
     });
   }

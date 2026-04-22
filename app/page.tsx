@@ -488,6 +488,7 @@ export default function Home() {
   const [bracketMessage, setBracketMessage] = useState("");
 
   const predictionClockRef = useRef<NodeJS.Timeout | null>(null);
+  const [countdownTick, setCountdownTick] = useState(Date.now());
 
   const normalizedViewer = viewerName.trim().toLowerCase();
   const adminAllowed = ADMIN_USERS.includes(normalizedViewer);
@@ -543,6 +544,32 @@ const currentPredictionAvgX =
     ? ((currentPredictionHunt.totalWinnings || 0) / currentPredictionHunt.startCost).toFixed(2)
     : "0.00";
 
+    const leaderboardCountdown = useMemo(() => {
+  const end = new Date("2026-05-04T00:00:00-04:00").getTime();
+  const diff = end - countdownTick;
+
+  if (diff <= 0) return "Ended";
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+}, [countdownTick]);
+
+const leaderboardProgress = useMemo(() => {
+  const start = new Date("2026-04-21T00:00:00-04:00").getTime();
+  const end = new Date("2026-05-04T00:00:00-04:00").getTime();
+  const total = end - start;
+  const elapsed = countdownTick - start;
+
+  if (elapsed <= 0) return 0;
+  if (elapsed >= total) return 100;
+
+  return (elapsed / total) * 100;
+}, [countdownTick]);
+
   useEffect(() => {
   if (!authLoaded) return;
   if (!isTwitchConnected) return;
@@ -556,6 +583,14 @@ const currentPredictionAvgX =
     }
   }
 }, [adminAllowed, activeSection, authLoaded, isTwitchConnected]);
+
+useEffect(() => {
+  const timer = setInterval(() => {
+    setCountdownTick(Date.now());
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, []);
 
 useEffect(() => {
   if (typeof window === "undefined") return;
@@ -772,7 +807,7 @@ useEffect(() => {
 
   const liveTimer = setInterval(loadLiveStatus, 60000);
   const predictionTimer = setInterval(loadPredictions, 5000);
-  const huntTimer = setInterval(loadHunts, 5000);
+  const huntTimer = setInterval(loadHunts, 30000);
 
   return () => {
     clearInterval(liveTimer);
@@ -780,26 +815,6 @@ useEffect(() => {
     clearInterval(huntTimer);
   };
 }, [loadBracket, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions]);
-
-useEffect(() => {
-  if (typeof window === "undefined") return;
-
-  if (!currentHuntState?.id) {
-    setPredictionStatus("locked");
-    localStorage.removeItem(STORAGE_KEYS.activeHuntId);
-    localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
-    return;
-  }
-
-  const nextStatus =
-    currentHuntState.prediction_status === "open" ? "open" : "locked";
-
-  setAdminHuntId(currentHuntState.id);
-  setPredictionStatus(nextStatus);
-
-  localStorage.setItem(STORAGE_KEYS.activeHuntId, currentHuntState.id);
-  localStorage.setItem(STORAGE_KEYS.predictionStatus, nextStatus);
-}, [currentHuntState]);
 
 // LOAD USER SESSION
 useEffect(() => {
@@ -907,24 +922,7 @@ useEffect(() => {
 
   if (currentHuntState?.id) {
     resolvedHunt =
-      huntsData.find((hunt) => hunt.id === currentHuntState.id) ||
-      ({
-        id: currentHuntState.id,
-        title: currentHuntState.title || "Live Hunt",
-        casino: currentHuntState.casino || "Unknown",
-        startCost: Number(currentHuntState.startCost || currentHuntState.start_amount || 0),
-        totalWinnings: Number(currentHuntState.totalWinnings || 0),
-        profitLoss: Number(currentHuntState.profitLoss || 0),
-        profitLossPercentage: Number(currentHuntState.profitLossPercentage || 0),
-        isOpening:
-          Boolean(currentHuntState.isOpening) || currentHuntState.status === "open",
-        status: currentHuntState.status || "",
-        prediction_status: currentHuntState.prediction_status || "locked",
-        currentOpeningSlot: currentHuntState.currentOpeningSlot || null,
-        createdAt: currentHuntState.createdAt || null,
-        updatedAt: currentHuntState.updatedAt || null,
-        bonuses: [],
-      } as HuntItem);
+      huntsData.find((hunt) => hunt.id === currentHuntState.id) || null;
   }
 
   if (!resolvedHunt && storedHuntId) {
@@ -934,16 +932,11 @@ useEffect(() => {
   if (!resolvedHunt) {
     resolvedHunt =
       huntsData.find(
-        (hunt) => hunt.prediction_status === "open" || hunt.status === "open" || hunt.isOpening
+        (hunt) =>
+          hunt.prediction_status === "open" ||
+          hunt.status === "open" ||
+          hunt.isOpening
       ) || null;
-  }
-
-  if (!resolvedHunt && huntsData.length) {
-    resolvedHunt = [...huntsData].sort((a, b) => {
-      const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-      const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-      return bTime - aTime;
-    })[0];
   }
 
   if (!resolvedHunt) {
@@ -957,7 +950,11 @@ useEffect(() => {
   }
 
   const nextStatus =
-    resolvedHunt.prediction_status === "open" ? "open" : storedPredictionStatus === "open" ? "open" : "locked";
+    resolvedHunt.prediction_status === "open"
+      ? "open"
+      : storedPredictionStatus === "open"
+      ? "open"
+      : "locked";
 
   setAdminHuntId(resolvedHunt.id);
   setPredictionStatus(nextStatus);
@@ -1002,12 +999,6 @@ useEffect(() => {
   };
 }, [loadBracket, loadPredictions, loadHunts]);
 
-// ADMIN MODE PERSISTENCE (FIXED POSITION)
-useEffect(() => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEYS.adminMode, String(isAdmin));
-}, [isAdmin]);
-
 const handleTwitchLogin = async () => {
   try {
     setPredictionMessage("");
@@ -1045,8 +1036,9 @@ const handleTwitchLogin = async () => {
     setActiveSection("home");
 
     localStorage.removeItem(STORAGE_KEYS.adminMode);
-localStorage.removeItem(STORAGE_KEYS.activeHuntId);
-localStorage.removeItem(STORAGE_KEYS.predictionStatus);
+    localStorage.removeItem(STORAGE_KEYS.activeHuntId);
+    localStorage.removeItem(STORAGE_KEYS.predictionStatus);
+    localStorage.removeItem(STORAGE_KEYS.activeSection);
 
     setPredictionMessage("Logged out.");
   } catch {
@@ -1148,136 +1140,161 @@ localStorage.removeItem(STORAGE_KEYS.predictionStatus);
   };
 
   const handleStartHunt = async () => {
-  if (adminHuntId && predictionStatus === "open") {
+  const existingHuntId =
+    adminHuntId ||
+    currentPredictionHunt?.id ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem(STORAGE_KEYS.activeHuntId) || ""
+      : "");
+
+  if (existingHuntId && predictionStatus === "open") {
     setAdminMessage("A hunt is already active.");
     return;
   }
 
   try {
-      const token = await getAccessToken();
+    const token = await getAccessToken();
 
-      const res = await fetch("/api/admin/hunts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: "Live Hunt",
-          casino: "Roulobets",
-          startAmount: 10000,
-        }),
-      });
+    const res = await fetch("/api/admin/hunts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        title: "Live Hunt",
+        casino: "Roulobets",
+        startAmount: 10000,
+      }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (!res.ok) {
-        setAdminMessage(data?.error || "Failed to start hunt.");
-        return;
-      }
-
-      const newHuntId = data?.hunt?.id || "";
-
-setAdminHuntId(newHuntId);
-setPredictionStatus("open");
-
-if (typeof window !== "undefined" && newHuntId) {
-  localStorage.setItem(STORAGE_KEYS.activeHuntId, newHuntId);
-  localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
-}
-      setLatestWinners([]);
-      setFinalResult("");
-      setAdminMessage("New hunt started.");
-      loadHunts();
-      loadPredictions();
-    } catch {
-      setAdminMessage("Failed to start hunt.");
+    if (!res.ok) {
+      setAdminMessage(data?.error || "Failed to start hunt.");
+      return;
     }
-  };
+
+    const newHuntId = data?.hunt?.id || "";
+
+    setAdminHuntId(newHuntId);
+    setPredictionStatus("open");
+
+    if (typeof window !== "undefined" && newHuntId) {
+      localStorage.setItem(STORAGE_KEYS.activeHuntId, newHuntId);
+      localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
+    }
+
+    setLatestWinners([]);
+    setFinalResult("");
+    setPredictions([]);
+    setAdminMessage("New hunt started.");
+    loadHunts();
+    loadPredictions();
+  } catch {
+    setAdminMessage("Failed to start hunt.");
+  }
+};
 
   const handleLockPredictions = async () => {
-    if (!adminHuntId) {
-      setAdminMessage("Start a new hunt first.");
+  const activeHuntId =
+    adminHuntId ||
+    currentPredictionHunt?.id ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem(STORAGE_KEYS.activeHuntId) || ""
+      : "");
+
+  if (!activeHuntId) {
+    setAdminMessage("Start a new hunt first.");
+    return;
+  }
+
+  try {
+    const token = await getAccessToken();
+
+    const res = await fetch(`/api/admin/hunts/${activeHuntId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        action: "lock",
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setAdminMessage(data?.error || "Failed to lock predictions.");
       return;
     }
 
-    try {
-      const token = await getAccessToken();
+    setPredictionStatus("locked");
+    setAdminHuntId(activeHuntId);
 
-      const res = await fetch(`/api/admin/hunts/${adminHuntId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          action: "lock",
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setAdminMessage(data?.error || "Failed to lock predictions.");
-        return;
-      }
-
-      setPredictionStatus("locked");
-
-if (typeof window !== "undefined") {
-  localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
-  if (adminHuntId) {
-    localStorage.setItem(STORAGE_KEYS.activeHuntId, adminHuntId);
-  }
-}
-      setAdminMessage("Predictions locked.");
-      loadPredictions();
-    } catch {
-      setAdminMessage("Failed to lock predictions.");
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
+      localStorage.setItem(STORAGE_KEYS.activeHuntId, activeHuntId);
     }
-  };
+
+    setAdminMessage("Predictions locked.");
+    loadPredictions();
+    loadHunts();
+  } catch {
+    setAdminMessage("Failed to lock predictions.");
+  }
+};
 
   const handleOpenPredictions = async () => {
-    if (!adminHuntId) {
-      setAdminMessage("Start a new hunt first.");
+  const activeHuntId =
+    adminHuntId ||
+    currentPredictionHunt?.id ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem(STORAGE_KEYS.activeHuntId) || ""
+      : "");
+
+  if (!activeHuntId) {
+    setAdminMessage("Start a new hunt first.");
+    return;
+  }
+
+  try {
+    const token = await getAccessToken();
+
+    const res = await fetch(`/api/admin/hunts/${activeHuntId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        action: "open",
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setAdminMessage(data?.error || "Failed to open predictions.");
       return;
     }
 
-    try {
-      const token = await getAccessToken();
+    setPredictionStatus("open");
+    setAdminHuntId(activeHuntId);
 
-      const res = await fetch(`/api/admin/hunts/${adminHuntId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          action: "open",
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setAdminMessage(data?.error || "Failed to open predictions.");
-        return;
-      }
-
-      setPredictionStatus("open");
-
-if (typeof window !== "undefined") {
-  localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
-  if (adminHuntId) {
-    localStorage.setItem(STORAGE_KEYS.activeHuntId, adminHuntId);
-  }
-}
-      setAdminMessage("Predictions opened.");
-      loadPredictions();
-    } catch {
-      setAdminMessage("Failed to open predictions.");
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
+      localStorage.setItem(STORAGE_KEYS.activeHuntId, activeHuntId);
     }
-  };
+
+    setAdminMessage("Predictions opened.");
+    loadPredictions();
+    loadHunts();
+  } catch {
+    setAdminMessage("Failed to open predictions.");
+  }
+};
 
   const handleCompleteHunt = async () => {
     if (!adminHuntId) {
@@ -1606,11 +1623,14 @@ LEADERBOARD
         </div>
 
         <div className="mt-4 text-[clamp(2rem,5vw,3.8rem)] font-black leading-none text-[#8fffd0]">
-          Ends in: 22d 19h 28m 45s
-        </div>
+  Ends in: {leaderboardCountdown}
+</div>
 
         <div className="mx-auto mt-6 h-3 w-full max-w-4xl overflow-hidden rounded-full border border-[rgba(0,255,136,0.18)] bg-[rgba(255,255,255,0.03)]">
-          <div className="h-full w-[23%] rounded-full bg-[linear-gradient(90deg,#00ff88,#19d38a)] shadow-[0_0_20px_rgba(0,255,136,0.35)]" />
+          <div
+  className="h-full rounded-full bg-[linear-gradient(90deg,#00ff88,#19d38a)] shadow-[0_0_20px_rgba(0,255,136,0.35)]"
+  style={{ width: `${leaderboardProgress}%` }}
+/>
         </div>
       </div>
     </Panel>
@@ -1623,9 +1643,9 @@ LEADERBOARD
         <div className="hidden text-right sm:block">Prize</div>
       </div>
 
-      {leaderboardLoading ? (
-        <div className="px-6 py-10 text-white/60">Loading leaderboard...</div>
-      ) : (
+      {leaderboardLoading && leaderboardData.length === 0 ? (
+  <div className="px-6 py-10 text-white/60">Loading leaderboard...</div>
+) : (
         <div className="divide-y divide-white/5">
           {leaderboardData.map((player) => {
             const prize = leaderboardPrizes[player.rank] || 0;
