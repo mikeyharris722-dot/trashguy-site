@@ -22,11 +22,13 @@ export async function PATCH(
       return NextResponse.json({ error: "Missing hunt id" }, { status: 400 });
     }
 
+    // OPEN PREDICTIONS (keep hunt open)
     if (action === "open") {
       const { data, error } = await supabase
         .from("hunts")
         .update({
           status: "open",
+          prediction_status: "open",
           opened_at: new Date().toISOString(),
         })
         .eq("id", id)
@@ -40,11 +42,13 @@ export async function PATCH(
       return NextResponse.json({ success: true, hunt: data });
     }
 
+    // LOCK PREDICTIONS (hunt stays open)
     if (action === "lock") {
       const { data, error } = await supabase
         .from("hunts")
         .update({
-          status: "locked",
+          status: "open",
+          prediction_status: "locked",
           locked_at: new Date().toISOString(),
         })
         .eq("id", id)
@@ -58,6 +62,7 @@ export async function PATCH(
       return NextResponse.json({ success: true, hunt: data });
     }
 
+    // COMPLETE HUNT
     if (action === "complete") {
       if (typeof finalAmount !== "number" || Number.isNaN(finalAmount)) {
         return NextResponse.json(
@@ -70,6 +75,7 @@ export async function PATCH(
         .from("hunts")
         .update({
           status: "completed",
+          prediction_status: "locked",
           final_amount: finalAmount,
           completed_at: new Date().toISOString(),
         })

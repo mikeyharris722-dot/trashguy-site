@@ -169,7 +169,7 @@ async function resolveProfile(
 async function getOpenHunt() {
   const { data, error } = await supabaseAdmin
     .from("hunts")
-    .select("id, status")
+    .select("id, status, prediction_status")
     .eq("status", "open")
     .order("created_at", { ascending: false })
     .limit(1)
@@ -310,6 +310,13 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    if (openHuntResult.hunt.prediction_status !== "open") {
+  return NextResponse.json(
+    { error: "Predictions are locked." },
+    { status: 400 }
+  );
+}
 
     const huntId = openHuntResult.hunt.id;
 
