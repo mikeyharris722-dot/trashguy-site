@@ -85,6 +85,7 @@ type HuntItem = {
   profitLoss: number;
   profitLossPercentage: number;
   isOpening: boolean;
+  status?: string;
   currentOpeningSlot?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
@@ -518,53 +519,62 @@ const currentPredictionAvgX =
   }, []);
 
   const loadHunts = useCallback(async () => {
-    try {
-      const res = await fetch("/api/hunts", { cache: "no-store" });
-      const data = await res.json();
+  try {
+    const res = await fetch("/api/hunts", { cache: "no-store" });
+    const data = await res.json();
 
-      const rawHunts = Array.isArray(data?.hunts) ? data.hunts : [];
+    const rawHunts = Array.isArray(data?.hunts) ? data.hunts : [];
 
-      const normalized: HuntItem[] = rawHunts.map((hunt: any, index: number) => ({
-  id: hunt.id || `hunt-${index}`,
-  title: hunt.title || `Hunt #${index + 1}`,
-  casino: hunt.casino || "Unknown",
-  startCost: Number(hunt.startCost || hunt.start_amount || 0),
-  totalWinnings: Number(hunt?.stats?.totalWinnings || hunt.totalWinnings || 0),
-  profitLoss: Number(hunt?.stats?.profitLoss || hunt.profitLoss || 0),
-  profitLossPercentage: Number(
-    hunt?.stats?.profitLossPercentage || hunt.profitLossPercentage || 0
-  ),
-  isOpening: Boolean(hunt.isOpening) || hunt.status === "open",
-  currentOpeningSlot: hunt.currentOpeningSlot || null,
-  createdAt: hunt.createdAt || null,
-  updatedAt: hunt.updatedAt || null,
-  stats: hunt.stats || undefined,
-  bonuses: Array.isArray(hunt.bonuses)
-    ? hunt.bonuses.map((bonus: any) => ({
-        id: bonus.id,
-        slotName: bonus.slotName || "---",
-        provider: bonus.provider || "",
-        slotImage: bonus.slotImage || "",
-        betSize: Number(bonus.betSize || 0),
-        payout: Number(bonus.payout || 0),
-        multiplier: Number(bonus.multiplier || 0),
-        note: bonus.note || null,
-        order: bonus.order ?? 0,
-        createdAt: bonus.createdAt || null,
-        updatedAt: bonus.updatedAt || null,
-      }))
-    : [],
-}));
+    const normalized: HuntItem[] = rawHunts.map((hunt: any, index: number) => ({
+      id: hunt.id || `hunt-${index}`,
+      title: hunt.title || `Hunt #${index + 1}`,
+      casino: hunt.casino || "Unknown",
+      startCost: Number(hunt.startCost || hunt.start_amount || 0),
+      totalWinnings: Number(hunt?.stats?.totalWinnings || hunt.totalWinnings || 0),
+      profitLoss: Number(hunt?.stats?.profitLoss || hunt.profitLoss || 0),
+      profitLossPercentage: Number(
+        hunt?.stats?.profitLossPercentage || hunt.profitLossPercentage || 0
+      ),
+      status: hunt.status || "",
+      isOpening: Boolean(hunt.isOpening) || hunt.status === "open",
+      currentOpeningSlot: hunt.currentOpeningSlot || null,
+      createdAt: hunt.createdAt || null,
+      updatedAt: hunt.updatedAt || null,
+      stats: hunt.stats || undefined,
+      bonuses: Array.isArray(hunt.bonuses)
+        ? hunt.bonuses.map((bonus: any) => ({
+            id: bonus.id,
+            slotName: bonus.slotName || "---",
+            provider: bonus.provider || "",
+            slotImage: bonus.slotImage || "",
+            betSize: Number(bonus.betSize || 0),
+            payout: Number(bonus.payout || 0),
+            multiplier: Number(bonus.multiplier || 0),
+            note: bonus.note || null,
+            order: bonus.order ?? 0,
+            createdAt: bonus.createdAt || null,
+            updatedAt: bonus.updatedAt || null,
+          }))
+        : [],
+    }));
 
-      if (normalized.length > 0) {
-        setHuntsData(normalized);
-      }
-    } catch (error) {
-      console.error("Hunts failed to load", error);
-    } finally {
-      setHuntsLoading(false);
+    setHuntsData(normalized);
+
+    const activeOpenHunt = normalized.find((hunt) => hunt.status === "open" || hunt.isOpening);
+
+    if (activeOpenHunt) {
+      setPredictionStatus("open");
+    } else {
+      setPredictionStatus("locked");
+      setPredictions([]);
     }
-  }, []);
+  } catch (error) {
+    console.error("Hunts failed to load", error);
+    setPredictionStatus("locked");
+  } finally {
+    setHuntsLoading(false);
+  }
+}, []);
 
   const loadLeaderboard = useCallback(async () => {
     try {
@@ -714,21 +724,6 @@ useEffect(() => {
     clearInterval(huntTimer);
   };
 }, [loadBracket, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions]);
-
-// PREDICTION STATUS BASED ON CURRENT HUNT
-useEffect(() => {
-  if (!currentPredictionHunt?.id) {
-    setPredictionStatus("locked");
-    setPredictions([]);
-    return;
-  }
-
-  if (currentPredictionHunt.isOpening) {
-    setPredictionStatus("open");
-  } else {
-    setPredictionStatus("locked");
-  }
-}, [currentPredictionHunt]);
 
 // LOAD USER SESSION
 useEffect(() => {
