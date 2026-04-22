@@ -813,28 +813,33 @@ useEffect(() => {
     )
 
     .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "hunts" },
-      (payload: any) => {
-        const nextRow = payload?.new;
+  "postgres_changes",
+  { event: "*", schema: "public", table: "hunts" },
+  (payload: any) => {
+    const nextRow = payload?.new;
 
-        if (nextRow?.id) {
-          setAdminHuntId(nextRow.id);
-        }
+    if (nextRow?.id) {
+      setAdminHuntId(nextRow.id);
+    }
 
-        if (nextRow?.status === "open") {
-          setPredictionStatus("open");
-        } else if (
-          nextRow?.status === "locked" ||
-          nextRow?.status === "completed"
-        ) {
-          setPredictionStatus("locked");
-        }
+    const activeHuntId = adminHuntId || currentPredictionHunt?.id;
 
-        loadHunts();
-        loadPredictions();
-      }
-    )
+    // 🚫 Ignore updates from OTHER hunts
+    if (nextRow?.id !== activeHuntId) {
+      loadHunts();
+      return;
+    }
+
+    if (nextRow?.status === "open") {
+      setPredictionStatus("open");
+    } else if (nextRow?.status === "locked" || nextRow?.status === "completed") {
+      setPredictionStatus("locked");
+    }
+
+    loadHunts();
+    loadPredictions();
+  }
+)
 
     .on(
       "postgres_changes",
@@ -849,7 +854,7 @@ useEffect(() => {
   return () => {
     supabaseBrowser.removeChannel(channel);
   };
-}, [loadBracket, loadPredictions, loadHunts]);
+}, [loadBracket, loadPredictions, loadHunts, adminHuntId, currentPredictionHunt?.id]);
 
 // ADMIN MODE PERSISTENCE (FIXED POSITION)
 useEffect(() => {
