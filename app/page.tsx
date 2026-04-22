@@ -559,21 +559,11 @@ const currentPredictionAvgX =
     }));
 
     setHuntsData(normalized);
-
-    const activeOpenHunt = normalized.find((hunt) => hunt.status === "open" || hunt.isOpening);
-
-    if (activeOpenHunt) {
-      setPredictionStatus("open");
-    } else {
-      setPredictionStatus("locked");
-      setPredictions([]);
-    }
-  } catch (error) {
-    console.error("Hunts failed to load", error);
-    setPredictionStatus("locked");
-  } finally {
-    setHuntsLoading(false);
-  }
+} catch (error) {
+  console.error("Hunts failed to load", error);
+} finally {
+  setHuntsLoading(false);
+}
 }, []);
 
   const loadLeaderboard = useCallback(async () => {
