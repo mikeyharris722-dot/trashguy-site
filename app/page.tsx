@@ -653,7 +653,7 @@ const currentPredictionAvgX =
   } catch (error) {
     console.error("Predictions failed to load", error);
   }
-}, []);;
+}, []);
 
   const loadLiveStatus = useCallback(async () => {
     try {
@@ -734,6 +734,12 @@ useEffect(() => {
     setPredictionStatus("locked");
   }
 }, [currentPredictionHunt, huntsData]);
+
+useEffect(() => {
+  if (currentPredictionHunt?.id) {
+    setAdminHuntId(currentPredictionHunt.id);
+  }
+}, [currentPredictionHunt?.id]);
 
 // LOAD USER SESSION
 useEffect(() => {
@@ -931,41 +937,44 @@ const handleTwitchLogin = async () => {
 };
 
   const handlePredictionSubmit = async () => {
-  if (!isTwitchConnected || predictionStatus !== "open" || !currentPredictionHunt?.id) return
+  if (!isTwitchConnected || predictionStatus !== "open" || !currentPredictionHunt?.id) {
+    setPredictionMessage("No active hunt found.");
+    return;
+  }
 
-    const guess = Number(predictionInput || 0);
+  const guess = Number(predictionInput || 0);
 
-    if (!guess || Number.isNaN(guess)) {
-      setPredictionMessage("Enter a valid guess.");
+  if (!guess || Number.isNaN(guess)) {
+    setPredictionMessage("Enter a valid guess.");
+    return;
+  }
+
+  try {
+    const { data: sessionData, error: sessionError } =
+      await supabaseBrowser.auth.getSession();
+
+    if (sessionError || !sessionData.session) {
+      setPredictionMessage("Not logged in. Please reconnect Twitch.");
       return;
     }
 
-    try {
-      const { data: sessionData, error: sessionError } =
-        await supabaseBrowser.auth.getSession();
+    const token = sessionData.session.access_token;
 
-      if (sessionError || !sessionData.session) {
-        setPredictionMessage("Not logged in. Please reconnect Twitch.");
-        return;
-      }
+    if (!token) {
+      setPredictionMessage("Missing auth token. Please reconnect Twitch.");
+      return;
+    }
 
-      const token = sessionData.session.access_token;
-
-      if (!token) {
-        setPredictionMessage("Missing auth token. Please reconnect Twitch.");
-        return;
-      }
-
-      const res = await fetch("/api/predictions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          guessAmount: guess,
-        }),
-      });
+    const res = await fetch("/api/predictions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        guessAmount: guess,
+      }),
+    });
 
       const data = await res.json();
 
