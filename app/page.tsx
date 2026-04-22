@@ -472,6 +472,12 @@ const currentPredictionEntry = useMemo(() => {
 }, [predictions, viewerName, predictionStatus]);
 
 const currentPredictionHunt = useMemo(() => {
+  const openHunt = huntsData.find(
+    (hunt) => hunt.isOpening || hunt.status === "open"
+  );
+
+  if (openHunt) return openHunt;
+
   const sorted = [...huntsData].sort((a, b) => {
     const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
     const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
