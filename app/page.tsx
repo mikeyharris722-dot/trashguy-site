@@ -2173,7 +2173,7 @@ LEADERBOARD
                       {index + 1}
                     </div>
 
-                    <div className="truncate font-semibold text-white">
+                    <div className="font-semibold text-white break-all">
                       {entry.username}
                     </div>
                   </div>
