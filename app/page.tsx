@@ -86,6 +86,7 @@ type HuntItem = {
   profitLossPercentage: number;
   isOpening: boolean;
   status?: string;
+  prediction_status?: string;
   currentOpeningSlot?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
@@ -427,6 +428,7 @@ export default function Home() {
 
   const [huntsData, setHuntsData] = useState<HuntItem[]>([]);
   const [huntsLoading, setHuntsLoading] = useState(true);
+  const [currentHuntState, setCurrentHuntState] = useState<any>(null);
 
   const [liveStatus, setLiveStatus] = useState<LiveStatus>({
     isLive: false,
@@ -472,12 +474,6 @@ const currentPredictionEntry = useMemo(() => {
 }, [predictions, viewerName, predictionStatus]);
 
 const currentPredictionHunt = useMemo(() => {
-  const openHunt = huntsData.find(
-    (hunt) => hunt.isOpening || hunt.status === "open"
-  );
-
-  if (openHunt) return openHunt;
-
   const sorted = [...huntsData].sort((a, b) => {
     const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
     const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
@@ -535,6 +531,7 @@ const currentPredictionAvgX =
     const data = await res.json();
 
     const rawHunts = Array.isArray(data?.hunts) ? data.hunts : [];
+    setCurrentHuntState(data?.currentHuntState || null);
 
     const normalized: HuntItem[] = rawHunts.map((hunt: any, index: number) => ({
       id: hunt.id || `hunt-${index}`,
@@ -547,10 +544,11 @@ const currentPredictionAvgX =
         hunt?.stats?.profitLossPercentage || hunt.profitLossPercentage || 0
       ),
       status: hunt.status || "",
+      prediction_status: hunt.prediction_status || "locked",
       isOpening: Boolean(hunt.isOpening) || hunt.status === "open",
       currentOpeningSlot: hunt.currentOpeningSlot || null,
-      createdAt: hunt.createdAt || null,
-      updatedAt: hunt.updatedAt || null,
+      createdAt: hunt.createdAt || hunt.created_at || null,
+      updatedAt: hunt.updatedAt || hunt.updated_at || null,
       stats: hunt.stats || undefined,
       bonuses: Array.isArray(hunt.bonuses)
         ? hunt.bonuses.map((bonus: any) => ({
@@ -569,12 +567,14 @@ const currentPredictionAvgX =
         : [],
     }));
 
-    setHuntsData(normalized);
-} catch (error) {
-  console.error("Hunts failed to load", error);
-} finally {
-  setHuntsLoading(false);
+    if (normalized.length > 0) {
+  setHuntsData(normalized);
 }
+  } catch (error) {
+    console.error("Hunts failed to load", error);
+  } finally {
+    setHuntsLoading(false);
+  }
 }, []);
 
   const loadLeaderboard = useCallback(async () => {
@@ -718,28 +718,16 @@ useEffect(() => {
 }, [loadBracket, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions]);
 
 useEffect(() => {
-  if (!huntsData.length) return;
-
-  if (!currentPredictionHunt?.id) {
+  if (!currentHuntState?.id) {
     setPredictionStatus("locked");
     return;
   }
 
-  if (currentPredictionHunt.status === "open" || currentPredictionHunt.isOpening) {
-    setPredictionStatus("open");
-  } else if (
-    currentPredictionHunt.status === "locked" ||
-    currentPredictionHunt.status === "completed"
-  ) {
-    setPredictionStatus("locked");
-  }
-}, [currentPredictionHunt, huntsData]);
-
-useEffect(() => {
-  if (currentPredictionHunt?.id) {
-    setAdminHuntId(currentPredictionHunt.id);
-  }
-}, [currentPredictionHunt?.id]);
+  setAdminHuntId(currentHuntState.id);
+  setPredictionStatus(
+    currentHuntState.prediction_status === "open" ? "open" : "locked"
+  );
+}, [currentHuntState]);
 
 // LOAD USER SESSION
 useEffect(() => {
@@ -812,23 +800,6 @@ loadUser();
   };
 }, []);
 
-// FORCE UI REFRESH TIMER
-useEffect(() => {
-  if (predictionClockRef.current) {
-    clearInterval(predictionClockRef.current);
-  }
-
-  predictionClockRef.current = setInterval(() => {
-    setPredictions((current) => [...current]);
-  }, 30000);
-
-  return () => {
-    if (predictionClockRef.current) {
-      clearInterval(predictionClockRef.current);
-    }
-  };
-}, []);
-
 // REALTIME UPDATES (FIXED)
 useEffect(() => {
   const channel = supabaseBrowser
@@ -841,31 +812,10 @@ useEffect(() => {
         loadPredictions();
       }
     )
-
-    .on(
+  .on(
   "postgres_changes",
   { event: "*", schema: "public", table: "hunts" },
-  (payload: any) => {
-    const nextRow = payload?.new;
-
-    if (nextRow?.id) {
-      setAdminHuntId(nextRow.id);
-    }
-
-    const activeHuntId = adminHuntId || currentPredictionHunt?.id;
-
-    // 🚫 Ignore updates from OTHER hunts
-    if (nextRow?.id !== activeHuntId) {
-      loadHunts();
-      return;
-    }
-
-    if (nextRow?.status === "open") {
-      setPredictionStatus("open");
-    } else if (nextRow?.status === "locked" || nextRow?.status === "completed") {
-      setPredictionStatus("locked");
-    }
-
+  () => {
     loadHunts();
     loadPredictions();
   }
@@ -884,7 +834,7 @@ useEffect(() => {
   return () => {
     supabaseBrowser.removeChannel(channel);
   };
-}, [loadBracket, loadPredictions, loadHunts, adminHuntId, currentPredictionHunt?.id]);
+}, [loadBracket, loadPredictions, loadHunts]);
 
 // ADMIN MODE PERSISTENCE (FIXED POSITION)
 useEffect(() => {
