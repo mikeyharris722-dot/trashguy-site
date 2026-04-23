@@ -486,6 +486,10 @@ export default function Home() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardPlayer[]>(fallbackLeaderboard);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
 
+  const [giveaways, setGiveaways] = useState<any[]>([]);
+const [giveawayTotal, setGiveawayTotal] = useState(0);
+const [giveawayLoading, setGiveawayLoading] = useState(true);
+
   const [huntsData, setHuntsData] = useState<HuntItem[]>([]);
   const [huntsLoading, setHuntsLoading] = useState(true);
   const [currentHuntState, setCurrentHuntState] = useState<any>(null);
@@ -733,6 +737,20 @@ useEffect(() => {
     }
   }, []);
 
+  const loadGiveaways = useCallback(async () => {
+  try {
+    const res = await fetch("/api/giveaways", { cache: "no-store" });
+    const data = await res.json();
+
+    setGiveaways(Array.isArray(data?.giveaways) ? data.giveaways : []);
+    setGiveawayTotal(Number(data?.total || 0));
+  } catch (error) {
+    console.error("Giveaways failed to load", error);
+  } finally {
+    setGiveawayLoading(false);
+  }
+}, []);
+
   const loadPredictions = useCallback(async () => {
   try {
     const res = await fetch("/api/predictions", { cache: "no-store" });
@@ -817,6 +835,7 @@ useEffect(() => {
  // INITIAL LOAD + POLLING
 useEffect(() => {
   loadLeaderboard();
+  loadGiveaways();
   loadHunts();
   loadPredictions();
   loadLiveStatus();
@@ -825,13 +844,15 @@ useEffect(() => {
   const liveTimer = setInterval(loadLiveStatus, 60000);
   const predictionTimer = setInterval(loadPredictions, 5000);
   const huntTimer = setInterval(loadHunts, 30000);
+  const giveawayTimer = setInterval(loadGiveaways, 5000);
 
   return () => {
     clearInterval(liveTimer);
     clearInterval(predictionTimer);
     clearInterval(huntTimer);
+    clearInterval(giveawayTimer);
   };
-}, [loadBracket, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions]);
+}, [loadBracket, loadGiveaways, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions]);
 
 // LOAD USER SESSION
 useEffect(() => {
@@ -1737,6 +1758,91 @@ LEADERBOARD
             );
           })}
         </div>
+      )}
+    </Panel>
+  </section>
+)}
+
+{activeSection === "giveaways" && (
+  <section className="space-y-6">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,255,136,0.16)] shadow-[0_0_55px_rgba(0,255,136,0.10)]">
+      <div className="text-center">
+        <SectionLabel>Giveaways</SectionLabel>
+
+        <h2 className="mt-4 text-[clamp(2.8rem,8vw,5.8rem)] font-black leading-[0.9] tracking-tight text-white">
+          TOTAL
+          <br />
+          GIVEN AWAY
+        </h2>
+
+        <div className="mt-6 text-[clamp(2.4rem,7vw,5rem)] font-black leading-none text-[#8fffd0]">
+          ${giveawayTotal.toLocaleString()}
+        </div>
+      </div>
+    </Panel>
+
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,255,136,0.16)] shadow-[0_0_55px_rgba(0,255,136,0.10)]">
+      {giveawayLoading ? (
+        <div className="px-6 py-10 text-white/60">Loading giveaways...</div>
+      ) : giveaways.length === 0 ? (
+        <div className="px-6 py-10 text-center text-white/45">
+          No giveaways logged yet.
+        </div>
+      ) : (
+        <>
+          <div className="mb-6 rounded-[1.5rem] border border-[rgba(0,255,136,0.16)] bg-[rgba(0,255,136,0.06)] p-5">
+            <div className="text-xs uppercase tracking-[0.3em] text-white/40">
+              Latest Winner
+            </div>
+
+            <div className="mt-3 flex items-center justify-between gap-4">
+              <div className="truncate text-2xl font-black text-white">
+                {giveaways[0].winner_name}
+              </div>
+
+              <div className="shrink-0 text-2xl font-black text-[#b8ffd8]">
+                ${Number(giveaways[0].amount || 0).toLocaleString()}
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)]">
+            <div className="grid grid-cols-[70px_1fr_120px] border-b border-white/5 px-5 py-4 text-xs font-bold uppercase tracking-[0.22em] text-white/35">
+              <div>#</div>
+              <div>Winner</div>
+              <div className="text-right">Amount</div>
+            </div>
+
+            <div className="max-h-[520px] overflow-y-auto">
+              {giveaways.map((giveaway, index) => (
+                <div
+                  key={giveaway.id}
+                  className="grid grid-cols-[70px_1fr_120px] items-center border-b border-white/5 px-5 py-4 last:border-b-0"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] text-xs font-black text-[#8fffd0]">
+                    {index + 1}
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold text-white">
+                      {giveaway.winner_name}
+                    </div>
+
+                    {giveaway.note && (
+                      <div className="mt-1 truncate text-xs text-white/35">
+                        {giveaway.note}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-right text-lg font-black text-[#b8ffd8]">
+                    ${Number(giveaway.amount || 0).toLocaleString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
       )}
     </Panel>
   </section>

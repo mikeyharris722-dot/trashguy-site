@@ -33,13 +33,14 @@ export default function SiteHeader({
   liveStatus,
 }: SiteHeaderProps) {
   const navItems = [
-    { id: "home", label: "Home" },
-    { id: "leaderboard", label: "Leaderboard" },
-    { id: "hunts", label: "Bonus Hunts" },
-    { id: "predictions", label: "Predictions" },
-    { id: "tournaments", label: "Tournaments" },
-    ...(adminAllowed ? [{ id: "admin", label: "Admin" }] : []),
-  ];
+  { id: "home", label: "Home" },
+  { id: "leaderboard", label: "Leaderboard" },
+  { id: "hunts", label: "Bonus Hunts" },
+  { id: "predictions", label: "Predictions" },
+  { id: "giveaways", label: "Giveaways" }, // 👈 ADD THIS
+  { id: "tournaments", label: "Tournaments" },
+  ...(adminAllowed ? [{ id: "admin", label: "Admin" }] : []),
+];
 
   return (
     <header className="sticky top-0 z-50 border-b border-emerald-400/15 bg-black/85 backdrop-blur-xl">
