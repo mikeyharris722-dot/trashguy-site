@@ -137,3 +137,74 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const key = url.searchParams.get("key");
+    const id = url.searchParams.get("id");
+
+    if (key !== process.env.GIVEAWAY_API_KEY) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    }
+
+    const { error } = await supabase
+      .from("giveaways")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error?.message || "Delete failed" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const key = url.searchParams.get("key");
+    const id = url.searchParams.get("id");
+
+    if (key !== process.env.GIVEAWAY_API_KEY) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    }
+
+    const body = await req.json();
+    const { winner_name, amount, note } = body;
+
+    const { error } = await supabase
+      .from("giveaways")
+      .update({
+        winner_name,
+        amount,
+        note,
+      })
+      .eq("id", id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error?.message || "Update failed" },
+      { status: 500 }
+    );
+  }
+}

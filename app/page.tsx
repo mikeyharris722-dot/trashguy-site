@@ -591,6 +591,14 @@ const leaderboardProgress = useMemo(() => {
   return (elapsed / total) * 100;
 }, [countdownTick]);
 
+const biggestGiveaway = useMemo(() => {
+  if (!giveaways.length) return null;
+
+  return [...giveaways].sort(
+    (a, b) => Number(b.amount || 0) - Number(a.amount || 0)
+  )[0];
+}, [giveaways]);
+
   useEffect(() => {
   if (!authLoaded) return;
   if (!isTwitchConnected) return;
@@ -1549,8 +1557,8 @@ if (typeof window !== "undefined") {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white">
-  <div className="min-h-screen bg-[radial-gradient(circle_at_20%_10%,rgba(0,255,136,0.16),transparent_22%),radial-gradient(circle_at_80%_20%,rgba(0,255,136,0.10),transparent_18%),radial-gradient(circle_at_50%_100%,rgba(0,180,120,0.14),transparent_28%)]">
-    <div className="min-h-screen bg-[linear-gradient(to_bottom,rgba(0,0,0,0.72),rgba(0,0,0,0.96))]">
+  <div className="min-h-screen bg-[url('/bg-tunnel.png')] bg-cover bg-center bg-fixed brightness-110 contrast-110">
+    <div className="min-h-screen bg-[linear-gradient(to_bottom,rgba(0,0,0,0.72),rgba(0,0,0,0.88)),radial-gradient(circle_at_center,rgba(0,0,0,0.35),rgba(0,0,0,0.82))]">
           <SiteHeader
   activeSection={activeSection}
   setActiveSection={setActiveSection}
@@ -1572,39 +1580,26 @@ if (typeof window !== "undefined") {
                   <SectionLabel>Home</SectionLabel>
                   <h1 className="mt-3 text-4xl font-black tracking-wide">TRASHGUY</h1>
                   <p className="mt-4 max-w-xl text-white/65">
-                    Your stream hub for socials, live content, bonus hunts, predictions,
-                    and tournaments.
-                  </p>
+  Sign up with code{" "}
+  <span className="font-bold text-[#8fffd0]">
+    trashguy
+  </span>{" "}
+  on Roulobets to earn rewards
+</p>
 
-                  <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div>
-                        <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-                          Stream status
-                        </div>
-                        <div className="mt-2 text-2xl font-black">
-                          {liveLoading ? "Checking..." : liveStatus.isLive ? "TRASHGUY IS LIVE" : "Currently offline"}
-                        </div>
-                        {liveStatus.title && (
-                          <div className="mt-2 text-white/60">{liveStatus.title}</div>
-                        )}
-                        {liveStatus.gameName && (
-                          <div className="mt-2 text-sm uppercase tracking-[0.22em] text-emerald-300">
-                            {liveStatus.gameName}
-                          </div>
-                        )}
-                      </div>
+                  <div className="mt-6 flex items-center gap-3">
+  <div className={`h-2 w-2 rounded-full ${
+    liveStatus.isLive ? "bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.8)]" : "bg-red-400"
+  }`} />
 
-                      <a
-  href="https://www.twitch.tv/trashguy__"
-  target="_blank"
-  rel="noreferrer"
-  className="inline-flex rounded-full border border-[rgba(0,255,136,0.22)] bg-[linear-gradient(180deg,rgba(0,255,136,0.18),rgba(0,255,136,0.08))] px-5 py-3 text-sm font-semibold text-[#b8ffd8] shadow-[0_0_20px_rgba(0,255,136,0.12),inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-[rgba(0,255,136,0.34)] hover:bg-[linear-gradient(180deg,rgba(0,255,136,0.22),rgba(0,255,136,0.10))]"
->
-  Open Twitch
-</a>
-                    </div>
-                  </div>
+  <div className="text-sm font-semibold text-white/70">
+    {liveLoading
+      ? "Checking stream..."
+      : liveStatus.isLive
+      ? "Live now"
+      : "Offline"}
+  </div>
+</div>
 
                   <div className="mt-8 grid gap-3">
   {socials.map((social) => {
@@ -1612,59 +1607,101 @@ if (typeof window !== "undefined") {
 
     return (
       <a
-        key={social.name}
-        href={social.href}
-        target="_blank"
-        rel="noreferrer"
-        className="flex items-center justify-between rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.92),rgba(8,8,8,0.96))] px-5 py-4 transition hover:border-[rgba(0,255,136,0.28)] hover:bg-[linear-gradient(180deg,rgba(18,18,18,0.96),rgba(10,10,10,0.98))] hover:shadow-[0_0_24px_rgba(0,255,136,0.06)]"
-      >
-        <div className="flex items-center gap-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(0,255,136,0.18)] bg-[rgba(0,255,136,0.08)] shadow-[0_0_16px_rgba(0,255,136,0.08)]">
-            {social.image ? (
-              <img
-                src={social.image}
-                alt={social.name}
-                className="h-6 w-6 object-contain"
-              />
-            ) : Icon ? (
-              <Icon className="text-xl text-[#8fffd0]" />
-            ) : null}
-          </div>
+  key={social.name}
+  href={social.href}
+  target="_blank"
+  rel="noreferrer"
+  className="flex items-center justify-between rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.92),rgba(8,8,8,0.96))] px-5 py-4 transition hover:border-[rgba(0,255,136,0.28)] hover:bg-[linear-gradient(180deg,rgba(18,18,18,0.96),rgba(10,10,10,0.98))] hover:shadow-[0_0_24px_rgba(0,255,136,0.06)]"
+>
+  <div className="flex items-center gap-4">
+    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/40 shadow-[0_0_16px_rgba(0,255,136,0.08)]">
+      {social.image ? (
+        <img
+          src={social.image}
+          alt={social.name}
+          className="h-8 w-8 object-contain"
+        />
+      ) : Icon ? (
+        <Icon
+          className={`text-2xl ${
+            social.name === "Discord"
+              ? "text-[#5865F2]"
+              : social.name === "YouTube"
+              ? "text-[#FF0000]"
+              : social.name === "Twitter / X"
+              ? "text-white"
+              : "text-[#8fffd0]"
+          }`}
+        />
+      ) : null}
+    </div>
 
-          <div>
-            <div className="font-semibold text-white">{social.name}</div>
-            <div className="text-xs uppercase tracking-[0.18em] text-white/30">
-              Open link
-            </div>
-          </div>
-        </div>
+    <div className="text-lg font-black text-white">
+      {social.name}
+    </div>
+  </div>
 
-        <span className="text-sm font-semibold text-emerald-300">Visit</span>
-      </a>
+  <span className="text-sm font-semibold text-white/45 transition hover:text-[#8fffd0]">
+    Visit
+  </span>
+</a>
     );
   })}
 </div>
                 </Panel>
 
                 <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_40px_rgba(0,255,136,0.08)]">
-                  <SectionLabel>Live Stream</SectionLabel>
-                  <h2 className="mt-3 text-3xl font-black">WATCH TRASHGUY LIVE</h2>
-                  <p className="mt-4 text-white/65">Live Twitch embed for your site.</p>
+  <SectionLabel>Live Stream</SectionLabel>
+  <h2 className="mt-3 text-3xl font-black">WATCH TRASHGUY LIVE</h2>
 
-                  <div className="mt-6 mb-3 text-xs uppercase tracking-[0.26em] text-emerald-300">
-                    {liveStatus.isLive ? "Live stream" : "Channel player"}
-                  </div>
+  <div className="mt-6 mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.26em] text-emerald-300">
+  {liveStatus.isLive && (
+    <>
+      <span className="relative flex h-2 w-2">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+      </span>
+      <span>Live stream</span>
+    </>
+  )}
+</div>
 
-                  <div className="aspect-video w-full overflow-hidden rounded-[1.25rem] border border-emerald-300/20">
-                    <iframe
-                      src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
-                      height="100%"
-                      width="100%"
-                      allowFullScreen
-                      className="rounded-[1.25rem]"
-                    />
-                  </div>
-                </Panel>
+  <div className="aspect-video w-full overflow-hidden rounded-[1.25rem] border border-emerald-300/20">
+    {liveStatus.isLive ? (
+      <iframe
+        src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
+        height="100%"
+        width="100%"
+        allowFullScreen
+        className="rounded-[1.25rem]"
+      />
+    ) : (
+      <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[linear-gradient(180deg,rgba(10,10,10,0.92),rgba(3,3,3,0.98))]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,136,0.18),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[url('/bg-tunnel.png')] bg-cover bg-center opacity-20" />
+
+        <div className="relative z-10 text-center">
+          <div className="text-4xl font-black tracking-wide text-white">
+            OFFLINE
+          </div>
+
+          <div className="mt-2 text-white/50">
+            Catch the next stream live
+          </div>
+
+          <a
+            href="https://www.twitch.tv/trashguy__"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-6 inline-flex rounded-full border border-[#9146FF]/40 bg-[#9146FF]/20 px-6 py-3 text-sm font-bold text-white transition hover:bg-[#9146FF]/30"
+          >
+            Follow on Twitch
+          </a>
+        </div>
+      </div>
+    )}
+  </div>
+</Panel>
               </section>
             )}
 
@@ -1790,58 +1827,124 @@ LEADERBOARD
         </div>
       ) : (
         <>
-          <div className="mb-6 rounded-[1.5rem] border border-[rgba(0,255,136,0.16)] bg-[rgba(0,255,136,0.06)] p-5">
-            <div className="text-xs uppercase tracking-[0.3em] text-white/40">
-              Latest Winner
-            </div>
+          {biggestGiveaway && (
+  <div className="mb-6 rounded-[1.5rem] border border-yellow-400/25 bg-[linear-gradient(180deg,rgba(250,204,21,0.10),rgba(0,255,136,0.04))] p-5 shadow-[0_0_28px_rgba(250,204,21,0.08)]">
+    <div className="text-xs uppercase tracking-[0.3em] text-yellow-300/70">
+      Biggest Giveaway
+    </div>
 
-            <div className="mt-3 flex items-center justify-between gap-4">
-              <div className="truncate text-2xl font-black text-white">
-                {giveaways[0].winner_name}
-              </div>
+    <div className="mt-3 flex items-center justify-between gap-4">
+      <div className="min-w-0">
+        <div className="truncate text-2xl font-black text-white">
+          🏆 {biggestGiveaway.winner_name}
+        </div>
 
-              <div className="shrink-0 text-2xl font-black text-[#b8ffd8]">
-                ${Number(giveaways[0].amount || 0).toLocaleString()}
-              </div>
-            </div>
+        {biggestGiveaway.note && (
+          <div className="mt-1 truncate text-sm text-white/40">
+            {biggestGiveaway.note}
           </div>
+        )}
+      </div>
+
+      <div className="shrink-0 text-2xl font-black text-[#f5c451]">
+        ${Number(biggestGiveaway.amount || 0).toLocaleString()}
+      </div>
+    </div>
+  </div>
+)}
 
           <div className="overflow-hidden rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)]">
-            <div className="grid grid-cols-[70px_1fr_120px] border-b border-white/5 px-5 py-4 text-xs font-bold uppercase tracking-[0.22em] text-white/35">
-              <div>#</div>
-              <div>Winner</div>
-              <div className="text-right">Amount</div>
-            </div>
+  {/* HEADER */}
+  <div className="grid grid-cols-[64px_1fr_140px_90px] border-b border-white/5 px-5 py-4 text-xs font-bold uppercase tracking-[0.22em] text-white/35">
+    <div>#</div>
+    <div>Winner</div>
+    <div className="text-right">Amount</div>
+    <div className="text-right">{isAdmin ? "Edit" : ""}</div>
+  </div>
 
-            <div className="max-h-[520px] overflow-y-auto">
-              {giveaways.map((giveaway, index) => (
-                <div
-                  key={giveaway.id}
-                  className="grid grid-cols-[70px_1fr_120px] items-center border-b border-white/5 px-5 py-4 last:border-b-0"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] text-xs font-black text-[#8fffd0]">
-                    {index + 1}
-                  </div>
+  {/* BODY */}
+  <div className="max-h-[520px] overflow-y-auto">
+    {giveaways.map((giveaway, index) => (
+      <div
+        key={giveaway.id}
+        className="grid grid-cols-[64px_1fr_140px_90px] items-center border-b border-white/5 px-5 py-4 last:border-b-0"
+      >
+        {/* RANK */}
+        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] text-xs font-black text-[#8fffd0]">
+          {index + 1}
+        </div>
 
-                  <div className="min-w-0">
-                    <div className="truncate font-semibold text-white">
-                      {giveaway.winner_name}
-                    </div>
-
-                    {giveaway.note && (
-                      <div className="mt-1 truncate text-xs text-white/35">
-                        {giveaway.note}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="text-right text-lg font-black text-[#b8ffd8]">
-                    ${Number(giveaway.amount || 0).toLocaleString()}
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* NAME */}
+        <div className="min-w-0">
+          <div className="truncate font-semibold text-white">
+            {giveaway.winner_name}
           </div>
+
+          {giveaway.note && (
+            <div className="mt-1 truncate text-xs text-white/35">
+              {giveaway.note}
+            </div>
+          )}
+        </div>
+
+        {/* AMOUNT */}
+        <div className="text-right text-lg font-black text-[#b8ffd8]">
+          ${Number(giveaway.amount || 0).toLocaleString()}
+        </div>
+
+        {/* BUTTONS */}
+        {isAdmin ? (
+          <div className="flex justify-end gap-2">
+            {/* EDIT */}
+            <button
+              onClick={async () => {
+                const newName = prompt("Edit name:", giveaway.winner_name);
+                const newAmount = prompt("Edit amount:", String(giveaway.amount));
+                const newNote = prompt("Edit note:", giveaway.note || "");
+
+                if (!newName || !newAmount) return;
+
+                await fetch(
+                  `/api/giveaways?id=${giveaway.id}&key=trashguy92`,
+                  {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      winner_name: newName,
+                      amount: Number(newAmount),
+                      note: newNote,
+                    }),
+                  }
+                );
+
+                window.location.reload();
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400/30 bg-yellow-400/10 text-yellow-300 transition hover:bg-yellow-400/20 hover:shadow-[0_0_12px_rgba(250,204,21,0.45)]"
+            >
+              ✎
+            </button>
+
+            {/* DELETE */}
+            <button
+              onClick={async () => {
+                await fetch(
+                  `/api/giveaways?id=${giveaway.id}&key=trashguy92`,
+                  { method: "DELETE" }
+                );
+                window.location.reload();
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400/30 bg-red-400/10 text-red-300 transition hover:bg-red-400/20 hover:shadow-[0_0_12px_rgba(248,113,113,0.45)]"
+            >
+              ×
+            </button>
+          </div>
+        ) : (
+          <div />
+        )}
+      </div>
+    ))}
+  </div>
+</div>
         </>
       )}
     </Panel>

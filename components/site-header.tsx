@@ -56,9 +56,6 @@ export default function SiteHeader({
               <div className="text-2xl font-black tracking-tight text-white sm:text-3xl">
                 TRASHGUY
               </div>
-              <div className="text-[10px] uppercase tracking-[0.25em] text-emerald-300/70">
-                Stream Hub
-              </div>
             </div>
           </div>
 
