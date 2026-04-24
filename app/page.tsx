@@ -1855,7 +1855,7 @@ LEADERBOARD
 
           <div className="overflow-hidden rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)]">
   {/* HEADER */}
-  <div className="grid grid-cols-[64px_1fr_140px_90px] border-b border-white/5 px-5 py-4 text-xs font-bold uppercase tracking-[0.22em] text-white/35">
+  <div className={`grid ${isAdmin ? "grid-cols-[52px_minmax(0,1fr)_90px_74px]" : "grid-cols-[52px_minmax(0,1fr)_90px]"} border-b border-white/5 px-4 py-4 text-xs font-bold uppercase tracking-[0.18em] text-white/35 sm:px-5 sm:tracking-[0.22em]`}>
     <div>#</div>
     <div>Winner</div>
     <div className="text-right">Amount</div>
@@ -1867,7 +1867,7 @@ LEADERBOARD
     {giveaways.map((giveaway, index) => (
       <div
         key={giveaway.id}
-        className="grid grid-cols-[64px_1fr_140px_90px] items-center border-b border-white/5 px-5 py-4 last:border-b-0"
+        className={`grid ${isAdmin ? "grid-cols-[52px_minmax(0,1fr)_90px_74px]" : "grid-cols-[52px_minmax(0,1fr)_90px]"} items-center border-b border-white/5 px-4 py-4 last:border-b-0 sm:px-5`}
       >
         {/* RANK */}
         <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] text-xs font-black text-[#8fffd0]">
@@ -1875,10 +1875,10 @@ LEADERBOARD
         </div>
 
         {/* NAME */}
-        <div className="min-w-0">
-          <div className="truncate font-semibold text-white">
-            {giveaway.winner_name}
-          </div>
+        <div className="min-w-0 overflow-hidden">
+  <div className="truncate text-sm font-semibold text-white sm:text-base">
+    {giveaway.winner_name}
+  </div>
 
           {giveaway.note && (
             <div className="mt-1 truncate text-xs text-white/35">
