@@ -15,9 +15,6 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Trashguy",
   description: "Trashguy stream hub – bonus hunts, predictions, giveaways, and more.",
-  icons: {
-    icon: "/favicon.png",
-  },
 };
 
 export default function RootLayout({
