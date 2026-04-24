@@ -16,7 +16,7 @@ export const metadata = {
   title: "Trashguy",
   description: "Trashguy stream hub – bonus hunts, predictions, giveaways, and more.",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/favicon.png",
   },
 };
 
