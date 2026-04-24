@@ -14,11 +14,21 @@ export async function POST(req: NextRequest) {
     const { title, casino, startAmount } = body;
 
     if (!title || !casino || !startAmount) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
+  return NextResponse.json(
+    { error: "Missing required fields" },
+    { status: 400 }
+  );
+}
+
+// close old open hunts before starting a new one
+await supabase
+  .from("hunts")
+  .update({
+    status: "completed",
+    prediction_status: "locked",
+    updated_at: new Date().toISOString(),
+  })
+  .eq("status", "open");
 
     const apiKey = process.env.BONUSHUNT_API_KEY;
 

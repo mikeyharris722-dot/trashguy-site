@@ -539,24 +539,29 @@ const currentPredictionEntry = useMemo(() => {
 const currentPredictionHunt = useMemo(() => {
   if (!huntsData.length) return null;
 
-  if (adminHuntId) {
-    const exact = huntsData.find((hunt) => hunt.id === adminHuntId);
-    if (exact) return exact;
-  }
+  const openHunts = huntsData
+    .filter(
+      (hunt) =>
+        hunt.prediction_status === "open" ||
+        hunt.status === "open" ||
+        hunt.isOpening
+    )
+    .sort((a, b) => {
+      const aTime = a.updatedAt || a.createdAt ? new Date(a.updatedAt || a.createdAt || "").getTime() : 0;
+      const bTime = b.updatedAt || b.createdAt ? new Date(b.updatedAt || b.createdAt || "").getTime() : 0;
+      return bTime - aTime;
+    });
 
-  const openPredictionHunt = huntsData.find(
-    (hunt) => hunt.prediction_status === "open" || hunt.status === "open" || hunt.isOpening
-  );
-  if (openPredictionHunt) return openPredictionHunt;
+  if (openHunts.length) return openHunts[0];
 
   const sorted = [...huntsData].sort((a, b) => {
-    const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-    const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+    const aTime = a.updatedAt || a.createdAt ? new Date(a.updatedAt || a.createdAt || "").getTime() : 0;
+    const bTime = b.updatedAt || b.createdAt ? new Date(b.updatedAt || b.createdAt || "").getTime() : 0;
     return bTime - aTime;
   });
 
   return sorted[0] || null;
-}, [huntsData, adminHuntId]);
+}, [huntsData]);
 
 const currentPredictionCount = predictions.length;
 
