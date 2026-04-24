@@ -1858,7 +1858,7 @@ LEADERBOARD
   <div className={`grid ${isAdmin ? "grid-cols-[52px_minmax(0,1fr)_90px_74px]" : "grid-cols-[52px_minmax(0,1fr)_90px]"} border-b border-white/5 px-4 py-4 text-xs font-bold uppercase tracking-[0.18em] text-white/35 sm:px-5 sm:tracking-[0.22em]`}>
     <div>#</div>
     <div>Winner</div>
-    <div className="text-right">Amount</div>
+    <div className="text-center">Amount</div>
     <div className="text-right">{isAdmin ? "Edit" : ""}</div>
   </div>
 
@@ -1888,9 +1888,9 @@ LEADERBOARD
         </div>
 
         {/* AMOUNT */}
-        <div className="text-right text-lg font-black text-[#b8ffd8]">
-          ${Number(giveaway.amount || 0).toLocaleString()}
-        </div>
+        <div className="text-center text-lg font-black text-[#b8ffd8]">
+  ${Number(giveaway.amount || 0).toLocaleString()}
+</div>
 
         {/* BUTTONS */}
         {isAdmin ? (
