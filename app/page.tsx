@@ -1711,7 +1711,7 @@ if (typeof window !== "undefined") {
       <div className="text-center">
         <SectionLabel>Leaderboard</SectionLabel>
 
-        <h2 className="mt-4 text-[clamp(2.8rem,8vw,5.8rem)] font-black leading-[0.9] tracking-tight text-white">
+        <h2 className="mt-4 text-[clamp(2.5rem,6vw,4.5rem)] font-black leading-[1.05] tracking-tight text-white">
           ${leaderboardTotal}
 <br />
 LEADERBOARD
@@ -1806,7 +1806,7 @@ LEADERBOARD
       <div className="text-center">
         <SectionLabel>Giveaways</SectionLabel>
 
-        <h2 className="mt-4 text-[clamp(2.8rem,8vw,5.8rem)] font-black leading-[0.9] tracking-tight text-white">
+        <h2 className="mt-4 text-[clamp(2.5rem,6vw,4.5rem)] font-black leading-[1.05] tracking-tight text-white">
           TOTAL
           <br />
           GIVEN AWAY
@@ -2414,7 +2414,7 @@ LEADERBOARD
       <div className="text-center">
         <SectionLabel>Tournaments</SectionLabel>
 
-        <h2 className="mt-4 text-[clamp(2.3rem,7vw,5rem)] font-black leading-[0.92] tracking-tight text-white">
+        <h2 className="mt-4 text-[clamp(2.5rem,6vw,4.5rem)] font-black leading-[1.05] tracking-tight text-white">
           {bracket.title || "Tournament Bracket"}
         </h2>
 
