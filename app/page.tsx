@@ -441,9 +441,15 @@ function MatchCard({
         >
           <div className="truncate">{match.player1 || ""}</div>
 {match.player1Amount && (
-  <div className="mt-1 text-xs font-semibold text-white/45">
-    ${match.player1Amount}
-  </div>
+  <div
+  className={`mt-1 text-xs font-semibold ${
+    match.winner === match.player1
+      ? "text-[#f5c451] drop-shadow-[0_0_6px_rgba(245,196,81,0.4)]"
+      : "text-white/45"
+  }`}
+>
+  ${match.player1Amount}
+</div>
 )}
         </div>
 
@@ -460,9 +466,15 @@ function MatchCard({
         >
           <div className="truncate">{match.player2 || ""}</div>
 {match.player2Amount && (
-  <div className="mt-1 text-xs font-semibold text-white/45">
-    ${match.player2Amount}
-  </div>
+  <div
+  className={`mt-1 text-xs font-semibold ${
+    match.winner === match.player2
+      ? "text-[#f5c451] drop-shadow-[0_0_6px_rgba(245,196,81,0.4)]"
+      : "text-white/45"
+  }`}
+>
+  ${match.player2Amount}
+</div>
 )}
         </div>
       </div>
