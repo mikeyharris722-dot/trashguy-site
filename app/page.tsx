@@ -440,6 +440,11 @@ function MatchCard({
           }`}
         >
           <div className="truncate">{match.player1 || ""}</div>
+{match.player1Amount && (
+  <div className="mt-1 text-xs font-semibold text-white/45">
+    ${match.player1Amount}
+  </div>
+)}
         </div>
 
         <div className="text-center text-[10px] uppercase tracking-[0.24em] text-white/25">
@@ -454,6 +459,11 @@ function MatchCard({
           }`}
         >
           <div className="truncate">{match.player2 || ""}</div>
+{match.player2Amount && (
+  <div className="mt-1 text-xs font-semibold text-white/45">
+    ${match.player2Amount}
+  </div>
+)}
         </div>
       </div>
 
@@ -2691,26 +2701,60 @@ LEADERBOARD
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
-                  <input
-                    value={match.player1}
-                    onChange={(e) =>
-                      updateMatchField(round.id, match.id, "player1", e.target.value)
-                    }
-                    disabled={!isAdmin || match.player1 === "BYE"}
-                    placeholder=""
-                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
-                  />
+  <div className="grid gap-2">
+    <input
+      value={match.player1}
+      onChange={(e) =>
+        updateMatchField(round.id, match.id, "player1", e.target.value)
+      }
+      disabled={!isAdmin || match.player1 === "BYE"}
+      placeholder="Player / Provider"
+      className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
+    />
 
-                  <input
-                    value={match.player2}
-                    onChange={(e) =>
-                      updateMatchField(round.id, match.id, "player2", e.target.value)
-                    }
-                    disabled={!isAdmin || match.player2 === "BYE"}
-                    placeholder=""
-                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
-                  />
-                </div>
+    <input
+      value={match.player1Amount || ""}
+      onChange={(e) =>
+        updateMatchField(
+          round.id,
+          match.id,
+          "player1Amount",
+          e.target.value.replace(/[^0-9.]/g, "")
+        )
+      }
+      disabled={!isAdmin || match.player1 === "BYE"}
+      placeholder="Amount won"
+      className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.25)] px-4 py-3 text-sm text-white outline-none transition focus:border-[rgba(245,196,81,0.35)] disabled:opacity-40"
+    />
+  </div>
+
+  <div className="grid gap-2">
+    <input
+      value={match.player2}
+      onChange={(e) =>
+        updateMatchField(round.id, match.id, "player2", e.target.value)
+      }
+      disabled={!isAdmin || match.player2 === "BYE"}
+      placeholder="Player / Provider"
+      className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
+    />
+
+    <input
+      value={match.player2Amount || ""}
+      onChange={(e) =>
+        updateMatchField(
+          round.id,
+          match.id,
+          "player2Amount",
+          e.target.value.replace(/[^0-9.]/g, "")
+        )
+      }
+      disabled={!isAdmin || match.player2 === "BYE"}
+      placeholder="Amount won"
+      className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.25)] px-4 py-3 text-sm text-white outline-none transition focus:border-[rgba(245,196,81,0.35)] disabled:opacity-40"
+    />
+  </div>
+</div>
 
                 <div className="mt-4 grid gap-2 md:grid-cols-3">
                   <button
