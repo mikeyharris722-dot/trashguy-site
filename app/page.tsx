@@ -58,24 +58,25 @@ const defaultBracket: BracketData = {
       id: "round-1",
       name: "Quarterfinals",
       matches: [
-        { id: "m1", player1: "", player2: "", winner: "" },
-        { id: "m2", player1: "", player2: "", winner: "" },
-        { id: "m3", player1: "", player2: "", winner: "" },
-        { id: "m4", player1: "", player2: "", winner: "" },
+        { id: "m1", player1: "", player1Amount: "", player2: "", player2Amount: "", winner: "" },
+        { id: "m2", player1: "", player1Amount: "", player2: "", player2Amount: "", winner: "" },
+        { id: "m3", player1: "", player1Amount: "", player2: "", player2Amount: "", winner: "" },
+        { id: "m4", player1: "", player1Amount: "", player2: "", player2Amount: "", winner: "" },
       ],
     },
     {
       id: "round-2",
       name: "Semifinals",
       matches: [
-        { id: "m5", player1: "", player2: "", winner: "" },
-        { id: "m6", player1: "", player2: "", winner: "" },
+        { id: "m5", player1: "", player1Amount: "", player2: "", player2Amount: "", winner: "" },
+        { id: "m6", player1: "", player1Amount: "", player2: "", player2Amount: "", winner: "" },
       ],
     },
     {
       id: "round-3",
       name: "Final",
-      matches: [{ id: "m7", player1: "", player2: "", winner: "" }],
+      matches: [
+        { id: "m7", player1: "", player1Amount: "", player2: "", player2Amount: "", winner: "" }],
     },
   ],
 };
@@ -164,7 +165,9 @@ type LiveStatus = {
 type BracketMatch = {
   id: string;
   player1: string;
+  player1Amount?: string;
   player2: string;
+  player2Amount?: string;
   winner: string;
 };
 
@@ -236,19 +239,23 @@ function createBracketFromTeamCount(teamCount: number, title: string): BracketDa
     const matches: BracketMatch[] = Array.from({ length: matchCount }, (_, matchIndex) => {
       if (roundIndex === 0) {
         return {
-          id: `m${matchCounter++}`,
-          player1: teamNames[matchIndex * 2] || "",
-          player2: teamNames[matchIndex * 2 + 1] || "",
-          winner: "",
-        };
+  id: `m${matchCounter++}`,
+  player1: teamNames[matchIndex * 2] || "",
+  player1Amount: "",
+  player2: teamNames[matchIndex * 2 + 1] || "",
+  player2Amount: "",
+  winner: "",
+};
       }
 
       return {
-        id: `m${matchCounter++}`,
-        player1: "",
-        player2: "",
-        winner: "",
-      };
+  id: `m${matchCounter++}`,
+  player1: "",
+  player1Amount: "",
+  player2: "",
+  player2Amount: "",
+  winner: "",
+};
     });
 
     rounds.push({
@@ -1415,7 +1422,7 @@ if (typeof window !== "undefined") {
   const updateMatchField = (
   roundId: string,
   matchId: string,
-  field: "player1" | "player2",
+  field: "player1" | "player2" | "player1Amount" | "player2Amount",
   value: string
 ) => {
   setBracket((current) => {
