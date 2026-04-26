@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
-import { FaDiscord, FaYoutube, FaXTwitter } from "react-icons/fa6";
+import { FaDiscord, FaXTwitter, FaYoutube, FaInstagram } from "react-icons/fa6";
 
 const socials = [
   {
@@ -26,6 +26,11 @@ const socials = [
     href: "https://www.youtube.com/@Trashguyy",
     icon: FaYoutube,
   },
+  {
+  name: "Instagram",
+  href: "https://instagram.com/trashguy__",
+  icon: FaInstagram,
+},
 ];
 
 const fallbackLeaderboard = [
@@ -1657,16 +1662,18 @@ if (typeof window !== "undefined") {
         />
       ) : Icon ? (
         <Icon
-          className={`text-2xl ${
-            social.name === "Discord"
-              ? "text-[#5865F2]"
-              : social.name === "YouTube"
-              ? "text-[#FF0000]"
-              : social.name === "Twitter / X"
-              ? "text-white"
-              : "text-[#8fffd0]"
-          }`}
-        />
+  className={`text-2xl ${
+    social.name === "Discord"
+      ? "text-[#5865F2]"
+      : social.name === "YouTube"
+      ? "text-[#FF0000]"
+      : social.name === "Twitter / X"
+      ? "text-white"
+      : social.name === "Instagram"
+      ? "text-[#E1306C]"
+      : "text-[#8fffd0]"
+  }`}
+/>
       ) : null}
     </div>
 
