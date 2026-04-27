@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
 import { FaDiscord, FaXTwitter, FaYoutube, FaInstagram } from "react-icons/fa6";
+import { slotData, providerLogos, type SlotItem } from "./slotData";
 
 const socials = [
   {
@@ -494,6 +495,11 @@ function MatchCard({
 export default function Home() {
   const [activeSection, setActiveSection] = useState("home");
 
+  const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
+  const [pickedSlot, setPickedSlot] = useState<SlotItem | null>(null);
+  const [isPickingSlot, setIsPickingSlot] = useState(false);
+  const lastPickedRef = useRef<string | null>(null);
+
   const [viewerName, setViewerName] = useState("viewer");
   const [viewerDisplayName, setViewerDisplayName] = useState("viewer");
   const [viewerAvatar, setViewerAvatar] = useState("");
@@ -637,6 +643,81 @@ const biggestGiveaway = useMemo(() => {
     (a, b) => Number(b.amount || 0) - Number(a.amount || 0)
   )[0];
 }, [giveaways]);
+
+const slotProviders = useMemo(() => {
+  return Array.from(new Set(slotData.map((slot) => slot.provider)));
+}, []);
+
+const filteredSlots = useMemo(() => {
+  if (selectedProviders.length === 0) return slotData;
+
+  return slotData.filter((slot) =>
+    selectedProviders.includes(slot.provider)
+  );
+}, [selectedProviders]);
+
+const toggleSlotProvider = (provider: string) => {
+  setSelectedProviders((current) =>
+    current.includes(provider)
+      ? current.filter((item) => item !== provider)
+      : [...current, provider]
+  );
+};
+
+const pickRandomSlot = () => {
+  if (!filteredSlots.length || isPickingSlot) return;
+
+  const spinSound = new Audio("/spin.mp3");
+  spinSound.loop = true;
+  spinSound.volume = 0.25;
+  spinSound.play().catch(() => {});
+
+  setIsPickingSlot(true);
+
+  let spins = 0;
+  const maxSpins = 24;
+  let speed = 45;
+
+  const spinLoop = () => {
+    const randomSlot =
+      filteredSlots[Math.floor(Math.random() * filteredSlots.length)];
+
+    // this MUST be the full slot object
+    setPickedSlot(randomSlot);
+
+    spins += 1;
+    speed += spins > 14 ? 18 : 6;
+
+    if (spins >= maxSpins) {
+      spinSound.pause();
+      spinSound.currentTime = 0;
+
+      let finalSlot: SlotItem;
+
+      do {
+        finalSlot =
+          filteredSlots[Math.floor(Math.random() * filteredSlots.length)];
+      } while (
+        filteredSlots.length > 1 &&
+        finalSlot.name === lastPickedRef.current
+      );
+
+      lastPickedRef.current = finalSlot.name;
+      setPickedSlot(finalSlot);
+      setIsPickingSlot(false);
+
+      const clickSound = new Audio("/click.mp3");
+      clickSound.volume = 0.45;
+      clickSound.play().catch(() => {});
+
+      return;
+    }
+
+    setTimeout(spinLoop, speed);
+  };
+
+  spinLoop();
+};
 
   useEffect(() => {
   if (!authLoaded) return;
@@ -2446,6 +2527,161 @@ LEADERBOARD
     </div>
   </div>
 </Panel>
+  </section>
+)}
+
+{activeSection === "slotpicker" && (
+  <section className="space-y-6">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,255,136,0.16)] shadow-[0_0_55px_rgba(0,255,136,0.10)]">
+      <div className="text-center">
+        <SectionLabel>Slot Picker</SectionLabel>
+
+        <h2 className="mt-4 text-[clamp(2.5rem,6vw,4.5rem)] font-black leading-[1.05] tracking-tight text-white">
+          RANDOM
+          <br />
+          SLOT PICKER
+        </h2>
+
+        <p className="mx-auto mt-4 max-w-2xl text-white/55">
+          Select providers, spin the picker, and let fate choose the next slot.
+        </p>
+      </div>
+
+      <div className="mt-8 rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
+        <div className="text-xs font-bold uppercase tracking-[0.24em] text-white/40">
+          Providers
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {slotProviders.map((provider) => {
+            const active = selectedProviders.includes(provider);
+            const logo = providerLogos[provider];
+
+            return (
+              <button
+                key={provider}
+                onClick={() => toggleSlotProvider(provider)}
+                className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
+                  active
+                    ? "border-[#00ff88]/45 bg-[#00ff88]/15 text-white shadow-[0_0_20px_rgba(0,255,136,0.14)]"
+                    : "border-white/10 bg-white/5 text-white/65 hover:border-white/20 hover:text-white"
+                }`}
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/35">
+                  {logo ? (
+                    <img
+                      src={logo}
+                      alt={provider}
+                      className="h-7 w-7 object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <span className="text-xs font-black text-[#8fffd0]">
+                      {provider.charAt(0)}
+                    </span>
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <div className="truncate font-bold">{provider}</div>
+                  <div className="text-xs text-white/35">
+                    {slotData.filter((slot) => slot.provider === provider).length} slots
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm text-white/45">
+  {selectedProviders.length === 0
+    ? `🎲 All Providers Active (${slotData.length} slots)`
+    : `${filteredSlots.length} slots from ${selectedProviders.length} provider(s)`}
+</div>
+
+          <button
+            onClick={() => {
+              setSelectedProviders([]);
+              setPickedSlot(null);
+            }}
+            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/55 transition hover:text-white"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-[2rem] border border-[rgba(0,255,136,0.16)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(6,6,6,0.98))] p-8 text-center shadow-[0_0_45px_rgba(0,255,136,0.08)]">
+        <button
+          onClick={pickRandomSlot}
+          disabled={isPickingSlot || filteredSlots.length === 0}
+          className="w-full rounded-2xl border border-[#00ff88]/25 bg-[linear-gradient(180deg,rgba(0,255,136,0.22),rgba(0,255,136,0.08))] px-6 py-4 text-lg font-black text-[#b8ffd8] shadow-[0_0_25px_rgba(0,255,136,0.12)] transition hover:border-[#00ff88]/45 hover:bg-[#00ff88]/20 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isPickingSlot ? "Spinning..." : "Pick Random Slot"}
+        </button>
+
+        <div
+  className={`mt-8 rounded-[1.75rem] border bg-black/35 p-8 transition-all duration-300 ${
+    isPickingSlot
+      ? "scale-[1.03] border-[#00ff88]/40 shadow-[0_0_60px_rgba(0,255,136,0.28)] blur-[0.2px]"
+      : "border-white/10 shadow-[0_0_35px_rgba(0,255,136,0.14)]"
+  }`}
+>
+          {!pickedSlot ? (
+            <div className="py-12 text-white/45">
+              No slot picked yet.
+            </div>
+          ) : (
+            <>
+              <div className="text-xs font-bold uppercase tracking-[0.3em] text-white/35">
+  Selected Slot
+</div>
+
+{pickedSlot.image && (
+  <img
+    src={pickedSlot.image}
+    alt={pickedSlot.name}
+    className="mx-auto mt-6 mb-4 h-32 object-contain"
+  />
+)}
+
+<div
+  className={`mt-5 text-[clamp(2rem,5vw,4rem)] font-black transition-all duration-200 ${
+    isPickingSlot
+      ? "scale-95 text-white/70 blur-[1px]"
+      : "scale-105 text-[#8fffd0] drop-shadow-[0_0_25px_rgba(0,255,136,0.65)]"
+  }`}
+>
+  {pickedSlot.name}
+</div>
+
+<div
+  className={`mt-5 inline-flex items-center gap-3 rounded-full border px-5 py-2 text-sm font-bold transition-all duration-200 ${
+    isPickingSlot
+      ? "border-white/10 bg-white/5 text-white/40 scale-95"
+      : "border-[#00ff88]/20 bg-[#00ff88]/10 text-[#b8ffd8] scale-105 shadow-[0_0_20px_rgba(0,255,136,0.35)]"
+  }`}
+>
+  {providerLogos[pickedSlot.provider] && (
+    <img
+      src={providerLogos[pickedSlot.provider]}
+      alt={pickedSlot.provider}
+      className="h-6 w-6 object-contain"
+      onError={(e) => {
+        e.currentTarget.style.display = "none";
+      }}
+    />
+  )}
+  {pickedSlot.provider}
+</div>
+            </>
+          )}
+        </div>
+      </div>
+    </Panel>
   </section>
 )}
 

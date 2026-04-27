@@ -37,7 +37,8 @@ export default function SiteHeader({
   { id: "leaderboard", label: "Leaderboard" },
   { id: "hunts", label: "Bonus Hunts" },
   { id: "predictions", label: "Predictions" },
-  { id: "giveaways", label: "Giveaways" }, // 👈 ADD THIS
+  { id: "giveaways", label: "Giveaways" },
+  { id: "slotpicker", label: "Slot Picker" },
   { id: "tournaments", label: "Tournaments" },
   ...(adminAllowed ? [{ id: "admin", label: "Admin" }] : []),
 ];
