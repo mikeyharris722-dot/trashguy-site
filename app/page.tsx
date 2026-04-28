@@ -611,7 +611,7 @@ const currentPredictionAvgX =
     : "0.00";
 
     const leaderboardCountdown = useMemo(() => {
-  const end = new Date("2026-05-04T00:00:00-04:00").getTime();
+  const end = new Date("2026-05-05T00:00:00-04:00").getTime();
   const diff = end - countdownTick;
 
   if (diff <= 0) return "Ended";
@@ -626,7 +626,7 @@ const currentPredictionAvgX =
 
 const leaderboardProgress = useMemo(() => {
   const start = new Date("2026-04-21T00:00:00-04:00").getTime();
-  const end = new Date("2026-05-04T00:00:00-04:00").getTime();
+  const end = new Date("2026-05-05T00:00:00-04:00").getTime();
   const total = end - start;
   const elapsed = countdownTick - start;
 
