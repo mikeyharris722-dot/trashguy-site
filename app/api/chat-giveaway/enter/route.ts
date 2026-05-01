@@ -8,100 +8,42 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
 
-function getDateRange() {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(end.getDate() - 30);
-
-  return {
-    start_at: start.toISOString().slice(0, 10),
-    end_at: end.toISOString().slice(0, 10),
-  };
+function normalize(value: string) {
+  return String(value || "").replace("@", "").trim().toLowerCase();
 }
 
-async function getRouloBoost(username: string) {
-  try {
-    const key = process.env.ROULO_API_KEY;
+async function getSavedRouloBoost(twitchUsername: string) {
+  const cleanTwitch = normalize(twitchUsername);
 
-    if (!key) {
-      return {
-        weight: 1,
-        isRouloAffiliate: false,
-        rouloWagered: 0,
-      };
-    }
+  const { data: link } = await supabase
+    .from("roulo_links")
+    .select("roulo_username, wagered, role, weight")
+    .eq("twitch_username", cleanTwitch)
+    .maybeSingle();
 
-    const { start_at, end_at } = getDateRange();
-
-    const res = await fetch(
-      `https://api.roulobets.com/v1/external/affiliates?start_at=${start_at}&end_at=${end_at}&key=${key}`,
-      { cache: "no-store" }
-    );
-
-    const json = await res.json();
-    const affiliates = json.affiliates || json.data || [];
-
-    const match = affiliates.find((player: any) => {
-      const playerName = String(
-        player.username ||
-          player.name ||
-          player.display_name ||
-          ""
-      )
-        .replace("@", "")
-        .trim()
-        .toLowerCase();
-
-      return playerName === username;
-    });
-
-    if (!match) {
-      return {
-        weight: 1,
-        isRouloAffiliate: false,
-        rouloWagered: 0,
-      };
-    }
-
-    const wagered = Number(
-      match.wagered_amount ||
-        match.amount_wagered ||
-        match.wagered ||
-        match.total_wagered ||
-        0
-    );
-
-let weight = 1; // default = normal viewer
-
-if (wagered >= 100) {
-  weight = 1.25; // affiliate
-}
-
-if (wagered >= 2000) {
-  weight = 1.5; // VIP
-}
-
-    return {
-      weight,
-      isRouloAffiliate: true,
-      rouloWagered: wagered,
-    };
-  } catch {
+  if (!link) {
     return {
       weight: 1,
+      role: "viewer",
       isRouloAffiliate: false,
       rouloWagered: 0,
+      rouloUsername: null,
     };
   }
+
+  return {
+    weight: Number(link.weight || 1),
+    role: link.role || "viewer",
+    isRouloAffiliate: Number(link.weight || 1) > 1,
+    rouloWagered: Number(link.wagered || 0),
+    rouloUsername: link.roulo_username || null,
+  };
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
-  const username = String(body.username || "")
-    .replace("@", "")
-    .trim()
-    .toLowerCase();
+  const username = normalize(body.username || "");
 
   if (!username) {
     return NextResponse.json(
@@ -125,7 +67,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const boost = await getRouloBoost(username);
+  const boost = await getSavedRouloBoost(username);
 
   const { data, error } = await supabase
     .from("chat_giveaway_entries")
@@ -136,9 +78,12 @@ export async function POST(req: NextRequest) {
         display_name: body.display_name || username,
         twitch_id: body.twitch_id || null,
         avatar_url: body.avatar_url || null,
+
         weight: boost.weight,
+        role: boost.role,
         is_roulo_affiliate: boost.isRouloAffiliate,
         roulo_wagered: boost.rouloWagered,
+        roulo_username: boost.rouloUsername,
       },
       { onConflict: "giveaway_id,username" }
     )
