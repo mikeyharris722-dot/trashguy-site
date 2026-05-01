@@ -9,16 +9,18 @@ const supabase = createClient(
 );
 
 function pickWeightedWinner(entries: any[]) {
-  const totalWeight = entries.reduce(
-    (sum, entry) => sum + Math.max(1, Number(entry.weight || 1)),
-    0
-  );
+  const totalWeight = entries.reduce((sum, entry) => {
+    return sum + Math.max(1, Number(entry.weight || 1));
+  }, 0);
 
   let random = Math.random() * totalWeight;
 
   for (const entry of entries) {
     random -= Math.max(1, Number(entry.weight || 1));
-    if (random <= 0) return entry;
+
+    if (random <= 0) {
+      return entry;
+    }
   }
 
   return entries[entries.length - 1];
@@ -27,7 +29,7 @@ function pickWeightedWinner(entries: any[]) {
 export async function GET(req: NextRequest) {
   const amount = Number(req.nextUrl.searchParams.get("amount") || 0);
 
-  const { data: giveaway } = await supabase
+  const { data: giveaway, error: giveawayError } = await supabase
     .from("chat_giveaways")
     .select("id")
     .eq("status", "live")
@@ -35,7 +37,7 @@ export async function GET(req: NextRequest) {
     .limit(1)
     .single();
 
-  if (!giveaway) {
+  if (giveawayError || !giveaway) {
     return NextResponse.json({ ok: false, error: "No live giveaway" });
   }
 
@@ -53,8 +55,18 @@ export async function GET(req: NextRequest) {
   }
 
   const winner = pickWeightedWinner(entries);
-  const winnerUsername = String(winner.username || "").toLowerCase().trim();
-  const winnerTwitchId = winner.twitch_id || null;
+
+  const winnerUsername = String(winner.username || "")
+    .replace("@", "")
+    .trim()
+    .toLowerCase();
+
+  const winnerDisplayName = winner.display_name || winnerUsername;
+
+  const totalWeight = entries.reduce(
+    (sum, entry) => sum + Math.max(1, Number(entry.weight || 1)),
+    0
+  );
 
   const { error: updateError } = await supabase
     .from("chat_giveaways")
@@ -72,8 +84,8 @@ export async function GET(req: NextRequest) {
   if (amount > 0) {
     await supabase.from("rewards").insert({
       twitch_username: winnerUsername,
-      twitch_id: winnerTwitchId,
-      display_name: winner.display_name || winnerUsername,
+      twitch_id: winner.twitch_id || null,
+      display_name: winnerDisplayName,
       amount,
       title: "Chat Giveaway",
       status: "pending",
@@ -86,5 +98,9 @@ export async function GET(req: NextRequest) {
     winner,
     amount,
     total_entries: entries.length,
+    total_weight: totalWeight,
+    winner_weight: Number(winner.weight || 1),
+    winner_role: winner.role || "viewer",
+    winner_roulo_username: winner.roulo_username || null,
   });
 }
