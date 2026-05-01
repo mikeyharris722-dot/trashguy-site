@@ -493,6 +493,7 @@ function MatchCard({
 }
 
 export default function Home() {
+
   const [activeSection, setActiveSection] = useState("home");
 
   const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
@@ -522,13 +523,102 @@ export default function Home() {
   const [adminMessage, setAdminMessage] = useState("");
   const [latestWinners, setLatestWinners] = useState<WinnerItem[]>([]);
   const [adminHuntId, setAdminHuntId] = useState("");
+const [giveawayMessage, setGiveawayMessage] = useState("");
 
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardPlayer[]>(fallbackLeaderboard);
-  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+const [giveawayEntries, setGiveawayEntries] = useState<any[]>([]);
+const [recentGiveawayWinners, setRecentGiveawayWinners] = useState<any[]>([]);
+const [giveawayWinnerCounts, setGiveawayWinnerCounts] = useState<Record<string, number>>({});
 
-  const [giveaways, setGiveaways] = useState<any[]>([]);
+const loadGiveawayEntries = async () => {
+  try {
+    const res = await fetch("/api/chat-giveaway");
+    const data = await res.json();
+
+    if (Array.isArray(data?.entries)) {
+      setGiveawayEntries(data.entries);
+    }
+
+    if (Array.isArray(data?.recentWinners)) {
+      setRecentGiveawayWinners(data.recentWinners);
+    }
+
+    if (data?.winnerCounts) {
+      setGiveawayWinnerCounts(data.winnerCounts);
+    }
+  } catch (err) {
+    console.error("Failed to load entries", err);
+  }
+};
+
+const handleDeleteWinner = async (id: string) => {
+  if (!confirm("Delete this winner?")) return;
+
+  await fetch(`/api/chat-giveaway/delete?id=${id}`, {
+    method: "DELETE",
+  });
+
+  loadGiveawayEntries(); // refresh list
+};
+
+const [leaderboardData, setLeaderboardData] = useState<LeaderboardPlayer[]>(fallbackLeaderboard);
+const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+
+const [giveaways, setGiveaways] = useState<any[]>([]);
 const [giveawayTotal, setGiveawayTotal] = useState(0);
 const [giveawayLoading, setGiveawayLoading] = useState(true);
+
+const [viewerRewards, setViewerRewards] = useState<any[]>([]);
+const [viewerRewardsPending, setViewerRewardsPending] = useState(0);
+const [viewerRewardsPaid, setViewerRewardsPaid] = useState(0);
+const [viewerRewardsMessage, setViewerRewardsMessage] = useState("");
+
+const [rouloUsernameInput, setRouloUsernameInput] = useState("");
+const [rouloLink, setRouloLink] = useState<any>(null);
+const [rouloLinkMessage, setRouloLinkMessage] = useState("");
+
+const [adminRewards, setAdminRewards] = useState<any[]>([]);
+const [adminRewardsSearch, setAdminRewardsSearch] = useState("");
+const [adminRewardsMessage, setAdminRewardsMessage] = useState("");
+
+const [adminDropdowns, setAdminDropdowns] = useState(() => {
+  if (typeof window === "undefined") {
+    return {
+      predictions: true,
+      giveaway: false,
+      prizePortal: false,
+      tournament: false,
+    };
+  }
+
+  const saved = localStorage.getItem("admin_dropdowns");
+
+  return saved
+    ? JSON.parse(saved)
+    : {
+        predictions: true,
+        giveaway: false,
+        prizePortal: false,
+        tournament: false,
+      };
+});
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("admin_dropdowns", JSON.stringify(adminDropdowns));
+}, [adminDropdowns]);
+
+const setAdminDropdown = (
+  key: "predictions" | "giveaway" | "prizePortal" | "tournament",
+  open: boolean
+) => {
+  setAdminDropdowns((current: Record<
+    "predictions" | "giveaway" | "prizePortal" | "tournament",
+    boolean
+  >) => ({
+    ...current,
+    [key]: open,
+  }));
+};
 
   const [huntsData, setHuntsData] = useState<HuntItem[]>([]);
   const [huntsLoading, setHuntsLoading] = useState(true);
@@ -865,6 +955,84 @@ useEffect(() => {
     }
   }, []);
 
+const loadViewerRewards = useCallback(async () => {
+  try {
+    const viewer = viewerName || viewerDisplayName;
+
+    if (!viewer || viewer === "viewer") {
+      setViewerRewards([]);
+      setViewerRewardsPending(0);
+      setViewerRewardsPaid(0);
+      setViewerRewardsMessage("Connect Twitch to view rewards.");
+      return;
+    }
+
+    const res = await fetch(
+      `/api/prize-portal?viewer=${encodeURIComponent(viewer)}`,
+      { cache: "no-store" }
+    );
+
+    const data = await res.json();
+
+    if (!data.ok) {
+      setViewerRewardsMessage(data.error || "Could not load rewards.");
+      return;
+    }
+
+    setViewerRewards(data.rewards || []);
+    setViewerRewardsPending(Number(data.totalPending || 0));
+    setViewerRewardsPaid(Number(data.totalPaid || 0));
+    setViewerRewardsMessage("");
+  } catch {
+    setViewerRewardsMessage("Could not load rewards.");
+  }
+}, [viewerName, viewerDisplayName]);
+
+const loadRouloLink = useCallback(async () => {
+  if (!viewerName || viewerName === "viewer") return;
+
+  try {
+    const res = await fetch(`/api/roulo-link?twitch=${encodeURIComponent(viewerName)}`, {
+      cache: "no-store",
+    });
+
+    const data = await res.json();
+
+    if (data?.ok) {
+      setRouloLink(data.link || null);
+      if (data.link?.roulo_username) {
+        setRouloUsernameInput(data.link.roulo_username);
+      }
+    }
+  } catch {
+    setRouloLinkMessage("Could not load Roulo link.");
+  }
+}, [viewerName]);
+
+const handleLinkRoulo = async () => {
+  setRouloLinkMessage("Checking Roulo account...");
+
+  const res = await fetch("/api/roulo-link", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      twitch_username: viewerName,
+      twitch_display_name: viewerDisplayName,
+      roulo_username: rouloUsernameInput,
+    }),
+  });
+
+  const data = await res.json();
+
+  if (!data.ok) {
+    setRouloLinkMessage(data.error || "Could not link Roulo account.");
+    return;
+  }
+
+  setRouloLink(data.link);
+  setRouloLinkMessage("Roulo account linked.");
+};
+
   const loadGiveaways = useCallback(async () => {
   try {
     const res = await fetch("/api/giveaways", { cache: "no-store" });
@@ -968,19 +1136,22 @@ useEffect(() => {
   loadPredictions();
   loadLiveStatus();
   loadBracket();
+  loadGiveawayEntries();
 
   const liveTimer = setInterval(loadLiveStatus, 60000);
   const predictionTimer = setInterval(loadPredictions, 5000);
   const huntTimer = setInterval(loadHunts, 30000);
   const giveawayTimer = setInterval(loadGiveaways, 5000);
+  const giveawayEntriesTimer = setInterval(loadGiveawayEntries, 2000);
 
-  return () => {
-    clearInterval(liveTimer);
-    clearInterval(predictionTimer);
-    clearInterval(huntTimer);
-    clearInterval(giveawayTimer);
-  };
-}, [loadBracket, loadGiveaways, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions]);
+return () => {
+  clearInterval(liveTimer);
+  clearInterval(predictionTimer);
+  clearInterval(huntTimer);
+  clearInterval(giveawayTimer);
+  clearInterval(giveawayEntriesTimer);
+};
+}, [loadBracket, loadGiveaways, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions, loadViewerRewards]);
 
 // LOAD USER SESSION
 useEffect(() => {
@@ -1128,6 +1299,13 @@ useEffect(() => {
   localStorage.setItem(STORAGE_KEYS.activeHuntId, resolvedHunt.id);
   localStorage.setItem(STORAGE_KEYS.predictionStatus, nextStatus);
 }, [currentHuntState, huntsLoading, huntsData]);
+
+useEffect(() => {
+  if (activeSection === "giveaways") {
+    loadViewerRewards();
+    loadRouloLink();
+  }
+}, [activeSection, loadViewerRewards, loadRouloLink]);
 
 // REALTIME UPDATES (FIXED)
 useEffect(() => {
@@ -1510,6 +1688,134 @@ if (typeof window !== "undefined") {
       setAdminMessage("Failed to complete hunt.");
     }
   };
+
+const handleStartGiveaway = async () => {
+  setGiveawayMessage("Starting giveaway...");
+
+  const res = await fetch("/api/chat-giveaway", { method: "POST" });
+  const data = await res.json();
+
+  setGiveawayMessage(data?.ok ? "Giveaway started." : data?.error || "Failed to start giveaway.");
+};
+
+const handleAddTestEntry = async () => {
+  setGiveawayMessage("Adding test entry...");
+
+  const res = await fetch("/api/chat-giveaway/enter", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: `testuser${Date.now()}` }),
+  });
+
+  const data = await res.json();
+
+  setGiveawayMessage(data?.ok ? `Entry added: ${data.entry.username}` : data?.error || "Failed to add entry.");
+};
+
+const handleDrawGiveawayWinner = async () => {
+  setGiveawayMessage("Drawing winner...");
+
+  const prizeAmount = prompt("Prize amount?", "25");
+const amount = Number(prizeAmount || 0);
+
+const res = await fetch(`/api/chat-giveaway/draw?amount=${amount}`);
+  const data = await res.json();
+
+  setGiveawayMessage(data?.ok ? `Winner: ${data.winner.username}` : data?.error || "Failed to draw winner.");
+};
+
+const handleMarkRewardPaid = async (id: string) => {
+  await fetch(`/api/rewards?id=${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "complete" }),
+  });
+
+  loadViewerRewards();
+};
+
+const handleMarkRewardPending = async (id: string) => {
+  await fetch(`/api/rewards?id=${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "pending" }),
+  });
+
+  loadViewerRewards();
+};
+
+const handleDeleteReward = async (id: string) => {
+  if (!confirm("Delete this reward?")) return;
+
+  await fetch(`/api/rewards?id=${id}`, {
+    method: "DELETE",
+  });
+
+  loadViewerRewards();
+};
+
+const loadAdminRewards = async () => {
+  try {
+    const res = await fetch("/api/admin/rewards", { cache: "no-store" });
+    const data = await res.json();
+
+    if (!data.ok) {
+      setAdminRewardsMessage(data.error || "Could not load rewards.");
+      return;
+    }
+
+    setAdminRewards(data.rewards || []);
+    setAdminRewardsMessage("");
+  } catch {
+    setAdminRewardsMessage("Could not load rewards.");
+  }
+};
+
+const handleAdminMarkRewardPaid = async (id: string) => {
+  await fetch(`/api/admin/rewards?id=${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "complete" }),
+  });
+
+  loadAdminRewards();
+  loadViewerRewards();
+};
+
+const handleAdminMarkRewardPending = async (id: string) => {
+  await fetch(`/api/admin/rewards?id=${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "pending" }),
+  });
+
+  loadAdminRewards();
+  loadViewerRewards();
+};
+
+const handleAdminDeleteReward = async (id: string) => {
+  if (!confirm("Delete this reward?")) return;
+
+  await fetch(`/api/admin/rewards?id=${id}`, {
+    method: "DELETE",
+  });
+
+  loadAdminRewards();
+  loadViewerRewards();
+};
+
+const filteredAdminRewards = adminRewards.filter((reward) => {
+  const search = adminRewardsSearch.trim().toLowerCase();
+
+  if (!search) return true;
+
+  return (
+    String(reward.twitch_username || "").toLowerCase().includes(search) ||
+    String(reward.display_name || "").toLowerCase().includes(search) ||
+    String(reward.title || "").toLowerCase().includes(search) ||
+    String(reward.status || "").toLowerCase().includes(search)
+  );
+});
 
   const updateBracketTitle = (value: string) => {
     setBracket((current) => ({
@@ -1939,6 +2245,181 @@ LEADERBOARD
         </div>
       </div>
     </Panel>
+
+    <Panel className="mx-auto max-w-5xl border-fuchsia-300/20 shadow-[0_0_55px_rgba(217,70,239,0.10)]">
+  <div className="text-center">
+    <SectionLabel>Prize Portal</SectionLabel>
+
+    <h2 className="mt-4 text-[clamp(2rem,5vw,3.5rem)] font-black leading-[1.05] tracking-tight text-white">
+      MY REWARDS
+    </h2>
+
+    {isTwitchConnected && (
+  <div className="mt-6 rounded-[1.5rem] border border-emerald-300/20 bg-black/30 p-5 text-left">
+    <div className="text-xs uppercase tracking-[0.24em] text-emerald-300/80">
+      Roulo Account
+    </div>
+
+    <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
+      <input
+        value={rouloUsernameInput}
+        onChange={(e) => setRouloUsernameInput(e.target.value)}
+        placeholder="Enter your Roulo username"
+        className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+      />
+
+      <button
+        onClick={handleLinkRoulo}
+        className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-3 font-bold text-emerald-200 hover:bg-emerald-400/20"
+      >
+        Link Roulo
+      </button>
+    </div>
+
+    {rouloLink && (
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+          <div className="text-xs uppercase tracking-[0.2em] text-white/35">
+            Wagered
+          </div>
+          <div className="mt-1 text-xl font-black text-white">
+            ${Number(rouloLink.wagered || 0).toLocaleString()}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+          <div className="text-xs uppercase tracking-[0.2em] text-white/35">
+            Role
+          </div>
+          <div className="mt-1 text-xl font-black text-[#8fffd0] uppercase">
+            {rouloLink.role}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+          <div className="text-xs uppercase tracking-[0.2em] text-white/35">
+            Giveaway Chance
+          </div>
+          <div className="mt-1 text-xl font-black text-[#f5c451]">
+            x{rouloLink.weight || 1}
+          </div>
+        </div>
+      </div>
+    )}
+
+    {rouloLinkMessage && (
+      <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white/70">
+        {rouloLinkMessage}
+      </div>
+    )}
+  </div>
+)}
+
+    {!isTwitchConnected ? (
+      <div className="mt-6">
+        <button
+          onClick={handleTwitchLogin}
+          className="rounded-2xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-6 py-4 font-bold text-white transition hover:bg-[#9146FF]/30"
+        >
+          Connect Twitch to View Rewards
+        </button>
+      </div>
+    ) : (
+      <>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-yellow-300/20 bg-yellow-400/10 p-5">
+            <div className="text-xs uppercase tracking-[0.22em] text-yellow-200/70">
+              Pending
+            </div>
+            <div className="mt-2 text-3xl font-black text-yellow-200">
+              ${viewerRewardsPending.toLocaleString()}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-5">
+            <div className="text-xs uppercase tracking-[0.22em] text-emerald-200/70">
+              Paid
+            </div>
+            <div className="mt-2 text-3xl font-black text-emerald-200">
+              ${viewerRewardsPaid.toLocaleString()}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
+          {viewerRewards.length === 0 ? (
+            <div className="px-6 py-10 text-center text-white/45">
+              {viewerRewardsMessage || "No rewards yet."}
+            </div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {viewerRewards.map((reward) => (
+                <div
+                  key={reward.id}
+                  className="flex items-center justify-between gap-4 px-5 py-4"
+                >
+                  <div className="min-w-0 text-left">
+                    <div className="truncate font-black text-white">
+                      {reward.title || "Chat Giveaway"}
+                    </div>
+                    <div className="mt-1 text-xs text-white/35">
+                      {reward.created_at
+                        ? new Date(reward.created_at).toLocaleString()
+                        : "Recently"}
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-xl font-black text-[#8fffd0]">
+                      ${Number(reward.amount || 0).toLocaleString()}
+                    </div>
+                    <div
+                      className={`mt-1 inline-flex rounded-full px-3 py-1 text-xs font-black ${
+                        reward.status === "paid"
+                          ? "border border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+                          : "border border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
+                      }`}
+                    >
+                      {reward.status === "complete" || reward.status === "paid" ? "Completed" : "Pending"}
+                    </div>
+
+                  {(adminAllowed || isAdmin) && (
+  <div className="mt-2 flex gap-2 justify-end">
+
+    {reward.status === "pending" && (
+      <button
+        onClick={() => handleMarkRewardPaid(reward.id)}
+        className="rounded-lg border border-emerald-300/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-200"
+      >
+        Mark Paid
+      </button>
+    )}
+
+    {(reward.status === "complete" || reward.status === "paid") && (
+      <div className="rounded-lg border border-emerald-300/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-200">
+        Paid
+      </div>
+    )}
+
+    <button
+      onClick={() => handleDeleteReward(reward.id)}
+      className="rounded-lg border border-red-300/30 bg-red-400/10 px-3 py-1 text-xs font-bold text-red-200"
+    >
+      Delete
+    </button>
+
+  </div>
+)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </>
+    )}
+  </div>
+</Panel>
 
     <Panel className="mx-auto max-w-5xl border-[rgba(0,255,136,0.16)] shadow-[0_0_55px_rgba(0,255,136,0.10)]">
       {giveawayLoading ? (
@@ -2748,338 +3229,620 @@ LEADERBOARD
   </section>
 )}
 
-            {activeSection === "admin" && adminAllowed && (
-              <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-                <Panel className="border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
-                  <SectionLabel>Admin</SectionLabel>
-                  <h2 className="mt-3 text-4xl font-black tracking-wide">CONTROL PANEL</h2>
-                  <p className="mt-4 text-white/65">
-                    Admin panel is only shown for approved Twitch accounts.
-                  </p>
+{activeSection === "admin" && adminAllowed && (
+  <section className="grid gap-6">
+    <Panel className="border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
+      <SectionLabel>Admin</SectionLabel>
+      <h2 className="mt-3 text-4xl font-black tracking-wide">CONTROL CENTER</h2>
+      <p className="mt-4 text-white/65">
+        Admin panel is only shown for approved Twitch accounts.
+      </p>
 
-                  <div className="mt-8 grid gap-4">
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                        Signed in as
-                      </div>
-                      <div className="mt-2 text-xl font-black text-white">{viewerDisplayName}</div>
-                      <div className="mt-1 text-white/45">@{viewerName}</div>
-                    </div>
+      <div className="mt-8 grid gap-4">
+        <details
+  open={adminDropdowns.predictions}
+  onToggle={(e) => setAdminDropdown("predictions", e.currentTarget.open)}
+  className="rounded-2xl border border-white/10 bg-black/30 p-5"
+>
+          <summary className="cursor-pointer text-xl font-black text-white">
+            Predictions / Hunt
+          </summary>
 
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                        Admin Name
-                      </div>
-                      <input
-                        value={adminName}
-                        onChange={(e) => setAdminName(e.target.value)}
-                        className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                      />
-                    </div>
-
-                    <button
-                      onClick={() => setIsAdmin((v) => !v)}
-                      className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 font-semibold text-emerald-200 transition hover:bg-emerald-400/20"
-                    >
-                      {isAdmin ? `Admin Enabled (${adminName})` : "Enable Admin Mode"}
-                    </button>
-
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <button
-                        onClick={handleStartHunt}
-                        disabled={!isAdmin}
-                        className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-                      >
-                        Start New Hunt
-                      </button>
-                      <button
-                        onClick={handleOpenPredictions}
-                        disabled={!isAdmin}
-                        className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-                      >
-                        Open Predictions
-                      </button>
-                      <button
-                        onClick={handleLockPredictions}
-                        disabled={!isAdmin}
-                        className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-                      >
-                        Close Predictions
-                      </button>
-                      <button
-                        onClick={handleCompleteHunt}
-                        disabled={!isAdmin}
-                        className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-                      >
-                        Complete Hunt
-                      </button>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                        Final Hunt Result
-                      </div>
-                      <input
-                        value={finalResult}
-                        onChange={(e) => setFinalResult(e.target.value.replace(/[^0-9]/g, ""))}
-                        placeholder="Enter final balance"
-                        disabled={!isAdmin}
-                        className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
-                      />
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/75">
-                      {adminMessage || `Current internal hunt ID: ${adminHuntId || "none yet"}`}
-                    </div>
-                  </div>
-
-                  <div className="mt-8 rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
-                    <div className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-300">
-                      Top 2 Winners
-                    </div>
-                    <div className="mt-4 space-y-3">
-                      {rankedWinners.length === 0 && (
-                        <div className="text-white/50">Set a final result to rank winners.</div>
-                      )}
-                      {rankedWinners.map((winner, index) => (
-                        <div
-                          key={winner.id}
-                          className="rounded-xl border border-white/10 bg-white/5 px-4 py-3"
-                        >
-                          <div className="font-semibold text-white">
-                            #{index + 1} {winner.username}
-                          </div>
-                          <div className="mt-1 text-sm text-white/55">
-                            Guess: {formatMoney(winner.guess)} • Off by{" "}
-                            {formatMoney(winner.distance)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </Panel>
-
-                <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_65px_rgba(0,255,136,0.10)]">
-  <SectionLabel>Tournament Admin</SectionLabel>
-  <h2 className="mt-3 text-4xl font-black tracking-wide">EDIT BRACKET</h2>
-
-  <div className="mt-8 grid gap-5">
-    <div className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-5">
-      <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
-        Bracket Title
-      </div>
-      <input
-        value={bracket.title}
-        onChange={(e) => updateBracketTitle(e.target.value)}
-        disabled={!isAdmin}
-        placeholder="Enter tournament title"
-        className="mt-3 w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
-      />
-    </div>
-
-    <div className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-5">
-      <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
-        Generate New Bracket
-      </div>
-
-      <div className="mt-4 grid gap-3 md:grid-cols-[220px_1fr]">
-        <select
-          value={generatorTeamCount}
-          onChange={(e) => setGeneratorTeamCount(e.target.value)}
-          disabled={!isAdmin}
-          className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none disabled:opacity-40"
-        >
-          <option value="2">2 Teams</option>
-          <option value="3">3 Teams</option>
-          <option value="4">4 Teams</option>
-          <option value="5">5 Teams</option>
-          <option value="6">6 Teams</option>
-          <option value="7">7 Teams</option>
-          <option value="8">8 Teams</option>
-          <option value="9">9 Teams</option>
-          <option value="10">10 Teams</option>
-          <option value="11">11 Teams</option>
-          <option value="12">12 Teams</option>
-          <option value="13">13 Teams</option>
-          <option value="14">14 Teams</option>
-          <option value="15">15 Teams</option>
-          <option value="16">16 Teams</option>
-        </select>
-
-        <button
-          onClick={handleGenerateBracket}
-          disabled={!isAdmin}
-          className="rounded-xl border border-[rgba(0,255,136,0.22)] bg-[linear-gradient(180deg,rgba(0,255,136,0.18),rgba(0,255,136,0.08))] px-5 py-3 font-semibold text-[#b8ffd8] shadow-[0_0_20px_rgba(0,255,136,0.10)] transition hover:border-[rgba(0,255,136,0.34)] hover:bg-[linear-gradient(180deg,rgba(0,255,136,0.22),rgba(0,255,136,0.10))] disabled:opacity-40"
-        >
-          Generate Bracket
-        </button>
-      </div>
-
-      <div className="mt-3 text-sm text-white/45">
-        Blank team slots are created automatically. Odd team counts will include BYEs.
-      </div>
-    </div>
-
-    <div className="grid gap-4">
-      {bracket.rounds.map((round) => (
-        <div
-          key={round.id}
-          className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-5"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-xs font-bold uppercase tracking-[0.22em] text-[#8fffd0]">
-              {round.name}
+          <div className="mt-6 grid gap-4">
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+                Signed in as
+              </div>
+              <div className="mt-2 text-xl font-black text-white">{viewerDisplayName}</div>
+              <div className="mt-1 text-white/45">@{viewerName}</div>
             </div>
 
-            <input
-              value={round.name}
-              onChange={(e) => updateRoundName(round.id, e.target.value)}
-              disabled={!isAdmin}
-              className="w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40 md:max-w-[220px]"
-            />
-          </div>
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+                Admin Name
+              </div>
+              <input
+                value={adminName}
+                onChange={(e) => setAdminName(e.target.value)}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+              />
+            </div>
 
-          <div className="mt-5 grid gap-4">
-            {round.matches.map((match) => (
-              <div
-                key={match.id}
-                className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)] p-4"
+            <button
+              onClick={() => setIsAdmin((v) => !v)}
+              className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 font-semibold text-emerald-200 transition hover:bg-emerald-400/20"
+            >
+              {isAdmin ? `Admin Enabled (${adminName})` : "Enable Admin Mode"}
+            </button>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <button
+                onClick={handleStartHunt}
+                disabled={!isAdmin}
+                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
               >
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                  <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/35">
-                    {match.id.toUpperCase()}
+                Start New Hunt
+              </button>
+
+              <button
+                onClick={handleOpenPredictions}
+                disabled={!isAdmin}
+                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
+              >
+                Open Predictions
+              </button>
+
+              <button
+                onClick={handleLockPredictions}
+                disabled={!isAdmin}
+                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
+              >
+                Close Predictions
+              </button>
+
+              <button
+                onClick={handleCompleteHunt}
+                disabled={!isAdmin}
+                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
+              >
+                Complete Hunt
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+                Final Hunt Result
+              </div>
+              <input
+                value={finalResult}
+                onChange={(e) => setFinalResult(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="Enter final balance"
+                disabled={!isAdmin}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
+              />
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/75">
+              {adminMessage || `Current internal hunt ID: ${adminHuntId || "none yet"}`}
+            </div>
+
+            <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
+              <div className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-300">
+                Top 2 Winners
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {rankedWinners.length === 0 && (
+                  <div className="text-white/50">Set a final result to rank winners.</div>
+                )}
+
+                {rankedWinners.map((winner, index) => (
+                  <div
+                    key={winner.id}
+                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+                  >
+                    <div className="font-semibold text-white">
+                      #{index + 1} {winner.username}
+                    </div>
+                    <div className="mt-1 text-sm text-white/55">
+                      Guess: {formatMoney(winner.guess)} • Off by{" "}
+                      {formatMoney(winner.distance)}
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </details>
 
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/30">
-                    {match.winner ? `Winner: ${match.winner}` : "No winner selected"}
-                  </div>
-                </div>
+        <details
+  open={adminDropdowns.giveaway}
+  onToggle={(e) => setAdminDropdown("giveaway", e.currentTarget.open)}
+  className="rounded-2xl border border-fuchsia-300/20 bg-black/30 p-5"
+>
+          <summary className="cursor-pointer text-xl font-black text-white">
+            Giveaway System
+          </summary>
 
-                <div className="grid gap-3 md:grid-cols-2">
-  <div className="grid gap-2">
-    <input
-      value={match.player1}
-      onChange={(e) =>
-        updateMatchField(round.id, match.id, "player1", e.target.value)
-      }
-      disabled={!isAdmin || match.player1 === "BYE"}
-      placeholder="Player / Provider"
-      className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
-    />
+          <div className="mt-6 grid gap-4">
+            <button
+              onClick={handleStartGiveaway}
+              disabled={!isAdmin}
+              className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 font-semibold text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-40"
+            >
+              Start Giveaway
+            </button>
 
-    <input
-      value={match.player1Amount || ""}
-      onChange={(e) =>
-        updateMatchField(
-          round.id,
-          match.id,
-          "player1Amount",
-          e.target.value.replace(/[^0-9.]/g, "")
-        )
-      }
-      disabled={!isAdmin || match.player1 === "BYE"}
-      placeholder="Amount won"
-      className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.25)] px-4 py-3 text-sm text-white outline-none transition focus:border-[rgba(245,196,81,0.35)] disabled:opacity-40"
-    />
+            <button
+              onClick={handleAddTestEntry}
+              disabled={!isAdmin}
+              className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white transition hover:bg-white/5 disabled:opacity-40"
+            >
+              Add Test Entry
+            </button>
+
+            <button
+              onClick={handleDrawGiveawayWinner}
+              disabled={!isAdmin}
+              className="rounded-2xl border border-fuchsia-300/25 bg-fuchsia-400/10 px-5 py-4 font-semibold text-fuchsia-200 transition hover:bg-fuchsia-400/20 disabled:opacity-40"
+            >
+              Draw Winner
+            </button>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/75">
+              {giveawayMessage || "Start a giveaway, add entries, then draw a winner."}
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="mb-3 text-xs uppercase tracking-[0.22em] text-white/45">
+                Live Entries ({giveawayEntries.length})
+              </div>
+
+              <div className="max-h-[220px] space-y-2 overflow-y-auto">
+                {giveawayEntries.length === 0 ? (
+                  <div className="text-sm text-white/40">No entries yet</div>
+                ) : (
+                  giveawayEntries.map((entry, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-2"
+                    >
+                      <div className="font-semibold text-white">{entry.username}</div>
+
+                      <div
+                        className={`rounded-full px-3 py-1 text-xs font-black ${
+                          Number(entry.weight || 1) >= 1.5
+                            ? "border border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
+                            : Number(entry.weight || 1) >= 1.25
+                            ? "border border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
+                            : "border border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+                        }`}
+                      >
+                        {Number(entry.weight || 1) >= 1.5
+                          ? `💎 VIP x${entry.weight}`
+                          : Number(entry.weight || 1) >= 1.25
+                          ? `⭐ Affiliate x${entry.weight}`
+                          : `Viewer x${entry.weight || 1}`}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="mb-3 text-xs uppercase tracking-[0.22em] text-white/45">
+                Recent Winners
+              </div>
+
+              <div className="max-h-[220px] space-y-2 overflow-y-auto">
+                {recentGiveawayWinners.length === 0 ? (
+                  <div className="text-sm text-white/40">No winners yet</div>
+                ) : (
+                  recentGiveawayWinners.map((winner, index) => {
+                    const username = String(winner.winner_username || "").toLowerCase();
+                    const winCount = giveawayWinnerCounts[username] || 1;
+
+                    return (
+                      <div
+                        key={winner.id || index}
+                        className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-2"
+                      >
+                        <div>
+                          <div className="font-semibold text-white">
+                            #{index + 1} {winner.winner_username}
+                          </div>
+                          <div className="text-xs text-white/35">
+                            {winner.finished_at
+                              ? new Date(winner.finished_at).toLocaleString()
+                              : "Recently"}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`rounded-full px-3 py-1 text-xs font-black ${
+                              winCount > 1
+                                ? "border border-red-300/20 bg-red-400/15 text-red-300"
+                                : "border border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+                            }`}
+                          >
+                            {winCount > 1 ? `Repeat x${winCount}` : "New"}
+                          </div>
+
+                          <button
+                            onClick={() => handleDeleteWinner(winner.id)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md border border-red-400/30 bg-red-400/10 text-red-300 hover:bg-red-400/20"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details
+  open={adminDropdowns.prizePortal}
+  onToggle={(e) => setAdminDropdown("prizePortal", e.currentTarget.open)}
+  className="rounded-2xl border border-cyan-300/20 bg-black/30 p-5"
+>
+          <summary className="cursor-pointer text-xl font-black text-white">
+            Prize Portal Manager
+          </summary>
+
+<div className="mt-6 grid gap-4">
+  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div>
+      <SectionLabel>Prize Portal Manager</SectionLabel>
+      <h2 className="mt-2 text-3xl font-black tracking-wide">ALL REWARDS</h2>
+      <div className="mt-1 text-sm text-white/45">
+        Manage every viewer reward, payout status, and mistakes.
+      </div>
+    </div>
+
+    <button
+      onClick={loadAdminRewards}
+      className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-5 py-3 font-bold text-cyan-200 hover:bg-cyan-400/20"
+    >
+      Refresh Rewards
+    </button>
   </div>
 
-  <div className="grid gap-2">
-    <input
-      value={match.player2}
-      onChange={(e) =>
-        updateMatchField(round.id, match.id, "player2", e.target.value)
-      }
-      disabled={!isAdmin || match.player2 === "BYE"}
-      placeholder="Player / Provider"
-      className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
-    />
+  <input
+    value={adminRewardsSearch}
+    onChange={(e) => setAdminRewardsSearch(e.target.value)}
+    placeholder="Search username, status, title..."
+    className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+  />
 
-    <input
-      value={match.player2Amount || ""}
-      onChange={(e) =>
-        updateMatchField(
-          round.id,
-          match.id,
-          "player2Amount",
-          e.target.value.replace(/[^0-9.]/g, "")
-        )
-      }
-      disabled={!isAdmin || match.player2 === "BYE"}
-      placeholder="Amount won"
-      className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.25)] px-4 py-3 text-sm text-white outline-none transition focus:border-[rgba(245,196,81,0.35)] disabled:opacity-40"
-    />
-  </div>
-</div>
+  {adminRewardsMessage && (
+    <div className="rounded-xl border border-white/10 bg-black/30 p-4 text-sm text-white/70">
+      {adminRewardsMessage}
+    </div>
+  )}
 
-                <div className="mt-4 grid gap-2 md:grid-cols-3">
-                  <button
-                    onClick={() => selectMatchWinner(round.id, match.id, match.player1)}
-                    disabled={!isAdmin || !match.player1.trim() || match.player1 === "BYE"}
-                    className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-40 ${
-                      match.winner === match.player1
-                        ? "border-[rgba(0,255,136,0.30)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8]"
-                        : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white"
-                    }`}
-                  >
-                    Pick {match.player1 || ""}
-                  </button>
+  <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30">
+    {filteredAdminRewards.length === 0 ? (
+      <div className="p-6 text-center text-white/45">
+        No rewards found. Click Refresh Rewards.
+      </div>
+    ) : (
+      <div className="max-h-[650px] overflow-y-auto divide-y divide-white/5">
+        {filteredAdminRewards.map((reward) => {
+          const isComplete =
+            reward.status === "complete" || reward.status === "paid";
 
-                  <button
-                    onClick={() => selectMatchWinner(round.id, match.id, match.player2)}
-                    disabled={!isAdmin || !match.player2.trim() || match.player2 === "BYE"}
-                    className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-40 ${
-                      match.winner === match.player2
-                        ? "border-[rgba(0,255,136,0.30)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8]"
-                        : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white"
-                    }`}
-                  >
-                    Pick {match.player2 || ""}
-                  </button>
-
-                  <button
-                    onClick={() => clearMatchWinner(round.id, match.id)}
-                    disabled={!isAdmin}
-                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
-                  >
-                    Clear Winner
-                  </button>
+          return (
+            <div
+              key={reward.id}
+              className="grid gap-4 p-4 md:grid-cols-[1fr_120px_140px_190px]"
+            >
+              <div>
+                <div className="font-black text-white">
+                  {reward.display_name || reward.twitch_username}
                 </div>
-
-                <div className="mt-4">
-                  <MatchCard match={match} compact />
+                <div className="mt-1 text-xs text-white/40">
+                  @{reward.twitch_username}
+                </div>
+                <div className="mt-2 text-sm text-white/60">
+                  {reward.title || "Chat Giveaway"} •{" "}
+                  {reward.created_at
+                    ? new Date(reward.created_at).toLocaleString()
+                    : "Recently"}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      ))}
+
+              <div>
+                <div className="text-xs text-white/35">Amount</div>
+                <div className="mt-1 text-xl font-black text-[#8fffd0]">
+                  ${Number(reward.amount || 0).toLocaleString()}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs text-white/35">Status</div>
+                <div
+                  className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-black ${
+                    isComplete
+                      ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+                      : "border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
+                  }`}
+                >
+                  {isComplete ? "Completed" : "Pending"}
+                </div>
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                {isComplete ? (
+                  <button
+                    onClick={() => handleAdminMarkRewardPending(reward.id)}
+                    className="rounded-lg border border-yellow-300/30 bg-yellow-400/10 px-3 py-2 text-xs font-bold text-yellow-200"
+                  >
+                    Set Pending
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleAdminMarkRewardPaid(reward.id)}
+                    className="rounded-lg border border-emerald-300/30 bg-emerald-400/10 px-3 py-2 text-xs font-bold text-emerald-200"
+                  >
+                    Mark Paid
+                  </button>
+                )}
+
+                <button
+                  onClick={() => handleAdminDeleteReward(reward.id)}
+                  className="rounded-lg border border-red-300/30 bg-red-400/10 px-3 py-2 text-xs font-bold text-red-200"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</div>
+        </details>
+
+        <details
+  open={adminDropdowns.tournament}
+  onToggle={(e) => setAdminDropdown("tournament", e.currentTarget.open)}
+  className="rounded-2xl border border-emerald-300/20 bg-black/30 p-5"
+>
+          <summary className="cursor-pointer text-xl font-black text-white">
+            Tournament Editor
+          </summary>
+
+          <div className="mt-6">
+<SectionLabel>Tournament Admin</SectionLabel>
+<h2 className="mt-3 text-4xl font-black tracking-wide">EDIT BRACKET</h2>
+
+<div className="mt-8 grid gap-5">
+  <div className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-5">
+    <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
+      Bracket Title
+    </div>
+    <input
+      value={bracket.title}
+      onChange={(e) => updateBracketTitle(e.target.value)}
+      disabled={!isAdmin}
+      placeholder="Enter tournament title"
+      className="mt-3 w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
+    />
+  </div>
+
+  <div className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-5">
+    <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
+      Generate New Bracket
     </div>
 
-    <div className="grid gap-3 md:grid-cols-2">
-      <button
-        onClick={saveBracket}
+    <div className="mt-4 grid gap-3 md:grid-cols-[220px_1fr]">
+      <select
+        value={generatorTeamCount}
+        onChange={(e) => setGeneratorTeamCount(e.target.value)}
         disabled={!isAdmin}
-        className="rounded-2xl border border-[rgba(0,255,136,0.22)] bg-[linear-gradient(180deg,rgba(0,255,136,0.18),rgba(0,255,136,0.08))] px-5 py-4 font-semibold text-[#b8ffd8] shadow-[0_0_20px_rgba(0,255,136,0.10)] transition hover:border-[rgba(0,255,136,0.34)] hover:bg-[linear-gradient(180deg,rgba(0,255,136,0.22),rgba(0,255,136,0.10))] disabled:opacity-40"
+        className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none disabled:opacity-40"
       >
-        Save Bracket
-      </button>
+        <option value="2">2 Teams</option>
+        <option value="3">3 Teams</option>
+        <option value="4">4 Teams</option>
+        <option value="5">5 Teams</option>
+        <option value="6">6 Teams</option>
+        <option value="7">7 Teams</option>
+        <option value="8">8 Teams</option>
+        <option value="9">9 Teams</option>
+        <option value="10">10 Teams</option>
+        <option value="11">11 Teams</option>
+        <option value="12">12 Teams</option>
+        <option value="13">13 Teams</option>
+        <option value="14">14 Teams</option>
+        <option value="15">15 Teams</option>
+        <option value="16">16 Teams</option>
+      </select>
 
       <button
-        onClick={resetBracket}
+        onClick={handleGenerateBracket}
         disabled={!isAdmin}
-        className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-5 py-4 font-semibold text-white disabled:opacity-40"
+        className="rounded-xl border border-[rgba(0,255,136,0.22)] bg-[linear-gradient(180deg,rgba(0,255,136,0.18),rgba(0,255,136,0.08))] px-5 py-3 font-semibold text-[#b8ffd8] shadow-[0_0_20px_rgba(0,255,136,0.10)] transition hover:border-[rgba(0,255,136,0.34)] disabled:opacity-40"
       >
-        Reset Bracket
+        Generate Bracket
       </button>
     </div>
 
-    <div className="rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.03)] p-4 text-sm text-white/75">
-      {bracketMessage || "Generate a bracket, enter teams, pick winners, then save it live."}
+    <div className="mt-3 text-sm text-white/45">
+      Blank team slots are created automatically. Odd team counts will include BYEs.
     </div>
   </div>
-</Panel>
-              </section>
-            )}
+
+  <div className="grid gap-4">
+    {bracket.rounds.map((round) => (
+      <div
+        key={round.id}
+        className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-5"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="text-xs font-bold uppercase tracking-[0.22em] text-[#8fffd0]">
+            {round.name}
+          </div>
+
+          <input
+            value={round.name}
+            onChange={(e) => updateRoundName(round.id, e.target.value)}
+            disabled={!isAdmin}
+            className="w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40 md:max-w-[220px]"
+          />
+        </div>
+
+        <div className="mt-5 grid gap-4">
+          {round.matches.map((match) => (
+            <div
+              key={match.id}
+              className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)] p-4"
+            >
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/35">
+                  {match.id.toUpperCase()}
+                </div>
+
+                <div className="text-xs uppercase tracking-[0.22em] text-white/30">
+                  {match.winner ? `Winner: ${match.winner}` : "No winner selected"}
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-2">
+                  <input
+                    value={match.player1}
+                    onChange={(e) =>
+                      updateMatchField(round.id, match.id, "player1", e.target.value)
+                    }
+                    disabled={!isAdmin || match.player1 === "BYE"}
+                    placeholder="Player / Provider"
+                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
+                  />
+
+                  <input
+                    value={match.player1Amount || ""}
+                    onChange={(e) =>
+                      updateMatchField(
+                        round.id,
+                        match.id,
+                        "player1Amount",
+                        e.target.value.replace(/[^0-9.]/g, "")
+                      )
+                    }
+                    disabled={!isAdmin || match.player1 === "BYE"}
+                    placeholder="Amount won"
+                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.25)] px-4 py-3 text-sm text-white outline-none transition focus:border-[rgba(245,196,81,0.35)] disabled:opacity-40"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <input
+                    value={match.player2}
+                    onChange={(e) =>
+                      updateMatchField(round.id, match.id, "player2", e.target.value)
+                    }
+                    disabled={!isAdmin || match.player2 === "BYE"}
+                    placeholder="Player / Provider"
+                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
+                  />
+
+                  <input
+                    value={match.player2Amount || ""}
+                    onChange={(e) =>
+                      updateMatchField(
+                        round.id,
+                        match.id,
+                        "player2Amount",
+                        e.target.value.replace(/[^0-9.]/g, "")
+                      )
+                    }
+                    disabled={!isAdmin || match.player2 === "BYE"}
+                    placeholder="Amount won"
+                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.25)] px-4 py-3 text-sm text-white outline-none transition focus:border-[rgba(245,196,81,0.35)] disabled:opacity-40"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-2 md:grid-cols-3">
+                <button
+                  onClick={() => selectMatchWinner(round.id, match.id, match.player1)}
+                  disabled={!isAdmin || !match.player1.trim() || match.player1 === "BYE"}
+                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-40 ${
+                    match.winner === match.player1
+                      ? "border-[rgba(0,255,136,0.30)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8]"
+                      : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white"
+                  }`}
+                >
+                  Pick {match.player1 || ""}
+                </button>
+
+                <button
+                  onClick={() => selectMatchWinner(round.id, match.id, match.player2)}
+                  disabled={!isAdmin || !match.player2.trim() || match.player2 === "BYE"}
+                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-40 ${
+                    match.winner === match.player2
+                      ? "border-[rgba(0,255,136,0.30)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8]"
+                      : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white"
+                  }`}
+                >
+                  Pick {match.player2 || ""}
+                </button>
+
+                <button
+                  onClick={() => clearMatchWinner(round.id, match.id)}
+                  disabled={!isAdmin}
+                  className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
+                >
+                  Clear Winner
+                </button>
+              </div>
+
+              <div className="mt-4">
+                <MatchCard match={match} compact />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div className="grid gap-3 md:grid-cols-2">
+    <button
+      onClick={saveBracket}
+      disabled={!isAdmin}
+      className="rounded-2xl border border-[rgba(0,255,136,0.22)] bg-[linear-gradient(180deg,rgba(0,255,136,0.18),rgba(0,255,136,0.08))] px-5 py-4 font-semibold text-[#b8ffd8] shadow-[0_0_20px_rgba(0,255,136,0.10)] transition hover:border-[rgba(0,255,136,0.34)] disabled:opacity-40"
+    >
+      Save Bracket
+    </button>
+
+    <button
+      onClick={resetBracket}
+      disabled={!isAdmin}
+      className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-5 py-4 font-semibold text-white disabled:opacity-40"
+    >
+      Reset Bracket
+    </button>
+  </div>
+
+  <div className="rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.03)] p-4 text-sm text-white/75">
+    {bracketMessage || "Generate a bracket, enter teams, pick winners, then save it live."}
+  </div>
+</div>
+</div>
+        </details>
+      </div>
+    </Panel>
+  </section>
+)}
           </main>
 
           <footer className="relative overflow-hidden border-t border-[rgba(0,255,136,0.14)] bg-[linear-gradient(180deg,rgba(8,8,8,0.88),rgba(4,4,4,0.96))] px-6 py-8">
