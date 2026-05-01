@@ -9,10 +9,11 @@ const supabase = createClient(
 );
 
 export async function GET() {
-  const { data, error } = await supabase
-    .from("rewards")
-    .select("*")
-    .order("created_at", { ascending: false });
+const { data, error } = await supabase
+  .from("rewards")
+  .select("*")
+  .neq("twitch_username", "trashguy__") // hide your own rewards
+  .order("created_at", { ascending: false });
 
   if (error) {
     return NextResponse.json({
