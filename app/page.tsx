@@ -3401,7 +3401,9 @@ LEADERBOARD
                       key={index}
                       className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
                     >
-                      <div className="font-semibold text-white">{entry.username}</div>
+                      <div className="font-semibold text-white"><span className="truncate text-sm">
+  {entry.display_name || entry.username}
+</span></div>
 
                       <div
                         className={`rounded-full px-3 py-1 text-xs font-black ${
@@ -3429,7 +3431,7 @@ LEADERBOARD
                 Recent Winners
               </div>
 
-              <div className="max-h-[220px] space-y-2 overflow-y-auto">
+              <div className="grid max-h-[420px] grid-cols-2 gap-1 overflow-y-auto md:grid-cols-4 xl:grid-cols-6">
                 {recentGiveawayWinners.length === 0 ? (
                   <div className="text-sm text-white/40">No winners yet</div>
                 ) : (
@@ -3443,7 +3445,7 @@ LEADERBOARD
                     return (
                       <div
                         key={winner.id || index}
-                        className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-2"
+                        className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
                       >
                         <div>
                           <div className="font-semibold text-white">
