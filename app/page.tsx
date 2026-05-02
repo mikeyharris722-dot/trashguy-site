@@ -3383,9 +3383,15 @@ LEADERBOARD
               Draw Winner
             </button>
 
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/75">
-              {giveawayMessage || "Start a giveaway, add entries, then draw a winner."}
-            </div>
+<div className="rounded-2xl border border-white/10 bg-black/30 p-6 text-center">
+  <div className="text-xs uppercase tracking-[0.25em] text-white/40">
+    🎯 Current Winner
+  </div>
+
+  <div className="mt-3 text-3xl md:text-4xl font-black text-green-400 drop-shadow-[0_0_20px_rgba(34,197,94,0.9)]">
+    {giveawayMessage || "Waiting for winner..."}
+  </div>
+</div>
 
             <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
               <div className="mb-3 text-xs uppercase tracking-[0.22em] text-white/45">
@@ -3403,82 +3409,26 @@ LEADERBOARD
                     >
                       <div className="font-semibold text-white"><span className="truncate text-sm">
   {entry.display_name || entry.username}
-</span></div>
+</span>
+</div>
 
-                      <div
-                        className={`rounded-full px-3 py-1 text-xs font-black ${
-                          Number(entry.weight || 1) >= 1.5
-                            ? "border border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
-                            : Number(entry.weight || 1) >= 1.25
-                            ? "border border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
-                            : "border border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
-                        }`}
-                      >
-                        {Number(entry.weight || 1) >= 1.5
-                          ? `💎 VIP x${entry.weight}`
-                          : Number(entry.weight || 1) >= 1.25
-                          ? `⭐ Affiliate x${entry.weight}`
-                          : `Viewer x${entry.weight || 1}`}
-                      </div>
+<div
+  className={`rounded-full px-3 py-1 text-xs font-black ${
+    Number(entry.weight || 1) >= 1.2
+      ? "border border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
+      : Number(entry.weight || 1) >= 1.1
+      ? "border border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
+      : "border border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+  }`}
+>
+  {Number(entry.weight || 1) >= 1.2
+    ? `💎 VIP x${entry.weight}`
+    : Number(entry.weight || 1) >= 1.1
+    ? `⭐ Affiliate x${entry.weight}`
+    : `Viewer x${entry.weight || 1}`}
+</div>
                     </div>
                   ))
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="mb-3 text-xs uppercase tracking-[0.22em] text-white/45">
-                Recent Winners
-              </div>
-
-              <div className="grid max-h-[420px] grid-cols-2 gap-1 overflow-y-auto md:grid-cols-4 xl:grid-cols-6">
-                {recentGiveawayWinners.length === 0 ? (
-                  <div className="text-sm text-white/40">No winners yet</div>
-                ) : (
-                  recentGiveawayWinners
-  .filter((winner) => winner.status === "active" || !winner.finished_at)
-  .slice(0, 1)
-  .map((winner, index) => {
-                    const username = String(winner.winner_username || "").toLowerCase();
-                    const winCount = giveawayWinnerCounts[username] || 1;
-
-                    return (
-                      <div
-                        key={winner.id || index}
-                        className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
-                      >
-                        <div>
-                          <div className="font-semibold text-white">
-                            #{index + 1} {winner.winner_username}
-                          </div>
-                          <div className="text-xs text-white/35">
-                            {winner.finished_at
-                              ? new Date(winner.finished_at).toLocaleString()
-                              : "Recently"}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`rounded-full px-3 py-1 text-xs font-black ${
-                              winCount > 1
-                                ? "border border-red-300/20 bg-red-400/15 text-red-300"
-                                : "border border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
-                            }`}
-                          >
-                            {winCount > 1 ? `Repeat x${winCount}` : "New"}
-                          </div>
-
-                          <button
-                            onClick={() => handleDeleteWinner(winner.id)}
-                            className="flex h-7 w-7 items-center justify-center rounded-md border border-red-400/30 bg-red-400/10 text-red-300 hover:bg-red-400/20"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
                 )}
               </div>
             </div>
@@ -3532,7 +3482,7 @@ LEADERBOARD
       </div>
     ) : (
       <div className="max-h-[650px] overflow-y-auto divide-y divide-white/5">
-        {filteredAdminRewards.slice(0, 1).map((reward) => {
+        {filteredAdminRewards.map((reward) => {
           const isComplete =
             reward.status === "complete"
 
