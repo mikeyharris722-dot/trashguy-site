@@ -9,11 +9,10 @@ const supabase = createClient(
 );
 
 export async function GET() {
-const { data, error } = await supabase
-  .from("rewards")
-  .select("*")
-  .neq("twitch_username", "trashguy__") // hide your own rewards
-  .order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("rewards")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   if (error) {
     return NextResponse.json({
@@ -37,35 +36,52 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Missing reward id" });
   }
 
-  const status = body.status || "pending";
+  if (body.action === "delete") {
+    const { data: reward, error: findError } = await supabase
+      .from("rewards")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-  const { error } = await supabase
+    if (findError || !reward) {
+      return NextResponse.json({ ok: false, error: "Reward not found." });
+    }
+
+    const query = reward.giveaway_id
+      ? supabase.from("rewards").delete().eq("giveaway_id", reward.giveaway_id)
+      : supabase.from("rewards").delete().eq("id", id);
+
+    const { data, error } = await query.select("*");
+
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message });
+    }
+
+    return NextResponse.json({ ok: true, deleted: data || [] });
+  }
+
+  const updateData: any = {};
+
+  if (body.status !== undefined) {
+    updateData.status = body.status;
+    updateData.paid_at =
+      body.status === "complete" ? new Date().toISOString() : null;
+  }
+
+  if (body.amount !== undefined) {
+    updateData.amount = Number(body.amount);
+  }
+
+  const { data, error } = await supabase
     .from("rewards")
-    .update({
-      status,
-      paid_at: status === "complete" ? new Date().toISOString() : null,
-    })
-    .eq("id", id);
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single();
 
   if (error) {
     return NextResponse.json({ ok: false, error: error.message });
   }
 
-  return NextResponse.json({ ok: true });
-}
-
-export async function DELETE(req: NextRequest) {
-  const id = req.nextUrl.searchParams.get("id");
-
-  if (!id) {
-    return NextResponse.json({ ok: false, error: "Missing reward id" });
-  }
-
-  const { error } = await supabase.from("rewards").delete().eq("id", id);
-
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message });
-  }
-
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, reward: data });
 }

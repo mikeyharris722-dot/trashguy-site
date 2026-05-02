@@ -26,20 +26,27 @@ function pickWeightedWinner(entries: any[]) {
   return entries[entries.length - 1];
 }
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   const amount = Number(req.nextUrl.searchParams.get("amount") || 0);
 
-  const { data: giveaway, error: giveawayError } = await supabase
-    .from("chat_giveaways")
-    .select("id")
-    .eq("status", "live")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+const { data: giveaway, error: giveawayError } = await supabase
+  .from("chat_giveaways")
+  .select("*")
+  .eq("status", "live")
+  .order("created_at", { ascending: false })
+  .limit(1)
+  .single();
 
-  if (giveawayError || !giveaway) {
+    if (giveawayError || !giveaway) {
     return NextResponse.json({ ok: false, error: "No live giveaway" });
   }
+
+if (giveaway?.winner_username) {
+  return NextResponse.json({
+    ok: false,
+    error: "Winner already drawn for this giveaway.",
+  });
+}
 
   const { data: entries, error: entriesError } = await supabase
     .from("chat_giveaway_entries")
@@ -81,17 +88,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: updateError.message });
   }
 
-  if (amount > 0) {
-    await supabase.from("rewards").insert({
-      twitch_username: winnerUsername,
-      twitch_id: winner.twitch_id || null,
-      display_name: winnerDisplayName,
-      amount,
-      title: "Chat Giveaway",
-      status: "pending",
-      giveaway_id: giveaway.id,
-    });
-  }
+// Remove any old reward for this same giveaway first.
+// This prevents duplicate rewards coming back after refresh.
+await supabase
+  .from("rewards")
+  .delete()
+  .eq("giveaway_id", giveaway.id);
+
+await supabase.from("rewards").insert({
+  twitch_username: winnerUsername,
+  twitch_id: winner.twitch_id || null,
+  display_name: winnerDisplayName,
+  amount: amount > 0 ? amount : 0,
+  title: "Chat Giveaway",
+  status: "pending",
+  giveaway_id: giveaway.id,
+});
 
   return NextResponse.json({
     ok: true,

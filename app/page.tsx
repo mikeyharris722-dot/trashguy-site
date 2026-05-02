@@ -1305,7 +1305,11 @@ useEffect(() => {
     loadViewerRewards();
     loadRouloLink();
   }
-}, [activeSection, loadViewerRewards, loadRouloLink]);
+
+  if (activeSection === "admin" && adminAllowed) {
+    loadAdminRewards();
+  }
+}, [activeSection, adminAllowed, loadViewerRewards, loadRouloLink]);
 
 // REALTIME UPDATES (FIXED)
 useEffect(() => {
@@ -1715,13 +1719,19 @@ const handleAddTestEntry = async () => {
 const handleDrawGiveawayWinner = async () => {
   setGiveawayMessage("Drawing winner...");
 
-  const prizeAmount = prompt("Prize amount?", "25");
-const amount = Number(prizeAmount || 0);
+  const res = await fetch(`/api/chat-giveaway/draw?amount=0`, {
+    method: "POST",
+  });
 
-const res = await fetch(`/api/chat-giveaway/draw?amount=${amount}`);
   const data = await res.json();
 
-  setGiveawayMessage(data?.ok ? `Winner: ${data.winner.username}` : data?.error || "Failed to draw winner.");
+  setGiveawayMessage(
+    data?.ok
+      ? `Winner: ${data.winner.username} — set winnings after bonus.`
+      : data?.error || "Failed to draw winner."
+  );
+
+  loadAdminRewards();
 };
 
 const handleMarkRewardPaid = async (id: string) => {
@@ -1796,12 +1806,21 @@ const handleAdminMarkRewardPending = async (id: string) => {
 const handleAdminDeleteReward = async (id: string) => {
   if (!confirm("Delete this reward?")) return;
 
-  await fetch(`/api/admin/rewards?id=${id}`, {
-    method: "DELETE",
+  const res = await fetch(`/api/admin/rewards?id=${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "delete" }),
   });
 
-  loadAdminRewards();
-  loadViewerRewards();
+  const data = await res.json();
+
+  if (!res.ok || !data.ok) {
+    alert(data.error || "Delete failed.");
+    return;
+  }
+
+  setAdminRewards((current) => current.filter((r) => r.id !== id));
+  setViewerRewards((current) => current.filter((r) => r.id !== id));
 };
 
 const filteredAdminRewards = adminRewards.filter((reward) => {
@@ -2246,7 +2265,9 @@ LEADERBOARD
       </div>
     </Panel>
 
+    {viewerName.toLowerCase() !== "trashguy__" && viewerName.toLowerCase() !== "trashguy" && (
     <Panel className="mx-auto max-w-5xl border-fuchsia-300/20 shadow-[0_0_55px_rgba(217,70,239,0.10)]">
+
   <div className="text-center">
     <SectionLabel>Prize Portal</SectionLabel>
 
@@ -2375,41 +2396,13 @@ LEADERBOARD
                     </div>
                     <div
                       className={`mt-1 inline-flex rounded-full px-3 py-1 text-xs font-black ${
-                        reward.status === "paid"
+                       reward.status === "complete"
                           ? "border border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
                           : "border border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
                       }`}
                     >
-                      {reward.status === "complete" || reward.status === "paid" ? "Completed" : "Pending"}
+                      {reward.status === "complete" ? "Completed" : "Pending"}
                     </div>
-
-                  {(adminAllowed || isAdmin) && (
-  <div className="mt-2 flex gap-2 justify-end">
-
-    {reward.status === "pending" && (
-      <button
-        onClick={() => handleMarkRewardPaid(reward.id)}
-        className="rounded-lg border border-emerald-300/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-200"
-      >
-        Mark Paid
-      </button>
-    )}
-
-    {(reward.status === "complete" || reward.status === "paid") && (
-      <div className="rounded-lg border border-emerald-300/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-200">
-        Paid
-      </div>
-    )}
-
-    <button
-      onClick={() => handleDeleteReward(reward.id)}
-      className="rounded-lg border border-red-300/30 bg-red-400/10 px-3 py-1 text-xs font-bold text-red-200"
-    >
-      Delete
-    </button>
-
-  </div>
-)}
                   </div>
                 </div>
               ))}
@@ -2420,6 +2413,7 @@ LEADERBOARD
     )}
   </div>
 </Panel>
+)}
 
     <Panel className="mx-auto max-w-5xl border-[rgba(0,255,136,0.16)] shadow-[0_0_55px_rgba(0,255,136,0.10)]">
       {giveawayLoading ? (
@@ -2502,7 +2496,7 @@ LEADERBOARD
             <button
               onClick={async () => {
                 const newName = prompt("Edit name:", giveaway.winner_name);
-                const newAmount = prompt("Edit amount:", String(giveaway.amount));
+                const newAmount = prompt("Edit winnings:", String(giveaway.amount));
                 const newNote = prompt("Edit note:", giveaway.note || "");
 
                 if (!newName || !newAmount) return;
@@ -3398,14 +3392,14 @@ LEADERBOARD
                 Live Entries ({giveawayEntries.length})
               </div>
 
-              <div className="max-h-[220px] space-y-2 overflow-y-auto">
+              <div className="grid max-h-[420px] grid-cols-2 gap-2 overflow-y-auto md:grid-cols-3 xl:grid-cols-4">
                 {giveawayEntries.length === 0 ? (
                   <div className="text-sm text-white/40">No entries yet</div>
                 ) : (
                   giveawayEntries.map((entry, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-2"
+                      className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
                     >
                       <div className="font-semibold text-white">{entry.username}</div>
 
@@ -3439,7 +3433,10 @@ LEADERBOARD
                 {recentGiveawayWinners.length === 0 ? (
                   <div className="text-sm text-white/40">No winners yet</div>
                 ) : (
-                  recentGiveawayWinners.map((winner, index) => {
+                  recentGiveawayWinners
+  .filter((winner) => winner.status === "active" || !winner.finished_at)
+  .slice(0, 1)
+  .map((winner, index) => {
                     const username = String(winner.winner_username || "").toLowerCase();
                     const winCount = giveawayWinnerCounts[username] || 1;
 
@@ -3533,9 +3530,9 @@ LEADERBOARD
       </div>
     ) : (
       <div className="max-h-[650px] overflow-y-auto divide-y divide-white/5">
-        {filteredAdminRewards.map((reward) => {
+        {filteredAdminRewards.slice(0, 1).map((reward) => {
           const isComplete =
-            reward.status === "complete" || reward.status === "paid";
+            reward.status === "complete"
 
           return (
             <div
@@ -3593,6 +3590,57 @@ LEADERBOARD
                     Mark Paid
                   </button>
                 )}
+
+                <button
+  onClick={async () => {
+    const newAmount = prompt("Edit giveaway winnings:", String(reward.amount || 0));
+
+    if (newAmount === null) return;
+
+    const amount = Number(newAmount);
+
+    if (Number.isNaN(amount) || amount < 0) {
+      alert("Enter a valid amount.");
+      return;
+    }
+
+    const res = await fetch(`/api/admin/rewards?id=${reward.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.ok) {
+      alert(data.error || "Amount update failed.");
+      return;
+    }
+    alert(JSON.stringify(data.reward, null, 2));
+
+    setAdminRewards((current) =>
+      current.map((item) =>
+        item.id === reward.id
+          ? { ...item, amount }
+          : item
+      )
+    );
+
+    setViewerRewards((current) =>
+      current.map((item) =>
+        item.id === reward.id
+          ? { ...item, amount }
+          : item
+      )
+    );
+
+    loadAdminRewards();
+    loadViewerRewards();
+  }}
+  className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-xs font-bold text-cyan-200"
+>
+  Edit Amount
+</button>
 
                 <button
                   onClick={() => handleAdminDeleteReward(reward.id)}
