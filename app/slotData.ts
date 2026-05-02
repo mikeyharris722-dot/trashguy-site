@@ -107,9 +107,12 @@ export const slotData: SlotItem[] = [
 { name: "Green Chilli", provider: "3 Oaks" },
 
 // AvatarUX
-{ name: "Animals Strike", provider: "AvatarUX" },
+{ name: "Jungle Pop", provider: "AvatarUX" },
+{ name: "Prince of Purrwood", provider: "AvatarUX" },
 { name: "Crypto Bro", provider: "AvatarUX" },
 { name: "Fruitillionaire", provider: "AvatarUX" },
+{ name: "Big Catch Xmas", provider: "AvatarUX" },
+{ name: "Animals Strike", provider: "AvatarUX" },
 { name: "3 Power Genies", provider: "AvatarUX" },
 { name: "Big Catch Craze", provider: "AvatarUX" },
 { name: "Piggy Pop", provider: "AvatarUX" },
@@ -134,6 +137,8 @@ export const slotData: SlotItem[] = [
 { name: "Critter Pop", provider: "AvatarUX" },
 { name: "Electric Rush", provider: "AvatarUX" },
 { name: "Midnight Hunt", provider: "AvatarUX" },
+{ name: "Crypto Crown 20", provider: "AvatarUX" },
+{ name: "Crypto Crown 40", provider: "AvatarUX" },
 { name: "The Vault Chase", provider: "AvatarUX" },
 { name: "Captain More'gain", provider: "AvatarUX" },
 { name: "KokeshiPop", provider: "AvatarUX" },
@@ -142,6 +147,7 @@ export const slotData: SlotItem[] = [
 { name: "Tiki Pop", provider: "AvatarUX" },
 { name: "Vegas Fortune", provider: "AvatarUX" },
 { name: "Raging Pop", provider: "AvatarUX" },
+{ name: "3 Jungle Beats", provider: "AvatarUX" },
 { name: "JinglePop", provider: "AvatarUX" },
 { name: "Hippo Pop", provider: "AvatarUX" },
 { name: "HipHopPop", provider: "AvatarUX" },
@@ -161,7 +167,8 @@ export const slotData: SlotItem[] = [
 { name: "Sphinx Treasure", provider: "AvatarUX" },
 { name: "Witchy POPpins", provider: "AvatarUX" },
 { name: "PixiePOP", provider: "AvatarUX" },
-{ name: "Big Catch Xmas", provider: "AvatarUX" },
+{ name: "3 Power Dragons", provider: "AvatarUX" },
+{ name: "Carioca Vibes", provider: "AvatarUX" },
 { name: "Gods Gone Wild", provider: "AvatarUX" },
 { name: "ReefPop", provider: "AvatarUX" },
 { name: "Pop Rocks", provider: "AvatarUX" },
@@ -169,6 +176,7 @@ export const slotData: SlotItem[] = [
 { name: "Depths of Fortune", provider: "AvatarUX" },
 { name: "Pixel Paws", provider: "AvatarUX" },
 { name: "PiggyPop Grand Affair", provider: "AvatarUX" },
+{ name: "Crazy Mart Bonanza", provider: "AvatarUX" },
 { name: "Papaya Pop", provider: "AvatarUX" },
 { name: "Zombie aPOPalypse", provider: "AvatarUX" },
 { name: "Kitty POPpins", provider: "AvatarUX" },
@@ -302,6 +310,34 @@ export const slotData: SlotItem[] = [
 { name: "Disco Party", provider: "BGaming" },
 { name: "Lucky Oak", provider: "BGaming" },
 { name: "Fishing Club", provider: "BGaming" },
+{ name: "Royal Beellion Hold & Win", provider: "BGaming" },
+{ name: "Grand Buffalo Hold and Win", provider: "BGaming" },
+{ name: "Fishing Club 2", provider: "BGaming" },
+{ name: "Plinko 2 Halloween", provider: "BGaming" },
+{ name: "Arrow Slot", provider: "BGaming" },
+{ name: "Adventures", provider: "BGaming" },
+{ name: "Tramp Day", provider: "BGaming" },
+{ name: "Classic Multihand Blackjack", provider: "BGaming" },
+{ name: "Infinity Pull", provider: "BGaming" },
+{ name: "Rotating Element", provider: "BGaming" },
+{ name: "Heart of Tiki", provider: "BGaming" },
+{ name: "Piggy Bank Hold&Win", provider: "BGaming" },
+{ name: "Golden Avalon Hold and Win", provider: "BGaming" },
+{ name: "Doors of Fresh", provider: "BGaming" },
+{ name: "Star Trek The Next Generation", provider: "BGaming" },
+{ name: "Fortune Red Packets", provider: "BGaming" },
+{ name: "Gates of Power", provider: "BGaming" },
+{ name: "Joker X Love", provider: "BGaming" },
+{ name: "Bonanza Billion Xtreme", provider: "BGaming" },
+{ name: "Recycle Riches", provider: "BGaming" },
+{ name: "Secret Bar Multidice X", provider: "BGaming" },
+{ name: "Panda Fortune Rush", provider: "BGaming" },
+{ name: "Royal Easter", provider: "BGaming" },
+{ name: "Aztec's Claw Wild Dice", provider: "BGaming" },
+{ name: "OOF The Goldmine Planet", provider: "BGaming" },
+{ name: "Royal Roulette 500X", provider: "BGaming" },
+{ name: "Sugar Merge Up", provider: "BGaming" },
+{ name: "Always Up! x10000", provider: "BGaming" },
 
 // Backseat Gaming
 { name: "Banana Farm", provider: "Backseat Gaming" },
@@ -333,6 +369,8 @@ export const slotData: SlotItem[] = [
 { name: "Commander of Tridents", provider: "Backseat Gaming" },
 { name: "The Cursed King", provider: "Backseat Gaming" },
 { name: "Lord Venom", provider: "Backseat Gaming" },
+{ name: "Diamond Mole", provider: "Backseat Gaming" },
+{ name: "Ghostly Hallows", provider: "Backseat Gaming" },
 
 // Bullshark (FINAL - VERIFIED)
 { name: "Age of Seth", provider: "Bullshark" },
@@ -358,6 +396,9 @@ export const slotData: SlotItem[] = [
 { name: "Jawsome Pirates", provider: "Bullshark" },
 { name: "Grunt Gold", provider: "Bullshark" },
 { name: "Gem Ghosts", provider: "Bullshark" },
+{ name: "Captain Coil", provider: "Bullshark" },
+{ name: "Lemur Levels", provider: "Bullshark" },
+{ name: "Crowned Corners", provider: "Bullshark" },
 
 // Clawbuster
 { name: "3 Claws of Aztec Fire: Hold & Win", provider: "Clawbuster" },
@@ -390,6 +431,17 @@ export const slotData: SlotItem[] = [
 { name: "Book of Fortune Clover", provider: "Clawbuster" },
 { name: "ClawBass Bonanza", provider: "Clawbuster" },
 { name: "Aztec Clawways", provider: "Clawbuster" },
+{ name: "3 Pots Bonanza", provider: "Clawbuster" },
+{ name: "Bastet FireClaw: Hold&Win", provider: "Clawbuster" },
+{ name: "4 Super Hot Pinatas: Hold&Win", provider: "Clawbuster" },
+{ name: "Olympus Bonanza Claw", provider: "Clawbuster" },
+{ name: "Wolf's Claws: Hold&Win", provider: "Clawbuster" },
+{ name: "3 Claws of Leprechaun Gold Hold&Win", provider: "Clawbuster" },
+{ name: "Jackpot Gems Claw", provider: "Clawbuster" },
+{ name: "Gold Power Express", provider: "Clawbuster" },
+{ name: "Buffalo Claws", provider: "Clawbuster" },
+{ name: "3 Super Pinatas", provider: "Clawbuster" },
+{ name: "4 Easter Egg Pots", provider: "Clawbuster" },
 
 // Hacksaw (slots only – no scratch / table games)
 { name: "Wanted Dead or a Wild", provider: "Hacksaw" },
@@ -561,6 +613,9 @@ export const slotData: SlotItem[] = [
 { name: "Lines", provider: "Hacksaw" },
 { name: "Wheel", provider: "Hacksaw" },
 { name: "Tiger Legends", provider: "Hacksaw" },
+{ name: "Dynasty of Death", provider: "Hacksaw" },
+{ name: "Marlin Masters: Atlantis", provider: "Hacksaw" },
+{ name: "Power of Ten", provider: "Hacksaw" },
 
 // Peter & Sons
 { name: "The Mafiosi", provider: "Peter & Sons" },
@@ -688,8 +743,12 @@ export const slotData: SlotItem[] = [
 { name: "Oktobearfest", provider: "PopiPlay" },
 { name: "Jellyens X", provider: "PopiPlay" },
 
-// Pragmatic Play (Chunk 1)
-
+// Pragmatic Play
+{ name: "Idol Pop Fever", provider: "Pragmatic Play" },
+{ name: "Inca Queen", provider: "Pragmatic Play" },
+{ name: "Big Bass Trophy Catch", provider: "Pragmatic Play" },
+{ name: "Dragon Pots Megaways", provider: "Pragmatic Play" },
+{ name: "Sweet Bonanza 2500", provider: "Pragmatic Play" },
 { name: "Sweet Bonanza 1000", provider: "Pragmatic Play" },
 { name: "Big Bass Splash", provider: "Pragmatic Play" },
 { name: "Gates of Olympus Super Scatter", provider: "Pragmatic Play" },
@@ -953,6 +1012,8 @@ export const slotData: SlotItem[] = [
 { name: "Office Party", provider: "Shady Lady" },
 { name: "Sew", provider: "Shady Lady" },
 { name: "Black Friday", provider: "Shady Lady" },
+{ name: "Preach TV", provider: "Shady Lady" },
+{ name: "Truth", provider: "Shady Lady" },
 ];
 
 export const providerLogos: Record<string, string> = {
