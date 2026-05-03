@@ -3414,18 +3414,18 @@ LEADERBOARD
 
 <div
   className={`rounded-full px-3 py-1 text-xs font-black ${
-    Number(entry.weight || 1) >= 1.2
-      ? "border border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
-      : Number(entry.weight || 1) >= 1.1
-      ? "border border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
-      : "border border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+Number(entry.weight || 1) >= 1.2
+  ? "border border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
+  : Number(entry.weight || 1) >= 1.1
+  ? "border border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
+  : "border border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
   }`}
 >
-  {Number(entry.weight || 1) >= 1.2
-    ? `💎 VIP x${entry.weight}`
-    : Number(entry.weight || 1) >= 1.1
-    ? `⭐ Affiliate x${entry.weight}`
-    : `Viewer x${entry.weight || 1}`}
+{Number(entry.weight || 1) >= 1.2
+  ? "💎 VIP x1.2"
+  : Number(entry.weight || 1) >= 1.1
+  ? "⭐ Affiliate x1.1"
+  : "Viewer x1"}
 </div>
                     </div>
                   ))
