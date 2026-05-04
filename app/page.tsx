@@ -524,6 +524,8 @@ export default function Home() {
   const [latestWinners, setLatestWinners] = useState<WinnerItem[]>([]);
   const [adminHuntId, setAdminHuntId] = useState("");
 const [giveawayMessage, setGiveawayMessage] = useState("");
+const [currentGiveawayWinner, setCurrentGiveawayWinner] = useState("");
+const [winnerChatMessages, setWinnerChatMessages] = useState<string[]>([]);
 
 const [giveawayEntries, setGiveawayEntries] = useState<any[]>([]);
 const [recentGiveawayWinners, setRecentGiveawayWinners] = useState<any[]>([]);
@@ -1347,6 +1349,46 @@ useEffect(() => {
   };
 }, [loadBracket, loadPredictions, loadHunts]);
 
+useEffect(() => {
+  if (!currentGiveawayWinner) return;
+
+  let client: any;
+
+  const connectChat = async () => {
+    const tmiModule: any = await import("tmi.js");
+    const tmi = tmiModule.default || tmiModule;
+
+    client = new tmi.Client({
+      channels: ["trashguy__"],
+    });
+
+    await client.connect().catch(() => {});
+
+    client.on("message", (_channel: string, tags: any, message: string, self: boolean) => {
+      if (self) return;
+
+      const chatter = String(tags.username || tags["display-name"] || "")
+        .replace("@", "")
+        .trim()
+        .toLowerCase();
+
+      if (chatter !== currentGiveawayWinner) return;
+
+      setWinnerChatMessages((current) =>
+        [`${tags["display-name"] || chatter}: ${message}`, ...current].slice(0, 6)
+      );
+    });
+  };
+
+  connectChat();
+
+  return () => {
+    if (client) {
+      client.disconnect().catch(() => {});
+    }
+  };
+}, [currentGiveawayWinner]);
+
 const handleTwitchLogin = async () => {
   try {
     setPredictionMessage("");
@@ -1725,11 +1767,19 @@ const handleDrawGiveawayWinner = async () => {
 
   const data = await res.json();
 
-  setGiveawayMessage(
-    data?.ok
-      ? `Winner: ${data.winner.username} — set winnings after bonus.`
-      : data?.error || "Failed to draw winner."
-  );
+  if (!data?.ok || !data?.winner?.username) {
+    setGiveawayMessage(data?.error || "Failed to draw winner.");
+    return;
+  }
+
+  const winnerName = String(data.winner.username || "")
+    .replace("@", "")
+    .trim()
+    .toLowerCase();
+
+  setCurrentGiveawayWinner(winnerName);
+  setWinnerChatMessages([]);
+  setGiveawayMessage(winnerName);
 
   loadAdminRewards();
 };
@@ -3390,6 +3440,33 @@ LEADERBOARD
 
   <div className="mt-3 text-3xl md:text-4xl font-black text-green-400 drop-shadow-[0_0_20px_rgba(34,197,94,0.9)]">
     {giveawayMessage || "Waiting for winner..."}
+  </div>
+</div>
+
+<div className="rounded-2xl border border-emerald-300/20 bg-black/40 p-5">
+  <div className="text-xs uppercase tracking-[0.25em] text-emerald-300/70">
+    Winner Chat
+  </div>
+
+  <div className="mt-4 min-h-[120px] space-y-2">
+    {!currentGiveawayWinner ? (
+      <div className="text-sm text-white/35">
+        Draw a winner to track their chat.
+      </div>
+    ) : winnerChatMessages.length === 0 ? (
+      <div className="text-sm text-white/35">
+        Waiting for @{currentGiveawayWinner} to type...
+      </div>
+    ) : (
+      winnerChatMessages.map((msg, index) => (
+        <div
+          key={index}
+          className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white"
+        >
+          {msg}
+        </div>
+      ))
+    )}
   </div>
 </div>
 
