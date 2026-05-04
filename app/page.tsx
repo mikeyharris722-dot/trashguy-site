@@ -3418,14 +3418,6 @@ LEADERBOARD
             </button>
 
             <button
-              onClick={handleAddTestEntry}
-              disabled={!isAdmin}
-              className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white transition hover:bg-white/5 disabled:opacity-40"
-            >
-              Add Test Entry
-            </button>
-
-            <button
               onClick={handleDrawGiveawayWinner}
               disabled={!isAdmin}
               className="rounded-2xl border border-fuchsia-300/25 bg-fuchsia-400/10 px-5 py-4 font-semibold text-fuchsia-200 transition hover:bg-fuchsia-400/20 disabled:opacity-40"
@@ -3447,6 +3439,16 @@ LEADERBOARD
   <div className="text-xs uppercase tracking-[0.25em] text-emerald-300/70">
     Winner Chat
   </div>
+
+  <div className="flex justify-end mt-2">
+  <button
+    onClick={() => setWinnerChatMessages([])}
+    disabled={!isAdmin}
+    className="rounded-xl border border-red-300/25 bg-red-400/10 px-4 py-2 text-xs font-bold text-red-200 transition hover:bg-red-400/20 disabled:opacity-40"
+  >
+    Clear Chat
+  </button>
+</div>
 
   <div className="mt-4 min-h-[120px] space-y-2">
     {!currentGiveawayWinner ? (
