@@ -3229,7 +3229,7 @@ LEADERBOARD
         <div className="mt-10 text-center text-white/55">Loading bracket...</div>
       ) : (
         <div className="mt-10 overflow-x-auto pb-2">
-          <div className="mx-auto flex min-w-[980px] items-start justify-center gap-6">
+          <div className="flex min-w-[1100px] items-start justify-start gap-6 px-6">
             {bracket.rounds.map((round, roundIndex) => {
               const topPadding =
                 roundIndex === 0
