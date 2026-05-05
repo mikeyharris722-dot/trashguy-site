@@ -230,10 +230,7 @@ function createBracketFromTeamCount(teamCount: number, title: string): BracketDa
   const safeCount = Math.max(2, Math.floor(teamCount));
   const bracketSize = nextPowerOfTwo(safeCount);
   const totalRounds = Math.log2(bracketSize);
-
-  const teamNames = Array.from({ length: bracketSize }, (_, index) =>
-    index < safeCount ? "" : "BYE"
-  );
+  const byeCount = bracketSize - safeCount;
 
   const rounds: BracketRound[] = [];
   let matchCounter = 1;
@@ -244,24 +241,26 @@ function createBracketFromTeamCount(teamCount: number, title: string): BracketDa
 
     const matches: BracketMatch[] = Array.from({ length: matchCount }, (_, matchIndex) => {
       if (roundIndex === 0) {
+        const hasBye = matchIndex < byeCount;
+
         return {
-  id: `m${matchCounter++}`,
-  player1: teamNames[matchIndex * 2] || "",
-  player1Amount: "",
-  player2: teamNames[matchIndex * 2 + 1] || "",
-  player2Amount: "",
-  winner: "",
-};
+          id: `m${matchCounter++}`,
+          player1: "",
+          player1Amount: "",
+          player2: hasBye ? "BYE" : "",
+          player2Amount: "",
+          winner: "",
+        };
       }
 
       return {
-  id: `m${matchCounter++}`,
-  player1: "",
-  player1Amount: "",
-  player2: "",
-  player2Amount: "",
-  winner: "",
-};
+        id: `m${matchCounter++}`,
+        player1: "",
+        player1Amount: "",
+        player2: "",
+        player2Amount: "",
+        winner: "",
+      };
     });
 
     rounds.push({
