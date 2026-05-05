@@ -50,9 +50,11 @@ const fallbackLeaderboard = [
 const leaderboardTotal = 700;
 
 const leaderboardPrizes: Record<number, number> = {
-  1: 400,
-  2: 200,
+  1: 300,
+  2: 175,
   3: 100,
+  4: 75,
+  5: 50,
 };
 
 const fallbackHunts: HuntItem[] = [];
