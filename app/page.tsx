@@ -528,6 +528,18 @@ const [giveawayMessage, setGiveawayMessage] = useState("");
 const [currentGiveawayWinner, setCurrentGiveawayWinner] = useState("");
 const [winnerChatMessages, setWinnerChatMessages] = useState<string[]>([]);
 
+const [slotCalls, setSlotCalls] = useState<
+  { username: string; slotName: string; createdAt: number }[]
+>([]);
+const [slotCallMessage, setSlotCallMessage] = useState("");
+const [isSlotWheelSpinning, setIsSlotWheelSpinning] = useState(false);
+const [pickedSlotCall, setPickedSlotCall] = useState<{
+  username: string;
+  slotName: string;
+  createdAt: number;
+} | null>(null);
+const [slotWheelRotation, setSlotWheelRotation] = useState(0);
+
 const [giveawayEntries, setGiveawayEntries] = useState<any[]>([]);
 const [recentGiveawayWinners, setRecentGiveawayWinners] = useState<any[]>([]);
 const [giveawayWinnerCounts, setGiveawayWinnerCounts] = useState<Record<string, number>>({});
@@ -586,10 +598,11 @@ const [adminRewardsMessage, setAdminRewardsMessage] = useState("");
 const [adminDropdowns, setAdminDropdowns] = useState(() => {
   if (typeof window === "undefined") {
     return {
-      predictions: true,
       giveaway: false,
       prizePortal: false,
+      predictions: false,
       tournament: false,
+      slotWheel: false,
     };
   }
 
@@ -598,10 +611,11 @@ const [adminDropdowns, setAdminDropdowns] = useState(() => {
   return saved
     ? JSON.parse(saved)
     : {
-        predictions: true,
-        giveaway: false,
-        prizePortal: false,
-        tournament: false,
+      giveaway: false,
+      prizePortal: false,
+      predictions: false,
+      tournament: false,
+      slotWheel: false,
       };
 });
 
@@ -611,11 +625,11 @@ useEffect(() => {
 }, [adminDropdowns]);
 
 const setAdminDropdown = (
-  key: "predictions" | "giveaway" | "prizePortal" | "tournament",
+  key: "giveaway" | "prizePortal" | "predictions" | "tournament" | "slotWheel",
   open: boolean
 ) => {
   setAdminDropdowns((current: Record<
-    "predictions" | "giveaway" | "prizePortal" | "tournament",
+    "giveaway" | "prizePortal" | "predictions" | "tournament" | "slotWheel",
     boolean
   >) => ({
     ...current,
@@ -1390,6 +1404,75 @@ useEffect(() => {
   };
 }, [currentGiveawayWinner]);
 
+useEffect(() => {
+  let client: any;
+
+  const connectSlotChat = async () => {
+    const tmiModule: any = await import("tmi.js");
+    const tmi = tmiModule.default || tmiModule;
+
+    client = new tmi.Client({
+      channels: ["trashguy__"],
+    });
+
+    await client.connect().catch(() => {});
+
+    client.on("message", (_channel: string, tags: any, message: string, self: boolean) => {
+      if (self) return;
+
+      const text = String(message || "").trim();
+      if (!text.toLowerCase().startsWith("!slot ")) return;
+
+      const slotName = text.replace(/^!slot\s+/i, "").trim();
+      if (!slotName) return;
+
+      const username = String(tags["display-name"] || tags.username || "viewer");
+
+setSlotCalls((current) => {
+  const normalizedUser = username.trim().toLowerCase();
+  const normalizedSlot = slotName.trim().toLowerCase();
+
+  const userAlreadyCalled = current.some(
+    (call) => call.username.trim().toLowerCase() === normalizedUser
+  );
+
+  if (userAlreadyCalled) {
+    setSlotCallMessage(`${username} already has a slot on the wheel.`);
+    return current;
+  }
+
+  const slotAlreadyCalled = current.some(
+    (call) => call.slotName.trim().toLowerCase() === normalizedSlot
+  );
+
+  if (slotAlreadyCalled) {
+    setSlotCallMessage(`${slotName} is already on the wheel.`);
+    return current;
+  }
+
+  setSlotCallMessage(`${username} added: ${slotName}`);
+
+  return [
+    ...current,
+    {
+      username,
+      slotName,
+      createdAt: Date.now(),
+    },
+  ];
+});
+    });
+  };
+
+  connectSlotChat();
+
+  return () => {
+    if (client) {
+      client.disconnect().catch(() => {});
+    }
+  };
+}, []);
+
 const handleTwitchLogin = async () => {
   try {
     setPredictionMessage("");
@@ -1783,6 +1866,43 @@ const handleDrawGiveawayWinner = async () => {
   setGiveawayMessage(winnerName);
 
   loadAdminRewards();
+};
+
+const handleSpinSlotWheel = () => {
+  if (isSlotWheelSpinning || slotCalls.length === 0) return;
+
+  setIsSlotWheelSpinning(true);
+  setPickedSlotCall(null);
+
+  const winnerIndex = Math.floor(Math.random() * slotCalls.length);
+  const segmentSize = 360 / slotCalls.length;
+
+  const targetAngle = 360 - winnerIndex * segmentSize - segmentSize / 2;
+  const extraSpins = 360 * 6;
+  const finalRotation = slotWheelRotation + extraSpins + targetAngle;
+
+  setSlotWheelRotation(finalRotation);
+
+  setTimeout(() => {
+    setPickedSlotCall(slotCalls[winnerIndex]);
+    setIsSlotWheelSpinning(false);
+  }, 4200);
+};
+
+const handleRemovePickedSlot = () => {
+  if (!pickedSlotCall) return;
+
+  setSlotCalls((current) =>
+    current.filter(
+      (call) =>
+        !(
+          call.slotName === pickedSlotCall.slotName &&
+          call.username === pickedSlotCall.username
+        )
+    )
+  );
+
+  setPickedSlotCall(null);
 };
 
 const handleMarkRewardPaid = async (id: string) => {
@@ -3284,123 +3404,8 @@ LEADERBOARD
       </p>
 
       <div className="mt-8 grid gap-4">
-        <details
-  open={adminDropdowns.predictions}
-  onToggle={(e) => setAdminDropdown("predictions", e.currentTarget.open)}
-  className="rounded-2xl border border-white/10 bg-black/30 p-5"
->
-          <summary className="cursor-pointer text-xl font-black text-white">
-            Predictions / Hunt
-          </summary>
-
-          <div className="mt-6 grid gap-4">
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                Signed in as
-              </div>
-              <div className="mt-2 text-xl font-black text-white">{viewerDisplayName}</div>
-              <div className="mt-1 text-white/45">@{viewerName}</div>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                Admin Name
-              </div>
-              <input
-                value={adminName}
-                onChange={(e) => setAdminName(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-              />
-            </div>
-
-            <button
-              onClick={() => setIsAdmin((v) => !v)}
-              className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 font-semibold text-emerald-200 transition hover:bg-emerald-400/20"
-            >
-              {isAdmin ? `Admin Enabled (${adminName})` : "Enable Admin Mode"}
-            </button>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <button
-                onClick={handleStartHunt}
-                disabled={!isAdmin}
-                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-              >
-                Start New Hunt
-              </button>
-
-              <button
-                onClick={handleOpenPredictions}
-                disabled={!isAdmin}
-                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-              >
-                Open Predictions
-              </button>
-
-              <button
-                onClick={handleLockPredictions}
-                disabled={!isAdmin}
-                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-              >
-                Close Predictions
-              </button>
-
-              <button
-                onClick={handleCompleteHunt}
-                disabled={!isAdmin}
-                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-              >
-                Complete Hunt
-              </button>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                Final Hunt Result
-              </div>
-              <input
-                value={finalResult}
-                onChange={(e) => setFinalResult(e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="Enter final balance"
-                disabled={!isAdmin}
-                className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
-              />
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/75">
-              {adminMessage || `Current internal hunt ID: ${adminHuntId || "none yet"}`}
-            </div>
-
-            <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
-              <div className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-300">
-                Top 2 Winners
-              </div>
-
-              <div className="mt-4 space-y-3">
-                {rankedWinners.length === 0 && (
-                  <div className="text-white/50">Set a final result to rank winners.</div>
-                )}
-
-                {rankedWinners.map((winner, index) => (
-                  <div
-                    key={winner.id}
-                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-3"
-                  >
-                    <div className="font-semibold text-white">
-                      #{index + 1} {winner.username}
-                    </div>
-                    <div className="mt-1 text-sm text-white/55">
-                      Guess: {formatMoney(winner.guess)} • Off by{" "}
-                      {formatMoney(winner.distance)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <details
+        
+              <details
   open={adminDropdowns.giveaway}
   onToggle={(e) => setAdminDropdown("giveaway", e.currentTarget.open)}
   className="rounded-2xl border border-fuchsia-300/20 bg-black/30 p-5"
@@ -3689,6 +3694,122 @@ Number(entry.weight || 1) >= 1.2
   </div>
 </div>
         </details>
+        
+        <details
+  open={adminDropdowns.predictions}
+  onToggle={(e) => setAdminDropdown("predictions", e.currentTarget.open)}
+  className="rounded-2xl border border-white/10 bg-black/30 p-5"
+>
+          <summary className="cursor-pointer text-xl font-black text-white">
+            Predictions / Hunt
+          </summary>
+
+          <div className="mt-6 grid gap-4">
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+                Signed in as
+              </div>
+              <div className="mt-2 text-xl font-black text-white">{viewerDisplayName}</div>
+              <div className="mt-1 text-white/45">@{viewerName}</div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+                Admin Name
+              </div>
+              <input
+                value={adminName}
+                onChange={(e) => setAdminName(e.target.value)}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+              />
+            </div>
+
+            <button
+              onClick={() => setIsAdmin((v) => !v)}
+              className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 font-semibold text-emerald-200 transition hover:bg-emerald-400/20"
+            >
+              {isAdmin ? `Admin Enabled (${adminName})` : "Enable Admin Mode"}
+            </button>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <button
+                onClick={handleStartHunt}
+                disabled={!isAdmin}
+                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
+              >
+                Start New Hunt
+              </button>
+
+              <button
+                onClick={handleOpenPredictions}
+                disabled={!isAdmin}
+                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
+              >
+                Open Predictions
+              </button>
+
+              <button
+                onClick={handleLockPredictions}
+                disabled={!isAdmin}
+                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
+              >
+                Close Predictions
+              </button>
+
+              <button
+                onClick={handleCompleteHunt}
+                disabled={!isAdmin}
+                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
+              >
+                Complete Hunt
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+                Final Hunt Result
+              </div>
+              <input
+                value={finalResult}
+                onChange={(e) => setFinalResult(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="Enter final balance"
+                disabled={!isAdmin}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
+              />
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/75">
+              {adminMessage || `Current internal hunt ID: ${adminHuntId || "none yet"}`}
+            </div>
+
+            <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
+              <div className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-300">
+                Top 2 Winners
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {rankedWinners.length === 0 && (
+                  <div className="text-white/50">Set a final result to rank winners.</div>
+                )}
+
+                {rankedWinners.map((winner, index) => (
+                  <div
+                    key={winner.id}
+                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+                  >
+                    <div className="font-semibold text-white">
+                      #{index + 1} {winner.username}
+                    </div>
+                    <div className="mt-1 text-sm text-white/55">
+                      Guess: {formatMoney(winner.guess)} • Off by{" "}
+                      {formatMoney(winner.distance)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </details>
 
         <details
   open={adminDropdowns.tournament}
@@ -3919,6 +4040,178 @@ Number(entry.weight || 1) >= 1.2
 </div>
 </div>
         </details>
+
+<details
+  open={adminDropdowns.slotWheel}
+  onToggle={(e) => setAdminDropdown("slotWheel", e.currentTarget.open)}
+  className="rounded-2xl border border-emerald-300/20 bg-black/30 p-5"
+>
+  <summary className="cursor-pointer text-xl font-black text-white">
+    Slot Wheel ({slotCalls.length} Calls)
+  </summary>
+
+  <div className="mb-6 rounded-[2rem] border border-emerald-300/20 bg-black/40 p-6 text-center">
+  <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/70">
+    Slot Call Wheel
+  </div>
+
+  <div className="relative mx-auto mt-6 flex h-[320px] w-[320px] items-center justify-center">
+    <div className="absolute -top-3 z-20 h-0 w-0 border-l-[16px] border-r-[16px] border-t-[28px] border-l-transparent border-r-transparent border-t-emerald-300 drop-shadow-[0_0_12px_rgba(0,255,136,0.9)]" />
+
+    <div
+      className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border-4 border-emerald-300/40 shadow-[0_0_45px_rgba(0,255,136,0.25)] transition-transform duration-[4200ms] ease-out"
+      style={{
+        transform: `rotate(${slotWheelRotation}deg)`,
+        background:
+          slotCalls.length === 0
+            ? "radial-gradient(circle, rgba(0,255,136,0.12), rgba(0,0,0,0.9))"
+            : `conic-gradient(${slotCalls
+                .map((call, index) => {
+                  const start = (index / slotCalls.length) * 360;
+                  const end = ((index + 1) / slotCalls.length) * 360;
+                  const color =
+                    index % 2 === 0
+                      ? "rgba(0,255,136,0.32)"
+                      : "rgba(20,20,20,0.95)";
+                  return `${color} ${start}deg ${end}deg`;
+                })
+                .join(", ")})`,
+      }}
+    >
+{slotCalls.map((call, index) => {
+  const angle =
+    (index / slotCalls.length) * 360 +
+    360 / slotCalls.length / 2 -
+    90;
+
+  return (
+    <div
+      key={`${call.username}-${call.slotName}-wheel-${index}`}
+      className="absolute left-1/2 top-1/2 z-10 w-[95px] origin-left"
+      style={{
+        transform: `rotate(${angle}deg) translateX(62px)`,
+      }}
+    >
+      <div className="truncate text-center text-[11px] font-black uppercase tracking-wide text-white drop-shadow-[0_0_10px_rgba(0,0,0,1)]">
+        {call.slotName}
+      </div>
+    </div>
+  );
+})}
+
+<div className="relative z-10 flex h-28 w-28 items-center justify-center rounded-full border border-emerald-300/30 bg-black text-center text-sm font-black text-emerald-200 shadow-[0_0_25px_rgba(0,255,136,0.25)]">
+  TRASHGUY
+  <br />
+  WHEEL
+</div>
+    </div>
+  </div>
+
+  <div className="mt-6">
+    {pickedSlotCall ? (
+      <div className="rounded-2xl border border-emerald-300/30 bg-emerald-400/10 p-5">
+        <div className="text-xs uppercase tracking-[0.25em] text-emerald-300/70">
+          Picked Slot
+        </div>
+
+        <div className="mt-2 text-4xl font-black text-emerald-300 drop-shadow-[0_0_18px_rgba(0,255,136,0.8)]">
+          {pickedSlotCall.slotName}
+        </div>
+
+        <div className="mt-2 text-sm text-white/45">
+          called by {pickedSlotCall.username}
+        </div>
+      </div>
+    ) : (
+      <div className="text-sm text-white/40">
+        {slotCalls.length === 0
+          ? "Waiting for slot calls..."
+          : "Ready to spin."}
+      </div>
+    )}
+  </div>
+
+  <div className="mt-5 grid gap-3 md:grid-cols-2">
+    <button
+      onClick={handleSpinSlotWheel}
+      disabled={isSlotWheelSpinning || slotCalls.length === 0}
+      className="rounded-2xl border border-emerald-300/30 bg-emerald-400/10 px-5 py-4 font-black text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-40"
+    >
+      {isSlotWheelSpinning ? "Spinning..." : "Spin Wheel"}
+    </button>
+
+    <button
+      onClick={handleRemovePickedSlot}
+      disabled={!pickedSlotCall}
+      className="rounded-2xl border border-red-300/25 bg-red-400/10 px-5 py-4 font-black text-red-200 transition hover:bg-red-400/20 disabled:opacity-40"
+    >
+      Remove Picked Slot
+    </button>
+  </div>
+</div>
+
+  <div className="border-t border-white/10 p-6">
+    <div className="rounded-2xl border border-emerald-300/20 bg-black/30 p-5">
+      <div className="text-xs uppercase tracking-[0.24em] text-emerald-300/80">
+        Live Slot Calls
+      </div>
+
+      <div className="mt-2 text-sm text-white/45">
+        Viewers type{" "}
+        <span className="font-bold text-white">
+          !slot _______
+        </span>{" "}
+        in Twitch chat.
+      </div>
+
+      <div className="mt-4 max-h-[320px] overflow-y-auto rounded-xl border border-white/10 bg-black/30">
+        {slotCalls.length === 0 ? (
+          <div className="p-5 text-sm text-white/40">
+            No slot calls yet.
+          </div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {slotCalls.map((call, index) => (
+              <div
+                key={`${call.username}-${call.slotName}-${index}`}
+                className="flex items-center justify-between gap-3 px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-black text-white">
+                    {call.slotName}
+                  </div>
+
+                  <div className="text-xs text-white/35">
+                    called by {call.username}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() =>
+                    setSlotCalls((current) =>
+                      current.filter((_, itemIndex) => itemIndex !== index)
+                    )
+                  }
+                  className="rounded-lg border border-red-300/25 bg-red-400/10 px-3 py-1 text-xs font-bold text-red-200"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={() => setSlotCalls([])}
+        className="mt-4 rounded-xl border border-red-300/25 bg-red-400/10 px-4 py-2 text-xs font-bold text-red-200"
+      >
+        Clear Calls
+      </button>
+    </div>
+  </div>
+</details>
+
       </div>
     </Panel>
   </section>
