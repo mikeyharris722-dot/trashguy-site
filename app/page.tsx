@@ -1884,6 +1884,7 @@ const handleSpinSlotWheel = () => {
   const extraSpins = 360 * 6;
   const finalRotation = slotWheelRotation + extraSpins + targetAngle;
 
+  
   setSlotWheelRotation(finalRotation);
 
   setTimeout(() => {
