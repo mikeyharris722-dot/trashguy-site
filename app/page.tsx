@@ -1877,7 +1877,10 @@ const handleSpinSlotWheel = () => {
   const winnerIndex = Math.floor(Math.random() * slotCalls.length);
   const segmentSize = 360 / slotCalls.length;
 
-  const targetAngle = 360 - winnerIndex * segmentSize - segmentSize / 2;
+ const targetAngle =
+  360 -
+  (winnerIndex * segmentSize + segmentSize / 2) +
+  90;
   const extraSpins = 360 * 6;
   const finalRotation = slotWheelRotation + extraSpins + targetAngle;
 
