@@ -190,6 +190,21 @@ type BracketData = {
   rounds: BracketRound[];
 };
 
+function playUiSound(type: "click" | "success" | "error" = "click") {
+  if (typeof window === "undefined") return;
+
+  const file =
+    type === "success"
+      ? "/click.mp3"
+      : type === "error"
+      ? "/click.mp3"
+      : "/click.mp3";
+
+  const audio = new Audio(file);
+  audio.volume = type === "error" ? 0.22 : 0.32;
+  audio.play().catch(() => {});
+}
+
 function formatMoney(value: number) {
   return `$${Number(value || 0).toLocaleString()}`;
 }
@@ -386,6 +401,54 @@ function SectionLabel({
     <div className={`text-[11px] font-black uppercase tracking-[0.34em] drop-shadow-[0_0_10px_rgba(0,255,136,0.25)] ${map[color]}`}>
       {children}
     </div>
+  );
+}
+
+function ActionButton({
+  children,
+  onClick,
+  disabled = false,
+  variant = "green",
+  className = "",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  variant?: "green" | "red" | "purple" | "gold" | "dark";
+  className?: string;
+}) {
+  const variants = {
+    green:
+      "border-emerald-300/35 bg-[linear-gradient(180deg,rgba(0,255,136,0.22),rgba(0,255,136,0.08))] text-emerald-100 shadow-[0_0_22px_rgba(0,255,136,0.12)] hover:border-emerald-200/60 hover:shadow-[0_0_35px_rgba(0,255,136,0.22)]",
+    red:
+      "border-red-300/30 bg-[linear-gradient(180deg,rgba(248,113,113,0.18),rgba(127,29,29,0.14))] text-red-100 hover:border-red-200/60 hover:shadow-[0_0_28px_rgba(248,113,113,0.18)]",
+    purple:
+      "border-fuchsia-300/30 bg-[linear-gradient(180deg,rgba(217,70,239,0.18),rgba(88,28,135,0.16))] text-fuchsia-100 hover:border-fuchsia-200/60 hover:shadow-[0_0_28px_rgba(217,70,239,0.20)]",
+    gold:
+      "border-yellow-300/35 bg-[linear-gradient(180deg,rgba(250,204,21,0.22),rgba(120,53,15,0.14))] text-yellow-100 hover:border-yellow-200/60 hover:shadow-[0_0_30px_rgba(250,204,21,0.22)]",
+    dark:
+      "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] text-white hover:border-white/25 hover:bg-white/[0.07]",
+  };
+
+  return (
+    <button
+      onClick={() => {
+        playUiSound("click");
+        onClick?.();
+      }}
+      disabled={disabled}
+      className={[
+        "group relative min-h-[54px] overflow-hidden rounded-2xl border px-5 py-3",
+        "text-sm font-black uppercase tracking-[0.12em]",
+        "transition-all duration-200 active:scale-[0.98]",
+        "disabled:cursor-not-allowed disabled:opacity-40",
+        variants[variant],
+        className,
+      ].join(" ")}
+    >
+      <span className="pointer-events-none absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
+      <span className="relative z-10">{children}</span>
+    </button>
   );
 }
 
@@ -710,6 +773,13 @@ const currentPredictionHunt = useMemo(() => {
   return sorted[0] || null;
 }, [huntsData]);
 
+const adminSelectedHunt = useMemo(() => {
+  return (
+    huntsData.find((hunt) => hunt.id === adminHuntId) ||
+    currentPredictionHunt ||
+    null
+  );
+}, [huntsData, adminHuntId, currentPredictionHunt]);
 const currentPredictionCount = predictions.length;
 
 const currentPredictionAvgX =
@@ -1136,8 +1206,11 @@ const handleLinkRoulo = async () => {
 
       const data = await res.json();
       if (data?.bracket?.rounds?.length) {
-        setBracket(maybeAutoAdvanceClassic8(data.bracket));
-      }
+  const nextBracket = maybeAutoAdvanceClassic8(data.bracket);
+
+  setBracket(nextBracket);
+  setGeneratorTeamCount(String(nextBracket.rounds[0]?.matches?.length * 2 || 8));
+}
     } catch (error) {
       console.error("Bracket failed to load", error);
     } finally {
@@ -1650,6 +1723,28 @@ const handleTwitchLogin = async () => {
     }
 
     const newHuntId = data?.hunt?.id || "";
+    if (data?.hunt) {
+  const newHunt: HuntItem = {
+    id: data.hunt.id,
+    title: data.hunt.title || "Live Hunt",
+    casino: data.hunt.casino || "Roulobets",
+    startCost: Number(data.hunt.start_amount || data.hunt.startCost || 0),
+    totalWinnings: 0,
+    profitLoss: 0,
+    profitLossPercentage: 0,
+    status: "open",
+    prediction_status: "open",
+    isOpening: true,
+    createdAt: data.hunt.created_at || new Date().toISOString(),
+    updatedAt: data.hunt.updated_at || new Date().toISOString(),
+    bonuses: [],
+  };
+
+  setHuntsData((current) => [
+    newHunt,
+    ...current.filter((hunt) => hunt.id !== newHunt.id),
+  ]);
+}
 
     setAdminHuntId(newHuntId);
     setPredictionStatus("open");
@@ -1663,8 +1758,8 @@ const handleTwitchLogin = async () => {
     setFinalResult("");
     setPredictions([]);
     setAdminMessage("New hunt started.");
-    loadHunts();
-    loadPredictions();
+await loadHunts();
+await loadPredictions();
   } catch {
     setAdminMessage("Failed to start hunt.");
   }
@@ -1713,8 +1808,8 @@ const handleTwitchLogin = async () => {
     }
 
     setAdminMessage("Predictions locked.");
-    loadPredictions();
-    loadHunts();
+await loadHunts();
+await loadPredictions();
   } catch {
     setAdminMessage("Failed to lock predictions.");
   }
@@ -1763,8 +1858,8 @@ const handleTwitchLogin = async () => {
     }
 
     setAdminMessage("Predictions opened.");
-    loadPredictions();
-    loadHunts();
+await loadHunts();
+await loadPredictions();
   } catch {
     setAdminMessage("Failed to open predictions.");
   }
@@ -1812,8 +1907,8 @@ if (typeof window !== "undefined") {
   localStorage.removeItem(STORAGE_KEYS.activeHuntId);
   localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
 }
-      loadHunts();
-      loadPredictions();
+await loadHunts();
+await loadPredictions();
     } catch {
       setAdminMessage("Failed to complete hunt.");
     }
@@ -1877,12 +1972,19 @@ const handleSpinSlotWheel = () => {
   const winnerIndex = Math.floor(Math.random() * slotCalls.length);
   const segmentSize = 360 / slotCalls.length;
 
- const targetAngle =
+const randomSliceOffset =
+  Math.random() * (segmentSize * 0.7) - segmentSize * 0.35;
+
+const targetAngle =
   360 -
   (winnerIndex * segmentSize + segmentSize / 2) +
-  90;
-  const extraSpins = 360 * 6;
-  const finalRotation = slotWheelRotation + extraSpins + targetAngle;
+  90 +
+  randomSliceOffset;
+
+const extraSpins = 360 * (5 + Math.floor(Math.random() * 4));
+
+const finalRotation =
+  slotWheelRotation + extraSpins + targetAngle;
 
   
   setSlotWheelRotation(finalRotation);
@@ -1891,6 +1993,23 @@ const handleSpinSlotWheel = () => {
     setPickedSlotCall(slotCalls[winnerIndex]);
     setIsSlotWheelSpinning(false);
   }, 4200);
+};
+
+const handleShuffleSlotWheel = () => {
+  if (slotCalls.length <= 1 || isSlotWheelSpinning) return;
+
+  setPickedSlotCall(null);
+
+  setSlotCalls((current) => {
+    const shuffled = [...current];
+
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    return shuffled;
+  });
 };
 
 const handleRemovePickedSlot = () => {
@@ -2096,17 +2215,18 @@ const filteredAdminRewards = adminRewards.filter((reward) => {
   });
 };
 
-  const handleGenerateBracket = () => {
-    const count = Number(generatorTeamCount);
+const handleGenerateBracket = () => {
+  const count = Number(generatorTeamCount);
 
-    if (!count || Number.isNaN(count) || count < 2) {
-      setBracketMessage("Enter at least 2 teams.");
-      return;
-    }
+  if (!count || Number.isNaN(count) || count < 2) {
+    setBracketMessage("Enter at least 2 teams.");
+    return;
+  }
 
-    setBracket(createBracketFromTeamCount(count, bracket.title || "Trashguy Tournament"));
-    setBracketMessage("Bracket generated locally. Click Save Bracket to keep it.");
-  };
+  setGeneratorTeamCount(String(count));
+  setBracket(createBracketFromTeamCount(count, bracket.title || "Trashguy Tournament"));
+  setBracketMessage(`${count}-team bracket generated locally. Click Save Bracket to keep it.`);
+};
 
   const saveBracket = async () => {
     try {
@@ -3403,11 +3523,64 @@ LEADERBOARD
     <Panel className="border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
       <SectionLabel>Admin</SectionLabel>
       <h2 className="mt-3 text-4xl font-black tracking-wide">CONTROL CENTER</h2>
-      <p className="mt-4 text-white/65">
-        Admin panel is only shown for approved Twitch accounts.
-      </p>
+<p className="mt-4 text-white/65">
+  Admin panel is only shown for approved Twitch accounts.
+</p>
 
-      <div className="mt-8 grid gap-4">
+<div className="mt-8 rounded-[2rem] border border-emerald-300/20 bg-[radial-gradient(circle_at_top,rgba(0,255,136,0.10),rgba(0,0,0,0.55)_55%)] p-5 shadow-[0_0_35px_rgba(0,255,136,0.08)]">
+  <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+    <div className="rounded-2xl border border-white/10 bg-black/35 p-4">
+      <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+        Signed in as
+      </div>
+
+      <div className="mt-3 flex items-center gap-3">
+        {viewerAvatar && (
+          <img
+            src={viewerAvatar}
+            alt={viewerDisplayName}
+            className="h-12 w-12 rounded-full border border-emerald-300/25 object-cover"
+          />
+        )}
+
+        <div>
+          <div className="text-xl font-black text-white">
+            {viewerDisplayName}
+          </div>
+          <div className="text-sm text-white/45">@{viewerName}</div>
+        </div>
+      </div>
+    </div>
+
+    <div className="rounded-2xl border border-white/10 bg-black/35 p-4">
+      <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+        Admin Name
+      </div>
+
+      <input
+        value={adminName}
+        onChange={(e) => setAdminName(e.target.value)}
+        className="mt-3 w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none transition focus:border-emerald-300/35"
+      />
+    </div>
+
+    <ActionButton
+      onClick={() => setIsAdmin((v) => !v)}
+      variant={isAdmin ? "green" : "dark"}
+      className="h-full min-h-[86px] w-full lg:w-[260px]"
+    >
+      {isAdmin ? `Admin Enabled` : "Enable Admin"}
+    </ActionButton>
+  </div>
+
+  <div className="mt-4 rounded-2xl border border-emerald-300/15 bg-emerald-400/5 px-4 py-3 text-sm font-semibold text-emerald-100/80">
+    {isAdmin
+      ? `${adminName} control center is active. Giveaway, prize portal, predictions, tournament, and slot wheel tools are below.`
+      : "Enable admin mode to use the control center tools below."}
+  </div>
+</div>
+
+<div className="mt-6 grid gap-4">
         
               <details
   open={adminDropdowns.giveaway}
@@ -3419,21 +3592,13 @@ LEADERBOARD
           </summary>
 
           <div className="mt-6 grid gap-4">
-            <button
-              onClick={handleStartGiveaway}
-              disabled={!isAdmin}
-              className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 font-semibold text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-40"
-            >
-              Start Giveaway
-            </button>
+<ActionButton onClick={handleStartGiveaway} disabled={!isAdmin} variant="green">
+  Start Giveaway
+</ActionButton>
 
-            <button
-              onClick={handleDrawGiveawayWinner}
-              disabled={!isAdmin}
-              className="rounded-2xl border border-fuchsia-300/25 bg-fuchsia-400/10 px-5 py-4 font-semibold text-fuchsia-200 transition hover:bg-fuchsia-400/20 disabled:opacity-40"
-            >
-              Draw Winner
-            </button>
+<ActionButton onClick={handleDrawGiveawayWinner} disabled={!isAdmin} variant="purple">
+  Draw Winner
+</ActionButton>
 
 <div className="rounded-2xl border border-white/10 bg-black/30 p-6 text-center">
   <div className="text-xs uppercase tracking-[0.25em] text-white/40">
@@ -3451,13 +3616,9 @@ LEADERBOARD
   </div>
 
   <div className="flex justify-end mt-2">
-  <button
-    onClick={() => setWinnerChatMessages([])}
-    disabled={!isAdmin}
-    className="rounded-xl border border-red-300/25 bg-red-400/10 px-4 py-2 text-xs font-bold text-red-200 transition hover:bg-red-400/20 disabled:opacity-40"
-  >
-    Clear Chat
-  </button>
+<ActionButton onClick={() => setWinnerChatMessages([])} disabled={!isAdmin} variant="red">
+  Clear Chat
+</ActionButton>
 </div>
 
   <div className="mt-4 min-h-[120px] space-y-2">
@@ -3543,12 +3704,9 @@ Number(entry.weight || 1) >= 1.2
       </div>
     </div>
 
-    <button
-      onClick={loadAdminRewards}
-      className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-5 py-3 font-bold text-cyan-200 hover:bg-cyan-400/20"
-    >
-      Refresh Rewards
-    </button>
+<ActionButton onClick={loadAdminRewards} variant="dark" className="w-full md:w-auto">
+  Refresh Rewards
+</ActionButton>
   </div>
 
   <input
@@ -3578,7 +3736,7 @@ Number(entry.weight || 1) >= 1.2
           return (
             <div
               key={reward.id}
-              className="grid gap-4 p-4 md:grid-cols-[1fr_120px_140px_190px]"
+              className="grid gap-4 p-4 xl:grid-cols-[1fr_120px_140px_360px]"
             >
               <div>
                 <div className="font-black text-white">
@@ -3615,24 +3773,28 @@ Number(entry.weight || 1) >= 1.2
                 </div>
               </div>
 
-              <div className="flex gap-2 justify-end">
+              <div className="grid grid-cols-3 gap-2">
                 {isComplete ? (
-                  <button
-                    onClick={() => handleAdminMarkRewardPending(reward.id)}
-                    className="rounded-lg border border-yellow-300/30 bg-yellow-400/10 px-3 py-2 text-xs font-bold text-yellow-200"
-                  >
-                    Set Pending
-                  </button>
+<ActionButton
+  onClick={() => handleAdminMarkRewardPending(reward.id)}
+  variant="gold"
+  className="min-h-[46px] px-3 py-2 text-[10px] leading-tight"
+>
+  Set Pending
+</ActionButton>
                 ) : (
-                  <button
-                    onClick={() => handleAdminMarkRewardPaid(reward.id)}
-                    className="rounded-lg border border-emerald-300/30 bg-emerald-400/10 px-3 py-2 text-xs font-bold text-emerald-200"
-                  >
-                    Mark Paid
-                  </button>
+<ActionButton
+  onClick={() => handleAdminMarkRewardPaid(reward.id)}
+  variant="green"
+  className="min-h-[46px] px-3 py-2 text-[10px] leading-tight"
+>
+  Mark Paid
+</ActionButton>
                 )}
 
-                <button
+<ActionButton
+  variant="dark"
+  className="min-h-[46px] px-3 py-2 text-[10px] leading-tight"
   onClick={async () => {
     const newAmount = prompt("Edit giveaway winnings:", String(reward.amount || 0));
 
@@ -3678,17 +3840,17 @@ Number(entry.weight || 1) >= 1.2
     loadAdminRewards();
     loadViewerRewards();
   }}
-  className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-xs font-bold text-cyan-200"
 >
   Edit Amount
-</button>
+</ActionButton>
 
-                <button
-                  onClick={() => handleAdminDeleteReward(reward.id)}
-                  className="rounded-lg border border-red-300/30 bg-red-400/10 px-3 py-2 text-xs font-bold text-red-200"
-                >
-                  Delete
-                </button>
+<ActionButton
+  onClick={() => handleAdminDeleteReward(reward.id)}
+  variant="red"
+  className="min-h-[42px] px-3 py-2 text-[11px]"
+>
+  Delete
+</ActionButton>
               </div>
             </div>
           );
@@ -3709,64 +3871,22 @@ Number(entry.weight || 1) >= 1.2
           </summary>
 
           <div className="mt-6 grid gap-4">
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                Signed in as
-              </div>
-              <div className="mt-2 text-xl font-black text-white">{viewerDisplayName}</div>
-              <div className="mt-1 text-white/45">@{viewerName}</div>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                Admin Name
-              </div>
-              <input
-                value={adminName}
-                onChange={(e) => setAdminName(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-              />
-            </div>
-
-            <button
-              onClick={() => setIsAdmin((v) => !v)}
-              className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 font-semibold text-emerald-200 transition hover:bg-emerald-400/20"
-            >
-              {isAdmin ? `Admin Enabled (${adminName})` : "Enable Admin Mode"}
-            </button>
-
             <div className="grid gap-3 md:grid-cols-2">
-              <button
-                onClick={handleStartHunt}
-                disabled={!isAdmin}
-                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-              >
-                Start New Hunt
-              </button>
+<ActionButton onClick={handleStartHunt} disabled={!isAdmin} variant="dark">
+  Start New Hunt
+</ActionButton>
 
-              <button
-                onClick={handleOpenPredictions}
-                disabled={!isAdmin}
-                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-              >
-                Open Predictions
-              </button>
+<ActionButton onClick={handleOpenPredictions} disabled={!isAdmin} variant="green">
+  Open Predictions
+</ActionButton>
 
-              <button
-                onClick={handleLockPredictions}
-                disabled={!isAdmin}
-                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-              >
-                Close Predictions
-              </button>
+<ActionButton onClick={handleLockPredictions} disabled={!isAdmin} variant="purple">
+  Close Predictions
+</ActionButton>
 
-              <button
-                onClick={handleCompleteHunt}
-                disabled={!isAdmin}
-                className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 font-semibold text-white disabled:opacity-40"
-              >
-                Complete Hunt
-              </button>
+<ActionButton onClick={handleCompleteHunt} disabled={!isAdmin} variant="gold">
+  Complete Hunt
+</ActionButton>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
@@ -3783,7 +3903,10 @@ Number(entry.weight || 1) >= 1.2
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/75">
-              {adminMessage || `Current internal hunt ID: ${adminHuntId || "none yet"}`}
+              {adminMessage ||
+  `Current hunt: ${adminSelectedHunt?.title || "none yet"}${
+    adminSelectedHunt?.casino ? ` • ${adminSelectedHunt.casino}` : ""
+  }`}
             </div>
 
             <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
@@ -3871,13 +3994,9 @@ Number(entry.weight || 1) >= 1.2
         <option value="16">16 Teams</option>
       </select>
 
-      <button
-        onClick={handleGenerateBracket}
-        disabled={!isAdmin}
-        className="rounded-xl border border-[rgba(0,255,136,0.22)] bg-[linear-gradient(180deg,rgba(0,255,136,0.18),rgba(0,255,136,0.08))] px-5 py-3 font-semibold text-[#b8ffd8] shadow-[0_0_20px_rgba(0,255,136,0.10)] transition hover:border-[rgba(0,255,136,0.34)] disabled:opacity-40"
-      >
-        Generate Bracket
-      </button>
+<ActionButton onClick={handleGenerateBracket} disabled={!isAdmin} variant="green">
+  Generate Bracket
+</ActionButton>
     </div>
 
     <div className="mt-3 text-sm text-white/45">
@@ -3904,11 +4023,11 @@ Number(entry.weight || 1) >= 1.2
           />
         </div>
 
-        <div className="mt-5 grid gap-4">
-          {round.matches.map((match) => (
+        <div className="mt-5 grid gap-3 xl:grid-cols-2">
+  {round.matches.map((match) => (
             <div
               key={match.id}
-              className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)] p-4"
+              className="rounded-2xl border border-white/10 bg-white/[0.025] p-3"
             >
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/35">
@@ -3977,41 +4096,32 @@ Number(entry.weight || 1) >= 1.2
               </div>
 
               <div className="mt-4 grid gap-2 md:grid-cols-3">
-                <button
-                  onClick={() => selectMatchWinner(round.id, match.id, match.player1)}
-                  disabled={!isAdmin || !match.player1.trim() || match.player1 === "BYE"}
-                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-40 ${
-                    match.winner === match.player1
-                      ? "border-[rgba(0,255,136,0.30)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8]"
-                      : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white"
-                  }`}
-                >
-                  Pick {match.player1 || ""}
-                </button>
+<ActionButton
+  onClick={() => selectMatchWinner(round.id, match.id, match.player1)}
+  disabled={!isAdmin || !match.player1.trim() || match.player1 === "BYE"}
+  variant={match.winner === match.player1 ? "green" : "dark"}
+  className="min-h-[38px] px-3 py-2 text-[10px]"
+>
+  Pick {match.player1 || ""}
+</ActionButton>
 
-                <button
-                  onClick={() => selectMatchWinner(round.id, match.id, match.player2)}
-                  disabled={!isAdmin || !match.player2.trim() || match.player2 === "BYE"}
-                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-40 ${
-                    match.winner === match.player2
-                      ? "border-[rgba(0,255,136,0.30)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8]"
-                      : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white"
-                  }`}
-                >
-                  Pick {match.player2 || ""}
-                </button>
+<ActionButton
+  onClick={() => selectMatchWinner(round.id, match.id, match.player2)}
+  disabled={!isAdmin || !match.player2.trim() || match.player2 === "BYE"}
+  variant={match.winner === match.player2 ? "green" : "dark"}
+  className="min-h-[38px] px-3 py-2 text-[10px]"
+>
+  Pick {match.player2 || ""}
+</ActionButton>
 
-                <button
-                  onClick={() => clearMatchWinner(round.id, match.id)}
-                  disabled={!isAdmin}
-                  className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
-                >
-                  Clear Winner
-                </button>
-              </div>
-
-              <div className="mt-4">
-                <MatchCard match={match} compact />
+<ActionButton
+  onClick={() => clearMatchWinner(round.id, match.id)}
+  disabled={!isAdmin}
+  variant="red"
+  className="min-h-[38px] px-3 py-2 text-[10px]"
+>
+  Clear Winner
+</ActionButton>
               </div>
             </div>
           ))}
@@ -4021,21 +4131,13 @@ Number(entry.weight || 1) >= 1.2
   </div>
 
   <div className="grid gap-3 md:grid-cols-2">
-    <button
-      onClick={saveBracket}
-      disabled={!isAdmin}
-      className="rounded-2xl border border-[rgba(0,255,136,0.22)] bg-[linear-gradient(180deg,rgba(0,255,136,0.18),rgba(0,255,136,0.08))] px-5 py-4 font-semibold text-[#b8ffd8] shadow-[0_0_20px_rgba(0,255,136,0.10)] transition hover:border-[rgba(0,255,136,0.34)] disabled:opacity-40"
-    >
-      Save Bracket
-    </button>
+<ActionButton onClick={saveBracket} disabled={!isAdmin} variant="green">
+  Save Bracket
+</ActionButton>
 
-    <button
-      onClick={resetBracket}
-      disabled={!isAdmin}
-      className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-5 py-4 font-semibold text-white disabled:opacity-40"
-    >
-      Reset Bracket
-    </button>
+<ActionButton onClick={resetBracket} disabled={!isAdmin} variant="red">
+  Reset Bracket
+</ActionButton>
   </div>
 
   <div className="rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.03)] p-4 text-sm text-white/75">
@@ -4050,168 +4152,200 @@ Number(entry.weight || 1) >= 1.2
   onToggle={(e) => setAdminDropdown("slotWheel", e.currentTarget.open)}
   className="rounded-2xl border border-emerald-300/20 bg-black/30 p-5"
 >
-  <summary className="cursor-pointer text-xl font-black text-white">
-    Slot Wheel ({slotCalls.length} Calls)
-  </summary>
+<summary className="cursor-pointer text-xl font-black text-white">
+  Slot Call Wheel
+</summary>
 
-  <div className="mb-6 rounded-[2rem] border border-emerald-300/20 bg-black/40 p-6 text-center">
-  <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/70">
-    Slot Call Wheel
+<div className="grid gap-6 p-4 lg:grid-cols-[420px_1fr] lg:p-6">
+  <div className="rounded-[2rem] border border-emerald-300/20 bg-black/45 p-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+    <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/70">
+      Community Picker
+    </div>
+
+<div className="relative mx-auto mt-6 h-[360px] w-[360px]">
+  
+  {/* OUTER GLOW */}
+  <div className="absolute inset-0 rounded-full bg-emerald-400/10 blur-3xl" />
+
+  {/* POINTER */}
+  <div className="absolute left-1/2 top-0 z-30 -translate-x-1/2">
+    <div className="h-0 w-0 border-l-[22px] border-r-[22px] border-t-[38px] border-l-transparent border-r-transparent border-t-emerald-300 drop-shadow-[0_0_18px_rgba(16,185,129,0.9)]" />
   </div>
 
-  <div className="relative mx-auto mt-6 flex h-[320px] w-[320px] items-center justify-center">
-    <div className="absolute -top-3 z-20 h-0 w-0 border-l-[16px] border-r-[16px] border-t-[28px] border-l-transparent border-r-transparent border-t-emerald-300 drop-shadow-[0_0_12px_rgba(0,255,136,0.9)]" />
+  {/* SPINNING WHEEL */}
+  <div
+    className="relative flex h-full w-full items-center justify-center rounded-full border-[10px] border-emerald-300/40 bg-black shadow-[0_0_80px_rgba(0,255,136,0.22)] transition-transform duration-[5200ms] ease-out"
+    style={{
+      transform: `rotate(${slotWheelRotation}deg)`,
+background:
+  slotCalls.length === 0
+    ? "radial-gradient(circle, rgba(0,255,136,0.10), rgba(0,0,0,0.92))"
+    : `conic-gradient(${slotCalls
+        .map((_, index) => {
+          const start = (index / slotCalls.length) * 360;
+          const end = ((index + 1) / slotCalls.length) * 360;
+          const color =
+            index % 2 === 0
+              ? "rgba(0,255,136,0.42)"
+              : "rgba(0,45,28,0.92)";
 
-    <div
-      className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border-4 border-emerald-300/40 shadow-[0_0_45px_rgba(0,255,136,0.25)] transition-transform duration-[4200ms] ease-out"
-      style={{
-        transform: `rotate(${slotWheelRotation}deg)`,
-        background:
-          slotCalls.length === 0
-            ? "radial-gradient(circle, rgba(0,255,136,0.12), rgba(0,0,0,0.9))"
-            : `conic-gradient(${slotCalls
-                .map((call, index) => {
-                  const start = (index / slotCalls.length) * 360;
-                  const end = ((index + 1) / slotCalls.length) * 360;
-                  const color =
-                    index % 2 === 0
-                      ? "rgba(0,255,136,0.32)"
-                      : "rgba(20,20,20,0.95)";
-                  return `${color} ${start}deg ${end}deg`;
-                })
-                .join(", ")})`,
-      }}
-    >
-{slotCalls.map((call, index) => {
-  const angle =
-    (index / slotCalls.length) * 360 +
-    360 / slotCalls.length / 2 -
-    90;
+          return `${color} ${start}deg ${end}deg`;
+        })
+        .join(", ")})`,
+    }}
+  >
+
+    {/* INNER RING */}
+    <div className="absolute h-[78%] w-[78%] rounded-full border border-emerald-300/15" />
+
+    {/* SLOT LABELS */}
+{slotCalls.map((slot, index) => {
+  const total = Math.max(slotCalls.length, 1);
+  const segmentSize = 360 / total;
+  const angle = index * segmentSize + segmentSize / 2;
 
   return (
     <div
-      key={`${call.username}-${call.slotName}-wheel-${index}`}
-      className="absolute left-1/2 top-1/2 z-10 w-[95px] origin-left"
+      key={`${slot.username}-${slot.slotName}-${index}`}
+      className="absolute left-1/2 top-1/2 z-10"
       style={{
-        transform: `rotate(${angle}deg) translateX(62px)`,
+        transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-118px)`,
       }}
     >
-      <div className="truncate text-center text-[11px] font-black uppercase tracking-wide text-white drop-shadow-[0_0_10px_rgba(0,0,0,1)]">
-        {call.slotName}
+      <div
+        className="w-[110px] truncate text-center text-[10px] font-black uppercase tracking-wide text-white drop-shadow-[0_0_8px_rgba(0,0,0,1)]"
+        style={{
+          transform: "rotate(90deg)",
+        }}
+      >
+        {slot.slotName}
       </div>
     </div>
   );
 })}
 
-<div className="relative z-10 flex h-28 w-28 items-center justify-center rounded-full border border-emerald-300/30 bg-black text-center text-sm font-black text-emerald-200 shadow-[0_0_25px_rgba(0,255,136,0.25)]">
-  TRASHGUY
-  <br />
-  WHEEL
-</div>
+    {/* CENTER */}
+    <div className="relative z-20 flex h-32 w-32 items-center justify-center rounded-full border-4 border-emerald-300/25 bg-[radial-gradient(circle_at_top,rgba(0,255,136,0.28),rgba(0,0,0,1)_70%)] shadow-[0_0_35px_rgba(0,255,136,0.45)]">
+      <div className="text-center">
+        <div className="text-sm font-black uppercase tracking-[0.2em] text-emerald-200">
+          Trashguy
+        </div>
+        <div className="text-xl font-black text-white">
+          Wheel
+        </div>
+      </div>
     </div>
   </div>
-
-  <div className="mt-6">
-    {pickedSlotCall ? (
-      <div className="rounded-2xl border border-emerald-300/30 bg-emerald-400/10 p-5">
-        <div className="text-xs uppercase tracking-[0.25em] text-emerald-300/70">
-          Picked Slot
-        </div>
-
-        <div className="mt-2 text-4xl font-black text-emerald-300 drop-shadow-[0_0_18px_rgba(0,255,136,0.8)]">
-          {pickedSlotCall.slotName}
-        </div>
-
-        <div className="mt-2 text-sm text-white/45">
-          called by {pickedSlotCall.username}
-        </div>
-      </div>
-    ) : (
-      <div className="text-sm text-white/40">
-        {slotCalls.length === 0
-          ? "Waiting for slot calls..."
-          : "Ready to spin."}
-      </div>
-    )}
-  </div>
-
-  <div className="mt-5 grid gap-3 md:grid-cols-2">
-    <button
-      onClick={handleSpinSlotWheel}
-      disabled={isSlotWheelSpinning || slotCalls.length === 0}
-      className="rounded-2xl border border-emerald-300/30 bg-emerald-400/10 px-5 py-4 font-black text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-40"
-    >
-      {isSlotWheelSpinning ? "Spinning..." : "Spin Wheel"}
-    </button>
-
-    <button
-      onClick={handleRemovePickedSlot}
-      disabled={!pickedSlotCall}
-      className="rounded-2xl border border-red-300/25 bg-red-400/10 px-5 py-4 font-black text-red-200 transition hover:bg-red-400/20 disabled:opacity-40"
-    >
-      Remove Picked Slot
-    </button>
-  </div>
 </div>
 
-  <div className="border-t border-white/10 p-6">
-    <div className="rounded-2xl border border-emerald-300/20 bg-black/30 p-5">
-      <div className="text-xs uppercase tracking-[0.24em] text-emerald-300/80">
-        Live Slot Calls
+      <div className="mt-6">
+        {pickedSlotCall ? (
+          <div className="rounded-[1.5rem] border border-emerald-300/35 bg-emerald-400/10 p-5 shadow-[0_0_30px_rgba(0,255,136,0.14)]">
+            <div className="text-xs uppercase tracking-[0.25em] text-emerald-300/70">
+              Picked Slot
+            </div>
+
+            <div className="mt-2 text-3xl font-black text-emerald-300 drop-shadow-[0_0_18px_rgba(0,255,136,0.8)] sm:text-4xl">
+              {pickedSlotCall.slotName}
+            </div>
+
+            <div className="mt-2 text-sm text-white/45">
+              called by {pickedSlotCall.username}
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm font-semibold text-white/45">
+            {slotCalls.length === 0 ? "Waiting for slot calls..." : "Ready to spin."}
+          </div>
+        )}
       </div>
 
-      <div className="mt-2 text-sm text-white/45">
-        Viewers type{" "}
-        <span className="font-bold text-white">
-          !slot _______
-        </span>{" "}
-        in Twitch chat.
+      <div className="mt-5 grid gap-3">
+        <ActionButton
+          onClick={handleSpinSlotWheel}
+          disabled={isSlotWheelSpinning || slotCalls.length === 0}
+          variant="green"
+        >
+          {isSlotWheelSpinning ? "Spinning..." : "Spin Wheel"}
+        </ActionButton>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ActionButton
+            onClick={handleShuffleSlotWheel}
+            disabled={slotCalls.length <= 1 || isSlotWheelSpinning}
+            variant="purple"
+          >
+            Shuffle
+          </ActionButton>
+
+          <ActionButton
+            onClick={handleRemovePickedSlot}
+            disabled={!pickedSlotCall}
+            variant="red"
+          >
+            Remove Picked
+          </ActionButton>
+        </div>
+      </div>
+    </div>
+
+    <div className="rounded-[2rem] border border-white/10 bg-black/35 p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-xs uppercase tracking-[0.24em] text-emerald-300/80">
+            Live Slot Calls
+          </div>
+
+          <div className="mt-2 text-sm text-white/45">
+            Viewers type <span className="font-bold text-white">!slot wanted</span> in Twitch chat.
+          </div>
+        </div>
+
+        <ActionButton
+          onClick={() => setSlotCalls([])}
+          variant="red"
+          className="min-h-[42px] px-4 py-2 text-xs"
+        >
+          Clear Calls
+        </ActionButton>
       </div>
 
-      <div className="mt-4 max-h-[320px] overflow-y-auto rounded-xl border border-white/10 bg-black/30">
+      <div className="mt-5 max-h-[520px] overflow-y-auto rounded-2xl border border-white/10 bg-black/35 p-3">
         {slotCalls.length === 0 ? (
-          <div className="p-5 text-sm text-white/40">
+          <div className="p-8 text-center text-sm text-white/40">
             No slot calls yet.
           </div>
         ) : (
-          <div className="divide-y divide-white/5">
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {slotCalls.map((call, index) => (
               <div
                 key={`${call.username}-${call.slotName}-${index}`}
-                className="flex items-center justify-between gap-3 px-4 py-3"
+                className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 transition hover:border-emerald-300/25 hover:bg-emerald-400/[0.06]"
               >
-                <div className="min-w-0">
-                  <div className="truncate font-black text-white">
-                    {call.slotName}
-                  </div>
-
-                  <div className="text-xs text-white/35">
-                    called by {call.username}
-                  </div>
+                <div className="truncate font-black text-white">
+                  {call.slotName}
                 </div>
 
-                <button
+                <div className="mt-1 truncate text-xs text-white/35">
+                  called by {call.username}
+                </div>
+
+                <ActionButton
                   onClick={() =>
                     setSlotCalls((current) =>
                       current.filter((_, itemIndex) => itemIndex !== index)
                     )
                   }
-                  className="rounded-lg border border-red-300/25 bg-red-400/10 px-3 py-1 text-xs font-bold text-red-200"
+                  variant="red"
+                  className="mt-3 min-h-[34px] w-full px-3 py-1 text-[10px]"
                 >
                   Remove
-                </button>
+                </ActionButton>
               </div>
             ))}
           </div>
         )}
       </div>
-
-      <button
-        onClick={() => setSlotCalls([])}
-        className="mt-4 rounded-xl border border-red-300/25 bg-red-400/10 px-4 py-2 text-xs font-bold text-red-200"
-      >
-        Clear Calls
-      </button>
     </div>
   </div>
 </details>
