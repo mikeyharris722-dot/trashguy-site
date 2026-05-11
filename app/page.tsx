@@ -5,13 +5,14 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
 import { FaDiscord, FaXTwitter, FaYoutube, FaInstagram } from "react-icons/fa6";
 import { slotData, providerLogos, type SlotItem } from "./slotData";
+import { Russo_One } from "next/font/google";
+
+const russo = Russo_One({
+  subsets: ["latin"],
+  weight: "400",
+});
 
 const socials = [
-  {
-    name: "RouloBets",
-    href: "https://roulobets.com/?r=trashguy",
-    image: "/roulobets.png",
-  },
   {
     name: "Discord",
     href: "https://discord.gg/EqjwXzkDMK",
@@ -2314,138 +2315,183 @@ const handleGenerateBracket = () => {
 />
 
           <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-            {activeSection === "home" && (
-              <section className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-                <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_40px_rgba(0,255,136,0.08)]">
-                  <SectionLabel>Home</SectionLabel>
-                  <h1 className="mt-3 text-4xl font-black tracking-wide">TRASHGUY</h1>
-                  <p className="mt-4 max-w-xl text-white/65">
-  Sign up with code{" "}
-  <span className="font-bold text-[#8fffd0]">
-    trashguy
-  </span>{" "}
-  on Roulobets to earn rewards
-</p>
+{activeSection === "home" && (
+  <section className="space-y-10">
+    <section className="relative -mx-4 overflow-hidden px-4 py-24 text-center sm:-mx-6 sm:px-6">
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,255,136,0.18),transparent_58%)]" />
 
-                  <div className="mt-6 flex items-center gap-3">
-  <div className={`h-2 w-2 rounded-full ${
-    liveStatus.isLive ? "bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.8)]" : "bg-red-400"
-  }`} />
+      <div className="relative z-10 mx-auto max-w-5xl">
+        <img
+          src="/hero-logos.png"
+          alt="Trashguy x RouloBets"
+          className="mx-auto h-[420px] w-auto object-contain drop-shadow-[0_0_65px_rgba(0,255,136,0.45)]"
+        />
 
-  <div className="text-sm font-semibold text-white/70">
-    {liveLoading
-      ? "Checking stream..."
-      : liveStatus.isLive
-      ? "Live now"
-      : "Offline"}
+<h1
+  className={`${russo.className} mx-auto mt-4 max-w-5xl text-center text-[clamp(1.4rem,2.4vw,2.8rem)] leading-[0.95] tracking-[-0.03em] text-white`}
+  style={{
+    textShadow:
+      "0 0 18px rgba(0,255,136,0.18), 0 0 42px rgba(0,255,136,0.10)",
+  }}
+>
+  ONE MAN’S TRASH IS ANOTHER MAN’S TREASURE
+</h1>
+
+        <p className="mx-auto mt-7 max-w-3xl text-lg font-semibold leading-8 text-white/70">
+          Sign up on RouloBets under code{" "}
+          <span className="font-black text-[#8fffd0]">trashguy</span>{" "}
+          to earn monthly prizes, VIP rewards, and daily stream giveaways.
+        </p>
+
+        <a
+          href="https://roulobets.com/?r=trashguy"
+          target="_blank"
+          rel="noreferrer"
+          className="group relative mt-9 inline-flex min-h-[66px] min-w-[280px] items-center justify-center overflow-hidden rounded-2xl border border-emerald-300/40 bg-[linear-gradient(180deg,rgba(0,255,136,0.34),rgba(0,110,70,0.45))] px-8 py-4 text-sm font-black uppercase tracking-[0.2em] text-white shadow-[0_0_45px_rgba(0,255,136,0.28)] transition hover:scale-[1.03] hover:border-emerald-200"
+        >
+          <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
+          <span className="relative z-10">Claim Rewards On Roulo</span>
+        </a>
+      </div>
+    </section>
+
+<div className="mx-auto mt-14 grid max-w-5xl gap-5 md:grid-cols-3">
+<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-emerald-300/20 bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] p-6 backdrop-blur-md shadow-[0_0_25px_rgba(0,255,136,0.08)] transition duration-300 hover:-translate-y-1 hover:border-emerald-300/40">
+  <div className="text-3xl">👑</div>
+
+  <div className="mt-4 text-2xl font-black text-white">
+    VIP Rewards
+  </div>
+
+  <div className="mt-3 max-w-[220px] text-sm leading-7 text-white/65">
+    Exclusive rewards for loyal supporters and wager leaders.
   </div>
 </div>
 
-                  <div className="mt-8 grid gap-3">
-  {socials.map((social) => {
-    const Icon = social.icon;
+<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-fuchsia-500/20 bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] p-6 backdrop-blur-md shadow-[0_0_25px_rgba(217,70,239,0.08)] transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40">
+  <div className="text-3xl">🎁</div>
 
-    return (
-      <a
-  key={social.name}
-  href={social.href}
-  target="_blank"
-  rel="noreferrer"
-  className="flex items-center justify-between rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.92),rgba(8,8,8,0.96))] px-5 py-4 transition hover:border-[rgba(0,255,136,0.28)] hover:bg-[linear-gradient(180deg,rgba(18,18,18,0.96),rgba(10,10,10,0.98))] hover:shadow-[0_0_24px_rgba(0,255,136,0.06)]"
->
-  <div className="flex items-center gap-4">
-    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/40 shadow-[0_0_16px_rgba(0,255,136,0.08)]">
-      {social.image ? (
-        <img
-          src={social.image}
-          alt={social.name}
-          className="h-8 w-8 object-contain"
-        />
-      ) : Icon ? (
-        <Icon
-  className={`text-2xl ${
+  <div className="mt-4 text-2xl font-black text-white">
+    Daily Giveaways
+  </div>
+
+  <div className="mt-3 max-w-[220px] text-sm leading-7 text-white/65">
+    Stream rewards and bonus buys for all Twitch viewers.
+  </div>
+</div>
+
+<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-yellow-500/20 bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] p-6 backdrop-blur-md shadow-[0_0_25px_rgba(234,179,8,0.08)] transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40">
+  <div className="text-3xl">🏆</div>
+
+  <div className="mt-4 text-2xl font-black text-white">
+    Monthly Prizes
+  </div>
+
+  <div className="mt-3 max-w-[220px] text-sm leading-7 text-white/65">
+    Compete for monthly leaderboard prizes and special events.
+  </div>
+</div>
+</div>
+
+    <section className="relative py-6">
+
+      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-2">
+        {socials.map((social) => {
+          const Icon = social.icon;
+
+          return (
+            <a
+              key={social.name}
+              href={social.href}
+              target="_blank"
+              rel="noreferrer"
+              className={`group flex items-center justify-between rounded-[1.5rem] border px-5 py-3.5 transition hover:scale-[1.01] ${
+                social.name === "Discord"
+                  ? "border-[#5865F2]/30 bg-[#5865F2]/10 hover:bg-[#5865F2]/20 hover:shadow-[0_0_30px_rgba(88,101,242,0.18)]"
+                  : social.name === "YouTube"
+                  ? "border-[#FF0000]/30 bg-[#FF0000]/10 hover:bg-[#FF0000]/20 hover:shadow-[0_0_30px_rgba(255,0,0,0.18)]"
+                  : social.name === "Instagram"
+                  ? "border-[#E1306C]/30 bg-[#E1306C]/10 hover:bg-[#E1306C]/20 hover:shadow-[0_0_30px_rgba(225,48,108,0.18)]"
+                  : social.name === "Twitter / X"
+                  ? "border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:shadow-[0_0_30px_rgba(255,255,255,0.12)]"
+                  : "border-emerald-300/30 bg-emerald-400/10 hover:bg-emerald-400/20 hover:shadow-[0_0_30px_rgba(0,255,136,0.18)]"
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className={`flex h-14 w-14 items-center justify-center rounded-2xl border ${
+                    social.name === "Discord"
+                      ? "border-[#5865F2]/40 bg-[#5865F2]/15"
+                      : social.name === "YouTube"
+                      ? "border-[#FF0000]/40 bg-[#FF0000]/15"
+                      : social.name === "Instagram"
+                      ? "border-[#E1306C]/40 bg-[#E1306C]/15"
+                      : social.name === "Twitter / X"
+                      ? "border-white/15 bg-white/[0.06]"
+                      : "border-emerald-300/30 bg-emerald-400/10"
+                  }`}
+                >
+<Icon
+  className={`text-3xl ${
     social.name === "Discord"
       ? "text-[#5865F2]"
       : social.name === "YouTube"
       ? "text-[#FF0000]"
-      : social.name === "Twitter / X"
-      ? "text-white"
       : social.name === "Instagram"
       ? "text-[#E1306C]"
+      : social.name === "Twitter / X"
+      ? "text-white"
       : "text-[#8fffd0]"
   }`}
 />
-      ) : null}
-    </div>
+                </div>
 
-    <div className="text-lg font-black text-white">
-      {social.name}
-    </div>
-  </div>
+                <div>
+                  <div className="text-lg font-black text-white">
+                    {social.name}
+                  </div>
+                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/35">
+                    Follow / Like / Comment
+                  </div>
+                </div>
+              </div>
 
-  <span className="text-sm font-semibold text-white/45 transition hover:text-[#8fffd0]">
-    Visit
-  </span>
-</a>
-    );
-  })}
-</div>
-                </Panel>
-
-                <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_40px_rgba(0,255,136,0.08)]">
-  <SectionLabel>Live Stream</SectionLabel>
-  <h2 className="mt-3 text-3xl font-black">WATCH TRASHGUY LIVE</h2>
-
-  <div className="mt-6 mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.26em] text-emerald-300">
-  {liveStatus.isLive && (
-    <>
-      <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
-      </span>
-      <span>Live stream</span>
-    </>
-  )}
-</div>
-
-  <div className="aspect-video w-full overflow-hidden rounded-[1.25rem] border border-emerald-300/20">
-    {liveStatus.isLive ? (
-      <iframe
-        src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
-        height="100%"
-        width="100%"
-        allowFullScreen
-        className="rounded-[1.25rem]"
-      />
-    ) : (
-      <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[linear-gradient(180deg,rgba(10,10,10,0.92),rgba(3,3,3,0.98))]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,136,0.18),transparent_55%)]" />
-        <div className="absolute inset-0 bg-[url('/bg-tunnel.png')] bg-cover bg-center opacity-20" />
-
-        <div className="relative z-10 text-center">
-          <div className="text-4xl font-black tracking-wide text-white">
-            OFFLINE
-          </div>
-
-          <div className="mt-2 text-white/50">
-            Catch the next stream live
-          </div>
-
-          <a
-            href="https://www.twitch.tv/trashguy__"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-6 inline-flex rounded-full border border-[#9146FF]/40 bg-[#9146FF]/20 px-6 py-3 text-sm font-bold text-white transition hover:bg-[#9146FF]/30"
-          >
-            Follow on Twitch
-          </a>
-        </div>
+              <div className="text-xs font-black uppercase tracking-[0.2em] text-white/35 group-hover:text-[#8fffd0]">
+                Visit
+              </div>
+            </a>
+          );
+        })}
       </div>
-    )}
-  </div>
-</Panel>
-              </section>
-            )}
+    </section>
+
+    <section className="relative py-8">
+      <SectionLabel>Live Stream</SectionLabel>
+      <h2 className="mt-3 text-3xl font-black">WATCH TRASHGUY LIVE</h2>
+
+      <div className="mt-5 aspect-video overflow-hidden rounded-[2rem] border border-emerald-250/20 bg-black">
+        {liveStatus.isLive ? (
+          <iframe
+            src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
+            height="100%"
+            width="100%"
+            allowFullScreen
+          />
+        ) : (
+          <div className="relative flex h-full items-center justify-center overflow-hidden">
+            <div className="absolute inset-0 bg-[url('/bg-tunnel.png')] bg-cover bg-center opacity-30" />
+            <div className="relative z-10 text-center">
+              <div className="text-5xl font-black text-white">OFFLINE</div>
+              <div className="mt-2 text-white/50">
+                Catch the next stream live
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  </section>
+)}
 
             {activeSection === "leaderboard" && (
   <section className="space-y-6">
@@ -4356,24 +4402,56 @@ background:
 )}
           </main>
 
-          <footer className="relative overflow-hidden border-t border-[rgba(0,255,136,0.14)] bg-[linear-gradient(180deg,rgba(8,8,8,0.88),rgba(4,4,4,0.96))] px-6 py-8">
-  <div className="absolute inset-x-0 top-0 h-px bg-[rgba(0,255,136,0.22)] shadow-[0_0_14px_rgba(0,255,136,0.25)]" />
-  
-  <div className="mx-auto flex max-w-7xl flex-col gap-3 text-sm text-white/45 md:flex-row md:items-center md:justify-between">
-    <div>© 2026 Trashguy</div>
+<footer className="relative mt-24 border-t border-white/10 bg-black/35 backdrop-blur-xl">
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,136,0.08),transparent_70%)]" />
 
-    <div className="flex flex-wrap gap-4">
-      {socials.map((social) => (
-        <a
-          key={social.name}
-          href={social.href}
-          target="_blank"
-          rel="noreferrer"
-          className="transition hover:text-[#8fffd0]"
-        >
-          {social.name}
-        </a>
-      ))}
+  <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center gap-6 px-6 py-10 text-center">
+    
+    <div className="flex items-center gap-5">
+      <a
+        href="https://discord.gg/EqjwXzkDMK"
+        target="_blank"
+        rel="noreferrer"
+        className="transition hover:scale-110"
+      >
+        <FaDiscord className="text-3xl text-[#5865F2]" />
+      </a>
+
+      <a
+        href="https://youtube.com/@Trashguyy"
+        target="_blank"
+        rel="noreferrer"
+        className="transition hover:scale-110"
+      >
+        <FaYoutube className="text-3xl text-[#FF0000]" />
+      </a>
+
+      <a
+        href="https://x.com/trashguy__"
+        target="_blank"
+        rel="noreferrer"
+        className="transition hover:scale-110"
+      >
+        <FaXTwitter className="text-3xl text-white" />
+      </a>
+
+      <a
+        href="https://instagram.com/trashguy__"
+        target="_blank"
+        rel="noreferrer"
+        className="transition hover:scale-110"
+      >
+        <FaInstagram className="text-3xl text-[#E1306C]" />
+      </a>
+    </div>
+
+    <div className="max-w-2xl text-sm leading-7 text-white/45">
+      Gamble responsibly. 18+ only.
+      A wise man once said "only gamble with what you can afford to lose".
+    </div>
+
+    <div className="text-xs uppercase tracking-[0.22em] text-white/25">
+      © 2026 Trashguy • All Rights Reserved
     </div>
   </div>
 </footer>
