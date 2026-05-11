@@ -2317,14 +2317,14 @@ const handleGenerateBracket = () => {
           <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
 {activeSection === "home" && (
   <section className="space-y-10">
-    <section className="relative -mx-4 overflow-hidden px-4 py-24 text-center sm:-mx-6 sm:px-6">
+    <section className="relative -mx-4 overflow-hidden px-4 py-10 text-center sm:-mx-6 sm:px-6 md:py-24">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,255,136,0.18),transparent_58%)]" />
 
       <div className="relative z-10 mx-auto max-w-5xl">
         <img
           src="/hero-logos.png"
           alt="Trashguy x RouloBets"
-          className="mx-auto h-[420px] w-auto object-contain drop-shadow-[0_0_65px_rgba(0,255,136,0.45)]"
+          className="mx-auto h-[150px] md:h-[420px] w-auto object-contain drop-shadow-[0_0_65px_rgba(0,255,136,0.45)]"
         />
 
 <h1
