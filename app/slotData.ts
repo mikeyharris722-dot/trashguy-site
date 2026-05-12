@@ -1151,7 +1151,7 @@ export const providerLogos: Record<string, string> = {
   "Bullshark": "/providers/bullshark.png",
   "Clawbuster": "https://usercontent.cc/logos/providers/white/clawbuster.svg",
   "Hacksaw Gaming": "https://usercontent.cc/logos/providers/white/hacksaw.svg",
-  "NoLimit City": "https://usercontent.cc/logos/providers/white/nolimitcity.svg",
+  "NoLimit City": "/providers/nolimit.png",
   "Peter & Sons": "https://usercontent.cc/logos/providers/white/petersons.svg",
   "Popiplay": "https://usercontent.cc/logos/providers/white/popiplay.svg",
   "Shady Lady": "https://usercontent.cc/logos/providers/white/shadylady.svg",
