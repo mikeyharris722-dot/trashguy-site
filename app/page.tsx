@@ -2334,7 +2334,7 @@ const handleGenerateBracket = () => {
       "0 0 18px rgba(0,255,136,0.18), 0 0 42px rgba(0,255,136,0.10)",
   }}
 >
-  ONE MAN’S TRASH IS ANOTHER MAN’S TREASURE
+  ONE MAN’S TRASH IS ANOTHER MAN’S MAX WIN
 </h1>
 
         <p className="mx-auto mt-7 max-w-3xl text-lg font-semibold leading-8 text-white/70">
