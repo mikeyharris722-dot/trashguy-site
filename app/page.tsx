@@ -2376,7 +2376,7 @@ const handleGenerateBracket = () => {
   </div>
 
   <div className="mt-3 max-w-[220px] text-sm leading-7 text-white/65">
-    Stream rewards and bonus buys for all Twitch viewers.
+    Stream rewards and bonus buys for all twitch viewers.
   </div>
 </div>
 
@@ -2449,9 +2449,6 @@ className={`group flex items-center justify-between rounded-[1.5rem] border px-5
                 <div>
                   <div className="text-lg font-black text-white">
                     {social.name}
-                  </div>
-                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/35">
-                    Follow / Like / Comment
                   </div>
                 </div>
               </div>
