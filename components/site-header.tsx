@@ -36,7 +36,6 @@ export default function SiteHeader({
   { id: "home", label: "Home" },
   { id: "leaderboard", label: "Leaderboard" },
   { id: "hunts", label: "Bonus Hunts" },
-  { id: "predictions", label: "Predictions" },
   { id: "giveaways", label: "Giveaways" },
   { id: "slotpicker", label: "Slot Picker" },
   { id: "tournaments", label: "Tournaments" },
@@ -44,7 +43,7 @@ export default function SiteHeader({
 ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-emerald-400/15 bg-black/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-cyan-400/15 bg-black/85 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -80,7 +79,7 @@ export default function SiteHeader({
                     className="h-9 w-9 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/30 text-sm font-black text-emerald-300">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/30 text-sm font-black text-cyan-300">
                     {viewerDisplayName.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -92,7 +91,7 @@ export default function SiteHeader({
 
                 <button
                   onClick={handleLogout}
-                  className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-200"
+                  className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-200"
                 >
                   Logout
                 </button>
@@ -100,7 +99,7 @@ export default function SiteHeader({
             ) : (
               <button
                 onClick={handleTwitchLogin}
-                className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm font-semibold text-emerald-200 shadow-[0_0_18px_rgba(16,185,129,0.18)]"
+                className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-200 shadow-[0_0_18px_rgba(0,245,255,0.18)]"
               >
                 Login
               </button>
@@ -108,7 +107,7 @@ export default function SiteHeader({
           </div>
         </div>
 
-        <nav className="mt-4 flex flex-wrap items-center gap-2 overflow-x-auto">
+        <nav className="mt-4 flex w-full flex-wrap items-center justify-center gap-2">
           {navItems.map((item) => {
             const active = activeSection === item.id;
 
@@ -118,7 +117,7 @@ export default function SiteHeader({
                 onClick={() => setActiveSection(item.id)}
                 className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                   active
-                    ? "border-emerald-400/30 bg-emerald-400/12 text-emerald-200 shadow-[0_0_18px_rgba(16,185,129,0.15)]"
+                    ? "border-cyan-400/30 bg-cyan-400/12 text-cyan-200 shadow-[0_0_18px_rgba(0,245,255,0.15)]"
                     : "border-white/10 bg-white/[0.03] text-white/70 hover:text-white"
                 }`}
               >

@@ -371,14 +371,14 @@ function Panel({
     <div
       className={[
         "relative overflow-hidden rounded-[30px]",
-        "border border-[rgba(0,255,136,0.16)]",
+        "border border-[rgba(0,245,255,0.16)]",
         "bg-[linear-gradient(180deg,rgba(17,17,17,0.96),rgba(8,8,8,0.96))]",
-        "shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_0_35px_rgba(0,255,136,0.08),inset_0_1px_0_rgba(255,255,255,0.03)]",
+        "shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_0_35px_rgba(0,245,255,0.08),inset_0_1px_0_rgba(255,255,255,0.03)]",
         "backdrop-blur-xl",
         className,
       ].join(" ")}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,255,136,0.10),transparent_32%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.10),transparent_32%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[rgba(255,255,255,0.07)]" />
       <div className="relative z-10 p-5 sm:p-7">{children}</div>
     </div>
@@ -387,19 +387,19 @@ function Panel({
 
 function SectionLabel({
   children,
-  color = "emerald",
+  color = "cyan",
 }: {
   children: React.ReactNode;
-  color?: "emerald" | "fuchsia" | "white";
+  color?: "cyan" | "fuchsia" | "white";
 }) {
   const map = {
-    emerald: "text-[#42f5a7]",
+    cyan: "text-[#00ffff]",
     fuchsia: "text-[#42f5a7]",
     white: "text-white/60",
   };
 
   return (
-    <div className={`text-[11px] font-black uppercase tracking-[0.34em] drop-shadow-[0_0_10px_rgba(0,255,136,0.25)] ${map[color]}`}>
+    <div className={`text-[11px] font-black uppercase tracking-[0.34em] drop-shadow-[0_0_10px_rgba(0,245,255,0.25)] ${map[color]}`}>
       {children}
     </div>
   );
@@ -418,18 +418,18 @@ function ActionButton({
   variant?: "green" | "red" | "purple" | "gold" | "dark";
   className?: string;
 }) {
-  const variants = {
-    green:
-      "border-emerald-300/35 bg-[linear-gradient(180deg,rgba(0,255,136,0.22),rgba(0,255,136,0.08))] text-emerald-100 shadow-[0_0_22px_rgba(0,255,136,0.12)] hover:border-emerald-200/60 hover:shadow-[0_0_35px_rgba(0,255,136,0.22)]",
-    red:
-      "border-red-300/30 bg-[linear-gradient(180deg,rgba(248,113,113,0.18),rgba(127,29,29,0.14))] text-red-100 hover:border-red-200/60 hover:shadow-[0_0_28px_rgba(248,113,113,0.18)]",
-    purple:
-      "border-fuchsia-300/30 bg-[linear-gradient(180deg,rgba(217,70,239,0.18),rgba(88,28,135,0.16))] text-fuchsia-100 hover:border-fuchsia-200/60 hover:shadow-[0_0_28px_rgba(217,70,239,0.20)]",
-    gold:
-      "border-yellow-300/35 bg-[linear-gradient(180deg,rgba(250,204,21,0.22),rgba(120,53,15,0.14))] text-yellow-100 hover:border-yellow-200/60 hover:shadow-[0_0_30px_rgba(250,204,21,0.22)]",
-    dark:
-      "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] text-white hover:border-white/25 hover:bg-white/[0.07]",
-  };
+const variants = {
+  green:
+    "border-cyan-300/35 bg-[linear-gradient(180deg,rgba(0,245,255,0.22),rgba(0,245,255,0.08))] text-cyan-100 shadow-[0_0_22px_rgba(0,245,255,0.12)] hover:border-cyan-200/60 hover:shadow-[0_0_35px_rgba(0,245,255,0.22)]",
+  red:
+    "border-red-300/30 bg-[linear-gradient(180deg,rgba(248,113,113,0.18),rgba(127,29,29,0.14))] text-red-100 hover:border-red-200/60 hover:shadow-[0_0_28px_rgba(248,113,113,0.18)]",
+  purple:
+    "border-fuchsia-300/30 bg-[linear-gradient(180deg,rgba(217,70,239,0.18),rgba(88,28,135,0.16))] text-fuchsia-100 hover:border-fuchsia-200/60 hover:shadow-[0_0_28px_rgba(217,70,239,0.20)]",
+  gold:
+    "border-yellow-300/35 bg-[linear-gradient(180deg,rgba(250,204,21,0.22),rgba(120,53,15,0.14))] text-yellow-100 hover:border-yellow-200/60 hover:shadow-[0_0_30px_rgba(250,204,21,0.22)]",
+  dark:
+    "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] text-white hover:border-white/25 hover:bg-white/[0.07]",
+};
 
   return (
     <button
@@ -498,7 +498,7 @@ function MatchCard({
 
   return (
     <div
-      className={`rounded-[1.2rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(18,18,18,0.96),rgba(8,8,8,0.98))] shadow-[0_0_18px_rgba(0,255,136,0.05)] ${
+      className={`rounded-[1.2rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(18,18,18,0.96),rgba(8,8,8,0.98))] shadow-[0_0_18px_rgba(0,245,255,0.05)] ${
         compact ? "p-3" : "p-4"
       }`}
     >
@@ -506,7 +506,7 @@ function MatchCard({
         <div
           className={`rounded-xl border px-4 py-3 font-semibold transition ${
             isWinner1
-              ? "border-[rgba(0,255,136,0.35)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8] shadow-[0_0_16px_rgba(0,255,136,0.10)]"
+              ? "border-[rgba(0,245,255,0.35)] bg-[rgba(0,245,255,0.10)] text-[#b8ffd8] shadow-[0_0_16px_rgba(0,245,255,0.10)]"
               : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-white"
           }`}
         >
@@ -531,7 +531,7 @@ function MatchCard({
         <div
           className={`rounded-xl border px-4 py-3 font-semibold transition ${
             isWinner2
-              ? "border-[rgba(0,255,136,0.35)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8] shadow-[0_0_16px_rgba(0,255,136,0.10)]"
+              ? "border-[rgba(0,245,255,0.35)] bg-[rgba(0,245,255,0.10)] text-[#b8ffd8] shadow-[0_0_16px_rgba(0,245,255,0.10)]"
               : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-white"
           }`}
         >
@@ -933,12 +933,12 @@ useEffect(() => {
     <button
       onClick={() => setActiveSection(id)}
       className={`relative px-2 py-2 text-base font-semibold tracking-wide transition ${
-        activeSection === id ? "text-emerald-300" : "text-white/80 hover:text-white"
+        activeSection === id ? "text-cyan-300" : "text-white/80 hover:text-white"
       }`}
     >
       {label}
       {activeSection === id && (
-        <span className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,1)]" />
+        <span className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(0,245,255,1)]" />
       )}
     </button>
   );
@@ -2297,9 +2297,9 @@ const handleGenerateBracket = () => {
   }, [predictions, finalResult, latestWinners]);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
-  <div className="min-h-screen bg-[url('/bg-tunnel.png')] bg-cover bg-center bg-fixed brightness-110 contrast-110">
-    <div className="min-h-screen bg-[linear-gradient(to_bottom,rgba(0,0,0,0.72),rgba(0,0,0,0.88)),radial-gradient(circle_at_center,rgba(0,0,0,0.35),rgba(0,0,0,0.82))]">
+<div className="min-h-screen bg-[#020809] text-white">
+  <div className="min-h-screen bg-[url('/trashguy-casino.png')] bg-cover bg-center bg-fixed">
+    <div className="min-h-screen bg-[linear-gradient(to_bottom,rgba(0,0,0,0.50),rgba(0,0,0,0.82)),radial-gradient(circle_at_center,rgba(0,255,255,0.10),rgba(0,0,0,0.78))]">
           <SiteHeader
   activeSection={activeSection}
   setActiveSection={setActiveSection}
@@ -2318,20 +2318,20 @@ const handleGenerateBracket = () => {
 {activeSection === "home" && (
   <section className="space-y-10">
     <section className="relative -mx-4 overflow-hidden px-4 py-10 text-center sm:-mx-6 sm:px-6 md:py-24">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,255,136,0.18),transparent_58%)]" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,245,255,0.18),transparent_58%)]" />
 
       <div className="relative z-10 mx-auto max-w-5xl">
         <img
           src="/hero-logos.png"
           alt="Trashguy x RouloBets"
-          className="mx-auto h-[150px] md:h-[420px] w-auto object-contain drop-shadow-[0_0_65px_rgba(0,255,136,0.45)]"
+          className="mx-auto h-[150px] md:h-[420px] w-auto object-contain drop-shadow-[0_0_65px_rgba(0,245,255,0.45)]"
         />
 
 <h1
   className={`${russo.className} mx-auto mt-4 max-w-5xl text-center text-[clamp(1.4rem,2.4vw,2.8rem)] leading-[0.95] tracking-[-0.03em] text-white`}
   style={{
     textShadow:
-      "0 0 18px rgba(0,255,136,0.18), 0 0 42px rgba(0,255,136,0.10)",
+      "0 0 18px rgba(0,245,255,0.18), 0 0 42px rgba(0,245,255,0.10)",
   }}
 >
   ONE MAN’S TRASH IS ANOTHER MAN’S MAX WIN
@@ -2347,7 +2347,7 @@ const handleGenerateBracket = () => {
           href="https://roulobets.com/?r=trashguy"
           target="_blank"
           rel="noreferrer"
-          className="group relative mt-9 inline-flex min-h-[66px] min-w-[280px] items-center justify-center overflow-hidden rounded-2xl border border-emerald-300/40 bg-[linear-gradient(180deg,rgba(0,255,136,0.34),rgba(0,110,70,0.45))] px-8 py-4 text-sm font-black uppercase tracking-[0.2em] text-white shadow-[0_0_45px_rgba(0,255,136,0.28)] transition hover:scale-[1.03] hover:border-emerald-200"
+          className="group relative mt-9 inline-flex min-h-[66px] min-w-[280px] items-center justify-center overflow-hidden rounded-2xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.38),rgba(0,120,255,0.28))] px-8 py-4 text-sm font-black uppercase tracking-[0.22em] text-white shadow-[0_0_45px_rgba(0,255,255,0.45)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)]"
         >
           <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
           <span className="relative z-10">Claim Rewards On Roulo</span>
@@ -2356,7 +2356,7 @@ const handleGenerateBracket = () => {
     </section>
 
 <div className="mx-auto mt-14 grid max-w-5xl gap-5 md:grid-cols-3">
-<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-emerald-300/20 bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] p-6 backdrop-blur-md shadow-[0_0_25px_rgba(0,255,136,0.08)] transition duration-300 hover:-translate-y-1 hover:border-emerald-300/40">
+<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] p-6 backdrop-blur-md shadow-[0_0_25px_rgba(0,245,255,0.08)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40">
   <div className="text-3xl">👑</div>
 
   <div className="mt-4 text-2xl font-black text-white">
@@ -2405,17 +2405,17 @@ const handleGenerateBracket = () => {
               href={social.href}
               target="_blank"
               rel="noreferrer"
-              className={`group flex items-center justify-between rounded-[1.5rem] border px-5 py-3.5 transition hover:scale-[1.01] ${
-                social.name === "Discord"
-                  ? "border-[#5865F2]/30 bg-[#5865F2]/10 hover:bg-[#5865F2]/20 hover:shadow-[0_0_30px_rgba(88,101,242,0.18)]"
-                  : social.name === "YouTube"
-                  ? "border-[#FF0000]/30 bg-[#FF0000]/10 hover:bg-[#FF0000]/20 hover:shadow-[0_0_30px_rgba(255,0,0,0.18)]"
-                  : social.name === "Instagram"
-                  ? "border-[#E1306C]/30 bg-[#E1306C]/10 hover:bg-[#E1306C]/20 hover:shadow-[0_0_30px_rgba(225,48,108,0.18)]"
-                  : social.name === "Twitter / X"
-                  ? "border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:shadow-[0_0_30px_rgba(255,255,255,0.12)]"
-                  : "border-emerald-300/30 bg-emerald-400/10 hover:bg-emerald-400/20 hover:shadow-[0_0_30px_rgba(0,255,136,0.18)]"
-              }`}
+className={`group flex items-center justify-between rounded-[1.5rem] border px-5 py-4 transition hover:scale-[1.01] ${
+  social.name === "Discord"
+    ? "border-[#5865F2]/35 bg-[#050816]/85 hover:bg-[#0b1230]/90"
+    : social.name === "YouTube"
+    ? "border-[#FF0000]/35 bg-[#180505]/85 hover:bg-[#250707]/90"
+    : social.name === "Instagram"
+    ? "border-[#E1306C]/35 bg-[#1a0610]/85 hover:bg-[#260819]/90"
+    : social.name === "Twitter / X"
+    ? "border-white/20 bg-black/85 hover:bg-zinc-900/90"
+    : "border-cyan-300/30 bg-black/85 hover:bg-cyan-950/80"
+}`}
             >
               <div className="flex items-center gap-4">
                 <div
@@ -2428,7 +2428,7 @@ const handleGenerateBracket = () => {
                       ? "border-[#E1306C]/40 bg-[#E1306C]/15"
                       : social.name === "Twitter / X"
                       ? "border-white/15 bg-white/[0.06]"
-                      : "border-emerald-300/30 bg-emerald-400/10"
+                      : "border-cyan-300/30 bg-cyan-400/10"
                   }`}
                 >
 <Icon
@@ -2469,7 +2469,7 @@ const handleGenerateBracket = () => {
       <SectionLabel>Live Stream</SectionLabel>
       <h2 className="mt-3 text-3xl font-black">WATCH TRASHGUY LIVE</h2>
 
-      <div className="mt-5 aspect-video overflow-hidden rounded-[2rem] border border-emerald-250/20 bg-black">
+      <div className="mt-5 aspect-video overflow-hidden rounded-[2rem] border border-cyan-250/20 bg-black">
         {liveStatus.isLive ? (
           <iframe
             src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
@@ -2479,7 +2479,8 @@ const handleGenerateBracket = () => {
           />
         ) : (
           <div className="relative flex h-full items-center justify-center overflow-hidden">
-            <div className="absolute inset-0 bg-[url('/bg-tunnel.png')] bg-cover bg-center opacity-30" />
+            <div className="absolute inset-0 bg-[url('/trashguy-casino.png')] bg-cover bg-center opacity-45" />
+<div className="absolute inset-0 bg-black/45" />
             <div className="relative z-10 text-center">
               <div className="text-5xl font-black text-white">OFFLINE</div>
               <div className="mt-2 text-white/50">
@@ -2495,7 +2496,7 @@ const handleGenerateBracket = () => {
 
             {activeSection === "leaderboard" && (
   <section className="space-y-6">
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,255,136,0.16)] shadow-[0_0_50px_rgba(0,255,136,0.10)]">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] shadow-[0_0_50px_rgba(0,245,255,0.10)]">
       <div className="text-center">
         <SectionLabel>Leaderboard</SectionLabel>
 
@@ -2513,17 +2514,17 @@ LEADERBOARD
   Ends in: {leaderboardCountdown}
 </div>
 
-        <div className="mx-auto mt-6 h-3 w-full max-w-4xl overflow-hidden rounded-full border border-[rgba(0,255,136,0.18)] bg-[rgba(255,255,255,0.03)]">
+        <div className="mx-auto mt-6 h-3 w-full max-w-4xl overflow-hidden rounded-full border border-[rgba(0,245,255,0.18)] bg-[rgba(255,255,255,0.03)]">
           <div
-  className="h-full rounded-full bg-[linear-gradient(90deg,#00ff88,#19d38a)] shadow-[0_0_20px_rgba(0,255,136,0.35)]"
+  className="h-full rounded-full bg-[linear-gradient(90deg,#00ff88,#19d38a)] shadow-[0_0_20px_rgba(0,245,255,0.35)]"
   style={{ width: `${leaderboardProgress}%` }}
 />
         </div>
       </div>
     </Panel>
 
-    <Panel className="mx-auto max-w-5xl overflow-hidden border-[rgba(0,255,136,0.16)] shadow-[0_0_55px_rgba(0,255,136,0.10)]">
-      <div className="grid grid-cols-[82px_1fr_150px] border-b border-[rgba(0,255,136,0.12)] bg-[linear-gradient(180deg,rgba(0,255,136,0.08),rgba(0,255,136,0.03))] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.24em] text-white/45 sm:grid-cols-[100px_1fr_190px_170px] sm:px-6">
+    <Panel className="mx-auto max-w-5xl overflow-hidden border-[rgba(0,245,255,0.16)] shadow-[0_0_55px_rgba(0,245,255,0.10)]">
+      <div className="grid grid-cols-[82px_1fr_150px] border-b border-[rgba(0,245,255,0.12)] bg-[linear-gradient(180deg,rgba(0,245,255,0.08),rgba(0,245,255,0.03))] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.24em] text-white/45 sm:grid-cols-[100px_1fr_190px_170px] sm:px-6">
         <div>Rank</div>
         <div>Player</div>
         <div className="text-right">Wagered</div>
@@ -2551,7 +2552,7 @@ LEADERBOARD
                         ? "border-zinc-300/40 text-zinc-200"
                         : player.rank === 3
                         ? "border-amber-500/50 text-amber-300"
-                        : "border-[rgba(0,255,136,0.28)] text-[#8fffd0]"
+                        : "border-[rgba(0,245,255,0.28)] text-[#8fffd0]"
                     }`}
                   >
                     {player.rank}
@@ -2590,11 +2591,11 @@ LEADERBOARD
 
 {activeSection === "giveaways" && (
   <section className="space-y-6">
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,255,136,0.16)] shadow-[0_0_55px_rgba(0,255,136,0.10)]">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] shadow-[0_0_55px_rgba(0,245,255,0.10)]">
       <div className="text-center">
         <SectionLabel>Giveaways</SectionLabel>
 
-        <h2 className="mt-4 text-[clamp(2.5rem,6vw,4.5rem)] font-black leading-[1.05] tracking-tight text-white">
+        <h2 className="mt-3 text-[clamp(1.8rem,4vw,3.2rem)] font-black leading-[1.05] tracking-tight text-white">
           TOTAL
           <br />
           GIVEN AWAY
@@ -2617,8 +2618,8 @@ LEADERBOARD
     </h2>
 
     {isTwitchConnected && (
-  <div className="mt-6 rounded-[1.5rem] border border-emerald-300/20 bg-black/30 p-5 text-left">
-    <div className="text-xs uppercase tracking-[0.24em] text-emerald-300/80">
+  <div className="mt-6 rounded-[1.5rem] border border-cyan-300/20 bg-black/30 p-5 text-left">
+    <div className="text-xs uppercase tracking-[0.24em] text-cyan-300/80">
       Roulo Account
     </div>
 
@@ -2632,7 +2633,7 @@ LEADERBOARD
 
       <button
         onClick={handleLinkRoulo}
-        className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-3 font-bold text-emerald-200 hover:bg-emerald-400/20"
+        className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-5 py-3 font-bold text-cyan-200 hover:bg-cyan-400/20"
       >
         Link Roulo
       </button>
@@ -2698,11 +2699,11 @@ LEADERBOARD
             </div>
           </div>
 
-          <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-5">
-            <div className="text-xs uppercase tracking-[0.22em] text-emerald-200/70">
+          <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-5">
+            <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">
               Paid
             </div>
-            <div className="mt-2 text-3xl font-black text-emerald-200">
+            <div className="mt-2 text-3xl font-black text-cyan-200">
               ${viewerRewardsPaid.toLocaleString()}
             </div>
           </div>
@@ -2738,7 +2739,7 @@ LEADERBOARD
                     <div
                       className={`mt-1 inline-flex rounded-full px-3 py-1 text-xs font-black ${
                        reward.status === "complete"
-                          ? "border border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+                          ? "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
                           : "border border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
                       }`}
                     >
@@ -2756,7 +2757,7 @@ LEADERBOARD
 </Panel>
 )}
 
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,255,136,0.16)] shadow-[0_0_55px_rgba(0,255,136,0.10)]">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] shadow-[0_0_55px_rgba(0,245,255,0.10)]">
       {giveawayLoading ? (
         <div className="px-6 py-10 text-white/60">Loading giveaways...</div>
       ) : giveaways.length === 0 ? (
@@ -2766,7 +2767,7 @@ LEADERBOARD
       ) : (
         <>
           {biggestGiveaway && (
-  <div className="mb-6 rounded-[1.5rem] border border-yellow-400/25 bg-[linear-gradient(180deg,rgba(250,204,21,0.10),rgba(0,255,136,0.04))] p-5 shadow-[0_0_28px_rgba(250,204,21,0.08)]">
+  <div className="mb-6 rounded-[1.5rem] border border-yellow-400/25 bg-[linear-gradient(180deg,rgba(250,204,21,0.10),rgba(0,245,255,0.04))] p-5 shadow-[0_0_28px_rgba(250,204,21,0.08)]">
     <div className="text-xs uppercase tracking-[0.3em] text-yellow-300/70">
       Biggest Giveaway
     </div>
@@ -2808,7 +2809,7 @@ LEADERBOARD
         className={`grid ${isAdmin ? "grid-cols-[52px_minmax(0,1fr)_90px_74px]" : "grid-cols-[52px_minmax(0,1fr)_90px]"} items-center border-b border-white/5 px-4 py-4 last:border-b-0 sm:px-5`}
       >
         {/* RANK */}
-        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] text-xs font-black text-[#8fffd0]">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(0,245,255,0.20)] bg-[rgba(0,245,255,0.08)] text-xs font-black text-[#8fffd0]">
           {index + 1}
         </div>
 
@@ -2889,293 +2890,392 @@ LEADERBOARD
   </section>
 )}
 
-            {activeSection === "hunts" && (
-              <section className="flex justify-center">
-                <Panel className="w-full max-w-6xl border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
-                  <div className="relative z-10">
-                    <SectionLabel>Bonus Hunts</SectionLabel>
-                    <h2 className="mt-3 text-4xl font-black tracking-wide">LIVE & RECENT HUNTS</h2>
+{activeSection === "hunts" && (
+  <section className="space-y-8">
+    <div className="text-center">
+      <div className="text-xs font-black uppercase tracking-[0.35em] text-cyan-300">
+        Bonus Hunts
+      </div>
+      <h2 className="mt-3 text-[clamp(2rem,5vw,4rem)] font-black uppercase tracking-tight text-white drop-shadow-[0_0_28px_rgba(0,245,255,0.22)]">
+        PREDICTIONS
+      </h2>
+    </div>
 
-                    <div className="mt-8 grid gap-6">
-                      {huntsLoading ? (
-                        <div className="text-white/60">Loading hunts...</div>
-                      ) : (
-                        huntsData.map((hunt) => (
-                          <div
-                            key={hunt.id}
-                            className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5"
-                          >
-                            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                              <div>
-                                <div className="text-xl font-black text-white">{hunt.title}</div>
-                                <div className="mt-1 text-sm text-white/50">{hunt.casino}</div>
-                              </div>
-                              <div
-                                className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.24em] ${
-                                  hunt.isOpening
-                                    ? "bg-emerald-400 text-black"
-                                    : "bg-white/10 text-white/80"
-                                }`}
-                              >
-                                {hunt.isOpening ? "Opening" : "Completed"}
-                              </div>
-                            </div>
-
-                            <div className="mt-5 grid gap-3 md:grid-cols-3">
-                              <div className="rounded-2xl bg-white/5 p-4">
-                                <div className="text-xs uppercase tracking-[0.2em] text-white/45">
-                                  Start
-                                </div>
-                                <div className="mt-2 text-xl font-black">
-                                  {formatMoney(hunt.startCost)}
-                                </div>
-                              </div>
-
-                              <div className="rounded-2xl bg-white/5 p-4">
-                                <div className="text-xs uppercase tracking-[0.2em] text-white/45">
-                                  Winnings
-                                </div>
-                                <div className="mt-2 text-xl font-black">
-                                  {formatMoney(hunt.totalWinnings)}
-                                </div>
-                              </div>
-
-                              <div className="rounded-2xl bg-white/5 p-4">
-                                <div className="text-xs uppercase tracking-[0.2em] text-white/45">
-                                  P/L
-                                </div>
-                                <div
-                                  className={`mt-2 text-xl font-black ${
-                                    hunt.profitLoss >= 0 ? "text-emerald-300" : "text-red-300"
-                                  }`}
-                                >
-                                  {hunt.profitLoss >= 0 ? "+" : ""}
-                                  {formatMoney(hunt.profitLoss)}
-                                </div>
-                                <div className="mt-1 text-sm text-white/45">
-                                  {hunt.profitLossPercentage}%
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </Panel>
-              </section>
-            )}
-
-           {activeSection === "predictions" && (
-  <section className="grid gap-6 2xl:grid-cols-[1.02fr_1.18fr]">
-    <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_65px_rgba(0,255,136,0.10)]">
-      <SectionLabel>Live Bonus Hunt</SectionLabel>
-
-      <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-[clamp(2rem,5vw,3.6rem)] font-black leading-[0.95] tracking-tight text-white">
-            {currentPredictionHunt?.title || "Latest Hunt"}
-          </h2>
-          <div className="mt-3 text-sm text-white/45">
-            Live prediction hub for the current hunt.
-          </div>
-        </div>
-
-        <div
-          className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] ${
-            predictionStatus === "open"
-              ? "border-[rgba(0,255,136,0.24)] bg-[rgba(0,255,136,0.10)] text-[#b8ffd8]"
-              : "border-white/10 bg-[rgba(255,255,255,0.03)] text-white/55"
+    <div className="flex gap-4 overflow-x-auto pb-4">
+      {huntsData.map((hunt) => (
+        <button
+          key={hunt.id}
+          onClick={() => {
+            setAdminHuntId(hunt.id);
+            setPredictionStatus(
+              hunt.prediction_status === "open" ? "open" : "locked"
+            );
+          }}
+          className={`flex min-w-[190px] flex-col items-center justify-center rounded-2xl border bg-black/70 p-4 text-center backdrop-blur-md transition hover:-translate-y-1 ${
+            currentPredictionHunt?.id === hunt.id || adminHuntId === hunt.id
+              ? "border-cyan-300/45 shadow-[0_0_30px_rgba(0,245,255,0.18)]"
+              : "border-white/10 hover:border-cyan-300/25"
           }`}
         >
-          {predictionStatus === "open" ? "Open" : "Locked"}
-        </div>
+          <div className="text-sm font-black text-white">
+            {hunt.title || "Bonus Hunt"}
+          </div>
+
+          <div className="mt-3 flex flex-col items-center gap-1 text-xs font-semibold text-white/65">
+            <div>Start: {formatMoney(hunt.startCost)}</div>
+            <div>Won: {formatMoney(hunt.totalWinnings)}</div>
+            <div>
+              Avg X:{" "}
+              {hunt.startCost
+                ? `${((hunt.totalWinnings || 0) / hunt.startCost).toFixed(2)}x`
+                : "---"}
+            </div>
+            <div
+              className={
+                hunt.profitLoss >= 0 ? "text-cyan-300" : "text-red-300"
+              }
+            >
+              P/L: {hunt.profitLoss >= 0 ? "+" : ""}
+              {formatMoney(hunt.profitLoss)}
+            </div>
+          </div>
+        </button>
+      ))}
+    </div>
+
+    <div className="overflow-hidden rounded-[2rem] border border-cyan-300/15 bg-black/70 backdrop-blur-xl shadow-[0_0_70px_rgba(0,245,255,0.08)]">
+      <div className="grid lg:grid-cols-[1fr_1.05fr]">
+        <div className="border-b border-white/10 p-6 lg:border-b-0 lg:border-r">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-xl font-black text-white">
+                <span className="h-2.5 w-2.5 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(0,245,255,0.9)]" />
+                {currentPredictionHunt?.title || "Latest Hunt"}
+              </div>
+              <div className="mt-1 text-sm text-white/45">
+                {currentPredictionHunt?.casino || "RouloBets"}
+              </div>
+            </div>
+
+            <div
+              className={`rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.2em] ${
+                predictionStatus === "open"
+                  ? "border-cyan-300/30 bg-cyan-400/10 text-cyan-100"
+                  : "border-red-300/25 bg-red-400/10 text-red-200"
+              }`}
+            >
+              {predictionStatus === "open" ? "Predictions Open" : "Closed"}
+            </div>
+          </div>
+
+<div className="mt-8 space-y-4">
+  {/* TOP ROW */}
+  <div className="grid gap-4 md:grid-cols-2">
+    <div className="rounded-[1.7rem] border border-white/10 bg-black/30 p-6">
+      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/35">
+        Start
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-3">
-        <div className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] px-5 py-5 min-h-[90px] flex flex-col justify-center">
-          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/42">
-            Start
-          </div>
-          <div className="mt-2 text-2xl font-black text-white">
-            {formatMoney(currentPredictionHunt?.startCost || 0)}
-          </div>
+      <div className="mt-3 text-5xl font-black tracking-tight text-white">
+        {formatMoney(currentPredictionHunt?.startCost || 0)}
+      </div>
+    </div>
+
+    <div className="rounded-[1.7rem] border border-cyan-400/20 bg-[rgba(0,245,255,0.06)] p-6">
+      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-cyan-100/45">
+        Won
+      </div>
+
+      <div className="mt-3 text-5xl font-black tracking-tight text-cyan-200">
+        {formatMoney(
+          currentPredictionHunt?.stats?.totalWinnings ||
+            currentPredictionHunt?.totalWinnings ||
+            0
+        )}
+      </div>
+    </div>
+  </div>
+
+  {/* MIDDLE ROW */}
+  <div className="grid gap-4 md:grid-cols-3">
+    <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
+      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/35">
+        Bonuses
+      </div>
+
+      <div className="mt-3 text-3xl font-black text-white">
+        {currentPredictionHunt?.bonuses?.length || 0}
+      </div>
+    </div>
+
+    <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
+      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/35">
+        Avg X
+      </div>
+
+      <div className="mt-3 text-3xl font-black text-white">
+        {currentPredictionHunt?.stats?.currentAverageMultiplier
+          ? `${Number(
+              currentPredictionHunt.stats.currentAverageMultiplier
+            ).toFixed(2)}x`
+          : `${currentPredictionAvgX}x`}
+      </div>
+    </div>
+
+    <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
+      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/35">
+        Req X
+      </div>
+
+      <div className="mt-3 text-3xl font-black text-white">
+        {currentPredictionHunt?.stats?.averagePayoutRequired &&
+        currentPredictionHunt?.stats?.averageBetSize
+          ? `${(
+              Number(currentPredictionHunt.stats.averagePayoutRequired) /
+              Number(currentPredictionHunt.stats.averageBetSize)
+            ).toFixed(2)}x`
+          : "---"}
+      </div>
+    </div>
+  </div>
+
+{/* BOTTOM ROW */}
+<div className="grid gap-4 md:grid-cols-2">
+  {/* HIGHEST WIN */}
+  <div className="rounded-[1.8rem] border border-white/10 bg-black/30 p-6">
+    <div className="text-[11px] font-black uppercase tracking-[0.24em] text-white/35">
+      Highest Win
+    </div>
+
+    <div className="mt-4">
+      <div className="text-2xl font-black leading-tight text-white break-words">
+        {currentPredictionHunt?.bonuses?.length
+          ? [...currentPredictionHunt.bonuses].sort(
+              (a: any, b: any) =>
+                Number(b.payout || 0) - Number(a.payout || 0)
+            )[0]?.slotName || "---"
+          : "---"}
+      </div>
+
+      <div className="mt-3 text-3xl font-black text-cyan-300">
+        {formatMoney(
+          currentPredictionHunt?.bonuses?.length
+            ? [...currentPredictionHunt.bonuses].sort(
+                (a: any, b: any) =>
+                  Number(b.payout || 0) - Number(a.payout || 0)
+              )[0]?.payout || 0
+            : 0
+        )}
+      </div>
+    </div>
+  </div>
+
+  {/* HIGHEST X */}
+  <div className="rounded-[1.8rem] border border-white/10 bg-black/30 p-6">
+    <div className="text-[11px] font-black uppercase tracking-[0.24em] text-white/35">
+      Highest X
+    </div>
+
+    <div className="mt-4">
+      <div className="text-2xl font-black leading-tight text-white break-words">
+        {currentPredictionHunt?.bonuses?.length
+          ? [...currentPredictionHunt.bonuses].sort(
+              (a: any, b: any) =>
+                Number(b.multiplier || 0) - Number(a.multiplier || 0)
+            )[0]?.slotName || "---"
+          : "---"}
+      </div>
+
+      <div className="mt-3 text-3xl font-black text-cyan-300">
+        {currentPredictionHunt?.bonuses?.length
+          ? `${Number(
+              [...currentPredictionHunt.bonuses].sort(
+                (a: any, b: any) =>
+                  Number(b.multiplier || 0) - Number(a.multiplier || 0)
+              )[0]?.multiplier || 0
+            ).toFixed(2)}x`
+          : "---"}
+      </div>
+    </div>
+  </div>
+</div>
+</div>
         </div>
 
-        <div className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] px-5 py-5 min-h-[90px] flex flex-col justify-center">
-          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/42">
-            Won
+        <div className="p-6">
+          <div className="text-center">
+            <div className="text-lg font-black text-white">
+              Guess the end balance
+            </div>
+            <div className="mt-2 text-xs text-white/45">
+              Closest predictions win. One entry per person.
+            </div>
+
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-xs font-black text-cyan-100">
+                1st Closest $15
+              </div>
+              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-xs font-black text-cyan-100">
+                2nd $10
+              </div>
+            </div>
           </div>
-          <div className="mt-2 text-2xl font-black text-white">
-            {formatMoney(
-              currentPredictionHunt?.stats?.totalWinnings ||
-                currentPredictionHunt?.totalWinnings ||
-                0
+
+          <div className="mt-6 rounded-2xl border border-cyan-300/15 bg-cyan-400/5 p-5">
+            <div className="grid gap-3 md:grid-cols-3">
+              {rankedWinners.length === 0 ? (
+                <div className="col-span-full py-8 text-center text-white/45">
+                  Winners will appear when the hunt is completed.
+                </div>
+              ) : (
+                rankedWinners.slice(0, 3).map((winner, index) => (
+                  <div
+                    key={winner.id}
+                    className="rounded-xl border border-white/10 bg-black/35 p-4 text-center"
+                  >
+                    <div className="text-xs font-black uppercase text-yellow-300">
+                      {index === 0 ? "1st" : index === 1 ? "2nd" : "3rd"}
+                    </div>
+                    <div className="mt-2 font-black text-white">
+                      {winner.username}
+                    </div>
+                    <div className="mt-2 text-xl font-black text-cyan-200">
+                      {formatMoney(winner.guess)}
+                    </div>
+                    <div className="mt-1 text-xs text-white/45">
+                      Off by {formatMoney(winner.distance)}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6">
+            {!isTwitchConnected ? (
+              <button
+                onClick={handleTwitchLogin}
+                className="mx-auto flex rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/25 px-6 py-3 text-sm font-black text-white transition hover:bg-[#9146FF]/35"
+              >
+                Sign in with Twitch
+              </button>
+            ) : (
+              <div className="mx-auto max-w-md">
+                <input
+                  value={predictionInput}
+                  onChange={(e) =>
+                    setPredictionInput(e.target.value.replace(/[^0-9]/g, ""))
+                  }
+                  placeholder="Enter final hunt balance"
+                  disabled={predictionStatus !== "open"}
+                  className="w-full rounded-xl border border-white/10 bg-black/55 px-5 py-4 text-center text-white outline-none transition focus:border-cyan-300/40 disabled:opacity-40"
+                />
+
+                <button
+                  onClick={handlePredictionSubmit}
+                  disabled={predictionStatus !== "open"}
+                  className="mt-3 w-full rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-5 py-4 font-black uppercase tracking-[0.18em] text-cyan-100 transition hover:bg-cyan-400/20 disabled:opacity-40"
+                >
+                  Save Prediction
+                </button>
+
+                {predictionMessage && (
+                  <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-center text-sm text-white/70">
+                    {predictionMessage}
+                  </div>
+                )}
+                <div className="mt-6 rounded-2xl border border-white/10 bg-black/35 p-4">
+  <div className="mb-3 flex items-center justify-between">
+    <div className="text-xs font-black uppercase tracking-[0.22em] text-white/45">
+      Live Guesses
+    </div>
+
+    <div className="text-xs font-black text-cyan-200">
+      {currentPredictionCount} Entries
+    </div>
+  </div>
+
+  <div className="max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-black/30">
+    {sortedPredictionsForTab.length === 0 ? (
+      <div className="p-6 text-center text-sm text-white/40">
+        No guesses yet.
+      </div>
+    ) : (
+      <div className="divide-y divide-white/5">
+        {sortedPredictionsForTab.map((entry, index) => (
+          <div
+            key={entry.id}
+            className="flex items-center justify-between gap-3 px-4 py-3"
+          >
+            <div className="min-w-0">
+              <div className="truncate font-black text-white">
+                #{index + 1} {entry.username}
+              </div>
+              <div className="text-xs text-white/35">
+                {formatTimeAgo(entry.createdAt)}
+              </div>
+            </div>
+
+            <div className="font-black text-cyan-200">
+              {formatMoney(entry.guess)}
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+              </div>
             )}
           </div>
         </div>
-
-        <div className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] px-5 py-5 min-h-[90px] flex flex-col justify-center">
-          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/42">
-            Bonuses
-          </div>
-          <div className="mt-2 text-2xl font-black text-white">
-            {currentPredictionHunt?.bonuses?.length || 0}
-          </div>
-        </div>
-
-        <div className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] px-5 py-5 min-h-[90px] flex flex-col justify-center">
-          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/42">
-            Avg
-          </div>
-          <div className="mt-2 text-2xl font-black text-white">
-            {currentPredictionHunt?.stats?.currentAverageMultiplier
-              ? `${Number(currentPredictionHunt.stats.currentAverageMultiplier).toFixed(2)}x`
-              : `${currentPredictionAvgX}x`}
-          </div>
-        </div>
-
-        <div className="rounded-[1.25rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] px-5 py-5 min-h-[90px] flex flex-col justify-center">
-          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/42">
-            Req
-          </div>
-          <div className="mt-2 text-2xl font-black text-white">
-            {currentPredictionHunt?.stats?.averagePayoutRequired &&
-            currentPredictionHunt?.stats?.averageBetSize
-              ? `${(
-                  Number(currentPredictionHunt.stats.averagePayoutRequired) /
-                  Number(currentPredictionHunt.stats.averageBetSize)
-                ).toFixed(2)}x`
-              : "---"}
-          </div>
-        </div>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] p-6 min-h-[185px]">
-          <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
-            Best Slot
-          </div>
-
-          <div className="mt-4 text-center text-3xl font-black text-white">
-            {currentPredictionHunt?.bonuses?.length
-              ? [...currentPredictionHunt.bonuses].sort(
-                  (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
-                )[0]?.slotName || "---"
-              : "---"}
-          </div>
-
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <div className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-              Win{" "}
-              {formatMoney(
-                currentPredictionHunt?.bonuses?.length
-                  ? [...currentPredictionHunt.bonuses].sort(
-                      (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
-                    )[0]?.payout || 0
-                  : 0
-              )}
-            </div>
-            <div className="rounded-full border border-[rgba(0,255,136,0.18)] bg-[rgba(0,255,136,0.08)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#b8ffd8]">
-              X{" "}
-              {currentPredictionHunt?.bonuses?.length
-                ? `${Number(
-                    [...currentPredictionHunt.bonuses].sort(
-                      (a: any, b: any) => Number(b.payout || 0) - Number(a.payout || 0)
-                    )[0]?.multiplier || 0
-                  ).toFixed(2)}x`
-                : "0.00x"}
-            </div>
-          </div>
+      <div className="border-t border-white/10 p-6">
+        <div className="mb-4 text-xs font-black uppercase tracking-[0.25em] text-white/45">
+          Slots in this hunt
         </div>
 
-        <div className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(16,16,16,0.92),rgba(8,8,8,0.96))] p-6 min-h-[185px]">
-          <div className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
-            Highest X
-          </div>
-
-          <div className="mt-4 text-center text-3xl font-black text-white">
-            {currentPredictionHunt?.bonuses?.length
-              ? `${Number(
-                  [...currentPredictionHunt.bonuses].sort(
-                    (a: any, b: any) => Number(b.multiplier || 0) - Number(a.multiplier || 0)
-                  )[0]?.multiplier || 0
-                ).toFixed(2)}x`
-              : "---"}
-          </div>
-
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <div className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">
-              Win{" "}
-              {formatMoney(
-                currentPredictionHunt?.bonuses?.length
-                  ? [...currentPredictionHunt.bonuses].sort(
-                      (a: any, b: any) => Number(b.multiplier || 0) - Number(a.multiplier || 0)
-                    )[0]?.payout || 0
-                  : 0
-              )}
-            </div>
-            <div className="rounded-full border border-[rgba(0,255,136,0.18)] bg-[rgba(0,255,136,0.08)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#b8ffd8]">
-              X{" "}
-              {currentPredictionHunt?.bonuses?.length
-                ? `${Number(
-                    [...currentPredictionHunt.bonuses].sort(
-                      (a: any, b: any) => Number(b.multiplier || 0) - Number(a.multiplier || 0)
-                    )[0]?.multiplier || 0
-                  ).toFixed(2)}x`
-                : "0.00x"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-5 rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.92),rgba(8,8,8,0.96))] p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
-            Live Bonus Feed
-          </div>
-
-          <div className="rounded-full border border-[rgba(0,255,136,0.18)] bg-[rgba(0,255,136,0.08)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#b8ffd8]">
-            {currentPredictionHunt?.bonuses?.length || 0} Bonus
-            {(currentPredictionHunt?.bonuses?.length || 0) === 1 ? "" : "es"}
-          </div>
-        </div>
-
-        <div className="mt-4 max-h-[280px] overflow-y-auto rounded-[1.1rem] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)]">
+        <div className="max-h-[520px] overflow-y-auto rounded-2xl border border-white/10 bg-black/35">
           {!currentPredictionHunt?.bonuses?.length ? (
-            <div className="flex h-[180px] items-center justify-center text-white/42">
-              No bonuses yet.
+            <div className="flex h-[160px] items-center justify-center text-white/40">
+              No bonuses in this hunt yet.
             </div>
           ) : (
             <div className="divide-y divide-white/5">
               {currentPredictionHunt.bonuses.map((bonus: any, index: number) => (
                 <div
                   key={bonus.id || index}
-                  className="flex items-center justify-between gap-4 px-5 py-4"
+                  className="grid grid-cols-[90px_1fr_90px_110px_110px] items-center gap-4 px-5 py-4 text-sm"
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] text-xs font-black text-[#8fffd0]">
-                        {index + 1}
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="truncate font-semibold text-white">
-                          {bonus.slotName}
-                        </div>
-                        <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/35">
-                          Bet {formatMoney(Number(bonus.betSize || 0))}
-                        </div>
-                      </div>
+                  <div className="font-black text-white/70">
+                    Bonus #{index + 1}
+                  </div>
+                  <div className="truncate font-black text-white">
+                    {bonus.slotName}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/35">
+                      Bet
+                    </div>
+                    <div className="font-black text-white">
+                      {formatMoney(Number(bonus.betSize || 0))}
                     </div>
                   </div>
-
                   <div className="text-right">
-                    <div className="font-black text-[#b8ffd8]">
-                      {formatMoney(Number(bonus.payout || 0))}
+                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/35">
+                      Multiplier
                     </div>
-                    <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/35">
+                    <div className="font-black text-white">
                       {Number(bonus.multiplier || 0).toFixed(2)}x
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/35">
+                      Payout
+                    </div>
+                    <div className="font-black text-cyan-300">
+                      {formatMoney(Number(bonus.payout || 0))}
                     </div>
                   </div>
                 </div>
@@ -3184,175 +3284,17 @@ LEADERBOARD
           )}
         </div>
       </div>
-    </Panel>
-
-    <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_65px_rgba(0,255,136,0.10)]">
-  <div className="flex flex-wrap items-start justify-between gap-4">
-    <div>
-      <SectionLabel>Predictions</SectionLabel>
-      <h2 className="mt-3 text-[clamp(2.2rem,5vw,4rem)] font-black leading-[0.95] tracking-tight text-white">
-        Community
-        <br />
-        Entries
-      </h2>
     </div>
-
-    <div className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-5 py-3 text-xs font-bold uppercase tracking-[0.22em] text-white/60">
-      {currentPredictionCount} Entries
-    </div>
-  </div>
-
-  <div className="mt-8 grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-    <div className="rounded-[1.75rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-7 flex flex-col justify-between">
-      <div className="flex flex-wrap gap-2">
-        <div className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-xs font-bold uppercase tracking-[0.20em] text-white/65">
-          {currentPredictionCount} Entries
-        </div>
-
-        <div
-          className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.20em] ${
-            predictionStatus === "open"
-              ? "border-[rgba(0,255,136,0.22)] bg-[rgba(0,255,136,0.08)] text-[#b8ffd8]"
-              : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white/55"
-          }`}
-        >
-          {predictionStatus === "open" ? "Open" : "None"}
-        </div>
-      </div>
-
-      <div className="mt-8 flex flex-col items-center justify-center">
-  <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-white/40">
-    Your Entry
-  </div>
-
-  <div className="mt-3 text-4xl font-black text-white tracking-tight">
-    {currentPredictionEntry ? formatMoney(currentPredictionEntry.guess) : "--"}
-  </div>
-</div>
-
-      <div className="mt-5 rounded-[1.2rem] border border-dashed border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.02)] p-4 text-white/70">
-        {predictionStatus === "open"
-          ? "Prediction session is open."
-          : "No prediction session is open yet."}
-      </div>
-
-      <div className="mt-6 rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)] p-6 flex flex-col gap-4">
-        <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-white/40">
-          Submit Prediction
-        </div>
-
-        <input
-          value={predictionInput}
-          onChange={(e) => setPredictionInput(e.target.value.replace(/[^0-9]/g, ""))}
-          placeholder="Enter final hunt balance"
-          disabled={predictionStatus !== "open"}
-          className="mt-4 w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-5 py-4 text-base text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] sm:text-lg"
-        />
-
-        <div className="mt-4 flex flex-col gap-3">
-          <button
-            onClick={isTwitchConnected ? handleLogout : handleTwitchLogin}
-            className="w-full rounded-xl min-h-[60px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-base font-semibold text-white transition hover:bg-white/[0.05]"
-          >
-            {isTwitchConnected ? "Logout" : "Connect Twitch"}
-          </button>
-
-          <button
-            onClick={handlePredictionSubmit}
-            disabled={!isTwitchConnected || predictionStatus !== "open"}
-            className="w-full rounded-xl min-h-[60px] border border-[rgba(0,255,136,0.22)] bg-[linear-gradient(180deg,rgba(0,255,136,0.18),rgba(0,255,136,0.08))] px-4 py-3 text-base font-semibold text-[#b8ffd8] shadow-[0_0_20px_rgba(0,255,136,0.10)] transition hover:border-[rgba(0,255,136,0.34)] hover:bg-[linear-gradient(180deg,rgba(0,255,136,0.22),rgba(0,255,136,0.10))] disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Save Prediction
-          </button>
-        </div>
-
-        {predictionMessage && (
-          <div className="mt-4 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3 text-sm text-white/75">
-            {predictionMessage}
-          </div>
-        )}
-      </div>
-    </div>
-
-    <div className="rounded-[1.75rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-6">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <button
-          onClick={() => setPredictionSortMode("highest")}
-          className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] transition ${
-            predictionSortMode === "highest"
-              ? "border-[rgba(0,255,136,0.22)] bg-[rgba(0,255,136,0.08)] text-[#b8ffd8]"
-              : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white/60 hover:text-white"
-          }`}
-        >
-          Highest
-        </button>
-
-        <button
-          onClick={() => setPredictionSortMode("newest")}
-          className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] transition ${
-            predictionSortMode === "newest"
-              ? "border-[rgba(0,255,136,0.22)] bg-[rgba(0,255,136,0.08)] text-[#b8ffd8]"
-              : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] text-white/60 hover:text-white"
-          }`}
-        >
-          Newest
-        </button>
-      </div>
-
-      <div className="h-[560px] overflow-y-auto rounded-[1.25rem] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)]">
-        {sortedPredictionsForTab.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center px-6 text-center text-white/42">
-  <div className="text-lg font-semibold">No entries</div>
-  <div className="mt-2 text-xs uppercase tracking-[0.2em] text-white/25">
-    Waiting for predictions
-  </div>
-</div>
-        ) : (
-          <div className="divide-y divide-white/5">
-            {sortedPredictionsForTab.map((entry, index) => (
-              <div
-  key={entry.id}
-  className="px-5 py-4"
->
-  <div className="flex items-start gap-3">
-    <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] text-xs font-black text-[#8fffd0]">
-      {index + 1}
-    </div>
-
-    <div className="min-w-0 flex-1">
-      <div className="truncate font-semibold text-white" title={entry.username}>
-        {entry.username}
-      </div>
-
-      <div className="mt-2 flex items-center justify-between gap-3">
-        <div className="text-xs uppercase tracking-[0.18em] text-white/35">
-          {formatTimeAgo(entry.createdAt)}
-        </div>
-
-        <div className="text-lg font-black text-[#b8ffd8]">
-          {formatMoney(entry.guess)}
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-</Panel>
   </section>
 )}
 
 {activeSection === "slotpicker" && (
   <section className="space-y-6">
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,255,136,0.16)] shadow-[0_0_55px_rgba(0,255,136,0.10)]">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] shadow-[0_0_55px_rgba(0,245,255,0.10)]">
       <div className="text-center">
         <SectionLabel>Slot Picker</SectionLabel>
 
-        <h2 className="mt-4 text-[clamp(2.5rem,6vw,4.5rem)] font-black leading-[1.05] tracking-tight text-white">
+        <h2 className="mt-3 text-[clamp(1.8rem,4vw,3.2rem)] font-black leading-[1.05] tracking-tight text-white">
           RANDOM
           <br />
           SLOT PICKER
@@ -3379,7 +3321,7 @@ LEADERBOARD
                 onClick={() => toggleSlotProvider(provider)}
                 className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
                   active
-                    ? "border-[#00ff88]/45 bg-[#00ff88]/15 text-white shadow-[0_0_20px_rgba(0,255,136,0.14)]"
+                    ? "border-[#00ff88]/45 bg-[#00ff88]/15 text-white shadow-[0_0_20px_rgba(0,245,255,0.14)]"
                     : "border-white/10 bg-white/5 text-white/65 hover:border-white/20 hover:text-white"
                 }`}
               >
@@ -3430,11 +3372,11 @@ LEADERBOARD
         </div>
       </div>
 
-      <div className="mt-6 rounded-[2rem] border border-[rgba(0,255,136,0.16)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(6,6,6,0.98))] p-8 text-center shadow-[0_0_45px_rgba(0,255,136,0.08)]">
+      <div className="mt-6 rounded-[2rem] border border-[rgba(0,245,255,0.16)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(6,6,6,0.98))] p-8 text-center shadow-[0_0_45px_rgba(0,245,255,0.08)]">
         <button
           onClick={pickRandomSlot}
           disabled={isPickingSlot || filteredSlots.length === 0}
-          className="w-full rounded-2xl border border-[#00ff88]/25 bg-[linear-gradient(180deg,rgba(0,255,136,0.22),rgba(0,255,136,0.08))] px-6 py-4 text-lg font-black text-[#b8ffd8] shadow-[0_0_25px_rgba(0,255,136,0.12)] transition hover:border-[#00ff88]/45 hover:bg-[#00ff88]/20 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-2xl border border-[#00ff88]/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.22),rgba(0,245,255,0.08))] px-6 py-4 text-lg font-black text-[#b8ffd8] shadow-[0_0_25px_rgba(0,245,255,0.12)] transition hover:border-[#00ff88]/45 hover:bg-[#00ff88]/20 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isPickingSlot ? "Spinning..." : "Pick Random Slot"}
         </button>
@@ -3442,8 +3384,8 @@ LEADERBOARD
         <div
   className={`mt-8 rounded-[1.75rem] border bg-black/35 p-8 transition-all duration-300 ${
     isPickingSlot
-      ? "scale-[1.03] border-[#00ff88]/40 shadow-[0_0_60px_rgba(0,255,136,0.28)] blur-[0.2px]"
-      : "border-white/10 shadow-[0_0_35px_rgba(0,255,136,0.14)]"
+      ? "scale-[1.03] border-[#00ff88]/40 shadow-[0_0_60px_rgba(0,245,255,0.28)] blur-[0.2px]"
+      : "border-white/10 shadow-[0_0_35px_rgba(0,245,255,0.14)]"
   }`}
 >
           {!pickedSlot ? (
@@ -3468,7 +3410,7 @@ LEADERBOARD
   className={`mt-5 text-[clamp(2rem,5vw,4rem)] font-black transition-all duration-200 ${
     isPickingSlot
       ? "scale-95 text-white/70 blur-[1px]"
-      : "scale-105 text-[#8fffd0] drop-shadow-[0_0_25px_rgba(0,255,136,0.65)]"
+      : "scale-105 text-[#8fffd0] drop-shadow-[0_0_25px_rgba(0,245,255,0.65)]"
   }`}
 >
   {pickedSlot.name}
@@ -3478,7 +3420,7 @@ LEADERBOARD
   className={`mt-5 inline-flex items-center gap-3 rounded-full border px-5 py-2 text-sm font-bold transition-all duration-200 ${
     isPickingSlot
       ? "border-white/10 bg-white/5 text-white/40 scale-95"
-      : "border-[#00ff88]/20 bg-[#00ff88]/10 text-[#b8ffd8] scale-105 shadow-[0_0_20px_rgba(0,255,136,0.35)]"
+      : "border-[#00ff88]/20 bg-[#00ff88]/10 text-[#b8ffd8] scale-105 shadow-[0_0_20px_rgba(0,245,255,0.35)]"
   }`}
 >
   {providerLogos[pickedSlot.provider] && (
@@ -3503,7 +3445,7 @@ LEADERBOARD
 
             {activeSection === "tournaments" && (
   <section className="space-y-6">
-    <Panel className="border-[rgba(0,255,136,0.16)] shadow-[0_0_65px_rgba(0,255,136,0.10)]">
+    <Panel className="border-[rgba(0,245,255,0.16)] shadow-[0_0_65px_rgba(0,245,255,0.10)]">
       <div className="text-center">
         <SectionLabel>Tournaments</SectionLabel>
 
@@ -3511,7 +3453,7 @@ LEADERBOARD
           {bracket.title || "Tournament Bracket"}
         </h2>
 
-        <div className="mt-4 inline-flex rounded-full border border-[rgba(0,255,136,0.20)] bg-[rgba(0,255,136,0.08)] px-5 py-2 text-sm font-semibold text-[#b8ffd8]">
+        <div className="mt-4 inline-flex rounded-full border border-[rgba(0,245,255,0.20)] bg-[rgba(0,245,255,0.08)] px-5 py-2 text-sm font-semibold text-[#b8ffd8]">
           Live Bracket
         </div>
       </div>
@@ -3566,14 +3508,14 @@ LEADERBOARD
 
 {activeSection === "admin" && adminAllowed && (
   <section className="grid gap-6">
-    <Panel className="border-emerald-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
+    <Panel className="border-cyan-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
       <SectionLabel>Admin</SectionLabel>
       <h2 className="mt-3 text-4xl font-black tracking-wide">CONTROL CENTER</h2>
 <p className="mt-4 text-white/65">
   Admin panel is only shown for approved Twitch accounts.
 </p>
 
-<div className="mt-8 rounded-[2rem] border border-emerald-300/20 bg-[radial-gradient(circle_at_top,rgba(0,255,136,0.10),rgba(0,0,0,0.55)_55%)] p-5 shadow-[0_0_35px_rgba(0,255,136,0.08)]">
+<div className="mt-8 rounded-[2rem] border border-cyan-300/20 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.10),rgba(0,0,0,0.55)_55%)] p-5 shadow-[0_0_35px_rgba(0,245,255,0.08)]">
   <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
     <div className="rounded-2xl border border-white/10 bg-black/35 p-4">
       <div className="text-xs uppercase tracking-[0.22em] text-white/45">
@@ -3585,7 +3527,7 @@ LEADERBOARD
           <img
             src={viewerAvatar}
             alt={viewerDisplayName}
-            className="h-12 w-12 rounded-full border border-emerald-300/25 object-cover"
+            className="h-12 w-12 rounded-full border border-cyan-300/25 object-cover"
           />
         )}
 
@@ -3606,7 +3548,7 @@ LEADERBOARD
       <input
         value={adminName}
         onChange={(e) => setAdminName(e.target.value)}
-        className="mt-3 w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none transition focus:border-emerald-300/35"
+        className="mt-3 w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none transition focus:border-cyan-300/35"
       />
     </div>
 
@@ -3619,7 +3561,7 @@ LEADERBOARD
     </ActionButton>
   </div>
 
-  <div className="mt-4 rounded-2xl border border-emerald-300/15 bg-emerald-400/5 px-4 py-3 text-sm font-semibold text-emerald-100/80">
+  <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-cyan-400/5 px-4 py-3 text-sm font-semibold text-cyan-100/80">
     {isAdmin
       ? `${adminName} control center is active. Giveaway, prize portal, predictions, tournament, and slot wheel tools are below.`
       : "Enable admin mode to use the control center tools below."}
@@ -3656,8 +3598,8 @@ LEADERBOARD
   </div>
 </div>
 
-<div className="rounded-2xl border border-emerald-300/20 bg-black/40 p-5">
-  <div className="text-xs uppercase tracking-[0.25em] text-emerald-300/70">
+<div className="rounded-2xl border border-cyan-300/20 bg-black/40 p-5">
+  <div className="text-xs uppercase tracking-[0.25em] text-cyan-300/70">
     Winner Chat
   </div>
 
@@ -3714,7 +3656,7 @@ Number(entry.weight || 1) >= 1.2
   ? "border border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
   : Number(entry.weight || 1) >= 1.1
   ? "border border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
-  : "border border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+  : "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
   }`}
 >
 {Number(entry.weight || 1) >= 1.2
@@ -3811,7 +3753,7 @@ Number(entry.weight || 1) >= 1.2
                 <div
                   className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-black ${
                     isComplete
-                      ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+                      ? "border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
                       : "border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
                   }`}
                 >
@@ -3956,7 +3898,7 @@ Number(entry.weight || 1) >= 1.2
             </div>
 
             <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
-              <div className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-300">
+              <div className="text-sm font-bold uppercase tracking-[0.24em] text-cyan-300">
                 Top 2 Winners
               </div>
 
@@ -3987,7 +3929,7 @@ Number(entry.weight || 1) >= 1.2
         <details
   open={adminDropdowns.tournament}
   onToggle={(e) => setAdminDropdown("tournament", e.currentTarget.open)}
-  className="rounded-2xl border border-emerald-300/20 bg-black/30 p-5"
+  className="rounded-2xl border border-cyan-300/20 bg-black/30 p-5"
 >
           <summary className="cursor-pointer text-xl font-black text-white">
             Tournament Editor
@@ -4007,7 +3949,7 @@ Number(entry.weight || 1) >= 1.2
       onChange={(e) => updateBracketTitle(e.target.value)}
       disabled={!isAdmin}
       placeholder="Enter tournament title"
-      className="mt-3 w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
+      className="mt-3 w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,245,255,0.28)] disabled:opacity-40"
     />
   </div>
 
@@ -4065,7 +4007,7 @@ Number(entry.weight || 1) >= 1.2
             value={round.name}
             onChange={(e) => updateRoundName(round.id, e.target.value)}
             disabled={!isAdmin}
-            className="w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40 md:max-w-[220px]"
+            className="w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,245,255,0.28)] disabled:opacity-40 md:max-w-[220px]"
           />
         </div>
 
@@ -4094,7 +4036,7 @@ Number(entry.weight || 1) >= 1.2
                     }
                     disabled={!isAdmin || match.player1 === "BYE"}
                     placeholder="Player / Provider"
-                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
+                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,245,255,0.28)] disabled:opacity-40"
                   />
 
                   <input
@@ -4121,7 +4063,7 @@ Number(entry.weight || 1) >= 1.2
                     }
                     disabled={!isAdmin || match.player2 === "BYE"}
                     placeholder="Player / Provider"
-                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,255,136,0.28)] disabled:opacity-40"
+                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,245,255,0.28)] disabled:opacity-40"
                   />
 
                   <input
@@ -4196,43 +4138,43 @@ Number(entry.weight || 1) >= 1.2
 <details
   open={adminDropdowns.slotWheel}
   onToggle={(e) => setAdminDropdown("slotWheel", e.currentTarget.open)}
-  className="rounded-2xl border border-emerald-300/20 bg-black/30 p-5"
+  className="rounded-2xl border border-cyan-300/20 bg-black/30 p-5"
 >
 <summary className="cursor-pointer text-xl font-black text-white">
   Slot Call Wheel
 </summary>
 
 <div className="grid gap-6 p-4 lg:grid-cols-[420px_1fr] lg:p-6">
-  <div className="rounded-[2rem] border border-emerald-300/20 bg-black/45 p-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-    <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/70">
+  <div className="rounded-[2rem] border border-cyan-300/20 bg-black/45 p-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+    <div className="text-xs uppercase tracking-[0.28em] text-cyan-300/70">
       Community Picker
     </div>
 
 <div className="relative mx-auto mt-6 h-[360px] w-[360px]">
   
   {/* OUTER GLOW */}
-  <div className="absolute inset-0 rounded-full bg-emerald-400/10 blur-3xl" />
+  <div className="absolute inset-0 rounded-full bg-cyan-400/10 blur-3xl" />
 
   {/* POINTER */}
   <div className="absolute left-1/2 top-0 z-30 -translate-x-1/2">
-    <div className="h-0 w-0 border-l-[22px] border-r-[22px] border-t-[38px] border-l-transparent border-r-transparent border-t-emerald-300 drop-shadow-[0_0_18px_rgba(16,185,129,0.9)]" />
+    <div className="h-0 w-0 border-l-[22px] border-r-[22px] border-t-[38px] border-l-transparent border-r-transparent border-t-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.9)]" />
   </div>
 
   {/* SPINNING WHEEL */}
   <div
-    className="relative flex h-full w-full items-center justify-center rounded-full border-[10px] border-emerald-300/40 bg-black shadow-[0_0_80px_rgba(0,255,136,0.22)] transition-transform duration-[5200ms] ease-out"
+    className="relative flex h-full w-full items-center justify-center rounded-full border-[10px] border-cyan-300/40 bg-black shadow-[0_0_80px_rgba(0,245,255,0.22)] transition-transform duration-[5200ms] ease-out"
     style={{
       transform: `rotate(${slotWheelRotation}deg)`,
 background:
   slotCalls.length === 0
-    ? "radial-gradient(circle, rgba(0,255,136,0.10), rgba(0,0,0,0.92))"
+    ? "radial-gradient(circle, rgba(0,245,255,0.10), rgba(0,0,0,0.92))"
     : `conic-gradient(${slotCalls
         .map((_, index) => {
           const start = (index / slotCalls.length) * 360;
           const end = ((index + 1) / slotCalls.length) * 360;
           const color =
             index % 2 === 0
-              ? "rgba(0,255,136,0.42)"
+              ? "rgba(0,245,255,0.42)"
               : "rgba(0,45,28,0.92)";
 
           return `${color} ${start}deg ${end}deg`;
@@ -4242,7 +4184,7 @@ background:
   >
 
     {/* INNER RING */}
-    <div className="absolute h-[78%] w-[78%] rounded-full border border-emerald-300/15" />
+    <div className="absolute h-[78%] w-[78%] rounded-full border border-cyan-300/15" />
 
     {/* SLOT LABELS */}
 {slotCalls.map((slot, index) => {
@@ -4271,9 +4213,9 @@ background:
 })}
 
     {/* CENTER */}
-    <div className="relative z-20 flex h-32 w-32 items-center justify-center rounded-full border-4 border-emerald-300/25 bg-[radial-gradient(circle_at_top,rgba(0,255,136,0.28),rgba(0,0,0,1)_70%)] shadow-[0_0_35px_rgba(0,255,136,0.45)]">
+    <div className="relative z-20 flex h-32 w-32 items-center justify-center rounded-full border-4 border-cyan-300/25 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.28),rgba(0,0,0,1)_70%)] shadow-[0_0_35px_rgba(0,245,255,0.45)]">
       <div className="text-center">
-        <div className="text-sm font-black uppercase tracking-[0.2em] text-emerald-200">
+        <div className="text-sm font-black uppercase tracking-[0.2em] text-cyan-200">
           Trashguy
         </div>
         <div className="text-xl font-black text-white">
@@ -4286,12 +4228,12 @@ background:
 
       <div className="mt-6">
         {pickedSlotCall ? (
-          <div className="rounded-[1.5rem] border border-emerald-300/35 bg-emerald-400/10 p-5 shadow-[0_0_30px_rgba(0,255,136,0.14)]">
-            <div className="text-xs uppercase tracking-[0.25em] text-emerald-300/70">
+          <div className="rounded-[1.5rem] border border-cyan-300/35 bg-cyan-400/10 p-5 shadow-[0_0_30px_rgba(0,245,255,0.14)]">
+            <div className="text-xs uppercase tracking-[0.25em] text-cyan-300/70">
               Picked Slot
             </div>
 
-            <div className="mt-2 text-3xl font-black text-emerald-300 drop-shadow-[0_0_18px_rgba(0,255,136,0.8)] sm:text-4xl">
+            <div className="mt-2 text-3xl font-black text-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.8)] sm:text-4xl">
               {pickedSlotCall.slotName}
             </div>
 
@@ -4338,7 +4280,7 @@ background:
     <div className="rounded-[2rem] border border-white/10 bg-black/35 p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-xs uppercase tracking-[0.24em] text-emerald-300/80">
+          <div className="text-xs uppercase tracking-[0.24em] text-cyan-300/80">
             Live Slot Calls
           </div>
 
@@ -4366,7 +4308,7 @@ background:
             {slotCalls.map((call, index) => (
               <div
                 key={`${call.username}-${call.slotName}-${index}`}
-                className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 transition hover:border-emerald-300/25 hover:bg-emerald-400/[0.06]"
+                className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 transition hover:border-cyan-300/25 hover:bg-cyan-400/[0.06]"
               >
                 <div className="truncate font-black text-white">
                   {call.slotName}
@@ -4403,7 +4345,7 @@ background:
           </main>
 
 <footer className="relative mt-24 border-t border-white/10 bg-black/35 backdrop-blur-xl">
-  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,136,0.08),transparent_70%)]" />
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,245,255,0.08),transparent_70%)]" />
 
   <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center gap-6 px-6 py-10 text-center">
     

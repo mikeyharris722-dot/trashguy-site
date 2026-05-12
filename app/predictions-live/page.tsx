@@ -677,7 +677,7 @@ export default function PredictionsLivePage() {
                             </div>
 
                             <div className="text-right">
-                              <div className="font-black text-emerald-200">
+                              <div className="font-black text-cyan-200">
                                 {formatMoney(bonus.payout)}
                               </div>
                               <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/35">
@@ -731,7 +731,7 @@ export default function PredictionsLivePage() {
                         value={predictionInput}
                         onChange={(e) => setPredictionInput(e.target.value.replace(/[^0-9]/g, ""))}
                         placeholder="Enter final hunt balance"
-                        className="mt-4 w-full rounded-xl border border-white/10 bg-black/40 px-5 py-4 text-lg text-white outline-none focus:border-emerald-300/40"
+                        className="mt-4 w-full rounded-xl border border-white/10 bg-black/40 px-5 py-4 text-lg text-white outline-none focus:border-cyan-300/40"
                       />
 
                       <div className="mt-5 grid gap-4 grid-cols-1 sm:grid-cols-2">
@@ -745,7 +745,7 @@ export default function PredictionsLivePage() {
                         <button
                           onClick={handlePredictionSubmit}
                           disabled={!isTwitchConnected || predictionStatus !== "open"}
-                          className="rounded-xl min-h-[64px] border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 font-semibold text-emerald-200 flex items-center justify-center transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-40"
+                          className="rounded-xl min-h-[64px] border border-cyan-300/25 bg-cyan-400/10 px-4 py-3 font-semibold text-cyan-200 flex items-center justify-center transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           Save Prediction
                         </button>

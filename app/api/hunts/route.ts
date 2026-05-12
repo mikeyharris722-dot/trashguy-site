@@ -21,7 +21,7 @@ export async function GET() {
       });
     }
 
-    const res = await fetch("https://bonushunt.gg/api/public/hunts?limit=10", {
+    const res = await fetch("https://bonushunt.gg/api/public/hunts?limit=1000", {
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
@@ -67,6 +67,7 @@ const localMap = new Map(
 
 const hunts = externalHunts.map((hunt: any) => {
   const local = localMap.get(hunt.id);
+  
       return {
         ...hunt,
         status: local?.status || hunt.status || "",
