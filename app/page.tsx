@@ -3562,15 +3562,15 @@ const handleGenerateBracket = () => {
 )}
 
 {activeSection === "admin" && adminAllowed && (
-  <section className="grid gap-6">
-    <Panel className="border-cyan-300/25 shadow-[0_0_65px_rgba(16,185,129,0.10)]">
+  <section className="grid gap-3 sm:gap-6">
+    <Panel className="border-cyan-300/25 p-4 shadow-[0_0_35px_rgba(0,245,255,0.08)] sm:p-8 sm:shadow-[0_0_65px_rgba(0,245,255,0.10)]">
       <SectionLabel>Admin</SectionLabel>
-      <h2 className="mt-3 text-4xl font-black tracking-wide">CONTROL CENTER</h2>
-<p className="mt-4 text-white/65">
+      <h2 className="mt-2 text-2xl font-black tracking-wide sm:mt-3 sm:text-4xl">CONTROL CENTER</h2>
+<p className="mt-2 text-sm text-white/65 sm:mt-4 sm:text-base">
   Admin panel is only shown for approved Twitch accounts.
 </p>
 
-<div className="mt-8 rounded-[2rem] border border-cyan-300/20 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.10),rgba(0,0,0,0.55)_55%)] p-5 shadow-[0_0_35px_rgba(0,245,255,0.08)]">
+<div className="mt-4 rounded-[1.25rem] border border-cyan-300/20 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.10),rgba(0,0,0,0.55)_55%)] p-3 shadow-[0_0_25px_rgba(0,245,255,0.06)] sm:mt-8 sm:rounded-[2rem] sm:p-5 sm:shadow-[0_0_35px_rgba(0,245,255,0.08)]">
   <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
     <div className="rounded-2xl border border-white/10 bg-black/35 p-4">
       <div className="text-xs uppercase tracking-[0.22em] text-white/45">
@@ -3628,7 +3628,7 @@ const handleGenerateBracket = () => {
               <details
   open={adminDropdowns.giveaway}
   onToggle={(e) => setAdminDropdown("giveaway", e.currentTarget.open)}
-  className="rounded-2xl border border-fuchsia-300/20 bg-black/30 p-5"
+  className="rounded-xl border border-cyan-300/20 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
 >
           <summary className="cursor-pointer text-xl font-black text-white">
             Giveaway System
@@ -3731,7 +3731,7 @@ Number(entry.weight || 1) >= 1.2
         <details
   open={adminDropdowns.prizePortal}
   onToggle={(e) => setAdminDropdown("prizePortal", e.currentTarget.open)}
-  className="rounded-2xl border border-cyan-300/20 bg-black/30 p-5"
+  className="rounded-xl border border-cyan-300/20 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
 >
           <summary className="cursor-pointer text-xl font-black text-white">
             Prize Portal Manager
@@ -3907,9 +3907,9 @@ Number(entry.weight || 1) >= 1.2
         <details
   open={adminDropdowns.predictions}
   onToggle={(e) => setAdminDropdown("predictions", e.currentTarget.open)}
-  className="rounded-2xl border border-white/10 bg-black/30 p-5"
+  className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
 >
-          <summary className="cursor-pointer text-xl font-black text-white">
+          <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
             Predictions / Hunt
           </summary>
 
@@ -4205,7 +4205,7 @@ Number(entry.weight || 1) >= 1.2
       Community Picker
     </div>
 
-<div className="relative mx-auto mt-6 h-[360px] w-[360px]">
+<div className="relative mx-auto mt-4 h-[260px] w-[260px] sm:mt-6 sm:h-[360px] sm:w-[360px]">
   
   {/* OUTER GLOW */}
   <div className="absolute inset-0 rounded-full bg-cyan-400/10 blur-3xl" />
@@ -4252,11 +4252,11 @@ background:
       key={`${slot.username}-${slot.slotName}-${index}`}
       className="absolute left-1/2 top-1/2 z-10"
       style={{
-        transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-118px)`,
+        transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(${window.innerWidth < 640 ? "-84px" : "-118px"})`,
       }}
     >
       <div
-        className="w-[110px] truncate text-center text-[10px] font-black uppercase tracking-wide text-white drop-shadow-[0_0_8px_rgba(0,0,0,1)]"
+        className="w-[72px] truncate text-center text-[8px] font-black uppercase tracking-wide text-white drop-shadow-[0_0_8px_rgba(0,0,0,1)] sm:w-[110px] sm:text-[10px]"
         style={{
           transform: "rotate(90deg)",
         }}
@@ -4268,12 +4268,12 @@ background:
 })}
 
     {/* CENTER */}
-    <div className="relative z-20 flex h-32 w-32 items-center justify-center rounded-full border-4 border-cyan-300/25 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.28),rgba(0,0,0,1)_70%)] shadow-[0_0_35px_rgba(0,245,255,0.45)]">
+    <div className="relative z-20 flex h-20 w-20 sm:h-32 sm:w-32 items-center justify-center rounded-full border-4 border-cyan-300/25 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.28),rgba(0,0,0,1)_70%)] shadow-[0_0_35px_rgba(0,245,255,0.45)]">
       <div className="text-center">
         <div className="text-sm font-black uppercase tracking-[0.2em] text-cyan-200">
           Trashguy
         </div>
-        <div className="text-xl font-black text-white">
+        <div className="text-sm sm:text-xl font-black text-white">
           Wheel
         </div>
       </div>
