@@ -3563,163 +3563,174 @@ const handleGenerateBracket = () => {
 
 {activeSection === "admin" && adminAllowed && (
   <section className="grid gap-3 sm:gap-6">
-    <Panel className="border-cyan-300/25 p-4 shadow-[0_0_35px_rgba(0,245,255,0.08)] sm:p-8 sm:shadow-[0_0_65px_rgba(0,245,255,0.10)]">
+    <Panel className="border-cyan-300/25 p-2 shadow-[0_0_28px_rgba(0,245,255,0.07)] sm:p-8 sm:shadow-[0_0_65px_rgba(0,245,255,0.10)]">
       <SectionLabel>Admin</SectionLabel>
-      <h2 className="mt-2 text-2xl font-black tracking-wide sm:mt-3 sm:text-4xl">CONTROL CENTER</h2>
-<p className="mt-2 text-sm text-white/65 sm:mt-4 sm:text-base">
-  Admin panel is only shown for approved Twitch accounts.
-</p>
 
-<div className="mt-4 rounded-[1.25rem] border border-cyan-300/20 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.10),rgba(0,0,0,0.55)_55%)] p-3 shadow-[0_0_25px_rgba(0,245,255,0.06)] sm:mt-8 sm:rounded-[2rem] sm:p-5 sm:shadow-[0_0_35px_rgba(0,245,255,0.08)]">
-  <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
-    <div className="rounded-2xl border border-white/10 bg-black/35 p-4">
-      <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-        Signed in as
-      </div>
+      <h2 className="mt-2 text-xl font-black tracking-wide sm:mt-3 sm:text-4xl">
+        CONTROL CENTER
+      </h2>
 
-      <div className="mt-3 flex items-center gap-3">
-        {viewerAvatar && (
-          <img
-            src={viewerAvatar}
-            alt={viewerDisplayName}
-            className="h-12 w-12 rounded-full border border-cyan-300/25 object-cover"
-          />
-        )}
+      <p className="mt-2 text-xs text-white/60 sm:mt-4 sm:text-base">
+        Admin panel is only shown for approved Twitch accounts.
+      </p>
 
-        <div>
-          <div className="text-xl font-black text-white">
-            {viewerDisplayName}
+      <div className="mt-3 rounded-xl border border-cyan-300/20 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.08),rgba(0,0,0,0.55)_55%)] p-2 shadow-[0_0_20px_rgba(0,245,255,0.05)] sm:mt-8 sm:rounded-[2rem] sm:p-5">
+        <div className="grid gap-2 sm:gap-3 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+          <div className="rounded-xl border border-white/10 bg-black/35 p-2.5 sm:p-4">
+            <div className="text-[9px] uppercase tracking-[0.16em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
+              Signed in as
+            </div>
+
+            <div className="mt-2 flex items-center gap-2 sm:mt-3 sm:gap-3">
+              {viewerAvatar && (
+                <img
+                  src={viewerAvatar}
+                  alt={viewerDisplayName}
+                  className="h-9 w-9 rounded-full border border-cyan-300/25 object-cover sm:h-12 sm:w-12"
+                />
+              )}
+
+              <div className="min-w-0">
+                <div className="truncate text-base font-black text-white sm:text-xl">
+                  {viewerDisplayName}
+                </div>
+                <div className="truncate text-xs text-white/45 sm:text-sm">
+                  @{viewerName}
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="text-sm text-white/45">@{viewerName}</div>
+
+          <div className="rounded-xl border border-white/10 bg-black/35 p-2.5 sm:p-4">
+            <div className="text-[9px] uppercase tracking-[0.16em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
+              Admin Name
+            </div>
+
+            <input
+              value={adminName}
+              onChange={(e) => setAdminName(e.target.value)}
+              className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-300/35 sm:mt-3 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
+            />
+          </div>
+
+          <ActionButton
+            onClick={() => setIsAdmin((v) => !v)}
+            variant={isAdmin ? "green" : "dark"}
+            className="min-h-[40px] w-full px-3 py-2 text-[10px] sm:min-h-[86px] sm:text-sm lg:w-[260px]"
+          >
+            {isAdmin ? `Admin Enabled` : "Enable Admin"}
+          </ActionButton>
+        </div>
+
+        <div className="mt-2 rounded-xl border border-cyan-300/15 bg-cyan-400/5 px-3 py-2 text-[11px] font-semibold leading-5 text-cyan-100/75 sm:mt-4 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
+          {isAdmin
+            ? `${adminName} control center is active.`
+            : "Enable admin mode to use the tools below."}
         </div>
       </div>
-    </div>
 
-    <div className="rounded-2xl border border-white/10 bg-black/35 p-4">
-      <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-        Admin Name
-      </div>
-
-      <input
-        value={adminName}
-        onChange={(e) => setAdminName(e.target.value)}
-        className="mt-3 w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none transition focus:border-cyan-300/35"
-      />
-    </div>
-
-    <ActionButton
-      onClick={() => setIsAdmin((v) => !v)}
-      variant={isAdmin ? "green" : "dark"}
-      className="h-full min-h-[86px] w-full lg:w-[260px]"
-    >
-      {isAdmin ? `Admin Enabled` : "Enable Admin"}
-    </ActionButton>
-  </div>
-
-  <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-cyan-400/5 px-4 py-3 text-sm font-semibold text-cyan-100/80">
-    {isAdmin
-      ? `${adminName} control center is active. Giveaway, prize portal, predictions, tournament, and slot wheel tools are below.`
-      : "Enable admin mode to use the control center tools below."}
-  </div>
-</div>
-
-<div className="mt-6 grid gap-4">
-        
-              <details
-  open={adminDropdowns.giveaway}
-  onToggle={(e) => setAdminDropdown("giveaway", e.currentTarget.open)}
-  className="rounded-xl border border-cyan-300/20 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
->
-          <summary className="cursor-pointer text-xl font-black text-white">
+      <div className="mt-3 grid gap-3 sm:mt-6 sm:gap-4">
+        <details
+          open={adminDropdowns.giveaway}
+          onToggle={(e) => setAdminDropdown("giveaway", e.currentTarget.open)}
+          className="rounded-xl border border-cyan-300/20 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
+        >
+          <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
             Giveaway System
           </summary>
 
-          <div className="mt-6 grid gap-4">
-<ActionButton onClick={handleStartGiveaway} disabled={!isAdmin} variant="green">
-  Start Giveaway
-</ActionButton>
+          <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <ActionButton onClick={handleStartGiveaway} disabled={!isAdmin} variant="green">
+                Start Giveaway
+              </ActionButton>
 
-<ActionButton onClick={handleDrawGiveawayWinner} disabled={!isAdmin} variant="purple">
-  Draw Winner
-</ActionButton>
+              <ActionButton onClick={handleDrawGiveawayWinner} disabled={!isAdmin} variant="purple">
+                Draw Winner
+              </ActionButton>
+            </div>
 
-<div className="rounded-2xl border border-white/10 bg-black/30 p-4 sm:p-6 text-center">
-  <div className="text-xs uppercase tracking-[0.25em] text-white/40">
-    🎯 Current Winner
-  </div>
+            <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-center sm:rounded-2xl sm:p-6">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-white/40 sm:text-xs sm:tracking-[0.25em]">
+                🎯 Current Winner
+              </div>
 
-  <div className="mt-3 text-2xl sm:text-3xl md:text-4xl font-black text-green-400 drop-shadow-[0_0_20px_rgba(34,197,94,0.9)]">
-    {giveawayMessage || "Waiting for winner..."}
-  </div>
-</div>
+              <div className="mt-2 truncate text-xl font-black text-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.75)] sm:mt-3 sm:text-3xl md:text-4xl">
+                {giveawayMessage || "Waiting..."}
+              </div>
+            </div>
 
-<div className="rounded-2xl border border-cyan-300/20 bg-black/40 p-5">
-  <div className="text-xs uppercase tracking-[0.25em] text-cyan-300/70">
-    Winner Chat
-  </div>
+            <div className="rounded-xl border border-cyan-300/20 bg-black/40 p-3 sm:rounded-2xl sm:p-5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/70 sm:text-xs sm:tracking-[0.25em]">
+                  Winner Chat
+                </div>
 
-  <div className="flex justify-end mt-2">
-<ActionButton onClick={() => setWinnerChatMessages([])} disabled={!isAdmin} variant="red">
-  Clear Chat
-</ActionButton>
-</div>
+                <ActionButton
+                  onClick={() => setWinnerChatMessages([])}
+                  disabled={!isAdmin}
+                  variant="red"
+                  className="min-h-[34px] px-3 py-1 text-[9px]"
+                >
+                  Clear
+                </ActionButton>
+              </div>
 
-  <div className="mt-4 min-h-[120px] space-y-2">
-    {!currentGiveawayWinner ? (
-      <div className="text-sm text-white/35">
-        Draw a winner to track their chat.
-      </div>
-    ) : winnerChatMessages.length === 0 ? (
-      <div className="text-sm text-white/35">
-        Waiting for @{currentGiveawayWinner} to type...
-      </div>
-    ) : (
-      winnerChatMessages.map((msg, index) => (
-        <div
-          key={index}
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white"
-        >
-          {msg}
-        </div>
-      ))
-    )}
-  </div>
-</div>
+              <div className="mt-3 max-h-[160px] min-h-[70px] space-y-2 overflow-y-auto sm:mt-4 sm:min-h-[120px]">
+                {!currentGiveawayWinner ? (
+                  <div className="text-xs text-white/35 sm:text-sm">
+                    Draw a winner to track their chat.
+                  </div>
+                ) : winnerChatMessages.length === 0 ? (
+                  <div className="text-xs text-white/35 sm:text-sm">
+                    Waiting for @{currentGiveawayWinner} to type...
+                  </div>
+                ) : (
+                  winnerChatMessages.map((msg, index) => (
+                    <div
+                      key={index}
+                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
+                    >
+                      {msg}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="mb-3 text-xs uppercase tracking-[0.22em] text-white/45">
+            <div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-4">
+              <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-white/45 sm:mb-3 sm:text-xs sm:tracking-[0.22em]">
                 Live Entries ({giveawayEntries.length})
               </div>
 
-              <div className="grid max-h-[420px] grid-cols-2 gap-2 overflow-y-auto md:grid-cols-3 xl:grid-cols-4">
+              <div className="grid max-h-[260px] grid-cols-2 gap-2 overflow-y-auto sm:max-h-[420px] md:grid-cols-3 xl:grid-cols-4">
                 {giveawayEntries.length === 0 ? (
-                  <div className="text-sm text-white/40">No entries yet</div>
+                  <div className="text-xs text-white/40 sm:text-sm">No entries yet</div>
                 ) : (
                   giveawayEntries.map((entry, index) => (
                     <div
                       key={index}
-                      className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                      className="min-w-0 rounded-lg border border-white/10 bg-white/5 px-2 py-2 sm:rounded-xl sm:px-3"
                     >
-                      <div className="font-semibold text-white"><span className="truncate text-sm">
-  {entry.display_name || entry.username}
-</span>
-</div>
+                      <div className="truncate text-xs font-semibold text-white sm:text-sm">
+                        {entry.display_name || entry.username}
+                      </div>
 
-<div
-  className={`rounded-full px-3 py-1 text-xs font-black ${
-Number(entry.weight || 1) >= 1.2
-  ? "border border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
-  : Number(entry.weight || 1) >= 1.1
-  ? "border border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
-  : "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
-  }`}
->
-{Number(entry.weight || 1) >= 1.2
-  ? "💎 VIP x1.2"
-  : Number(entry.weight || 1) >= 1.1
-  ? "⭐ Affiliate x1.1"
-  : "Viewer x1"}
-</div>
+                      <div
+                        className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[9px] font-black sm:px-3 sm:py-1 sm:text-xs ${
+                          Number(entry.weight || 1) >= 1.2
+                            ? "border border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
+                            : Number(entry.weight || 1) >= 1.1
+                            ? "border border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
+                            : "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
+                        }`}
+                      >
+                        {Number(entry.weight || 1) >= 1.2
+                          ? "💎 VIP"
+                          : Number(entry.weight || 1) >= 1.1
+                          ? "⭐ Affiliate"
+                          : "Viewer"}
+                      </div>
                     </div>
                   ))
                 )}
@@ -3729,211 +3740,210 @@ Number(entry.weight || 1) >= 1.2
         </details>
 
         <details
-  open={adminDropdowns.prizePortal}
-  onToggle={(e) => setAdminDropdown("prizePortal", e.currentTarget.open)}
-  className="rounded-xl border border-cyan-300/20 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
->
-          <summary className="cursor-pointer text-xl font-black text-white">
+          open={adminDropdowns.prizePortal}
+          onToggle={(e) => setAdminDropdown("prizePortal", e.currentTarget.open)}
+          className="rounded-xl border border-cyan-300/20 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
+        >
+          <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
             Prize Portal Manager
           </summary>
 
-<div className="mt-6 grid gap-4">
-  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-    <div>
-      <SectionLabel>Prize Portal Manager</SectionLabel>
-      <h2 className="mt-2 text-2xl sm:text-3xl font-black tracking-wide">ALL REWARDS</h2>
-      <div className="mt-1 text-sm text-white/45">
-        Manage every viewer reward, payout status, and mistakes.
-      </div>
-    </div>
-
-<ActionButton onClick={loadAdminRewards} variant="dark" className="w-full md:w-auto">
-  Refresh Rewards
-</ActionButton>
-  </div>
-
-  <input
-    value={adminRewardsSearch}
-    onChange={(e) => setAdminRewardsSearch(e.target.value)}
-    placeholder="Search username, status, title..."
-    className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-  />
-
-  {adminRewardsMessage && (
-    <div className="rounded-xl border border-white/10 bg-black/30 p-4 text-sm text-white/70">
-      {adminRewardsMessage}
-    </div>
-  )}
-
-  <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30">
-    {filteredAdminRewards.length === 0 ? (
-      <div className="p-4 sm:p-6 text-center text-white/45">
-        No rewards found. Click Refresh Rewards.
-      </div>
-    ) : (
-      <div className="max-h-[650px] overflow-y-auto divide-y divide-white/5">
-        {filteredAdminRewards.map((reward) => {
-          const isComplete =
-            reward.status === "complete"
-
-          return (
-            <div
-              key={reward.id}
-              className="grid gap-4 p-4 xl:grid-cols-[1fr_120px_140px_360px]"
-            >
+          <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="font-black text-white">
-                  {reward.display_name || reward.twitch_username}
-                </div>
-                <div className="mt-1 text-xs text-white/40">
-                  @{reward.twitch_username}
-                </div>
-                <div className="mt-2 text-sm text-white/60">
-                  {reward.title || "Chat Giveaway"} •{" "}
-                  {reward.created_at
-                    ? new Date(reward.created_at).toLocaleString()
-                    : "Recently"}
+                <SectionLabel>Prize Portal Manager</SectionLabel>
+                <h2 className="mt-2 text-xl font-black tracking-wide sm:text-3xl">
+                  ALL REWARDS
+                </h2>
+                <div className="mt-1 text-xs text-white/45 sm:text-sm">
+                  Manage viewer rewards and payout status.
                 </div>
               </div>
 
-              <div>
-                <div className="text-xs text-white/35">Amount</div>
-                <div className="mt-1 text-xl font-black text-[#8fffd0]">
-                  ${Number(reward.amount || 0).toLocaleString()}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs text-white/35">Status</div>
-                <div
-                  className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-black ${
-                    isComplete
-                      ? "border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
-                      : "border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
-                  }`}
-                >
-                  {isComplete ? "Completed" : "Pending"}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                {isComplete ? (
-<ActionButton
-  onClick={() => handleAdminMarkRewardPending(reward.id)}
-  variant="gold"
-  className="min-h-[46px] px-3 py-2 text-[10px] leading-tight"
->
-  Set Pending
-</ActionButton>
-                ) : (
-<ActionButton
-  onClick={() => handleAdminMarkRewardPaid(reward.id)}
-  variant="green"
-  className="min-h-[46px] px-3 py-2 text-[10px] leading-tight"
->
-  Mark Paid
-</ActionButton>
-                )}
-
-<ActionButton
-  variant="dark"
-  className="min-h-[46px] px-3 py-2 text-[10px] leading-tight"
-  onClick={async () => {
-    const newAmount = prompt("Edit giveaway winnings:", String(reward.amount || 0));
-
-    if (newAmount === null) return;
-
-    const amount = Number(newAmount);
-
-    if (Number.isNaN(amount) || amount < 0) {
-      alert("Enter a valid amount.");
-      return;
-    }
-
-    const res = await fetch(`/api/admin/rewards?id=${reward.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || !data.ok) {
-      alert(data.error || "Amount update failed.");
-      return;
-    }
-    alert(JSON.stringify(data.reward, null, 2));
-
-    setAdminRewards((current) =>
-      current.map((item) =>
-        item.id === reward.id
-          ? { ...item, amount }
-          : item
-      )
-    );
-
-    setViewerRewards((current) =>
-      current.map((item) =>
-        item.id === reward.id
-          ? { ...item, amount }
-          : item
-      )
-    );
-
-    loadAdminRewards();
-    loadViewerRewards();
-  }}
->
-  Edit Amount
-</ActionButton>
-
-<ActionButton
-  onClick={() => handleAdminDeleteReward(reward.id)}
-  variant="red"
-  className="min-h-[42px] px-3 py-2 text-[11px]"
->
-  Delete
-</ActionButton>
-              </div>
+              <ActionButton onClick={loadAdminRewards} variant="dark" className="w-full md:w-auto">
+                Refresh
+              </ActionButton>
             </div>
-          );
-        })}
-      </div>
-    )}
-  </div>
-</div>
+
+            <input
+              value={adminRewardsSearch}
+              onChange={(e) => setAdminRewardsSearch(e.target.value)}
+              placeholder="Search username, status, title..."
+              className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none sm:px-4 sm:py-3 sm:text-base"
+            />
+
+            {adminRewardsMessage && (
+              <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-white/70 sm:p-4 sm:text-sm">
+                {adminRewardsMessage}
+              </div>
+            )}
+
+            <div className="overflow-hidden rounded-xl border border-white/10 bg-black/30 sm:rounded-2xl">
+              {filteredAdminRewards.length === 0 ? (
+                <div className="p-4 text-center text-sm text-white/45 sm:p-6">
+                  No rewards found. Click Refresh Rewards.
+                </div>
+              ) : (
+                <div className="max-h-[520px] overflow-y-auto divide-y divide-white/5 sm:max-h-[650px]">
+                  {filteredAdminRewards.map((reward) => {
+                    const isComplete = reward.status === "complete";
+
+                    return (
+                      <div
+                        key={reward.id}
+                        className="grid grid-cols-[1fr_auto] gap-3 p-3 sm:p-4 xl:grid-cols-[1fr_120px_140px_360px]"
+                      >
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-black text-white sm:text-base">
+                            {reward.display_name || reward.twitch_username}
+                          </div>
+                          <div className="mt-1 truncate text-[11px] text-white/40 sm:text-xs">
+                            @{reward.twitch_username}
+                          </div>
+                          <div className="mt-1 line-clamp-2 text-xs text-white/55 sm:mt-2 sm:text-sm">
+                            {reward.title || "Chat Giveaway"} •{" "}
+                            {reward.created_at
+                              ? new Date(reward.created_at).toLocaleString()
+                              : "Recently"}
+                          </div>
+                        </div>
+
+                        <div className="text-right xl:text-left">
+                          <div className="text-[10px] text-white/35 sm:text-xs">Amount</div>
+                          <div className="mt-1 text-lg font-black text-cyan-200 sm:text-xl">
+                            ${Number(reward.amount || 0).toLocaleString()}
+                          </div>
+
+                          <div
+                            className={`mt-2 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-black sm:px-3 sm:py-1 sm:text-xs xl:hidden ${
+                              isComplete
+                                ? "border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
+                                : "border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
+                            }`}
+                          >
+                            {isComplete ? "Completed" : "Pending"}
+                          </div>
+                        </div>
+
+                        <div className="hidden xl:block">
+                          <div className="text-xs text-white/35">Status</div>
+                          <div
+                            className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-black ${
+                              isComplete
+                                ? "border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
+                                : "border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
+                            }`}
+                          >
+                            {isComplete ? "Completed" : "Pending"}
+                          </div>
+                        </div>
+
+                        <div className="col-span-2 grid grid-cols-3 gap-2 xl:col-span-1">
+                          {isComplete ? (
+                            <ActionButton
+                              onClick={() => handleAdminMarkRewardPending(reward.id)}
+                              variant="gold"
+                              className="min-h-[34px] px-2 py-1 text-[9px] sm:min-h-[46px] sm:text-[10px]"
+                            >
+                              Pending
+                            </ActionButton>
+                          ) : (
+                            <ActionButton
+                              onClick={() => handleAdminMarkRewardPaid(reward.id)}
+                              variant="green"
+                              className="min-h-[34px] px-2 py-1 text-[9px] sm:min-h-[46px] sm:text-[10px]"
+                            >
+                              Paid
+                            </ActionButton>
+                          )}
+
+                          <ActionButton
+                            variant="dark"
+                            className="min-h-[34px] px-2 py-1 text-[9px] sm:min-h-[46px] sm:text-[10px]"
+                            onClick={async () => {
+                              const newAmount = prompt("Edit giveaway winnings:", String(reward.amount || 0));
+                              if (newAmount === null) return;
+                              const amount = Number(newAmount);
+                              if (Number.isNaN(amount) || amount < 0) {
+                                alert("Enter a valid amount.");
+                                return;
+                              }
+
+                              const res = await fetch(`/api/admin/rewards?id=${reward.id}`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ amount }),
+                              });
+
+                              const data = await res.json();
+
+                              if (!res.ok || !data.ok) {
+                                alert(data.error || "Amount update failed.");
+                                return;
+                              }
+
+                              setAdminRewards((current) =>
+                                current.map((item) => (item.id === reward.id ? { ...item, amount } : item))
+                              );
+
+                              setViewerRewards((current) =>
+                                current.map((item) => (item.id === reward.id ? { ...item, amount } : item))
+                              );
+
+                              loadAdminRewards();
+                              loadViewerRewards();
+                            }}
+                          >
+                            Edit
+                          </ActionButton>
+
+                          <ActionButton
+                            onClick={() => handleAdminDeleteReward(reward.id)}
+                            variant="red"
+                            className="min-h-[34px] px-2 py-1 text-[9px] sm:min-h-[42px] sm:text-[11px]"
+                          >
+                            Delete
+                          </ActionButton>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </details>
-        
+
         <details
-  open={adminDropdowns.predictions}
-  onToggle={(e) => setAdminDropdown("predictions", e.currentTarget.open)}
-  className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
->
+          open={adminDropdowns.predictions}
+          onToggle={(e) => setAdminDropdown("predictions", e.currentTarget.open)}
+          className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
+        >
           <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
             Predictions / Hunt
           </summary>
 
-          <div className="mt-6 grid gap-4">
-            <div className="grid gap-3 md:grid-cols-2">
-<ActionButton onClick={handleStartHunt} disabled={!isAdmin} variant="dark">
-  Start New Hunt
-</ActionButton>
+          <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <ActionButton onClick={handleStartHunt} disabled={!isAdmin} variant="dark">
+                Start Hunt
+              </ActionButton>
 
-<ActionButton onClick={handleOpenPredictions} disabled={!isAdmin} variant="green">
-  Open Predictions
-</ActionButton>
+              <ActionButton onClick={handleOpenPredictions} disabled={!isAdmin} variant="green">
+                Open
+              </ActionButton>
 
-<ActionButton onClick={handleLockPredictions} disabled={!isAdmin} variant="purple">
-  Close Predictions
-</ActionButton>
+              <ActionButton onClick={handleLockPredictions} disabled={!isAdmin} variant="purple">
+                Close
+              </ActionButton>
 
-<ActionButton onClick={handleCompleteHunt} disabled={!isAdmin} variant="gold">
-  Complete Hunt
-</ActionButton>
+              <ActionButton onClick={handleCompleteHunt} disabled={!isAdmin} variant="gold">
+                Complete
+              </ActionButton>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+            <div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-4">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
                 Final Hunt Result
               </div>
               <input
@@ -3941,38 +3951,39 @@ Number(entry.weight || 1) >= 1.2
                 onChange={(e) => setFinalResult(e.target.value.replace(/[^0-9]/g, ""))}
                 placeholder="Enter final balance"
                 disabled={!isAdmin}
-                className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none disabled:opacity-40"
+                className="mt-2 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
               />
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/75">
+            <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-white/75 sm:rounded-2xl sm:p-4 sm:text-sm">
               {adminMessage ||
-  `Current hunt: ${adminSelectedHunt?.title || "none yet"}${
-    adminSelectedHunt?.casino ? ` • ${adminSelectedHunt.casino}` : ""
-  }`}
+                `Current hunt: ${adminSelectedHunt?.title || "none yet"}${
+                  adminSelectedHunt?.casino ? ` • ${adminSelectedHunt.casino}` : ""
+                }`}
             </div>
 
-            <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
-              <div className="text-sm font-bold uppercase tracking-[0.24em] text-cyan-300">
+            <div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-[1.5rem] sm:p-5">
+              <div className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300 sm:text-sm sm:tracking-[0.24em]">
                 Top 2 Winners
               </div>
 
-              <div className="mt-4 space-y-3">
+              <div className="mt-3 space-y-2 sm:mt-4 sm:space-y-3">
                 {rankedWinners.length === 0 && (
-                  <div className="text-white/50">Set a final result to rank winners.</div>
+                  <div className="text-xs text-white/50 sm:text-sm">
+                    Set a final result to rank winners.
+                  </div>
                 )}
 
                 {rankedWinners.map((winner, index) => (
                   <div
                     key={winner.id}
-                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 sm:rounded-xl sm:px-4 sm:py-3"
                   >
-                    <div className="font-semibold text-white">
+                    <div className="text-sm font-semibold text-white sm:text-base">
                       #{index + 1} {winner.username}
                     </div>
-                    <div className="mt-1 text-sm text-white/55">
-                      Guess: {formatMoney(winner.guess)} • Off by{" "}
-                      {formatMoney(winner.distance)}
+                    <div className="mt-1 text-xs text-white/55 sm:text-sm">
+                      Guess: {formatMoney(winner.guess)} • Off by {formatMoney(winner.distance)}
                     </div>
                   </div>
                 ))}
@@ -3982,417 +3993,407 @@ Number(entry.weight || 1) >= 1.2
         </details>
 
         <details
-  open={adminDropdowns.tournament}
-  onToggle={(e) => setAdminDropdown("tournament", e.currentTarget.open)}
-  className="rounded-2xl border border-cyan-300/20 bg-black/30 p-5"
->
-          <summary className="cursor-pointer text-xl font-black text-white">
+          open={adminDropdowns.tournament}
+          onToggle={(e) => setAdminDropdown("tournament", e.currentTarget.open)}
+          className="rounded-xl border border-cyan-300/20 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
+        >
+          <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
             Tournament Editor
           </summary>
 
-          <div className="mt-6">
-<SectionLabel>Tournament Admin</SectionLabel>
-<h2 className="mt-3 text-4xl font-black tracking-wide">EDIT BRACKET</h2>
+          <div className="mt-4 sm:mt-6">
+            <SectionLabel>Tournament Admin</SectionLabel>
+            <h2 className="mt-2 text-2xl font-black tracking-wide sm:mt-3 sm:text-4xl">
+              EDIT BRACKET
+            </h2>
 
-<div className="mt-8 grid gap-5">
-  <div className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-5">
-    <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
-      Bracket Title
-    </div>
-    <input
-      value={bracket.title}
-      onChange={(e) => updateBracketTitle(e.target.value)}
-      disabled={!isAdmin}
-      placeholder="Enter tournament title"
-      className="mt-3 w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,245,255,0.28)] disabled:opacity-40"
-    />
-  </div>
+            <div className="mt-4 grid gap-3 sm:mt-8 sm:gap-5">
+              <div className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-3 sm:rounded-[1.5rem] sm:p-5">
+                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
+                  Bracket Title
+                </div>
+                <input
+                  value={bracket.title}
+                  onChange={(e) => updateBracketTitle(e.target.value)}
+                  disabled={!isAdmin}
+                  placeholder="Enter tournament title"
+                  className="mt-2 w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-300/35 disabled:opacity-40 sm:mt-3 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
+                />
+              </div>
 
-  <div className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-5">
-    <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
-      Generate New Bracket
-    </div>
-
-    <div className="mt-4 grid gap-3 md:grid-cols-[220px_1fr]">
-      <select
-        value={generatorTeamCount}
-        onChange={(e) => setGeneratorTeamCount(e.target.value)}
-        disabled={!isAdmin}
-        className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none disabled:opacity-40"
-      >
-        <option value="2">2 Teams</option>
-        <option value="3">3 Teams</option>
-        <option value="4">4 Teams</option>
-        <option value="5">5 Teams</option>
-        <option value="6">6 Teams</option>
-        <option value="7">7 Teams</option>
-        <option value="8">8 Teams</option>
-        <option value="9">9 Teams</option>
-        <option value="10">10 Teams</option>
-        <option value="11">11 Teams</option>
-        <option value="12">12 Teams</option>
-        <option value="13">13 Teams</option>
-        <option value="14">14 Teams</option>
-        <option value="15">15 Teams</option>
-        <option value="16">16 Teams</option>
-      </select>
-
-<ActionButton onClick={handleGenerateBracket} disabled={!isAdmin} variant="green">
-  Generate Bracket
-</ActionButton>
-    </div>
-
-    <div className="mt-3 text-sm text-white/45">
-      Blank team slots are created automatically. Odd team counts will include BYEs.
-    </div>
-  </div>
-
-  <div className="grid gap-4">
-    {bracket.rounds.map((round) => (
-      <div
-        key={round.id}
-        className="rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-5"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-xs font-bold uppercase tracking-[0.22em] text-[#8fffd0]">
-            {round.name}
-          </div>
-
-          <input
-            value={round.name}
-            onChange={(e) => updateRoundName(round.id, e.target.value)}
-            disabled={!isAdmin}
-            className="w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,245,255,0.28)] disabled:opacity-40 md:max-w-[220px]"
-          />
-        </div>
-
-        <div className="mt-5 grid gap-3 xl:grid-cols-2">
-  {round.matches.map((match) => (
-            <div
-              key={match.id}
-              className="rounded-2xl border border-white/10 bg-white/[0.025] p-3"
-            >
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/35">
-                  {match.id.toUpperCase()}
+              <div className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-3 sm:rounded-[1.5rem] sm:p-5">
+                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
+                  Generate New Bracket
                 </div>
 
-                <div className="text-xs uppercase tracking-[0.22em] text-white/30">
-                  {match.winner ? `Winner: ${match.winner}` : "No winner selected"}
+                <div className="mt-3 grid grid-cols-[1fr_auto] gap-2 sm:mt-4 md:grid-cols-[220px_1fr]">
+                  <select
+                    value={generatorTeamCount}
+                    onChange={(e) => setGeneratorTeamCount(e.target.value)}
+                    disabled={!isAdmin}
+                    className="rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
+                  >
+                    <option value="2">2 Teams</option>
+                    <option value="3">3 Teams</option>
+                    <option value="4">4 Teams</option>
+                    <option value="5">5 Teams</option>
+                    <option value="6">6 Teams</option>
+                    <option value="7">7 Teams</option>
+                    <option value="8">8 Teams</option>
+                    <option value="9">9 Teams</option>
+                    <option value="10">10 Teams</option>
+                    <option value="11">11 Teams</option>
+                    <option value="12">12 Teams</option>
+                    <option value="13">13 Teams</option>
+                    <option value="14">14 Teams</option>
+                    <option value="15">15 Teams</option>
+                    <option value="16">16 Teams</option>
+                  </select>
+
+                  <ActionButton onClick={handleGenerateBracket} disabled={!isAdmin} variant="green">
+                    Generate
+                  </ActionButton>
+                </div>
+
+                <div className="mt-2 text-xs text-white/45 sm:mt-3 sm:text-sm">
+                  Odd team counts include BYEs.
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="grid gap-2">
-                  <input
-                    value={match.player1}
-                    onChange={(e) =>
-                      updateMatchField(round.id, match.id, "player1", e.target.value)
-                    }
-                    disabled={!isAdmin || match.player1 === "BYE"}
-                    placeholder="Player / Provider"
-                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,245,255,0.28)] disabled:opacity-40"
-                  />
+              <div className="grid max-h-[620px] gap-3 overflow-y-auto pr-1 sm:max-h-none sm:gap-4 sm:overflow-visible sm:pr-0">
+                {bracket.rounds.map((round) => (
+                  <div
+                    key={round.id}
+                    className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-3 sm:rounded-[1.5rem] sm:p-5"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:text-xs sm:tracking-[0.22em]">
+                        {round.name}
+                      </div>
 
-                  <input
-                    value={match.player1Amount || ""}
-                    onChange={(e) =>
-                      updateMatchField(
-                        round.id,
-                        match.id,
-                        "player1Amount",
-                        e.target.value.replace(/[^0-9.]/g, "")
-                      )
-                    }
-                    disabled={!isAdmin || match.player1 === "BYE"}
-                    placeholder="Amount won"
-                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.25)] px-4 py-3 text-sm text-white outline-none transition focus:border-[rgba(245,196,81,0.35)] disabled:opacity-40"
-                  />
-                </div>
+                      <input
+                        value={round.name}
+                        onChange={(e) => updateRoundName(round.id, e.target.value)}
+                        disabled={!isAdmin}
+                        className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-300/35 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base md:max-w-[220px]"
+                      />
+                    </div>
 
-                <div className="grid gap-2">
-                  <input
-                    value={match.player2}
-                    onChange={(e) =>
-                      updateMatchField(round.id, match.id, "player2", e.target.value)
-                    }
-                    disabled={!isAdmin || match.player2 === "BYE"}
-                    placeholder="Player / Provider"
-                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.35)] px-4 py-3 text-white outline-none transition focus:border-[rgba(0,245,255,0.28)] disabled:opacity-40"
-                  />
+                    <div className="mt-3 grid gap-3 sm:mt-5 xl:grid-cols-2">
+                      {round.matches.map((match) => (
+                        <div
+                          key={match.id}
+                          className="rounded-xl border border-white/10 bg-white/[0.025] p-3 sm:rounded-2xl"
+                        >
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 sm:mb-3">
+                            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35 sm:text-xs sm:tracking-[0.22em]">
+                              {match.id.toUpperCase()}
+                            </div>
 
-                  <input
-                    value={match.player2Amount || ""}
-                    onChange={(e) =>
-                      updateMatchField(
-                        round.id,
-                        match.id,
-                        "player2Amount",
-                        e.target.value.replace(/[^0-9.]/g, "")
-                      )
-                    }
-                    disabled={!isAdmin || match.player2 === "BYE"}
-                    placeholder="Amount won"
-                    className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.25)] px-4 py-3 text-sm text-white outline-none transition focus:border-[rgba(245,196,81,0.35)] disabled:opacity-40"
-                  />
-                </div>
+                            <div className="max-w-[180px] truncate text-[10px] uppercase tracking-[0.16em] text-white/30 sm:text-xs sm:tracking-[0.22em]">
+                              {match.winner ? `Winner: ${match.winner}` : "No winner"}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-2">
+                            <div className="grid gap-2">
+                              <input
+                                value={match.player1}
+                                onChange={(e) =>
+                                  updateMatchField(round.id, match.id, "player1", e.target.value)
+                                }
+                                disabled={!isAdmin || match.player1 === "BYE"}
+                                placeholder="Player"
+                                className="rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-300/35 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
+                              />
+
+                              <input
+                                value={match.player1Amount || ""}
+                                onChange={(e) =>
+                                  updateMatchField(
+                                    round.id,
+                                    match.id,
+                                    "player1Amount",
+                                    e.target.value.replace(/[^0-9.]/g, "")
+                                  )
+                                }
+                                disabled={!isAdmin || match.player1 === "BYE"}
+                                placeholder="Amount"
+                                className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none transition focus:border-yellow-300/35 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3"
+                              />
+                            </div>
+
+                            <div className="grid gap-2">
+                              <input
+                                value={match.player2}
+                                onChange={(e) =>
+                                  updateMatchField(round.id, match.id, "player2", e.target.value)
+                                }
+                                disabled={!isAdmin || match.player2 === "BYE"}
+                                placeholder="Player"
+                                className="rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-300/35 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
+                              />
+
+                              <input
+                                value={match.player2Amount || ""}
+                                onChange={(e) =>
+                                  updateMatchField(
+                                    round.id,
+                                    match.id,
+                                    "player2Amount",
+                                    e.target.value.replace(/[^0-9.]/g, "")
+                                  )
+                                }
+                                disabled={!isAdmin || match.player2 === "BYE"}
+                                placeholder="Amount"
+                                className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none transition focus:border-yellow-300/35 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4">
+                            <ActionButton
+                              onClick={() => selectMatchWinner(round.id, match.id, match.player1)}
+                              disabled={!isAdmin || !match.player1.trim() || match.player1 === "BYE"}
+                              variant={match.winner === match.player1 ? "green" : "dark"}
+                              className="min-h-[34px] px-2 py-1 text-[9px]"
+                            >
+                              Pick 1
+                            </ActionButton>
+
+                            <ActionButton
+                              onClick={() => selectMatchWinner(round.id, match.id, match.player2)}
+                              disabled={!isAdmin || !match.player2.trim() || match.player2 === "BYE"}
+                              variant={match.winner === match.player2 ? "green" : "dark"}
+                              className="min-h-[34px] px-2 py-1 text-[9px]"
+                            >
+                              Pick 2
+                            </ActionButton>
+
+                            <ActionButton
+                              onClick={() => clearMatchWinner(round.id, match.id)}
+                              disabled={!isAdmin}
+                              variant="red"
+                              className="min-h-[34px] px-2 py-1 text-[9px]"
+                            >
+                              Clear
+                            </ActionButton>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              <div className="mt-4 grid gap-2 md:grid-cols-3">
-<ActionButton
-  onClick={() => selectMatchWinner(round.id, match.id, match.player1)}
-  disabled={!isAdmin || !match.player1.trim() || match.player1 === "BYE"}
-  variant={match.winner === match.player1 ? "green" : "dark"}
-  className="min-h-[38px] px-3 py-2 text-[10px]"
->
-  Pick {match.player1 || ""}
-</ActionButton>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-2">
+                <ActionButton onClick={saveBracket} disabled={!isAdmin} variant="green">
+                  Save
+                </ActionButton>
 
-<ActionButton
-  onClick={() => selectMatchWinner(round.id, match.id, match.player2)}
-  disabled={!isAdmin || !match.player2.trim() || match.player2 === "BYE"}
-  variant={match.winner === match.player2 ? "green" : "dark"}
-  className="min-h-[38px] px-3 py-2 text-[10px]"
->
-  Pick {match.player2 || ""}
-</ActionButton>
+                <ActionButton onClick={resetBracket} disabled={!isAdmin} variant="red">
+                  Reset
+                </ActionButton>
+              </div>
 
-<ActionButton
-  onClick={() => clearMatchWinner(round.id, match.id)}
-  disabled={!isAdmin}
-  variant="red"
-  className="min-h-[38px] px-3 py-2 text-[10px]"
->
-  Clear Winner
-</ActionButton>
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-white/75 sm:rounded-2xl sm:p-4 sm:text-sm">
+                {bracketMessage || "Generate a bracket, enter teams, pick winners, then save it live."}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-    ))}
-  </div>
-
-  <div className="grid gap-3 md:grid-cols-2">
-<ActionButton onClick={saveBracket} disabled={!isAdmin} variant="green">
-  Save Bracket
-</ActionButton>
-
-<ActionButton onClick={resetBracket} disabled={!isAdmin} variant="red">
-  Reset Bracket
-</ActionButton>
-  </div>
-
-  <div className="rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.03)] p-4 text-sm text-white/75">
-    {bracketMessage || "Generate a bracket, enter teams, pick winners, then save it live."}
-  </div>
-</div>
-</div>
+          </div>
         </details>
 
-<details
-  open={adminDropdowns.slotWheel}
-  onToggle={(e) => setAdminDropdown("slotWheel", e.currentTarget.open)}
-  className="rounded-2xl border border-cyan-300/20 bg-black/30 p-5"
->
-<summary className="cursor-pointer text-xl font-black text-white">
-  Slot Call Wheel
-</summary>
-
-<div className="grid gap-6 p-4 lg:grid-cols-[420px_1fr] lg:p-6">
-  <div className="rounded-[2rem] border border-cyan-300/20 bg-black/45 p-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-    <div className="text-xs uppercase tracking-[0.28em] text-cyan-300/70">
-      Community Picker
-    </div>
-
-<div className="relative mx-auto mt-4 h-[260px] w-[260px] sm:mt-6 sm:h-[360px] sm:w-[360px]">
-  
-  {/* OUTER GLOW */}
-  <div className="absolute inset-0 rounded-full bg-cyan-400/10 blur-3xl" />
-
-  {/* POINTER */}
-  <div className="absolute left-1/2 top-0 z-30 -translate-x-1/2">
-    <div className="h-0 w-0 border-l-[22px] border-r-[22px] border-t-[38px] border-l-transparent border-r-transparent border-t-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.9)]" />
-  </div>
-
-  {/* SPINNING WHEEL */}
-  <div
-    className="relative flex h-full w-full items-center justify-center rounded-full border-[10px] border-cyan-300/40 bg-black shadow-[0_0_80px_rgba(0,245,255,0.22)] transition-transform duration-[5200ms] ease-out"
-    style={{
-      transform: `rotate(${slotWheelRotation}deg)`,
-background:
-  slotCalls.length === 0
-    ? "radial-gradient(circle, rgba(0,245,255,0.10), rgba(0,0,0,0.92))"
-    : `conic-gradient(${slotCalls
-        .map((_, index) => {
-          const start = (index / slotCalls.length) * 360;
-          const end = ((index + 1) / slotCalls.length) * 360;
-          const color =
-            index % 2 === 0
-              ? "rgba(0,245,255,0.42)"
-              : "rgba(0,45,28,0.92)";
-
-          return `${color} ${start}deg ${end}deg`;
-        })
-        .join(", ")})`,
-    }}
-  >
-
-    {/* INNER RING */}
-    <div className="absolute h-[78%] w-[78%] rounded-full border border-cyan-300/15" />
-
-    {/* SLOT LABELS */}
-{slotCalls.map((slot, index) => {
-  const total = Math.max(slotCalls.length, 1);
-  const segmentSize = 360 / total;
-  const angle = index * segmentSize + segmentSize / 2;
-
-  return (
-    <div
-      key={`${slot.username}-${slot.slotName}-${index}`}
-      className="absolute left-1/2 top-1/2 z-10"
-      style={{
-        transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(${window.innerWidth < 640 ? "-84px" : "-118px"})`,
-      }}
-    >
-      <div
-        className="w-[72px] truncate text-center text-[8px] font-black uppercase tracking-wide text-white drop-shadow-[0_0_8px_rgba(0,0,0,1)] sm:w-[110px] sm:text-[10px]"
-        style={{
-          transform: "rotate(90deg)",
-        }}
-      >
-        {slot.slotName}
-      </div>
-    </div>
-  );
-})}
-
-    {/* CENTER */}
-    <div className="relative z-20 flex h-20 w-20 sm:h-32 sm:w-32 items-center justify-center rounded-full border-4 border-cyan-300/25 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.28),rgba(0,0,0,1)_70%)] shadow-[0_0_35px_rgba(0,245,255,0.45)]">
-      <div className="text-center">
-        <div className="text-sm font-black uppercase tracking-[0.2em] text-cyan-200">
-          Trashguy
-        </div>
-        <div className="text-sm sm:text-xl font-black text-white">
-          Wheel
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-      <div className="mt-6">
-        {pickedSlotCall ? (
-          <div className="rounded-[1.5rem] border border-cyan-300/35 bg-cyan-400/10 p-5 shadow-[0_0_30px_rgba(0,245,255,0.14)]">
-            <div className="text-xs uppercase tracking-[0.25em] text-cyan-300/70">
-              Picked Slot
-            </div>
-
-            <div className="mt-2 text-2xl sm:text-3xl font-black text-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.8)] sm:text-4xl">
-              {pickedSlotCall.slotName}
-            </div>
-
-            <div className="mt-2 text-sm text-white/45">
-              called by {pickedSlotCall.username}
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm font-semibold text-white/45">
-            {slotCalls.length === 0 ? "Waiting for slot calls..." : "Ready to spin."}
-          </div>
-        )}
-      </div>
-
-      <div className="mt-5 grid gap-3">
-        <ActionButton
-          onClick={handleSpinSlotWheel}
-          disabled={isSlotWheelSpinning || slotCalls.length === 0}
-          variant="green"
+        <details
+          open={adminDropdowns.slotWheel}
+          onToggle={(e) => setAdminDropdown("slotWheel", e.currentTarget.open)}
+          className="rounded-xl border border-cyan-300/20 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
         >
-          {isSlotWheelSpinning ? "Spinning..." : "Spin Wheel"}
-        </ActionButton>
+          <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
+            Slot Call Wheel
+          </summary>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <ActionButton
-            onClick={handleShuffleSlotWheel}
-            disabled={slotCalls.length <= 1 || isSlotWheelSpinning}
-            variant="purple"
-          >
-            Shuffle
-          </ActionButton>
+          <div className="grid gap-4 p-0 pt-4 sm:gap-6 sm:p-4 lg:grid-cols-[420px_1fr] lg:p-6">
+            <div className="rounded-xl border border-cyan-300/20 bg-black/45 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:rounded-[2rem] sm:p-5">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-cyan-300/70 sm:text-xs sm:tracking-[0.28em]">
+                Community Picker
+              </div>
 
-          <ActionButton
-            onClick={handleRemovePickedSlot}
-            disabled={!pickedSlotCall}
-            variant="red"
-          >
-            Remove Picked
-          </ActionButton>
-        </div>
-      </div>
-    </div>
+              <div className="relative mx-auto mt-4 h-[230px] w-[230px] sm:mt-6 sm:h-[360px] sm:w-[360px]">
+                <div className="absolute inset-0 rounded-full bg-cyan-400/10 blur-3xl" />
 
-    <div className="rounded-[2rem] border border-white/10 bg-black/35 p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="text-xs uppercase tracking-[0.24em] text-cyan-300/80">
-            Live Slot Calls
-          </div>
-
-          <div className="mt-2 text-sm text-white/45">
-            Viewers type <span className="font-bold text-white">!slot wanted</span> in Twitch chat.
-          </div>
-        </div>
-
-        <ActionButton
-          onClick={() => setSlotCalls([])}
-          variant="red"
-          className="min-h-[42px] px-4 py-2 text-xs"
-        >
-          Clear Calls
-        </ActionButton>
-      </div>
-
-      <div className="mt-5 max-h-[520px] overflow-y-auto rounded-2xl border border-white/10 bg-black/35 p-3">
-        {slotCalls.length === 0 ? (
-          <div className="p-4 sm:p-8 text-center text-sm text-white/40">
-            No slot calls yet.
-          </div>
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {slotCalls.map((call, index) => (
-              <div
-                key={`${call.username}-${call.slotName}-${index}`}
-                className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 transition hover:border-cyan-300/25 hover:bg-cyan-400/[0.06]"
-              >
-                <div className="truncate font-black text-white">
-                  {call.slotName}
+                <div className="absolute left-1/2 top-0 z-30 -translate-x-1/2">
+                  <div className="h-0 w-0 border-l-[16px] border-r-[16px] border-t-[28px] border-l-transparent border-r-transparent border-t-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.9)] sm:border-l-[22px] sm:border-r-[22px] sm:border-t-[38px]" />
                 </div>
 
-                <div className="mt-1 truncate text-xs text-white/35">
-                  called by {call.username}
+                <div
+                  className="relative flex h-full w-full items-center justify-center rounded-full border-[8px] border-cyan-300/40 bg-black shadow-[0_0_55px_rgba(0,245,255,0.20)] transition-transform duration-[5200ms] ease-out sm:border-[10px] sm:shadow-[0_0_80px_rgba(0,245,255,0.22)]"
+                  style={{
+                    transform: `rotate(${slotWheelRotation}deg)`,
+                    background:
+                      slotCalls.length === 0
+                        ? "radial-gradient(circle, rgba(0,245,255,0.10), rgba(0,0,0,0.92))"
+                        : `conic-gradient(${slotCalls
+                            .map((_, index) => {
+                              const start = (index / slotCalls.length) * 360;
+                              const end = ((index + 1) / slotCalls.length) * 360;
+                              const color =
+                                index % 2 === 0
+                                  ? "rgba(0,245,255,0.42)"
+                                  : "rgba(0,45,55,0.92)";
+                              return `${color} ${start}deg ${end}deg`;
+                            })
+                            .join(", ")})`,
+                  }}
+                >
+                  <div className="absolute h-[78%] w-[78%] rounded-full border border-cyan-300/15" />
+
+                  {slotCalls.map((slot, index) => {
+                    const total = Math.max(slotCalls.length, 1);
+                    const segmentSize = 360 / total;
+                    const angle = index * segmentSize + segmentSize / 2;
+
+                    return (
+                      <div
+                        key={`${slot.username}-${slot.slotName}-${index}`}
+                        className="absolute left-1/2 top-1/2 z-10"
+                        style={{
+                          transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-84px)`,
+                        }}
+                      >
+                        <div
+                          className="w-[72px] truncate text-center text-[8px] font-black uppercase tracking-wide text-white drop-shadow-[0_0_8px_rgba(0,0,0,1)] sm:w-[110px] sm:text-[10px]"
+                          style={{ transform: "rotate(90deg)" }}
+                        >
+                          {slot.slotName}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  <div className="relative z-20 flex h-20 w-20 items-center justify-center rounded-full border-4 border-cyan-300/25 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.28),rgba(0,0,0,1)_70%)] shadow-[0_0_28px_rgba(0,245,255,0.40)] sm:h-32 sm:w-32 sm:shadow-[0_0_35px_rgba(0,245,255,0.45)]">
+                    <div className="text-center">
+                      <div className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-200 sm:text-sm sm:tracking-[0.2em]">
+                        Trashguy
+                      </div>
+                      <div className="text-sm font-black text-white sm:text-xl">
+                        Wheel
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 sm:mt-6">
+                {pickedSlotCall ? (
+                  <div className="rounded-xl border border-cyan-300/35 bg-cyan-400/10 p-3 shadow-[0_0_30px_rgba(0,245,255,0.14)] sm:rounded-[1.5rem] sm:p-5">
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/70 sm:text-xs sm:tracking-[0.25em]">
+                      Picked Slot
+                    </div>
+
+                    <div className="mt-2 truncate text-2xl font-black text-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.8)] sm:text-4xl">
+                      {pickedSlotCall.slotName}
+                    </div>
+
+                    <div className="mt-2 text-xs text-white/45 sm:text-sm">
+                      called by {pickedSlotCall.username}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs font-semibold text-white/45 sm:rounded-2xl sm:p-4 sm:text-sm">
+                    {slotCalls.length === 0 ? "Waiting for slot calls..." : "Ready to spin."}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 grid gap-2 sm:mt-5 sm:gap-3">
+                <ActionButton
+                  onClick={handleSpinSlotWheel}
+                  disabled={isSlotWheelSpinning || slotCalls.length === 0}
+                  variant="green"
+                >
+                  {isSlotWheelSpinning ? "Spinning..." : "Spin Wheel"}
+                </ActionButton>
+
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <ActionButton
+                    onClick={handleShuffleSlotWheel}
+                    disabled={slotCalls.length <= 1 || isSlotWheelSpinning}
+                    variant="purple"
+                  >
+                    Shuffle
+                  </ActionButton>
+
+                  <ActionButton
+                    onClick={handleRemovePickedSlot}
+                    disabled={!pickedSlotCall}
+                    variant="red"
+                  >
+                    Remove
+                  </ActionButton>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-black/35 p-3 sm:rounded-[2rem] sm:p-5">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
+                    Live Slot Calls
+                  </div>
+
+                  <div className="mt-1 text-xs text-white/45 sm:mt-2 sm:text-sm">
+                    Viewers type <span className="font-bold text-white">!slot wanted</span>.
+                  </div>
                 </div>
 
                 <ActionButton
-                  onClick={() =>
-                    setSlotCalls((current) =>
-                      current.filter((_, itemIndex) => itemIndex !== index)
-                    )
-                  }
+                  onClick={() => setSlotCalls([])}
                   variant="red"
-                  className="mt-3 min-h-[34px] w-full px-3 py-1 text-[10px]"
+                  className="min-h-[34px] px-3 py-1 text-[9px] sm:min-h-[42px] sm:text-xs"
                 >
-                  Remove
+                  Clear
                 </ActionButton>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-</details>
 
+              <div className="mt-3 max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-black/35 p-2 sm:mt-5 sm:max-h-[520px] sm:rounded-2xl sm:p-3">
+                {slotCalls.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-white/40 sm:p-8 sm:text-sm">
+                    No slot calls yet.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
+                    {slotCalls.map((call, index) => (
+                      <div
+                        key={`${call.username}-${call.slotName}-${index}`}
+                        className="rounded-xl border border-white/10 bg-white/[0.04] p-2 transition hover:border-cyan-300/25 hover:bg-cyan-400/[0.06] sm:rounded-2xl sm:p-3"
+                      >
+                        <div className="truncate text-xs font-black text-white sm:text-base">
+                          {call.slotName}
+                        </div>
+
+                        <div className="mt-1 truncate text-[10px] text-white/35 sm:text-xs">
+                          by {call.username}
+                        </div>
+
+                        <ActionButton
+                          onClick={() =>
+                            setSlotCalls((current) =>
+                              current.filter((_, itemIndex) => itemIndex !== index)
+                            )
+                          }
+                          variant="red"
+                          className="mt-2 min-h-[28px] w-full px-2 py-1 text-[8px] sm:mt-3 sm:min-h-[34px] sm:text-[10px]"
+                        >
+                          Remove
+                        </ActionButton>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </details>
       </div>
     </Panel>
   </section>
