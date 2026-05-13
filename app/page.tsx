@@ -3672,11 +3672,11 @@ const handleGenerateBracket = () => {
                 : "border border-white/10 bg-white/5 text-white/70"
             }`}
           >
-            {Number(entry.weight || 1) >= 1.2
-              ? `💎 ${entry.weight || 1}x VIP`
-              : Number(entry.weight || 1) >= 1.1
-              ? `⭐ ${entry.weight || 1}x Affiliate`
-              : `👤 ${entry.weight || 1}x Viewer`}
+{Number(entry.weight || 1) >= 1.2
+  ? "💎 1.2x VIP"
+  : Number(entry.weight || 1) >= 1.1
+  ? "⭐ 1.1x Affiliate"
+  : "👤 1x Viewer"}
           </div>
         </div>
       ))
