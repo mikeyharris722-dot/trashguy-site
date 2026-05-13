@@ -2315,225 +2315,183 @@ const handleGenerateBracket = () => {
 />
 
 <main className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-10">
-  {activeSection === "home" && (
-    <section className="space-y-4 sm:space-y-10">
-      <section className="relative -mx-3 overflow-hidden px-3 py-6 text-center sm:-mx-6 sm:px-6 sm:py-24">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,245,255,0.14),transparent_58%)]" />
+{activeSection === "home" && (
+  <section className="space-y-3 sm:space-y-10">
+    <section className="relative -mx-3 overflow-hidden px-3 py-5 text-center sm:-mx-6 sm:px-6 sm:py-24">
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,245,255,0.14),transparent_58%)]" />
 
-        <div className="relative z-10 mx-auto max-w-5xl">
-          <img
-            src="/hero-logos.png"
-            alt="Trashguy x RouloBets"
-            className="mx-auto h-[135px] w-auto object-contain drop-shadow-[0_0_42px_rgba(0,245,255,0.38)] sm:h-[420px] sm:drop-shadow-[0_0_65px_rgba(0,245,255,0.45)]"
-          />
+      <div className="relative z-10 mx-auto max-w-5xl">
+        <img
+          src="/hero-logos.png"
+          alt="Trashguy x RouloBets"
+          className="mx-auto h-[125px] w-auto object-contain drop-shadow-[0_0_42px_rgba(0,245,255,0.38)] sm:h-[420px] sm:drop-shadow-[0_0_65px_rgba(0,245,255,0.45)]"
+        />
 
-          <h1
-            className={`${russo.className} mx-auto mt-2 max-w-5xl text-center text-[clamp(0.95rem,4.8vw,4rem)] leading-[1.02] tracking-[-0.03em] text-white`}
-            style={{
-              textShadow:
-                "0 0 14px rgba(0,245,255,0.16), 0 0 34px rgba(0,245,255,0.08)",
-            }}
-          >
-            ONE MAN’S TRASH IS ANOTHER MAN’S MAX WIN
-          </h1>
+        <h1
+          className={`${russo.className} mx-auto mt-2 max-w-5xl text-center text-[clamp(0.95rem,4.8vw,4rem)] leading-[1.02] tracking-[-0.03em] text-white`}
+          style={{
+            textShadow:
+              "0 0 14px rgba(0,245,255,0.16), 0 0 34px rgba(0,245,255,0.08)",
+          }}
+        >
+          ONE MAN’S TRASH IS ANOTHER MAN’S MAX WIN
+        </h1>
 
-          <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-6 text-white/70 sm:mt-7 sm:text-lg sm:leading-8">
-            Sign up on RouloBets under code{" "}
-            <span className="font-black text-[#8fffd0]">trashguy</span>{" "}
-            to earn monthly prizes, VIP rewards, and daily stream giveaways.
-          </p>
+        <p className="mx-auto mt-3 max-w-2xl text-xs font-semibold leading-5 text-white/70 sm:mt-7 sm:text-lg sm:leading-8">
+          Sign up on RouloBets under code{" "}
+          <span className="font-black text-[#8fffd0]">trashguy</span>{" "}
+          to earn monthly prizes, VIP rewards, and daily stream giveaways.
+        </p>
 
-          <a
-            href="https://roulobets.com/?r=trashguy"
-            target="_blank"
-            rel="noreferrer"
-            className="group relative mt-5 inline-flex min-h-[48px] min-w-[235px] items-center justify-center overflow-hidden rounded-xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.34),rgba(0,120,255,0.24))] px-5 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-[0_0_34px_rgba(0,255,255,0.32)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)] sm:mt-9 sm:min-h-[66px] sm:min-w-[280px] sm:rounded-2xl sm:px-8 sm:py-4 sm:text-sm sm:tracking-[0.22em]"
-          >
-            <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
-            <span className="relative z-10">Claim Rewards On Roulo</span>
-          </a>
+        <a
+          href="https://roulobets.com/?r=trashguy"
+          target="_blank"
+          rel="noreferrer"
+          className="group relative mt-4 inline-flex min-h-[44px] min-w-[220px] items-center justify-center overflow-hidden rounded-xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.34),rgba(0,120,255,0.24))] px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_30px_rgba(0,255,255,0.28)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)] sm:mt-9 sm:min-h-[66px] sm:min-w-[280px] sm:rounded-2xl sm:px-8 sm:py-4 sm:text-sm sm:tracking-[0.22em]"
+        >
+          <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
+          <span className="relative z-10">Claim Rewards On Roulo</span>
+        </a>
+      </div>
+    </section>
+
+    <div className="mx-auto mt-2 grid max-w-4xl grid-cols-3 gap-2 sm:mt-10 sm:gap-4">
+      <div className="flex min-h-[92px] flex-col items-center justify-center rounded-xl border border-cyan-300/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(0,245,255,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] sm:p-5">
+        <div className="text-base sm:text-3xl">👑</div>
+        <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
+          VIP Rewards
         </div>
-      </section>
-
- <div className="mx-auto mt-3 grid max-w-4xl gap-3 sm:mt-10 sm:gap-4 md:grid-cols-3">
-
-  <div className="flex flex-col items-center rounded-[1rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] p-3 text-center shadow-[0_0_18px_rgba(0,245,255,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 sm:rounded-[1.4rem] sm:p-5">
-    <div className="text-xl sm:text-3xl">👑</div>
-
-    <div className="mt-2 text-lg font-black text-white sm:mt-3 sm:text-2xl">
-      VIP Rewards
-    </div>
-
-    <div className="mt-2 max-w-[210px] text-[13px] leading-5 text-white/65 sm:text-sm sm:leading-6">
-      Wager 2k or more on my code to earn exclusive rewards.
-    </div>
-  </div>
-
-  <div className="flex flex-col items-center rounded-[1rem] border border-yellow-500/20 bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] p-3 text-center shadow-[0_0_18px_rgba(234,179,8,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40 sm:rounded-[1.4rem] sm:p-5">
-    <div className="text-xl sm:text-4xl">🏆</div>
-
-    <div className="mt-2 text-lg font-black text-white sm:mt-3 sm:text-2xl">
-      Monthly Prizes
-    </div>
-
-    <div className="mt-2 max-w-[210px] text-[13px] leading-5 text-white/65 sm:text-sm sm:leading-6">
-      Compete for monthly leaderboard prizes and special events.
-    </div>
-  </div>
-
-  <div className="flex flex-col items-center rounded-[1rem] border border-fuchsia-500/20 bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] p-3 text-center shadow-[0_0_18px_rgba(217,70,239,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40 sm:rounded-[1.4rem] sm:p-5">
-    <div className="text-xl sm:text-4xl">🎁</div>
-
-    <div className="mt-2 text-lg font-black text-white sm:mt-3 sm:text-2xl">
-      Daily Giveaways
-    </div>
-
-    <div className="mt-2 max-w-[210px] text-[13px] leading-5 text-white/65 sm:text-sm sm:leading-6">
-      Stream rewards and bonus buys for all Twitch viewers.
-    </div>
-  </div>
+        <div className="mt-1 text-[9px] leading-4 text-white/55 sm:mt-2 sm:max-w-[210px] sm:text-sm sm:leading-6">
+          Wager 2k+ for rewards.
+        </div>
       </div>
 
-      <section className="relative py-2 sm:py-6">
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
-          {socials.map((social) => {
-            const Icon = social.icon;
-
-            return (
-              <a
-                key={social.name}
-                href={social.href}
-                target="_blank"
-                rel="noreferrer"
-                className={`group flex items-center justify-between rounded-[1.1rem] border px-3 py-3 transition hover:scale-[1.01] sm:rounded-[1.5rem] sm:px-5 sm:py-4 ${
-                  social.name === "Discord"
-                    ? "border-[#5865F2]/35 bg-[#050816]/85 hover:bg-[#0b1230]/90"
-                    : social.name === "YouTube"
-                    ? "border-[#FF0000]/35 bg-[#180505]/85 hover:bg-[#250707]/90"
-                    : social.name === "Instagram"
-                    ? "border-[#E1306C]/35 bg-[#1a0610]/85 hover:bg-[#260819]/90"
-                    : social.name === "Twitter / X"
-                    ? "border-white/20 bg-black/85 hover:bg-zinc-900/90"
-                    : "border-cyan-300/30 bg-black/85 hover:bg-cyan-950/80"
-                }`}
-              >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div
-                    className={`flex h-11 w-11 items-center justify-center rounded-xl border sm:h-14 sm:w-14 sm:rounded-2xl ${
-                      social.name === "Discord"
-                        ? "border-[#5865F2]/40 bg-[#5865F2]/15"
-                        : social.name === "YouTube"
-                        ? "border-[#FF0000]/40 bg-[#FF0000]/15"
-                        : social.name === "Instagram"
-                        ? "border-[#E1306C]/40 bg-[#E1306C]/15"
-                        : social.name === "Twitter / X"
-                        ? "border-white/15 bg-white/[0.06]"
-                        : "border-cyan-300/30 bg-cyan-400/10"
-                    }`}
-                  >
-                    <Icon
-                      className={`text-2xl sm:text-3xl ${
-                        social.name === "Discord"
-                          ? "text-[#5865F2]"
-                          : social.name === "YouTube"
-                          ? "text-[#FF0000]"
-                          : social.name === "Instagram"
-                          ? "text-[#E1306C]"
-                          : social.name === "Twitter / X"
-                          ? "text-white"
-                          : "text-[#8fffd0]"
-                      }`}
-                    />
-                  </div>
-
-                  <div className="text-base font-black text-white sm:text-lg">
-                    {social.name}
-                  </div>
-                </div>
-
-                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35 group-hover:text-[#8fffd0] sm:text-xs sm:tracking-[0.2em]">
-                  Visit
-                </div>
-              </a>
-            );
-          })}
+      <div className="flex min-h-[92px] flex-col items-center justify-center rounded-xl border border-yellow-500/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(234,179,8,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] sm:p-5">
+        <div className="text-base sm:text-4xl">🏆</div>
+        <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
+          Monthly
         </div>
-      </section>
+        <div className="mt-1 text-[9px] leading-4 text-white/55 sm:mt-2 sm:max-w-[210px] sm:text-sm sm:leading-6">
+          Leaderboard prizes.
+        </div>
+      </div>
 
-      <section className="relative py-5 sm:py-8">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <SectionLabel>Live Stream</SectionLabel>
-            <h2 className="mt-2 text-xl font-black sm:text-3xl">
-              WATCH TRASHGUY LIVE
-            </h2>
-          </div>
+      <div className="flex min-h-[92px] flex-col items-center justify-center rounded-xl border border-fuchsia-500/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(217,70,239,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] sm:p-5">
+        <div className="text-base sm:text-4xl">🎁</div>
+        <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
+          Giveaways
+        </div>
+        <div className="mt-1 text-[9px] leading-4 text-white/55 sm:mt-2 sm:max-w-[210px] sm:text-sm sm:leading-6">
+          Daily stream rewards.
+        </div>
+      </div>
+    </div>
 
+    <section className="relative py-2 sm:py-6">
+      <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2 sm:max-w-5xl sm:grid-cols-4 sm:gap-4">
+        {socials.map((social) => {
+          const Icon = social.icon;
+
+          return (
+            <a
+              key={social.name}
+              href={social.href}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={social.name}
+              className="group flex min-h-[58px] items-center justify-center rounded-xl border border-white/10 bg-black/50 p-2 backdrop-blur-md transition hover:-translate-y-0.5 hover:border-cyan-300/35 hover:bg-cyan-400/10 sm:min-h-[92px] sm:rounded-2xl sm:p-4"
+            >
+              <Icon
+                className={`text-2xl transition group-hover:scale-110 sm:text-4xl ${
+                  social.name === "Discord"
+                    ? "text-[#5865F2]"
+                    : social.name === "YouTube"
+                    ? "text-[#FF0000]"
+                    : social.name === "Instagram"
+                    ? "text-[#E1306C]"
+                    : social.name === "Twitter / X"
+                    ? "text-white"
+                    : "text-cyan-200"
+                }`}
+              />
+            </a>
+          );
+        })}
+      </div>
+    </section>
+
+    <section className="relative py-5 sm:py-8">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <SectionLabel>Live Stream</SectionLabel>
+          <h2 className="mt-2 text-xl font-black sm:text-3xl">
+            WATCH TRASHGUY LIVE
+          </h2>
+        </div>
+
+        <a
+          href="https://www.twitch.tv/trashguy__"
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-full border border-[#9146FF]/40 bg-[#9146FF]/20 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white transition hover:bg-[#9146FF]/35 sm:px-5 sm:py-3"
+        >
+          Open Twitch
+        </a>
+      </div>
+
+      <div className="mt-4 aspect-video overflow-hidden rounded-[1.25rem] border border-cyan-300/20 bg-black sm:rounded-[2rem]">
+        {liveStatus.isLive ? (
+          <iframe
+            src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
+            height="100%"
+            width="100%"
+            allowFullScreen
+          />
+        ) : (
           <a
             href="https://www.twitch.tv/trashguy__"
             target="_blank"
             rel="noreferrer"
-            className="rounded-full border border-[#9146FF]/40 bg-[#9146FF]/20 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white transition hover:bg-[#9146FF]/35 sm:px-5 sm:py-3"
+            className="relative flex h-full items-center justify-center overflow-hidden"
           >
-            Open Twitch
-          </a>
-        </div>
+            <div className="absolute inset-0 bg-[url('/trashguy-casino.png')] bg-cover bg-center opacity-45" />
+            <div className="absolute inset-0 bg-black/45" />
 
-        <div className="mt-4 aspect-video overflow-hidden rounded-[1.25rem] border border-cyan-300/20 bg-black sm:rounded-[2rem]">
-          {liveStatus.isLive ? (
-            <iframe
-              src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
-              height="100%"
-              width="100%"
-              allowFullScreen
-            />
-          ) : (
-            <a
-              href="https://www.twitch.tv/trashguy__"
-              target="_blank"
-              rel="noreferrer"
-              className="relative flex h-full items-center justify-center overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-[url('/trashguy-casino.png')] bg-cover bg-center opacity-45" />
-              <div className="absolute inset-0 bg-black/45" />
-
-              <div className="relative z-10 text-center">
-                <div className="text-3xl font-black text-white sm:text-5xl">
-                  OFFLINE
-                </div>
-
-                <div className="mt-2 text-sm text-white/50 sm:text-base">
-                  Tap to open Twitch
-                </div>
+            <div className="relative z-10 text-center">
+              <div className="text-3xl font-black text-white sm:text-5xl">
+                OFFLINE
               </div>
-            </a>
-          )}
-        </div>
-      </section>
+
+              <div className="mt-2 text-sm text-white/50 sm:text-base">
+                Tap to open Twitch
+              </div>
+            </div>
+          </a>
+        )}
+      </div>
     </section>
-  )}
+  </section>
+)}
 
 {activeSection === "leaderboard" && (
-  <section className="space-y-3 sm:space-y-6">
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-4 shadow-[0_0_35px_rgba(0,245,255,0.08)] sm:p-8 sm:shadow-[0_0_50px_rgba(0,245,255,0.10)]">
+  <section className="space-y-2 sm:space-y-6">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-3 shadow-[0_0_25px_rgba(0,245,255,0.06)] sm:p-8 sm:shadow-[0_0_50px_rgba(0,245,255,0.10)]">
       <div className="text-center">
         <SectionLabel>Leaderboard</SectionLabel>
 
-        <h2 className="mt-3 text-[clamp(1.7rem,9vw,4.5rem)] font-black leading-[1.02] tracking-tight text-white sm:mt-4">
-          ${leaderboardTotal}
-          <br />
-          LEADERBOARD
+        <h2 className="mt-2 text-3xl font-black leading-[0.95] tracking-tight text-white sm:mt-4 sm:text-[clamp(2.5rem,6vw,4.5rem)]">
+          ${leaderboardTotal} LEADERBOARD
         </h2>
 
-        <div className="mt-2 text-xs text-white/50 sm:mt-4 sm:text-sm">
+        <div className="mt-1 text-[11px] text-white/45 sm:mt-4 sm:text-sm">
           Updated 15 mins ago
         </div>
 
-        <div className="mx-auto mt-3 max-w-[310px] text-[clamp(1.2rem,7vw,3.8rem)] font-black leading-tight text-[#8fffd0] sm:mt-4 sm:max-w-none">
+        <div className="mx-auto mt-2 max-w-[290px] text-xl font-black leading-tight text-cyan-200 sm:mt-4 sm:max-w-none sm:text-[clamp(2rem,5vw,3.8rem)]">
           Ends in: {leaderboardCountdown}
         </div>
 
-        <div className="mx-auto mt-4 h-2 w-full max-w-4xl overflow-hidden rounded-full border border-[rgba(0,245,255,0.18)] bg-[rgba(255,255,255,0.03)] sm:mt-6 sm:h-3">
+        <div className="mx-auto mt-3 h-1.5 w-full max-w-4xl overflow-hidden rounded-full border border-[rgba(0,245,255,0.18)] bg-[rgba(255,255,255,0.03)] sm:mt-6 sm:h-3">
           <div
             className="h-full rounded-full bg-[linear-gradient(90deg,#00f5ff,#19d3ff)] shadow-[0_0_20px_rgba(0,245,255,0.35)]"
             style={{ width: `${leaderboardProgress}%` }}
@@ -2542,8 +2500,8 @@ const handleGenerateBracket = () => {
       </div>
     </Panel>
 
-    <Panel className="mx-auto max-w-5xl overflow-hidden border-[rgba(0,245,255,0.16)] p-0 shadow-[0_0_40px_rgba(0,245,255,0.08)] sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
-      <div className="grid grid-cols-[52px_1fr_105px] border-b border-[rgba(0,245,255,0.12)] bg-[linear-gradient(180deg,rgba(0,245,255,0.08),rgba(0,245,255,0.03))] px-3 py-3 text-[9px] font-bold uppercase tracking-[0.18em] text-white/45 sm:grid-cols-[100px_1fr_190px_170px] sm:px-6 sm:py-4 sm:text-[11px] sm:tracking-[0.24em]">
+    <Panel className="mx-auto max-w-5xl overflow-hidden border-[rgba(0,245,255,0.16)] p-0 shadow-[0_0_30px_rgba(0,245,255,0.06)] sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
+      <div className="grid grid-cols-[42px_1fr_92px] border-b border-[rgba(0,245,255,0.12)] bg-[linear-gradient(180deg,rgba(0,245,255,0.08),rgba(0,245,255,0.03))] px-2.5 py-2 text-[8px] font-bold uppercase tracking-[0.14em] text-white/45 sm:grid-cols-[100px_1fr_190px_170px] sm:px-6 sm:py-4 sm:text-[11px] sm:tracking-[0.24em]">
         <div>Rank</div>
         <div>Player</div>
         <div className="text-right">Wagered</div>
@@ -2551,7 +2509,7 @@ const handleGenerateBracket = () => {
       </div>
 
       {leaderboardLoading && leaderboardData.length === 0 ? (
-        <div className="px-4 py-8 text-sm text-white/60 sm:px-6 sm:py-10">
+        <div className="px-4 py-6 text-sm text-white/60 sm:px-6 sm:py-10">
           Loading leaderboard...
         </div>
       ) : (
@@ -2562,18 +2520,18 @@ const handleGenerateBracket = () => {
             return (
               <div
                 key={`${player.rank}-${player.username}`}
-                className="grid grid-cols-[52px_1fr_105px] items-center px-3 py-3 transition hover:bg-white/[0.02] sm:grid-cols-[100px_1fr_190px_170px] sm:px-6 sm:py-5"
+                className="grid grid-cols-[42px_1fr_92px] items-center px-2.5 py-2.5 transition hover:bg-white/[0.02] sm:grid-cols-[100px_1fr_190px_170px] sm:px-6 sm:py-5"
               >
                 <div className="flex items-center">
                   <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-black sm:h-12 sm:w-12 sm:text-lg ${
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-black sm:h-12 sm:w-12 sm:text-lg ${
                       player.rank === 1
                         ? "border-yellow-400/55 text-yellow-300 shadow-[0_0_18px_rgba(250,204,21,0.22)]"
                         : player.rank === 2
                         ? "border-zinc-300/40 text-zinc-200"
                         : player.rank === 3
                         ? "border-amber-500/50 text-amber-300"
-                        : "border-[rgba(0,245,255,0.28)] text-[#8fffd0]"
+                        : "border-[rgba(0,245,255,0.28)] text-cyan-200"
                     }`}
                   >
                     {player.rank}
@@ -2581,17 +2539,17 @@ const handleGenerateBracket = () => {
                 </div>
 
                 <div className="min-w-0">
-                  <div className="truncate text-base font-black text-white sm:text-2xl">
+                  <div className="truncate text-sm font-black text-white sm:text-2xl">
                     {player.username}
                   </div>
 
-                  <div className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-white/28 sm:hidden">
+                  <div className="mt-0.5 text-[9px] uppercase tracking-[0.12em] text-white/28 sm:hidden">
                     Prize ${prize.toLocaleString()}
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <div className="text-sm font-black text-white sm:text-xl">
+                  <div className="text-xs font-black text-white sm:text-xl">
                     {formatMoney(player.wagered)}
                   </div>
                 </div>
@@ -2611,18 +2569,16 @@ const handleGenerateBracket = () => {
 )}
 
 {activeSection === "giveaways" && (
-  <section className="space-y-3 sm:space-y-6">
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-4 shadow-[0_0_35px_rgba(0,245,255,0.08)] sm:p-8 sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
+  <section className="space-y-2 sm:space-y-6">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-3 shadow-[0_0_25px_rgba(0,245,255,0.06)] sm:p-8 sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
       <div className="text-center">
         <SectionLabel>Giveaways</SectionLabel>
 
-        <h2 className="mt-2 text-[clamp(1.35rem,7vw,3.2rem)] font-black leading-[1.05] tracking-tight text-white sm:mt-3">
-          TOTAL
-          <br />
-          GIVEN AWAY
+        <h2 className="mt-2 text-2xl font-black leading-[0.95] tracking-tight text-white sm:mt-3 sm:text-[clamp(2.5rem,6vw,4.5rem)]">
+          TOTAL GIVEN AWAY
         </h2>
 
-        <div className="mt-3 text-[clamp(2rem,10vw,5rem)] font-black leading-none text-[#8fffd0] sm:mt-6">
+        <div className="mt-2 text-4xl font-black leading-none text-cyan-200 sm:mt-6 sm:text-[clamp(2.4rem,7vw,5rem)]">
           ${giveawayTotal.toLocaleString()}
         </div>
       </div>
@@ -2630,61 +2586,61 @@ const handleGenerateBracket = () => {
 
     {viewerName.toLowerCase() !== "trashguy__" &&
       viewerName.toLowerCase() !== "trashguy" && (
-        <Panel className="mx-auto max-w-5xl border-fuchsia-300/20 p-4 shadow-[0_0_35px_rgba(217,70,239,0.08)] sm:p-8 sm:shadow-[0_0_55px_rgba(217,70,239,0.10)]">
+        <Panel className="mx-auto max-w-5xl border-fuchsia-300/20 p-3 shadow-[0_0_25px_rgba(217,70,239,0.06)] sm:p-8 sm:shadow-[0_0_55px_rgba(217,70,239,0.10)]">
           <div className="text-center">
             <SectionLabel>Prize Portal</SectionLabel>
 
-            <h2 className="mt-2 text-[clamp(1.35rem,7vw,3.5rem)] font-black leading-[1.05] tracking-tight text-white sm:mt-4">
+            <h2 className="mt-2 text-2xl font-black leading-[1] tracking-tight text-white sm:mt-4 sm:text-[clamp(2rem,5vw,3.5rem)]">
               MY REWARDS
             </h2>
 
             {isTwitchConnected && (
-              <div className="mt-4 rounded-[1.2rem] border border-cyan-300/20 bg-black/30 p-4 text-left sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
-                <div className="text-[10px] uppercase tracking-[0.22em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
+              <div className="mt-3 rounded-xl border border-cyan-300/20 bg-black/30 p-3 text-left sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
                   Roulo Account
                 </div>
 
-                <div className="mt-3 grid gap-2 md:grid-cols-[1fr_auto] sm:gap-3">
+                <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto] sm:mt-3 sm:gap-3">
                   <input
                     value={rouloUsernameInput}
                     onChange={(e) => setRouloUsernameInput(e.target.value)}
                     placeholder="Enter your Roulo username"
-                    className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none sm:px-4 sm:py-3 sm:text-base"
+                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
                   />
 
                   <button
                     onClick={handleLinkRoulo}
-                    className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-4 py-2.5 text-sm font-bold text-cyan-200 hover:bg-cyan-400/20 sm:px-5 sm:py-3 sm:text-base"
+                    className="rounded-lg border border-cyan-300/25 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 hover:bg-cyan-400/20 sm:rounded-xl sm:px-5 sm:py-3 sm:text-base"
                   >
                     Link Roulo
                   </button>
                 </div>
 
                 {rouloLink && (
-                  <div className="mt-3 grid gap-2 sm:mt-4 md:grid-cols-3 sm:gap-3">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
+                  <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-3">
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+                      <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
                         Wagered
                       </div>
-                      <div className="mt-1 text-lg font-black text-white sm:text-xl">
+                      <div className="mt-1 truncate text-sm font-black text-white sm:text-xl">
                         ${Number(rouloLink.wagered || 0).toLocaleString()}
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+                      <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
                         Role
                       </div>
-                      <div className="mt-1 text-lg font-black uppercase text-[#8fffd0] sm:text-xl">
+                      <div className="mt-1 truncate text-sm font-black uppercase text-cyan-200 sm:text-xl">
                         {rouloLink.role}
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+                      <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
                         Chance
                       </div>
-                      <div className="mt-1 text-lg font-black text-[#f5c451] sm:text-xl">
+                      <div className="mt-1 text-sm font-black text-[#f5c451] sm:text-xl">
                         x{rouloLink.weight || 1}
                       </div>
                     </div>
@@ -2692,7 +2648,7 @@ const handleGenerateBracket = () => {
                 )}
 
                 {rouloLinkMessage && (
-                  <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/70 sm:mt-4 sm:text-sm">
+                  <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-2 text-xs text-white/70 sm:mt-4 sm:rounded-xl sm:p-3 sm:text-sm">
                     {rouloLinkMessage}
                   </div>
                 )}
@@ -2700,7 +2656,7 @@ const handleGenerateBracket = () => {
             )}
 
             {!isTwitchConnected ? (
-              <div className="mt-4 sm:mt-6">
+              <div className="mt-3 sm:mt-6">
                 <button
                   onClick={handleTwitchLogin}
                   className="rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-[#9146FF]/30 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base"
@@ -2710,29 +2666,29 @@ const handleGenerateBracket = () => {
               </div>
             ) : (
               <>
-                <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2">
-                  <div className="rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-4 sm:rounded-2xl sm:p-5">
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-yellow-200/70 sm:text-xs sm:tracking-[0.22em]">
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-4">
+                  <div className="rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-3 sm:rounded-2xl sm:p-5">
+                    <div className="text-[9px] uppercase tracking-[0.16em] text-yellow-200/70 sm:text-xs sm:tracking-[0.22em]">
                       Pending
                     </div>
-                    <div className="mt-1 text-2xl font-black text-yellow-200 sm:mt-2 sm:text-3xl">
+                    <div className="mt-1 text-xl font-black text-yellow-200 sm:mt-2 sm:text-3xl">
                       ${viewerRewardsPending.toLocaleString()}
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-4 sm:rounded-2xl sm:p-5">
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-cyan-200/70 sm:text-xs sm:tracking-[0.22em]">
+                  <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3 sm:rounded-2xl sm:p-5">
+                    <div className="text-[9px] uppercase tracking-[0.16em] text-cyan-200/70 sm:text-xs sm:tracking-[0.22em]">
                       Paid
                     </div>
-                    <div className="mt-1 text-2xl font-black text-cyan-200 sm:mt-2 sm:text-3xl">
+                    <div className="mt-1 text-xl font-black text-cyan-200 sm:mt-2 sm:text-3xl">
                       ${viewerRewardsPaid.toLocaleString()}
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-4 overflow-hidden rounded-[1.2rem] border border-white/10 bg-black/30 sm:mt-6 sm:rounded-[1.5rem]">
+                <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-black/30 sm:mt-6 sm:rounded-[1.5rem]">
                   {viewerRewards.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-sm text-white/45 sm:px-6 sm:py-10">
+                    <div className="px-4 py-6 text-center text-sm text-white/45 sm:px-6 sm:py-10">
                       {viewerRewardsMessage || "No rewards yet."}
                     </div>
                   ) : (
@@ -2740,13 +2696,13 @@ const handleGenerateBracket = () => {
                       {viewerRewards.map((reward) => (
                         <div
                           key={reward.id}
-                          className="flex items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-5 sm:py-4"
+                          className="flex items-center justify-between gap-3 px-3 py-2.5 sm:gap-4 sm:px-5 sm:py-4"
                         >
                           <div className="min-w-0 text-left">
                             <div className="truncate text-sm font-black text-white sm:text-base">
                               {reward.title || "Chat Giveaway"}
                             </div>
-                            <div className="mt-1 text-[11px] text-white/35 sm:text-xs">
+                            <div className="mt-0.5 text-[10px] text-white/35 sm:mt-1 sm:text-xs">
                               {reward.created_at
                                 ? new Date(reward.created_at).toLocaleString()
                                 : "Recently"}
@@ -2754,19 +2710,17 @@ const handleGenerateBracket = () => {
                           </div>
 
                           <div className="shrink-0 text-right">
-                            <div className="text-lg font-black text-[#8fffd0] sm:text-xl">
+                            <div className="text-base font-black text-cyan-200 sm:text-xl">
                               ${Number(reward.amount || 0).toLocaleString()}
                             </div>
                             <div
-                              className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-[10px] font-black sm:px-3 sm:text-xs ${
+                              className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[9px] font-black sm:px-3 sm:py-1 sm:text-xs ${
                                 reward.status === "complete"
                                   ? "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
                                   : "border border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
                               }`}
                             >
-                              {reward.status === "complete"
-                                ? "Completed"
-                                : "Pending"}
+                              {reward.status === "complete" ? "Done" : "Pending"}
                             </div>
                           </div>
                         </div>
@@ -2780,50 +2734,50 @@ const handleGenerateBracket = () => {
         </Panel>
       )}
 
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-4 shadow-[0_0_35px_rgba(0,245,255,0.08)] sm:p-8 sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-3 shadow-[0_0_25px_rgba(0,245,255,0.06)] sm:p-8 sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
       {giveawayLoading ? (
-        <div className="px-4 py-8 text-sm text-white/60 sm:px-6 sm:py-10">
+        <div className="px-4 py-6 text-sm text-white/60 sm:px-6 sm:py-10">
           Loading giveaways...
         </div>
       ) : giveaways.length === 0 ? (
-        <div className="px-4 py-8 text-center text-sm text-white/45 sm:px-6 sm:py-10">
+        <div className="px-4 py-6 text-center text-sm text-white/45 sm:px-6 sm:py-10">
           No giveaways logged yet.
         </div>
       ) : (
         <>
           {biggestGiveaway && (
-            <div className="mb-4 rounded-[1.2rem] border border-yellow-400/25 bg-[linear-gradient(180deg,rgba(250,204,21,0.10),rgba(0,245,255,0.04))] p-4 shadow-[0_0_20px_rgba(250,204,21,0.08)] sm:mb-6 sm:rounded-[1.5rem] sm:p-5 sm:shadow-[0_0_28px_rgba(250,204,21,0.08)]">
-              <div className="text-[10px] uppercase tracking-[0.24em] text-yellow-300/70 sm:text-xs sm:tracking-[0.3em]">
+            <div className="mb-3 rounded-xl border border-yellow-400/25 bg-[linear-gradient(180deg,rgba(250,204,21,0.10),rgba(0,245,255,0.04))] p-3 shadow-[0_0_16px_rgba(250,204,21,0.06)] sm:mb-6 sm:rounded-[1.5rem] sm:p-5 sm:shadow-[0_0_28px_rgba(250,204,21,0.08)]">
+              <div className="text-[9px] uppercase tracking-[0.18em] text-yellow-300/70 sm:text-xs sm:tracking-[0.3em]">
                 Biggest Giveaway
               </div>
 
-              <div className="mt-3 flex items-center justify-between gap-3 sm:gap-4">
+              <div className="mt-2 flex items-center justify-between gap-3 sm:mt-3 sm:gap-4">
                 <div className="min-w-0">
-                  <div className="truncate text-lg font-black text-white sm:text-2xl">
+                  <div className="truncate text-base font-black text-white sm:text-2xl">
                     🏆 {biggestGiveaway.winner_name}
                   </div>
 
                   {biggestGiveaway.note && (
-                    <div className="mt-1 truncate text-xs text-white/40 sm:text-sm">
+                    <div className="mt-0.5 truncate text-[10px] text-white/40 sm:mt-1 sm:text-sm">
                       {biggestGiveaway.note}
                     </div>
                   )}
                 </div>
 
-                <div className="shrink-0 text-xl font-black text-[#f5c451] sm:text-2xl">
+                <div className="shrink-0 text-lg font-black text-[#f5c451] sm:text-2xl">
                   ${Number(biggestGiveaway.amount || 0).toLocaleString()}
                 </div>
               </div>
             </div>
           )}
 
-          <div className="overflow-hidden rounded-[1.2rem] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)] sm:rounded-[1.5rem]">
+          <div className="overflow-hidden rounded-xl border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)] sm:rounded-[1.5rem]">
             <div
               className={`grid ${
                 isAdmin
-                  ? "grid-cols-[38px_minmax(0,1fr)_70px_58px]"
-                  : "grid-cols-[38px_minmax(0,1fr)_70px]"
-              } border-b border-white/5 px-3 py-3 text-[9px] font-bold uppercase tracking-[0.14em] text-white/35 sm:grid-cols-[52px_minmax(0,1fr)_90px_74px] sm:px-5 sm:py-4 sm:text-xs sm:tracking-[0.22em]`}
+                  ? "grid-cols-[30px_minmax(0,1fr)_56px_50px]"
+                  : "grid-cols-[30px_minmax(0,1fr)_56px]"
+              } border-b border-white/5 px-2.5 py-2 text-[8px] font-bold uppercase tracking-[0.12em] text-white/35 sm:grid-cols-[52px_minmax(0,1fr)_90px_74px] sm:px-5 sm:py-4 sm:text-xs sm:tracking-[0.22em]`}
             >
               <div>#</div>
               <div>Winner</div>
@@ -2831,17 +2785,17 @@ const handleGenerateBracket = () => {
               <div className="text-right">{isAdmin ? "Edit" : ""}</div>
             </div>
 
-            <div className="max-h-[460px] overflow-y-auto sm:max-h-[520px]">
+            <div className="max-h-[420px] overflow-y-auto sm:max-h-[520px]">
               {giveaways.map((giveaway, index) => (
                 <div
                   key={giveaway.id}
                   className={`grid ${
                     isAdmin
-                      ? "grid-cols-[38px_minmax(0,1fr)_70px_58px]"
-                      : "grid-cols-[38px_minmax(0,1fr)_70px]"
-                  } items-center border-b border-white/5 px-3 py-3 last:border-b-0 sm:grid-cols-[52px_minmax(0,1fr)_90px_74px] sm:px-5 sm:py-4`}
+                      ? "grid-cols-[30px_minmax(0,1fr)_56px_50px]"
+                      : "grid-cols-[30px_minmax(0,1fr)_56px]"
+                  } items-center border-b border-white/5 px-2.5 py-2.5 last:border-b-0 sm:grid-cols-[52px_minmax(0,1fr)_90px_74px] sm:px-5 sm:py-4`}
                 >
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[rgba(0,245,255,0.20)] bg-[rgba(0,245,255,0.08)] text-[10px] font-black text-[#8fffd0] sm:h-9 sm:w-9 sm:text-xs">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full border border-[rgba(0,245,255,0.20)] bg-[rgba(0,245,255,0.08)] text-[9px] font-black text-cyan-200 sm:h-9 sm:w-9 sm:text-xs">
                     {index + 1}
                   </div>
 
@@ -2851,13 +2805,13 @@ const handleGenerateBracket = () => {
                     </div>
 
                     {giveaway.note && (
-                      <div className="mt-0.5 truncate text-[10px] text-white/35 sm:mt-1 sm:text-xs">
+                      <div className="mt-0.5 truncate text-[9px] text-white/35 sm:mt-1 sm:text-xs">
                         {giveaway.note}
                       </div>
                     )}
                   </div>
 
-                  <div className="text-center text-xs font-black text-[#b8ffd8] sm:text-lg">
+                  <div className="text-center text-xs font-black text-cyan-200 sm:text-lg">
                     ${Number(giveaway.amount || 0).toLocaleString()}
                   </div>
 
@@ -2865,50 +2819,37 @@ const handleGenerateBracket = () => {
                     <div className="flex justify-end gap-1 sm:gap-2">
                       <button
                         onClick={async () => {
-                          const newName = prompt(
-                            "Edit name:",
-                            giveaway.winner_name
-                          );
-                          const newAmount = prompt(
-                            "Edit winnings:",
-                            String(giveaway.amount)
-                          );
-                          const newNote = prompt(
-                            "Edit note:",
-                            giveaway.note || ""
-                          );
+                          const newName = prompt("Edit name:", giveaway.winner_name);
+                          const newAmount = prompt("Edit winnings:", String(giveaway.amount));
+                          const newNote = prompt("Edit note:", giveaway.note || "");
 
                           if (!newName || !newAmount) return;
 
-                          await fetch(
-                            `/api/giveaways?id=${giveaway.id}&key=trashguy92`,
-                            {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                winner_name: newName,
-                                amount: Number(newAmount),
-                                note: newNote,
-                              }),
-                            }
-                          );
+                          await fetch(`/api/giveaways?id=${giveaway.id}&key=trashguy92`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              winner_name: newName,
+                              amount: Number(newAmount),
+                              note: newNote,
+                            }),
+                          });
 
                           window.location.reload();
                         }}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-yellow-400/30 bg-yellow-400/10 text-xs text-yellow-300 transition hover:bg-yellow-400/20 hover:shadow-[0_0_12px_rgba(250,204,21,0.45)] sm:h-8 sm:w-8"
+                        className="flex h-6 w-6 items-center justify-center rounded-md border border-yellow-400/30 bg-yellow-400/10 text-[10px] text-yellow-300 transition hover:bg-yellow-400/20 sm:h-8 sm:w-8 sm:rounded-lg sm:text-xs"
                       >
                         ✎
                       </button>
 
                       <button
                         onClick={async () => {
-                          await fetch(
-                            `/api/giveaways?id=${giveaway.id}&key=trashguy92`,
-                            { method: "DELETE" }
-                          );
+                          await fetch(`/api/giveaways?id=${giveaway.id}&key=trashguy92`, {
+                            method: "DELETE",
+                          });
                           window.location.reload();
                         }}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-400/30 bg-red-400/10 text-xs text-red-300 transition hover:bg-red-400/20 hover:shadow-[0_0_12px_rgba(248,113,113,0.45)] sm:h-8 sm:w-8"
+                        className="flex h-6 w-6 items-center justify-center rounded-md border border-red-400/30 bg-red-400/10 text-[10px] text-red-300 transition hover:bg-red-400/20 sm:h-8 sm:w-8 sm:rounded-lg sm:text-xs"
                       >
                         ×
                       </button>
@@ -2927,18 +2868,18 @@ const handleGenerateBracket = () => {
 )}
 
 {activeSection === "hunts" && (
-  <section className="space-y-4 sm:space-y-8">
+  <section className="space-y-2 sm:space-y-8">
     <div className="text-center">
-      <div className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300 sm:text-xs sm:tracking-[0.35em]">
+      <div className="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-300 sm:text-xs sm:tracking-[0.35em]">
         Bonus Hunts
       </div>
 
-      <h2 className="mt-2 text-[clamp(1.4rem,7vw,4rem)] font-black uppercase tracking-tight text-white drop-shadow-[0_0_28px_rgba(0,245,255,0.22)] sm:mt-3">
+      <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-white drop-shadow-[0_0_22px_rgba(0,245,255,0.18)] sm:mt-3 sm:text-[clamp(2.5rem,6vw,4rem)]">
         PREDICTIONS
       </h2>
     </div>
 
-    <div className="flex gap-3 overflow-x-auto pb-3 sm:gap-4 sm:pb-4">
+    <div className="flex gap-2 overflow-x-auto pb-2 sm:gap-4 sm:pb-4">
       {huntsData.map((hunt) => (
         <button
           key={hunt.id}
@@ -2948,25 +2889,19 @@ const handleGenerateBracket = () => {
               hunt.prediction_status === "open" ? "open" : "locked"
             );
           }}
-          className={`flex min-w-[135px] flex-col items-center justify-center rounded-xl border bg-black/70 p-3 text-center backdrop-blur-md transition hover:-translate-y-1 sm:min-w-[190px] sm:rounded-2xl sm:p-4 ${
+          className={`flex min-w-[118px] flex-col items-center justify-center rounded-lg border bg-black/70 p-2 text-center backdrop-blur-md transition hover:-translate-y-1 sm:min-w-[190px] sm:rounded-2xl sm:p-4 ${
             currentPredictionHunt?.id === hunt.id || adminHuntId === hunt.id
-              ? "border-cyan-300/45 shadow-[0_0_24px_rgba(0,245,255,0.16)]"
+              ? "border-cyan-300/45 shadow-[0_0_20px_rgba(0,245,255,0.12)]"
               : "border-white/10 hover:border-cyan-300/25"
           }`}
         >
-          <div className="text-xs font-black text-white sm:text-sm">
+          <div className="max-w-full truncate text-[11px] font-black text-white sm:text-sm">
             {hunt.title || "Bonus Hunt"}
           </div>
 
-          <div className="mt-2 flex flex-col items-center gap-0.5 text-[10px] font-semibold text-white/65 sm:mt-3 sm:gap-1 sm:text-xs">
+          <div className="mt-1 grid gap-0.5 text-[9px] font-semibold text-white/60 sm:mt-3 sm:text-xs">
             <div>Start: {formatMoney(hunt.startCost)}</div>
             <div>Won: {formatMoney(hunt.totalWinnings)}</div>
-            <div>
-              Avg X:{" "}
-              {hunt.startCost
-                ? `${((hunt.totalWinnings || 0) / hunt.startCost).toFixed(2)}x`
-                : "---"}
-            </div>
             <div
               className={
                 hunt.profitLoss >= 0 ? "text-cyan-300" : "text-red-300"
@@ -2980,50 +2915,51 @@ const handleGenerateBracket = () => {
       ))}
     </div>
 
-    <div className="overflow-hidden rounded-[1.25rem] border border-cyan-300/15 bg-black/70 backdrop-blur-xl shadow-[0_0_42px_rgba(0,245,255,0.07)] sm:rounded-[2rem] sm:shadow-[0_0_70px_rgba(0,245,255,0.08)]">
+    <div className="overflow-hidden rounded-xl border border-cyan-300/15 bg-black/70 backdrop-blur-xl shadow-[0_0_30px_rgba(0,245,255,0.05)] sm:rounded-[2rem] sm:shadow-[0_0_70px_rgba(0,245,255,0.08)]">
       <div className="grid lg:grid-cols-[1fr_1.05fr]">
-        <div className="border-b border-white/10 p-3 sm:p-6 lg:border-b-0 lg:border-r">
-          <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
-            <div>
-              <div className="flex items-center gap-2 text-base font-black text-white sm:text-xl">
-                <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(0,245,255,0.9)] sm:h-2.5 sm:w-2.5" />
-                {currentPredictionHunt?.title || "Latest Hunt"}
+        <div className="border-b border-white/10 p-2.5 sm:p-6 lg:border-b-0 lg:border-r">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-2 text-sm font-black text-white sm:text-xl">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(0,245,255,0.9)] sm:h-2.5 sm:w-2.5" />
+                <span className="truncate">
+                  {currentPredictionHunt?.title || "Latest Hunt"}
+                </span>
               </div>
-              <div className="mt-1 text-xs text-white/45 sm:text-sm">
+              <div className="mt-0.5 text-[11px] text-white/45 sm:text-sm">
                 {currentPredictionHunt?.casino || "RouloBets"}
               </div>
             </div>
 
             <div
-              className={`rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em] ${
+              className={`shrink-0 rounded-full border px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.12em] sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em] ${
                 predictionStatus === "open"
                   ? "border-cyan-300/30 bg-cyan-400/10 text-cyan-100"
                   : "border-red-300/25 bg-red-400/10 text-red-200"
               }`}
             >
-              {predictionStatus === "open" ? "Predictions Open" : "Closed"}
+              {predictionStatus === "open" ? "Open" : "Closed"}
             </div>
           </div>
 
-          <div className="mt-4 space-y-3 sm:mt-8 sm:space-y-4">
-            {/* TOP ROW */}
-            <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
-              <div className="rounded-[1.15rem] border border-white/10 bg-black/30 p-3 sm:rounded-[1.7rem] sm:p-6">
-                <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
+          <div className="mt-3 space-y-2 sm:mt-8 sm:space-y-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4">
+              <div className="rounded-xl border border-white/10 bg-black/30 p-2.5 sm:rounded-[1.7rem] sm:p-6">
+                <div className="text-[8px] font-black uppercase tracking-[0.14em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
                   Start
                 </div>
 
-                <div className="mt-2 text-3xl font-black tracking-tight text-white sm:mt-3 sm:text-5xl">
+                <div className="mt-1 text-xl font-black tracking-tight text-white sm:mt-3 sm:text-5xl">
                   {formatMoney(currentPredictionHunt?.startCost || 0)}
                 </div>
               </div>
 
-              <div className="rounded-[1.15rem] border border-cyan-400/20 bg-[rgba(0,245,255,0.06)] p-3 sm:rounded-[1.7rem] sm:p-6">
-                <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-100/45 sm:text-[11px] sm:tracking-[0.22em]">
+              <div className="rounded-xl border border-cyan-400/20 bg-[rgba(0,245,255,0.06)] p-2.5 sm:rounded-[1.7rem] sm:p-6">
+                <div className="text-[8px] font-black uppercase tracking-[0.14em] text-cyan-100/45 sm:text-[11px] sm:tracking-[0.22em]">
                   Won
                 </div>
 
-                <div className="mt-2 text-3xl font-black tracking-tight text-cyan-200 sm:mt-3 sm:text-5xl">
+                <div className="mt-1 text-xl font-black tracking-tight text-cyan-200 sm:mt-3 sm:text-5xl">
                   {formatMoney(
                     currentPredictionHunt?.stats?.totalWinnings ||
                       currentPredictionHunt?.totalWinnings ||
@@ -3033,24 +2969,23 @@ const handleGenerateBracket = () => {
               </div>
             </div>
 
-            {/* MIDDLE ROW */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4">
-              <div className="rounded-[1rem] border border-white/10 bg-black/30 p-3 sm:rounded-[1.5rem] sm:p-5">
-                <div className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-4">
+              <div className="rounded-lg border border-white/10 bg-black/30 p-2 sm:rounded-[1.5rem] sm:p-5">
+                <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
                   Bonuses
                 </div>
 
-                <div className="mt-2 text-xl font-black text-white sm:mt-3 sm:text-3xl">
+                <div className="mt-1 text-lg font-black text-white sm:mt-3 sm:text-3xl">
                   {currentPredictionHunt?.bonuses?.length || 0}
                 </div>
               </div>
 
-              <div className="rounded-[1rem] border border-white/10 bg-black/30 p-3 sm:rounded-[1.5rem] sm:p-5">
-                <div className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
+              <div className="rounded-lg border border-white/10 bg-black/30 p-2 sm:rounded-[1.5rem] sm:p-5">
+                <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
                   Avg X
                 </div>
 
-                <div className="mt-2 text-xl font-black text-white sm:mt-3 sm:text-3xl">
+                <div className="mt-1 text-base font-black text-white sm:mt-3 sm:text-3xl">
                   {currentPredictionHunt?.stats?.currentAverageMultiplier
                     ? `${Number(
                         currentPredictionHunt.stats.currentAverageMultiplier
@@ -3059,12 +2994,12 @@ const handleGenerateBracket = () => {
                 </div>
               </div>
 
-              <div className="rounded-[1rem] border border-white/10 bg-black/30 p-3 sm:rounded-[1.5rem] sm:p-5">
-                <div className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
+              <div className="rounded-lg border border-white/10 bg-black/30 p-2 sm:rounded-[1.5rem] sm:p-5">
+                <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
                   Req X
                 </div>
 
-                <div className="mt-2 text-xl font-black text-white sm:mt-3 sm:text-3xl">
+                <div className="mt-1 text-base font-black text-white sm:mt-3 sm:text-3xl">
                   {currentPredictionHunt?.stats?.averagePayoutRequired &&
                   currentPredictionHunt?.stats?.averageBetSize
                     ? `${(
@@ -3076,15 +3011,14 @@ const handleGenerateBracket = () => {
               </div>
             </div>
 
-            {/* BOTTOM ROW */}
-            <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
-              <div className="rounded-[1.15rem] border border-white/10 bg-black/30 p-3 sm:rounded-[1.8rem] sm:p-6">
-                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/35 sm:text-[11px] sm:tracking-[0.24em]">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4">
+              <div className="rounded-xl border border-white/10 bg-black/30 p-2.5 sm:rounded-[1.8rem] sm:p-6">
+                <div className="text-[8px] font-black uppercase tracking-[0.14em] text-white/35 sm:text-[11px] sm:tracking-[0.24em]">
                   Highest Win
                 </div>
 
-                <div className="mt-3 sm:mt-4">
-                  <div className="break-words text-lg font-black leading-tight text-white sm:text-2xl">
+                <div className="mt-2 sm:mt-4">
+                  <div className="truncate text-sm font-black leading-tight text-white sm:text-2xl">
                     {currentPredictionHunt?.bonuses?.length
                       ? [...currentPredictionHunt.bonuses].sort(
                           (a: any, b: any) =>
@@ -3093,7 +3027,7 @@ const handleGenerateBracket = () => {
                       : "---"}
                   </div>
 
-                  <div className="mt-2 text-xl font-black text-cyan-300 sm:mt-3 sm:text-3xl">
+                  <div className="mt-1 text-lg font-black text-cyan-300 sm:mt-3 sm:text-3xl">
                     {formatMoney(
                       currentPredictionHunt?.bonuses?.length
                         ? [...currentPredictionHunt.bonuses].sort(
@@ -3106,13 +3040,13 @@ const handleGenerateBracket = () => {
                 </div>
               </div>
 
-              <div className="rounded-[1.15rem] border border-white/10 bg-black/30 p-3 sm:rounded-[1.8rem] sm:p-6">
-                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/35 sm:text-[11px] sm:tracking-[0.24em]">
+              <div className="rounded-xl border border-white/10 bg-black/30 p-2.5 sm:rounded-[1.8rem] sm:p-6">
+                <div className="text-[8px] font-black uppercase tracking-[0.14em] text-white/35 sm:text-[11px] sm:tracking-[0.24em]">
                   Highest X
                 </div>
 
-                <div className="mt-3 sm:mt-4">
-                  <div className="break-words text-lg font-black leading-tight text-white sm:text-2xl">
+                <div className="mt-2 sm:mt-4">
+                  <div className="truncate text-sm font-black leading-tight text-white sm:text-2xl">
                     {currentPredictionHunt?.bonuses?.length
                       ? [...currentPredictionHunt.bonuses].sort(
                           (a: any, b: any) =>
@@ -3122,7 +3056,7 @@ const handleGenerateBracket = () => {
                       : "---"}
                   </div>
 
-                  <div className="mt-2 text-xl font-black text-cyan-300 sm:mt-3 sm:text-3xl">
+                  <div className="mt-1 text-lg font-black text-cyan-300 sm:mt-3 sm:text-3xl">
                     {currentPredictionHunt?.bonuses?.length
                       ? `${Number(
                           [...currentPredictionHunt.bonuses].sort(
@@ -3140,44 +3074,44 @@ const handleGenerateBracket = () => {
         </div>
 
         {/* RIGHT SIDE */}
-        <div className="p-3 sm:p-6">
+        <div className="p-2.5 sm:p-6">
           <div className="text-center">
             <div className="text-sm font-black text-white sm:text-lg">
               Guess the end balance
             </div>
-            <div className="mt-1 text-[11px] text-white/45 sm:mt-2 sm:text-xs">
+            <div className="mt-0.5 text-[10px] text-white/45 sm:mt-2 sm:text-xs">
               Closest predictions win. One entry per person.
             </div>
 
-            <div className="mt-3 flex flex-wrap justify-center gap-2 sm:mt-4">
-              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1.5 text-[10px] font-black text-cyan-100 sm:px-4 sm:py-2 sm:text-xs">
+            <div className="mt-2 flex flex-wrap justify-center gap-1.5 sm:mt-4 sm:gap-2">
+              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black text-cyan-100 sm:px-4 sm:py-2 sm:text-xs">
                 1st Closest $15
               </div>
-              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1.5 text-[10px] font-black text-cyan-100 sm:px-4 sm:py-2 sm:text-xs">
+              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black text-cyan-100 sm:px-4 sm:py-2 sm:text-xs">
                 2nd $10
               </div>
             </div>
           </div>
 
-          <div className="mt-4 rounded-xl border border-cyan-300/15 bg-cyan-400/5 p-3 sm:mt-6 sm:rounded-2xl sm:p-5">
+          <div className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-400/5 p-2.5 sm:mt-6 sm:rounded-2xl sm:p-5">
             <div className="grid gap-2 sm:gap-3 md:grid-cols-3">
               {rankedWinners.length === 0 ? (
-                <div className="col-span-full py-5 text-center text-sm text-white/45 sm:py-8">
+                <div className="col-span-full py-4 text-center text-xs text-white/45 sm:py-8 sm:text-sm">
                   Winners will appear when the hunt is completed.
                 </div>
               ) : (
                 rankedWinners.slice(0, 3).map((winner, index) => (
                   <div
                     key={winner.id}
-                    className="rounded-lg border border-white/10 bg-black/35 p-3 text-center sm:rounded-xl sm:p-4"
+                    className="rounded-lg border border-white/10 bg-black/35 p-2.5 text-center sm:rounded-xl sm:p-4"
                   >
-                    <div className="text-[10px] font-black uppercase text-yellow-300 sm:text-xs">
+                    <div className="text-[9px] font-black uppercase text-yellow-300 sm:text-xs">
                       {index === 0 ? "1st" : index === 1 ? "2nd" : "3rd"}
                     </div>
-                    <div className="mt-1 text-sm font-black text-white sm:mt-2">
+                    <div className="mt-1 text-sm font-black text-white">
                       {winner.username}
                     </div>
-                    <div className="mt-1 text-base font-black text-cyan-200 sm:mt-2 sm:text-xl">
+                    <div className="mt-1 text-base font-black text-cyan-200 sm:text-xl">
                       {formatMoney(winner.guess)}
                     </div>
                     <div className="mt-1 text-[10px] text-white/45 sm:text-xs">
@@ -3189,11 +3123,11 @@ const handleGenerateBracket = () => {
             </div>
           </div>
 
-          <div className="mt-4 sm:mt-6">
+          <div className="mt-3 sm:mt-6">
             {!isTwitchConnected ? (
               <button
                 onClick={handleTwitchLogin}
-                className="mx-auto flex rounded-lg border border-[#9146FF]/40 bg-[#9146FF]/25 px-5 py-2.5 text-xs font-black text-white transition hover:bg-[#9146FF]/35 sm:rounded-xl sm:px-6 sm:py-3 sm:text-sm"
+                className="mx-auto flex rounded-lg border border-[#9146FF]/40 bg-[#9146FF]/25 px-4 py-2 text-xs font-black text-white transition hover:bg-[#9146FF]/35 sm:rounded-xl sm:px-6 sm:py-3 sm:text-sm"
               >
                 Sign in with Twitch
               </button>
@@ -3206,26 +3140,26 @@ const handleGenerateBracket = () => {
                   }
                   placeholder="Enter final hunt balance"
                   disabled={predictionStatus !== "open"}
-                  className="w-full rounded-lg border border-white/10 bg-black/55 px-4 py-3 text-center text-sm text-white outline-none transition focus:border-cyan-300/40 disabled:opacity-40 sm:rounded-xl sm:px-5 sm:py-4 sm:text-base"
+                  className="w-full rounded-lg border border-white/10 bg-black/55 px-3 py-2.5 text-center text-sm text-white outline-none transition focus:border-cyan-300/40 disabled:opacity-40 sm:rounded-xl sm:px-5 sm:py-4 sm:text-base"
                 />
 
                 <button
                   onClick={handlePredictionSubmit}
                   disabled={predictionStatus !== "open"}
-                  className="mt-2 w-full rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:bg-cyan-400/20 disabled:opacity-40 sm:mt-3 sm:rounded-xl sm:px-5 sm:py-4 sm:tracking-[0.18em]"
+                  className="mt-2 w-full rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-cyan-100 transition hover:bg-cyan-400/20 disabled:opacity-40 sm:mt-3 sm:rounded-xl sm:px-5 sm:py-4 sm:text-sm sm:tracking-[0.18em]"
                 >
                   Save Prediction
                 </button>
 
                 {predictionMessage && (
-                  <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-center text-xs text-white/70 sm:mt-3 sm:rounded-xl sm:text-sm">
+                  <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-2.5 text-center text-xs text-white/70 sm:mt-3 sm:rounded-xl sm:p-3 sm:text-sm">
                     {predictionMessage}
                   </div>
                 )}
 
-                <div className="mt-4 rounded-xl border border-white/10 bg-black/35 p-3 sm:mt-6 sm:rounded-2xl sm:p-4">
-                  <div className="mb-2 flex items-center justify-between sm:mb-3">
-                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
+                <div className="mt-3 rounded-xl border border-white/10 bg-black/35 p-2.5 sm:mt-6 sm:rounded-2xl sm:p-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="text-[9px] font-black uppercase tracking-[0.16em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
                       Live Guesses
                     </div>
 
@@ -3234,7 +3168,7 @@ const handleGenerateBracket = () => {
                     </div>
                   </div>
 
-                  <div className="max-h-[220px] overflow-y-auto rounded-lg border border-white/10 bg-black/30 sm:max-h-[260px] sm:rounded-xl">
+                  <div className="max-h-[180px] overflow-y-auto rounded-lg border border-white/10 bg-black/30 sm:max-h-[260px] sm:rounded-xl">
                     {sortedPredictionsForTab.length === 0 ? (
                       <div className="p-4 text-center text-xs text-white/40 sm:p-6 sm:text-sm">
                         No guesses yet.
@@ -3244,18 +3178,18 @@ const handleGenerateBracket = () => {
                         {sortedPredictionsForTab.map((entry, index) => (
                           <div
                             key={entry.id}
-                            className="flex items-center justify-between gap-3 px-3 py-2.5 sm:px-4 sm:py-3"
+                            className="flex items-center justify-between gap-3 px-3 py-2 sm:px-4 sm:py-3"
                           >
                             <div className="min-w-0">
-                              <div className="truncate text-sm font-black text-white sm:text-base">
+                              <div className="truncate text-xs font-black text-white sm:text-base">
                                 #{index + 1} {entry.username}
                               </div>
-                              <div className="text-[10px] text-white/35 sm:text-xs">
+                              <div className="text-[9px] text-white/35 sm:text-xs">
                                 {formatTimeAgo(entry.createdAt)}
                               </div>
                             </div>
 
-                            <div className="text-sm font-black text-cyan-200 sm:text-base">
+                            <div className="text-xs font-black text-cyan-200 sm:text-base">
                               {formatMoney(entry.guess)}
                             </div>
                           </div>
@@ -3271,14 +3205,14 @@ const handleGenerateBracket = () => {
       </div>
 
       {/* BONUS LIST */}
-      <div className="border-t border-white/10 p-3 sm:p-6">
-        <div className="mb-3 text-[10px] font-black uppercase tracking-[0.22em] text-white/45 sm:mb-4 sm:text-xs sm:tracking-[0.25em]">
+      <div className="border-t border-white/10 p-2.5 sm:p-6">
+        <div className="mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-white/45 sm:mb-4 sm:text-xs sm:tracking-[0.25em]">
           Slots in this hunt
         </div>
 
-        <div className="max-h-[420px] overflow-y-auto rounded-xl border border-white/10 bg-black/35 sm:max-h-[520px] sm:rounded-2xl">
+        <div className="max-h-[360px] overflow-y-auto rounded-xl border border-white/10 bg-black/35 sm:max-h-[520px] sm:rounded-2xl">
           {!currentPredictionHunt?.bonuses?.length ? (
-            <div className="flex h-[120px] items-center justify-center text-sm text-white/40 sm:h-[160px]">
+            <div className="flex h-[90px] items-center justify-center text-xs text-white/40 sm:h-[160px] sm:text-sm">
               No bonuses in this hunt yet.
             </div>
           ) : (
@@ -3286,14 +3220,14 @@ const handleGenerateBracket = () => {
               {currentPredictionHunt.bonuses.map((bonus: any, index: number) => (
                 <div
                   key={bonus.id || index}
-                  className="grid grid-cols-[1fr_auto] gap-3 px-3 py-3 text-sm sm:grid-cols-[90px_1fr_90px_110px_110px] sm:items-center sm:gap-4 sm:px-5 sm:py-4"
+                  className="grid grid-cols-[1fr_auto] gap-2 px-2.5 py-2 text-xs sm:grid-cols-[90px_1fr_90px_110px_110px] sm:items-center sm:gap-4 sm:px-5 sm:py-4 sm:text-sm"
                 >
                   <div className="min-w-0">
-                    <div className="text-xs font-black text-cyan-200 sm:text-white/70">
+                    <div className="text-[10px] font-black text-cyan-200 sm:text-white/70">
                       Bonus #{index + 1}
                     </div>
 
-                    <div className="mt-1 break-words text-sm font-black text-white sm:hidden">
+                    <div className="mt-0.5 break-words text-xs font-black text-white sm:hidden">
                       {bonus.slotName}
                     </div>
                   </div>
@@ -3303,28 +3237,28 @@ const handleGenerateBracket = () => {
                   </div>
 
                   <div className="text-right">
-                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">
+                    <div className="text-[8px] uppercase tracking-[0.12em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">
                       Bet
                     </div>
-                    <div className="text-sm font-black text-white sm:text-base">
+                    <div className="text-xs font-black text-white sm:text-base">
                       {formatMoney(Number(bonus.betSize || 0))}
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">
-                      Multiplier
+                    <div className="text-[8px] uppercase tracking-[0.12em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">
+                      X
                     </div>
-                    <div className="text-sm font-black text-white sm:text-base">
+                    <div className="text-xs font-black text-white sm:text-base">
                       {Number(bonus.multiplier || 0).toFixed(2)}x
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">
+                    <div className="text-[8px] uppercase tracking-[0.12em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">
                       Payout
                     </div>
-                    <div className="text-sm font-black text-cyan-300 sm:text-base">
+                    <div className="text-xs font-black text-cyan-300 sm:text-base">
                       {formatMoney(Number(bonus.payout || 0))}
                     </div>
                   </div>
@@ -3494,16 +3428,16 @@ const handleGenerateBracket = () => {
 )}
 
  {activeSection === "tournaments" && (
-  <section className="space-y-3 sm:space-y-6">
-    <Panel className="border-[rgba(0,245,255,0.16)] p-4 shadow-[0_0_35px_rgba(0,245,255,0.08)] sm:p-8 sm:shadow-[0_0_65px_rgba(0,245,255,0.10)]">
+  <section className="space-y-2 sm:space-y-6">
+    <Panel className="border-[rgba(0,245,255,0.16)] p-3 shadow-[0_0_25px_rgba(0,245,255,0.06)] sm:p-8 sm:shadow-[0_0_65px_rgba(0,245,255,0.10)]">
       <div className="text-center">
         <SectionLabel>Tournaments</SectionLabel>
 
-        <h2 className="mt-2 text-[clamp(1.4rem,7vw,4.5rem)] font-black leading-[1.05] tracking-tight text-white sm:mt-4">
+        <h2 className="mx-auto mt-2 max-w-[320px] text-2xl font-black leading-[1] tracking-tight text-white sm:mt-4 sm:max-w-none sm:text-[clamp(2.5rem,6vw,4.5rem)]">
           {bracket.title || "Tournament Bracket"}
         </h2>
 
-        <div className="mt-3 inline-flex rounded-full border border-[rgba(0,245,255,0.20)] bg-[rgba(0,245,255,0.08)] px-3 py-1.5 text-[10px] font-semibold text-[#b8ffd8] sm:mt-4 sm:px-5 sm:py-2 sm:text-sm">
+        <div className="mt-2 inline-flex rounded-full border border-[rgba(0,245,255,0.20)] bg-[rgba(0,245,255,0.08)] px-3 py-1 text-[9px] font-semibold text-cyan-100 sm:mt-4 sm:px-5 sm:py-2 sm:text-sm">
           Live Bracket
         </div>
       </div>
@@ -3514,41 +3448,41 @@ const handleGenerateBracket = () => {
         </div>
       ) : (
         <div className="mt-4 overflow-x-auto pb-2 sm:mt-10">
-          <div className="flex min-w-[760px] items-start gap-3 px-1 sm:min-w-[1100px] sm:gap-6 sm:px-6">
+          <div className="flex min-w-[560px] items-start gap-2 px-1 sm:min-w-[1100px] sm:gap-6 sm:px-6">
             {bracket.rounds.map((round, roundIndex) => {
               const topPadding =
                 roundIndex === 0
                   ? "pt-1"
                   : roundIndex === 1
-                  ? "pt-8"
+                  ? "pt-6"
                   : roundIndex === 2
-                  ? "pt-16"
-                  : "pt-24";
+                  ? "pt-12"
+                  : "pt-16";
 
               return (
                 <div
                   key={round.id}
-                  className={`w-[185px] shrink-0 sm:w-[290px] ${topPadding}`}
+                  className={`w-[135px] shrink-0 sm:w-[290px] ${topPadding}`}
                 >
                   <div className="mb-2 text-center sm:mb-4">
-                    <div className="inline-flex rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-3 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-[#8fffd0] sm:px-5 sm:py-2 sm:text-xs sm:tracking-[0.22em]">
-                      {round.name}
+                    <div className="inline-flex max-w-full rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.12em] text-cyan-200 sm:px-5 sm:py-2 sm:text-xs sm:tracking-[0.22em]">
+                      <span className="truncate">{round.name}</span>
                     </div>
                   </div>
 
                   <div
-                    className={`space-y-3 sm:space-y-6 ${
+                    className={`space-y-2 sm:space-y-6 ${
                       roundIndex === 0
                         ? ""
                         : roundIndex === 1
-                        ? "pt-4 sm:pt-8"
+                        ? "pt-3 sm:pt-8"
                         : roundIndex === 2
-                        ? "pt-8 sm:pt-16"
-                        : "pt-12 sm:pt-24"
+                        ? "pt-6 sm:pt-16"
+                        : "pt-8 sm:pt-24"
                     }`}
                   >
                     {round.matches.map((match) => (
-                      <MatchCard key={match.id} match={match} />
+                      <MatchCard key={match.id} match={match} compact />
                     ))}
                   </div>
                 </div>
@@ -3924,22 +3858,22 @@ const handleGenerateBracket = () => {
           </summary>
 
           <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              <ActionButton onClick={handleStartHunt} disabled={!isAdmin} variant="dark">
-                Start Hunt
-              </ActionButton>
+            <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3">
+<ActionButton onClick={handleStartHunt} disabled={!isAdmin} variant="dark" className="min-h-[44px] px-1.5 py-1 text-[9px] sm:min-h-[54px] sm:px-5 sm:py-3 sm:text-sm">
+  Start
+</ActionButton>
 
-              <ActionButton onClick={handleOpenPredictions} disabled={!isAdmin} variant="green">
-                Open
-              </ActionButton>
+<ActionButton onClick={handleOpenPredictions} disabled={!isAdmin} variant="green" className="min-h-[44px] px-1.5 py-1 text-[9px] sm:min-h-[54px] sm:px-5 sm:py-3 sm:text-sm">
+  Open
+</ActionButton>
 
-              <ActionButton onClick={handleLockPredictions} disabled={!isAdmin} variant="purple">
-                Close
-              </ActionButton>
+<ActionButton onClick={handleLockPredictions} disabled={!isAdmin} variant="purple" className="min-h-[44px] px-1.5 py-1 text-[9px] sm:min-h-[54px] sm:px-5 sm:py-3 sm:text-sm">
+  Close
+</ActionButton>
 
-              <ActionButton onClick={handleCompleteHunt} disabled={!isAdmin} variant="gold">
-                Complete
-              </ActionButton>
+<ActionButton onClick={handleCompleteHunt} disabled={!isAdmin} variant="gold" className="min-h-[44px] px-1.5 py-1 text-[9px] sm:min-h-[54px] sm:px-5 sm:py-3 sm:text-sm">
+  Complete
+</ActionButton>
             </div>
 
             <div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-4">
@@ -4095,7 +4029,7 @@ const handleGenerateBracket = () => {
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-2">
+                          <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
                             <div className="grid gap-2">
                               <input
                                 value={match.player1}
@@ -4151,7 +4085,7 @@ const handleGenerateBracket = () => {
                             </div>
                           </div>
 
-                          <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4">
+                          <div className="mt-3 grid grid-cols-3 gap-1.5 sm:mt-4 sm:gap-2">
                             <ActionButton
                               onClick={() => selectMatchWinner(round.id, match.id, match.player1)}
                               disabled={!isAdmin || !match.player1.trim() || match.player1 === "BYE"}
