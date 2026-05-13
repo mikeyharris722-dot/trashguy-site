@@ -3641,46 +3641,48 @@ const handleGenerateBracket = () => {
                 )}
               </div>
             </div>
-
-            <div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-4">
-              <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-white/45 sm:mb-3 sm:text-xs sm:tracking-[0.22em]">
-                Live Entries ({giveawayEntries.length})
-              </div>
-
-              <div className="grid max-h-[260px] grid-cols-2 gap-2 overflow-y-auto sm:max-h-[420px] md:grid-cols-3 xl:grid-cols-4">
-                {giveawayEntries.length === 0 ? (
-                  <div className="text-xs text-white/40 sm:text-sm">No entries yet</div>
-                ) : (
-                  giveawayEntries.map((entry, index) => (
-                    <div
-                      key={index}
-                      className="min-w-0 rounded-lg border border-white/10 bg-white/5 px-2 py-2 sm:rounded-xl sm:px-3"
-                    >
-                      <div className="truncate text-xs font-semibold text-white sm:text-sm">
-                        {entry.display_name || entry.username}
-                      </div>
-
-                      <div
-                        className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[9px] font-black sm:px-3 sm:py-1 sm:text-xs ${
-                          Number(entry.weight || 1) >= 1.2
-                            ? "border border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
-                            : Number(entry.weight || 1) >= 1.1
-                            ? "border border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
-                            : "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
-                        }`}
-                      >
-                        {Number(entry.weight || 1) >= 1.2
-                          ? "💎 VIP"
-                          : Number(entry.weight || 1) >= 1.1
-                          ? "⭐ Affiliate"
-                          : "Viewer"}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
             </div>
+
+<div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-4">
+  <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-white/45 sm:mb-3 sm:text-xs sm:tracking-[0.22em]">
+    Live Entries ({giveawayEntries.length})
+  </div>
+
+  <div className="grid max-h-[260px] grid-cols-2 gap-2 overflow-y-auto sm:max-h-[420px] sm:grid-cols-3 xl:grid-cols-4">
+    {giveawayEntries.length === 0 ? (
+      <div className="col-span-full text-center text-xs text-white/40 sm:text-sm">
+        No entries yet
+      </div>
+    ) : (
+      giveawayEntries.map((entry, index) => (
+        <div
+          key={index}
+          className="flex min-w-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-white/5 px-2 py-3 text-center sm:rounded-xl sm:px-3 sm:py-4"
+        >
+          <div className="truncate text-xs font-semibold text-white sm:text-sm">
+            {entry.display_name || entry.username}
           </div>
+
+          <div
+            className={`mt-2 inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[9px] font-black sm:px-3 sm:py-1 sm:text-xs ${
+              Number(entry.weight || 1) >= 1.2
+                ? "border border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
+                : Number(entry.weight || 1) >= 1.1
+                ? "border border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
+                : "border border-white/10 bg-white/5 text-white/70"
+            }`}
+          >
+            {Number(entry.weight || 1) >= 1.2
+              ? `💎 ${entry.weight || 1}x VIP`
+              : Number(entry.weight || 1) >= 1.1
+              ? `⭐ ${entry.weight || 1}x Affiliate`
+              : `👤 ${entry.weight || 1}x Viewer`}
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+</div>
         </details>
 
         <details
