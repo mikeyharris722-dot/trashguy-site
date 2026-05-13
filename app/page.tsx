@@ -2314,182 +2314,203 @@ const handleGenerateBracket = () => {
   liveStatus={liveStatus}
 />
 
-          <main className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-10">
-{activeSection === "home" && (
-  <section className="space-y-6 sm:space-y-10">
-    <section className="relative -mx-4 overflow-hidden px-4 py-10 text-center sm:-mx-6 sm:px-6 md:py-24">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,245,255,0.18),transparent_58%)]" />
+<main className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-10">
+  {activeSection === "home" && (
+    <section className="space-y-4 sm:space-y-10">
+      <section className="relative -mx-3 overflow-hidden px-3 py-6 text-center sm:-mx-6 sm:px-6 sm:py-24">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,245,255,0.14),transparent_58%)]" />
 
-      <div className="relative z-10 mx-auto max-w-5xl">
-        <img
-          src="/hero-logos.png"
-          alt="Trashguy x RouloBets"
-          className="mx-auto h-[220px] sm:h-[420px] w-auto object-contain drop-shadow-[0_0_65px_rgba(0,245,255,0.45)]"
-        />
+        <div className="relative z-10 mx-auto max-w-5xl">
+          <img
+            src="/hero-logos.png"
+            alt="Trashguy x RouloBets"
+            className="mx-auto h-[135px] w-auto object-contain drop-shadow-[0_0_42px_rgba(0,245,255,0.38)] sm:h-[420px] sm:drop-shadow-[0_0_65px_rgba(0,245,255,0.45)]"
+          />
 
-<h1
-  className={`${russo.className} mx-auto mt-4 max-w-5xl text-center text-[clamp(1.4rem,2.4vw,2.8rem)] leading-[0.95] tracking-[-0.03em] text-white`}
-  style={{
-    textShadow:
-      "0 0 18px rgba(0,245,255,0.18), 0 0 42px rgba(0,245,255,0.10)",
-  }}
->
-  ONE MAN’S TRASH IS ANOTHER MAN’S MAX WIN
-</h1>
+          <h1
+            className={`${russo.className} mx-auto mt-2 max-w-5xl text-center text-[clamp(0.95rem,4.8vw,4rem)] leading-[1.02] tracking-[-0.03em] text-white`}
+            style={{
+              textShadow:
+                "0 0 14px rgba(0,245,255,0.16), 0 0 34px rgba(0,245,255,0.08)",
+            }}
+          >
+            ONE MAN’S TRASH IS ANOTHER MAN’S MAX WIN
+          </h1>
 
-        <p className="mx-auto mt-7 max-w-3xl text-lg font-semibold leading-8 text-white/70">
-          Sign up on RouloBets under code{" "}
-          <span className="font-black text-[#8fffd0]">trashguy</span>{" "}
-          to earn monthly prizes, VIP rewards, and daily stream giveaways.
-        </p>
+          <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-6 text-white/70 sm:mt-7 sm:text-lg sm:leading-8">
+            Sign up on RouloBets under code{" "}
+            <span className="font-black text-[#8fffd0]">trashguy</span>{" "}
+            to earn monthly prizes, VIP rewards, and daily stream giveaways.
+          </p>
 
-        <a
-          href="https://roulobets.com/?r=trashguy"
-          target="_blank"
-          rel="noreferrer"
-          className="group relative mt-9 inline-flex min-h-[66px] min-w-[280px] items-center justify-center overflow-hidden rounded-2xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.38),rgba(0,120,255,0.28))] px-8 py-4 text-sm font-black uppercase tracking-[0.22em] text-white shadow-[0_0_45px_rgba(0,255,255,0.45)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)]"
-        >
-          <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
-          <span className="relative z-10">Claim Rewards On Roulo</span>
-        </a>
+          <a
+            href="https://roulobets.com/?r=trashguy"
+            target="_blank"
+            rel="noreferrer"
+            className="group relative mt-5 inline-flex min-h-[48px] min-w-[235px] items-center justify-center overflow-hidden rounded-xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.34),rgba(0,120,255,0.24))] px-5 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-[0_0_34px_rgba(0,255,255,0.32)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)] sm:mt-9 sm:min-h-[66px] sm:min-w-[280px] sm:rounded-2xl sm:px-8 sm:py-4 sm:text-sm sm:tracking-[0.22em]"
+          >
+            <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
+            <span className="relative z-10">Claim Rewards On Roulo</span>
+          </a>
+        </div>
+      </section>
+
+      <div className="mx-auto mt-3 grid max-w-5xl gap-3 sm:mt-14 sm:gap-5 md:grid-cols-3">
+        <div className="flex flex-col items-center rounded-[1.2rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] p-4 text-center shadow-[0_0_22px_rgba(0,245,255,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 sm:rounded-[1.6rem] sm:p-6">
+          <div className="text-2xl sm:text-3xl">👑</div>
+
+          <div className="mt-3 text-xl font-black text-white sm:mt-4 sm:text-2xl">
+            VIP Rewards
+          </div>
+
+          <div className="mt-2 max-w-[220px] text-sm leading-6 text-white/65 sm:mt-3">
+            Wager 2k or more on my code to earn exclusive rewards.
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center rounded-[1.2rem] border border-yellow-500/20 bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] p-4 text-center shadow-[0_0_22px_rgba(234,179,8,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40 sm:rounded-[1.6rem] sm:p-6">
+          <div className="text-2xl sm:text-4xl">🏆</div>
+
+          <div className="mt-3 text-xl font-black text-white sm:mt-4 sm:text-2xl">
+            Monthly Prizes
+          </div>
+
+          <div className="mt-2 max-w-[220px] text-sm leading-6 text-white/65 sm:mt-3">
+            Compete for monthly leaderboard prizes and special events.
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center rounded-[1.2rem] border border-fuchsia-500/20 bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] p-4 text-center shadow-[0_0_22px_rgba(217,70,239,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40 sm:rounded-[1.6rem] sm:p-6">
+          <div className="text-2xl sm:text-4xl">🎁</div>
+
+          <div className="mt-3 text-xl font-black text-white sm:mt-4 sm:text-2xl">
+            Daily Giveaways
+          </div>
+
+          <div className="mt-2 max-w-[220px] text-sm leading-6 text-white/65 sm:mt-3">
+            Stream rewards and bonus buys for all Twitch viewers.
+          </div>
+        </div>
       </div>
-    </section>
 
-<div className="mx-auto mt-14 grid max-w-5xl gap-5 md:grid-cols-3">
-<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] p-4 sm:p-6 backdrop-blur-md shadow-[0_0_25px_rgba(0,245,255,0.08)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40">
-  <div className="text-2xl sm:text-3xl">👑</div>
+      <section className="relative py-2 sm:py-6">
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
+          {socials.map((social) => {
+            const Icon = social.icon;
 
-  <div className="mt-4 text-2xl font-black text-white">
-    VIP Rewards
-  </div>
+            return (
+              <a
+                key={social.name}
+                href={social.href}
+                target="_blank"
+                rel="noreferrer"
+                className={`group flex items-center justify-between rounded-[1.1rem] border px-3 py-3 transition hover:scale-[1.01] sm:rounded-[1.5rem] sm:px-5 sm:py-4 ${
+                  social.name === "Discord"
+                    ? "border-[#5865F2]/35 bg-[#050816]/85 hover:bg-[#0b1230]/90"
+                    : social.name === "YouTube"
+                    ? "border-[#FF0000]/35 bg-[#180505]/85 hover:bg-[#250707]/90"
+                    : social.name === "Instagram"
+                    ? "border-[#E1306C]/35 bg-[#1a0610]/85 hover:bg-[#260819]/90"
+                    : social.name === "Twitter / X"
+                    ? "border-white/20 bg-black/85 hover:bg-zinc-900/90"
+                    : "border-cyan-300/30 bg-black/85 hover:bg-cyan-950/80"
+                }`}
+              >
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div
+                    className={`flex h-11 w-11 items-center justify-center rounded-xl border sm:h-14 sm:w-14 sm:rounded-2xl ${
+                      social.name === "Discord"
+                        ? "border-[#5865F2]/40 bg-[#5865F2]/15"
+                        : social.name === "YouTube"
+                        ? "border-[#FF0000]/40 bg-[#FF0000]/15"
+                        : social.name === "Instagram"
+                        ? "border-[#E1306C]/40 bg-[#E1306C]/15"
+                        : social.name === "Twitter / X"
+                        ? "border-white/15 bg-white/[0.06]"
+                        : "border-cyan-300/30 bg-cyan-400/10"
+                    }`}
+                  >
+                    <Icon
+                      className={`text-2xl sm:text-3xl ${
+                        social.name === "Discord"
+                          ? "text-[#5865F2]"
+                          : social.name === "YouTube"
+                          ? "text-[#FF0000]"
+                          : social.name === "Instagram"
+                          ? "text-[#E1306C]"
+                          : social.name === "Twitter / X"
+                          ? "text-white"
+                          : "text-[#8fffd0]"
+                      }`}
+                    />
+                  </div>
 
-  <div className="mt-3 max-w-[220px] text-sm leading-7 text-white/65">
-    Wager 2k or more on my code to earn exclusive rewards.
-  </div>
-</div>
-
-<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-yellow-500/20 bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] p-4 sm:p-6 backdrop-blur-md shadow-[0_0_25px_rgba(234,179,8,0.08)] transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40">
-  <div className="text-3xl sm:text-4xl">🏆</div>
-
-  <div className="mt-4 text-2xl font-black text-white">
-    Monthly Prizes
-  </div>
-
-  <div className="mt-3 max-w-[220px] text-sm leading-7 text-white/65">
-    Compete for monthly leaderboard prizes and special events.
-  </div>
-
-<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-fuchsia-500/20 bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] p-4 sm:p-6 backdrop-blur-md shadow-[0_0_25px_rgba(217,70,239,0.08)] transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40">
-  <div className="text-3xl sm:text-4xl">🎁</div>
-
-  <div className="mt-4 text-2xl font-black text-white">
-    Daily Giveaways
-  </div>
-
-  <div className="mt-3 max-w-[220px] text-sm leading-7 text-white/65">
-    Stream rewards and bonus buys for all twitch viewers.
-  </div>
-</div>
-</div>
-</div>
-
-    <section className="relative py-6">
-
-      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-2">
-        {socials.map((social) => {
-          const Icon = social.icon;
-
-          return (
-            <a
-              key={social.name}
-              href={social.href}
-              target="_blank"
-              rel="noreferrer"
-className={`group flex items-center justify-between rounded-[1.5rem] border px-5 py-4 transition hover:scale-[1.01] ${
-  social.name === "Discord"
-    ? "border-[#5865F2]/35 bg-[#050816]/85 hover:bg-[#0b1230]/90"
-    : social.name === "YouTube"
-    ? "border-[#FF0000]/35 bg-[#180505]/85 hover:bg-[#250707]/90"
-    : social.name === "Instagram"
-    ? "border-[#E1306C]/35 bg-[#1a0610]/85 hover:bg-[#260819]/90"
-    : social.name === "Twitter / X"
-    ? "border-white/20 bg-black/85 hover:bg-zinc-900/90"
-    : "border-cyan-300/30 bg-black/85 hover:bg-cyan-950/80"
-}`}
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className={`flex h-14 w-14 items-center justify-center rounded-2xl border ${
-                    social.name === "Discord"
-                      ? "border-[#5865F2]/40 bg-[#5865F2]/15"
-                      : social.name === "YouTube"
-                      ? "border-[#FF0000]/40 bg-[#FF0000]/15"
-                      : social.name === "Instagram"
-                      ? "border-[#E1306C]/40 bg-[#E1306C]/15"
-                      : social.name === "Twitter / X"
-                      ? "border-white/15 bg-white/[0.06]"
-                      : "border-cyan-300/30 bg-cyan-400/10"
-                  }`}
-                >
-<Icon
-  className={`text-2xl sm:text-3xl ${
-    social.name === "Discord"
-      ? "text-[#5865F2]"
-      : social.name === "YouTube"
-      ? "text-[#FF0000]"
-      : social.name === "Instagram"
-      ? "text-[#E1306C]"
-      : social.name === "Twitter / X"
-      ? "text-white"
-      : "text-[#8fffd0]"
-  }`}
-/>
-                </div>
-
-                <div>
-                  <div className="text-lg font-black text-white">
+                  <div className="text-base font-black text-white sm:text-lg">
                     {social.name}
                   </div>
                 </div>
-              </div>
 
-              <div className="text-xs font-black uppercase tracking-[0.2em] text-white/35 group-hover:text-[#8fffd0]">
-                Visit
+                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35 group-hover:text-[#8fffd0] sm:text-xs sm:tracking-[0.2em]">
+                  Visit
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="relative py-5 sm:py-8">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <SectionLabel>Live Stream</SectionLabel>
+            <h2 className="mt-2 text-xl font-black sm:text-3xl">
+              WATCH TRASHGUY LIVE
+            </h2>
+          </div>
+
+          <a
+            href="https://www.twitch.tv/trashguy__"
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-full border border-[#9146FF]/40 bg-[#9146FF]/20 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white transition hover:bg-[#9146FF]/35 sm:px-5 sm:py-3"
+          >
+            Open Twitch
+          </a>
+        </div>
+
+        <div className="mt-4 aspect-video overflow-hidden rounded-[1.25rem] border border-cyan-300/20 bg-black sm:rounded-[2rem]">
+          {liveStatus.isLive ? (
+            <iframe
+              src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
+              height="100%"
+              width="100%"
+              allowFullScreen
+            />
+          ) : (
+            <a
+              href="https://www.twitch.tv/trashguy__"
+              target="_blank"
+              rel="noreferrer"
+              className="relative flex h-full items-center justify-center overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-[url('/trashguy-casino.png')] bg-cover bg-center opacity-45" />
+              <div className="absolute inset-0 bg-black/45" />
+
+              <div className="relative z-10 text-center">
+                <div className="text-3xl font-black text-white sm:text-5xl">
+                  OFFLINE
+                </div>
+
+                <div className="mt-2 text-sm text-white/50 sm:text-base">
+                  Tap to open Twitch
+                </div>
               </div>
             </a>
-          );
-        })}
-      </div>
+          )}
+        </div>
+      </section>
     </section>
-
-    <section className="relative py-8">
-      <SectionLabel>Live Stream</SectionLabel>
-      <h2 className="mt-3 text-2xl sm:text-3xl font-black">WATCH TRASHGUY LIVE</h2>
-
-      <div className="mt-5 aspect-video overflow-hidden rounded-[2rem] border border-cyan-250/20 bg-black">
-        {liveStatus.isLive ? (
-          <iframe
-            src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
-            height="100%"
-            width="100%"
-            allowFullScreen
-          />
-        ) : (
-          <div className="relative flex h-full items-center justify-center overflow-hidden">
-            <div className="absolute inset-0 bg-[url('/trashguy-casino.png')] bg-cover bg-center opacity-45" />
-<div className="absolute inset-0 bg-black/45" />
-            <div className="relative z-10 text-center">
-              <div className="text-5xl font-black text-white">OFFLINE</div>
-              <div className="mt-2 text-white/50">
-                Catch the next stream live
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
-  </section>
-)}
+  )}
 
             {activeSection === "leaderboard" && (
   <section className="space-y-6">
@@ -2542,7 +2563,7 @@ LEADERBOARD
               >
                 <div className="flex items-center">
                   <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-full border text-lg font-black ${
+                    className={`flex h-12 w-12 items-center justify-center rounded-full border text-sm sm:text-sm sm:text-lg font-black ${
                       player.rank === 1
                         ? "border-yellow-400/55 text-yellow-300 shadow-[0_0_18px_rgba(250,204,21,0.22)]"
                         : player.rank === 2
@@ -2567,13 +2588,13 @@ LEADERBOARD
                 </div>
 
                 <div className="text-right">
-                  <div className="text-lg font-black text-white sm:text-xl">
+                  <div className="text-sm sm:text-lg font-black text-white sm:text-xl">
                     {formatMoney(player.wagered)}
                   </div>
                 </div>
 
                 <div className="hidden text-right sm:block">
-                  <div className="text-lg font-black text-[#f5c451] sm:text-xl">
+                  <div className="text-sm sm:text-lg font-black text-[#f5c451] sm:text-xl">
                     ${prize.toLocaleString()}
                   </div>
                 </div>
@@ -2824,7 +2845,7 @@ LEADERBOARD
         </div>
 
         {/* AMOUNT */}
-        <div className="text-center text-lg font-black text-[#b8ffd8]">
+        <div className="text-center text-sm sm:text-lg font-black text-[#b8ffd8]">
   ${Number(giveaway.amount || 0).toLocaleString()}
 </div>
 
@@ -3101,7 +3122,7 @@ LEADERBOARD
 
         <div className="p-4 sm:p-6">
           <div className="text-center">
-            <div className="text-lg font-black text-white">
+            <div className="text-sm sm:text-lg font-black text-white">
               Guess the end balance
             </div>
             <div className="mt-2 text-xs text-white/45">
@@ -3369,17 +3390,17 @@ LEADERBOARD
         </div>
       </div>
 
-      <div className="mt-6 rounded-[2rem] border border-[rgba(0,245,255,0.16)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(6,6,6,0.98))] p-8 text-center shadow-[0_0_45px_rgba(0,245,255,0.08)]">
+      <div className="mt-6 rounded-[2rem] border border-[rgba(0,245,255,0.16)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(6,6,6,0.98))] p-4 sm:p-8 text-center shadow-[0_0_45px_rgba(0,245,255,0.08)]">
         <button
           onClick={pickRandomSlot}
           disabled={isPickingSlot || filteredSlots.length === 0}
-          className="w-full rounded-2xl border border-[#00ff88]/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.22),rgba(0,245,255,0.08))] px-6 py-4 text-lg font-black text-[#b8ffd8] shadow-[0_0_25px_rgba(0,245,255,0.12)] transition hover:border-[#00ff88]/45 hover:bg-[#00ff88]/20 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-2xl border border-[#00ff88]/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.22),rgba(0,245,255,0.08))] px-6 py-4 text-sm sm:text-lg font-black text-[#b8ffd8] shadow-[0_0_25px_rgba(0,245,255,0.12)] transition hover:border-[#00ff88]/45 hover:bg-[#00ff88]/20 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isPickingSlot ? "Spinning..." : "Pick Random Slot"}
         </button>
 
         <div
-  className={`mt-8 rounded-[1.75rem] border bg-black/35 p-8 transition-all duration-300 ${
+  className={`mt-8 rounded-[1.75rem] border bg-black/35 p-4 sm:p-8 transition-all duration-300 ${
     isPickingSlot
       ? "scale-[1.03] border-[#00ff88]/40 shadow-[0_0_60px_rgba(0,245,255,0.28)] blur-[0.2px]"
       : "border-white/10 shadow-[0_0_35px_rgba(0,245,255,0.14)]"
@@ -4297,7 +4318,7 @@ background:
 
       <div className="mt-5 max-h-[520px] overflow-y-auto rounded-2xl border border-white/10 bg-black/35 p-3">
         {slotCalls.length === 0 ? (
-          <div className="p-8 text-center text-sm text-white/40">
+          <div className="p-4 sm:p-8 text-center text-sm text-white/40">
             No slot calls yet.
           </div>
         ) : (

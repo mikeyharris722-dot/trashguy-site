@@ -50,7 +50,7 @@ export default function SiteHeader({
             <img
               src="/logo.png"
               alt="Trashguy"
-              className="h-11 w-11 rounded-lg object-cover"
+              className="h-8 w-8 sm:h-11 sm:w-11 rounded-lg object-cover"
             />
             <div>
               <div className="text-2xl font-black tracking-tight text-white sm:text-3xl">
