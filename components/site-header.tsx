@@ -115,7 +115,7 @@ export default function SiteHeader({
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                className={`rounded-full border px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm font-semibold transition ${
                   active
                     ? "border-cyan-400/30 bg-cyan-400/12 text-cyan-200 shadow-[0_0_18px_rgba(0,245,255,0.15)]"
                     : "border-white/10 bg-white/[0.03] text-white/70 hover:text-white"

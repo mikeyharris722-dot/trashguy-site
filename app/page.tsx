@@ -2314,9 +2314,9 @@ const handleGenerateBracket = () => {
   liveStatus={liveStatus}
 />
 
-          <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+          <main className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-10">
 {activeSection === "home" && (
-  <section className="space-y-10">
+  <section className="space-y-6 sm:space-y-10">
     <section className="relative -mx-4 overflow-hidden px-4 py-10 text-center sm:-mx-6 sm:px-6 md:py-24">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,245,255,0.18),transparent_58%)]" />
 
@@ -2324,7 +2324,7 @@ const handleGenerateBracket = () => {
         <img
           src="/hero-logos.png"
           alt="Trashguy x RouloBets"
-          className="mx-auto h-[150px] md:h-[420px] w-auto object-contain drop-shadow-[0_0_65px_rgba(0,245,255,0.45)]"
+          className="mx-auto h-[220px] sm:h-[420px] w-auto object-contain drop-shadow-[0_0_65px_rgba(0,245,255,0.45)]"
         />
 
 <h1
@@ -2356,20 +2356,31 @@ const handleGenerateBracket = () => {
     </section>
 
 <div className="mx-auto mt-14 grid max-w-5xl gap-5 md:grid-cols-3">
-<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] p-6 backdrop-blur-md shadow-[0_0_25px_rgba(0,245,255,0.08)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40">
-  <div className="text-3xl">👑</div>
+<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] p-4 sm:p-6 backdrop-blur-md shadow-[0_0_25px_rgba(0,245,255,0.08)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40">
+  <div className="text-2xl sm:text-3xl">👑</div>
 
   <div className="mt-4 text-2xl font-black text-white">
     VIP Rewards
   </div>
 
   <div className="mt-3 max-w-[220px] text-sm leading-7 text-white/65">
-    Exclusive rewards for loyal supporters and wager leaders.
+    Wager 2k or more on my code to earn exclusive rewards.
   </div>
 </div>
 
-<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-fuchsia-500/20 bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] p-6 backdrop-blur-md shadow-[0_0_25px_rgba(217,70,239,0.08)] transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40">
-  <div className="text-3xl">🎁</div>
+<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-yellow-500/20 bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] p-4 sm:p-6 backdrop-blur-md shadow-[0_0_25px_rgba(234,179,8,0.08)] transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40">
+  <div className="text-3xl sm:text-4xl">🏆</div>
+
+  <div className="mt-4 text-2xl font-black text-white">
+    Monthly Prizes
+  </div>
+
+  <div className="mt-3 max-w-[220px] text-sm leading-7 text-white/65">
+    Compete for monthly leaderboard prizes and special events.
+  </div>
+
+<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-fuchsia-500/20 bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] p-4 sm:p-6 backdrop-blur-md shadow-[0_0_25px_rgba(217,70,239,0.08)] transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40">
+  <div className="text-3xl sm:text-4xl">🎁</div>
 
   <div className="mt-4 text-2xl font-black text-white">
     Daily Giveaways
@@ -2379,17 +2390,6 @@ const handleGenerateBracket = () => {
     Stream rewards and bonus buys for all twitch viewers.
   </div>
 </div>
-
-<div className="flex flex-col items-center text-center rounded-[1.6rem] border border-yellow-500/20 bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] p-6 backdrop-blur-md shadow-[0_0_25px_rgba(234,179,8,0.08)] transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40">
-  <div className="text-3xl">🏆</div>
-
-  <div className="mt-4 text-2xl font-black text-white">
-    Monthly Prizes
-  </div>
-
-  <div className="mt-3 max-w-[220px] text-sm leading-7 text-white/65">
-    Compete for monthly leaderboard prizes and special events.
-  </div>
 </div>
 </div>
 
@@ -2432,7 +2432,7 @@ className={`group flex items-center justify-between rounded-[1.5rem] border px-5
                   }`}
                 >
 <Icon
-  className={`text-3xl ${
+  className={`text-2xl sm:text-3xl ${
     social.name === "Discord"
       ? "text-[#5865F2]"
       : social.name === "YouTube"
@@ -2464,7 +2464,7 @@ className={`group flex items-center justify-between rounded-[1.5rem] border px-5
 
     <section className="relative py-8">
       <SectionLabel>Live Stream</SectionLabel>
-      <h2 className="mt-3 text-3xl font-black">WATCH TRASHGUY LIVE</h2>
+      <h2 className="mt-3 text-2xl sm:text-3xl font-black">WATCH TRASHGUY LIVE</h2>
 
       <div className="mt-5 aspect-video overflow-hidden rounded-[2rem] border border-cyan-250/20 bg-black">
         {liveStatus.isLive ? (
@@ -2691,7 +2691,7 @@ LEADERBOARD
             <div className="text-xs uppercase tracking-[0.22em] text-yellow-200/70">
               Pending
             </div>
-            <div className="mt-2 text-3xl font-black text-yellow-200">
+            <div className="mt-2 text-2xl sm:text-3xl font-black text-yellow-200">
               ${viewerRewardsPending.toLocaleString()}
             </div>
           </div>
@@ -2700,7 +2700,7 @@ LEADERBOARD
             <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">
               Paid
             </div>
-            <div className="mt-2 text-3xl font-black text-cyan-200">
+            <div className="mt-2 text-2xl sm:text-3xl font-black text-cyan-200">
               ${viewerRewardsPaid.toLocaleString()}
             </div>
           </div>
@@ -2893,7 +2893,7 @@ LEADERBOARD
       <div className="text-xs font-black uppercase tracking-[0.35em] text-cyan-300">
         Bonus Hunts
       </div>
-      <h2 className="mt-3 text-[clamp(2rem,5vw,4rem)] font-black uppercase tracking-tight text-white drop-shadow-[0_0_28px_rgba(0,245,255,0.22)]">
+      <h2 className="mt-3 text-[clamp(1.3rem,4vw,4rem)] font-black uppercase tracking-tight text-white drop-shadow-[0_0_28px_rgba(0,245,255,0.22)]">
         PREDICTIONS
       </h2>
     </div>
@@ -2908,7 +2908,7 @@ LEADERBOARD
               hunt.prediction_status === "open" ? "open" : "locked"
             );
           }}
-          className={`flex min-w-[190px] flex-col items-center justify-center rounded-2xl border bg-black/70 p-4 text-center backdrop-blur-md transition hover:-translate-y-1 ${
+          className={`flex min-w-[150px] sm:min-w-[190px] flex-col items-center justify-center rounded-2xl border bg-black/70 p-4 text-center backdrop-blur-md transition hover:-translate-y-1 ${
             currentPredictionHunt?.id === hunt.id || adminHuntId === hunt.id
               ? "border-cyan-300/45 shadow-[0_0_30px_rgba(0,245,255,0.18)]"
               : "border-white/10 hover:border-cyan-300/25"
@@ -2942,7 +2942,7 @@ LEADERBOARD
 
     <div className="overflow-hidden rounded-[2rem] border border-cyan-300/15 bg-black/70 backdrop-blur-xl shadow-[0_0_70px_rgba(0,245,255,0.08)]">
       <div className="grid lg:grid-cols-[1fr_1.05fr]">
-        <div className="border-b border-white/10 p-6 lg:border-b-0 lg:border-r">
+        <div className="border-b border-white/10 p-4 sm:p-6 lg:border-b-0 lg:border-r">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 text-xl font-black text-white">
@@ -2968,7 +2968,7 @@ LEADERBOARD
 <div className="mt-8 space-y-4">
   {/* TOP ROW */}
   <div className="grid gap-4 md:grid-cols-2">
-    <div className="rounded-[1.7rem] border border-white/10 bg-black/30 p-6">
+    <div className="rounded-[1.7rem] border border-white/10 bg-black/30 p-4 sm:p-6">
       <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/35">
         Start
       </div>
@@ -2978,7 +2978,7 @@ LEADERBOARD
       </div>
     </div>
 
-    <div className="rounded-[1.7rem] border border-cyan-400/20 bg-[rgba(0,245,255,0.06)] p-6">
+    <div className="rounded-[1.7rem] border border-cyan-400/20 bg-[rgba(0,245,255,0.06)] p-4 sm:p-6">
       <div className="text-[11px] font-black uppercase tracking-[0.22em] text-cyan-100/45">
         Won
       </div>
@@ -3000,7 +3000,7 @@ LEADERBOARD
         Bonuses
       </div>
 
-      <div className="mt-3 text-3xl font-black text-white">
+      <div className="mt-3 text-2xl sm:text-3xl font-black text-white">
         {currentPredictionHunt?.bonuses?.length || 0}
       </div>
     </div>
@@ -3010,7 +3010,7 @@ LEADERBOARD
         Avg X
       </div>
 
-      <div className="mt-3 text-3xl font-black text-white">
+      <div className="mt-3 text-2xl sm:text-3xl font-black text-white">
         {currentPredictionHunt?.stats?.currentAverageMultiplier
           ? `${Number(
               currentPredictionHunt.stats.currentAverageMultiplier
@@ -3024,7 +3024,7 @@ LEADERBOARD
         Req X
       </div>
 
-      <div className="mt-3 text-3xl font-black text-white">
+      <div className="mt-3 text-2xl sm:text-3xl font-black text-white">
         {currentPredictionHunt?.stats?.averagePayoutRequired &&
         currentPredictionHunt?.stats?.averageBetSize
           ? `${(
@@ -3039,7 +3039,7 @@ LEADERBOARD
 {/* BOTTOM ROW */}
 <div className="grid gap-4 md:grid-cols-2">
   {/* HIGHEST WIN */}
-  <div className="rounded-[1.8rem] border border-white/10 bg-black/30 p-6">
+  <div className="rounded-[1.8rem] border border-white/10 bg-black/30 p-4 sm:p-6">
     <div className="text-[11px] font-black uppercase tracking-[0.24em] text-white/35">
       Highest Win
     </div>
@@ -3054,7 +3054,7 @@ LEADERBOARD
           : "---"}
       </div>
 
-      <div className="mt-3 text-3xl font-black text-cyan-300">
+      <div className="mt-3 text-2xl sm:text-3xl font-black text-cyan-300">
         {formatMoney(
           currentPredictionHunt?.bonuses?.length
             ? [...currentPredictionHunt.bonuses].sort(
@@ -3068,7 +3068,7 @@ LEADERBOARD
   </div>
 
   {/* HIGHEST X */}
-  <div className="rounded-[1.8rem] border border-white/10 bg-black/30 p-6">
+  <div className="rounded-[1.8rem] border border-white/10 bg-black/30 p-4 sm:p-6">
     <div className="text-[11px] font-black uppercase tracking-[0.24em] text-white/35">
       Highest X
     </div>
@@ -3083,7 +3083,7 @@ LEADERBOARD
           : "---"}
       </div>
 
-      <div className="mt-3 text-3xl font-black text-cyan-300">
+      <div className="mt-3 text-2xl sm:text-3xl font-black text-cyan-300">
         {currentPredictionHunt?.bonuses?.length
           ? `${Number(
               [...currentPredictionHunt.bonuses].sort(
@@ -3099,7 +3099,7 @@ LEADERBOARD
 </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="text-center">
             <div className="text-lg font-black text-white">
               Guess the end balance
@@ -3194,7 +3194,7 @@ LEADERBOARD
 
   <div className="max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-black/30">
     {sortedPredictionsForTab.length === 0 ? (
-      <div className="p-6 text-center text-sm text-white/40">
+      <div className="p-4 sm:p-6 text-center text-sm text-white/40">
         No guesses yet.
       </div>
     ) : (
@@ -3228,7 +3228,7 @@ LEADERBOARD
         </div>
       </div>
 
-      <div className="border-t border-white/10 p-6">
+      <div className="border-t border-white/10 p-4 sm:p-6">
         <div className="mb-4 text-xs font-black uppercase tracking-[0.25em] text-white/45">
           Slots in this hunt
         </div>
@@ -3404,7 +3404,7 @@ LEADERBOARD
 )}
 
 <div
-  className={`mt-5 text-[clamp(2rem,5vw,4rem)] font-black transition-all duration-200 ${
+  className={`mt-5 text-[clamp(1.3rem,4vw,4rem)]font-black transition-all duration-200 ${
     isPickingSlot
       ? "scale-95 text-white/70 blur-[1px]"
       : "scale-105 text-[#8fffd0] drop-shadow-[0_0_25px_rgba(0,245,255,0.65)]"
@@ -3456,9 +3456,9 @@ LEADERBOARD
       </div>
 
       {bracketLoading ? (
-        <div className="mt-10 text-center text-white/55">Loading bracket...</div>
+        <div className="mt-6 sm:mt-10 text-center text-white/55">Loading bracket...</div>
       ) : (
-        <div className="mt-10 overflow-x-auto pb-2">
+        <div className="mt-6 sm:mt-10 overflow-x-auto pb-2">
           <div className="flex min-w-[1100px] items-start justify-start gap-6 px-6">
             {bracket.rounds.map((round, roundIndex) => {
               const topPadding =
@@ -3585,12 +3585,12 @@ LEADERBOARD
   Draw Winner
 </ActionButton>
 
-<div className="rounded-2xl border border-white/10 bg-black/30 p-6 text-center">
+<div className="rounded-2xl border border-white/10 bg-black/30 p-4 sm:p-6 text-center">
   <div className="text-xs uppercase tracking-[0.25em] text-white/40">
     🎯 Current Winner
   </div>
 
-  <div className="mt-3 text-3xl md:text-4xl font-black text-green-400 drop-shadow-[0_0_20px_rgba(34,197,94,0.9)]">
+  <div className="mt-3 text-2xl sm:text-3xl md:text-4xl font-black text-green-400 drop-shadow-[0_0_20px_rgba(34,197,94,0.9)]">
     {giveawayMessage || "Waiting for winner..."}
   </div>
 </div>
@@ -3683,7 +3683,7 @@ Number(entry.weight || 1) >= 1.2
   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
     <div>
       <SectionLabel>Prize Portal Manager</SectionLabel>
-      <h2 className="mt-2 text-3xl font-black tracking-wide">ALL REWARDS</h2>
+      <h2 className="mt-2 text-2xl sm:text-3xl font-black tracking-wide">ALL REWARDS</h2>
       <div className="mt-1 text-sm text-white/45">
         Manage every viewer reward, payout status, and mistakes.
       </div>
@@ -3709,7 +3709,7 @@ Number(entry.weight || 1) >= 1.2
 
   <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30">
     {filteredAdminRewards.length === 0 ? (
-      <div className="p-6 text-center text-white/45">
+      <div className="p-4 sm:p-6 text-center text-white/45">
         No rewards found. Click Refresh Rewards.
       </div>
     ) : (
@@ -4230,7 +4230,7 @@ background:
               Picked Slot
             </div>
 
-            <div className="mt-2 text-3xl font-black text-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.8)] sm:text-4xl">
+            <div className="mt-2 text-2xl sm:text-3xl font-black text-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.8)] sm:text-4xl">
               {pickedSlotCall.slotName}
             </div>
 
@@ -4353,7 +4353,7 @@ background:
         rel="noreferrer"
         className="transition hover:scale-110"
       >
-        <FaDiscord className="text-3xl text-[#5865F2]" />
+        <FaDiscord className="text-2xl sm:text-3xl text-[#5865F2]" />
       </a>
 
       <a
@@ -4362,7 +4362,7 @@ background:
         rel="noreferrer"
         className="transition hover:scale-110"
       >
-        <FaYoutube className="text-3xl text-[#FF0000]" />
+        <FaYoutube className="text-2xl sm:text-3xl md:text-4xl text-[#FF0000]" />
       </a>
 
       <a
@@ -4371,7 +4371,7 @@ background:
         rel="noreferrer"
         className="transition hover:scale-110"
       >
-        <FaXTwitter className="text-3xl text-white" />
+        <FaXTwitter className="text-2xl sm:text-3xl md:text-4xl text-white" />
       </a>
 
       <a
@@ -4380,7 +4380,7 @@ background:
         rel="noreferrer"
         className="transition hover:scale-110"
       >
-        <FaInstagram className="text-3xl text-[#E1306C]" />
+        <FaInstagram className="text-2xl sm:text-3xl md:text-4xl text-[#E1306C]" />
       </a>
     </div>
 
