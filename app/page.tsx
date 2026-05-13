@@ -3868,21 +3868,41 @@ const handleGenerateBracket = () => {
           </summary>
 
           <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
-            <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3">
-<ActionButton onClick={handleStartHunt} disabled={!isAdmin} variant="dark" className="min-h-[44px] px-1.5 py-1 text-[9px] sm:min-h-[54px] sm:px-5 sm:py-3 sm:text-sm">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
+<ActionButton
+  onClick={handleStartHunt}
+  disabled={!isAdmin}
+  variant="dark"
+  className="min-h-[46px] px-1 py-2 text-[9px] tracking-[0.08em] sm:min-h-[54px] sm:px-5 sm:text-sm"
+>
   Start
 </ActionButton>
 
-<ActionButton onClick={handleOpenPredictions} disabled={!isAdmin} variant="green" className="min-h-[44px] px-1.5 py-1 text-[9px] sm:min-h-[54px] sm:px-5 sm:py-3 sm:text-sm">
+<ActionButton
+  onClick={handleOpenPredictions}
+  disabled={!isAdmin}
+  variant="green"
+  className="min-h-[46px] px-1 py-2 text-[9px] tracking-[0.08em] sm:min-h-[54px] sm:px-5 sm:text-sm"
+>
   Open
 </ActionButton>
 
-<ActionButton onClick={handleLockPredictions} disabled={!isAdmin} variant="purple" className="min-h-[44px] px-1.5 py-1 text-[9px] sm:min-h-[54px] sm:px-5 sm:py-3 sm:text-sm">
+<ActionButton
+  onClick={handleLockPredictions}
+  disabled={!isAdmin}
+  variant="purple"
+  className="min-h-[46px] px-1 py-2 text-[9px] tracking-[0.08em] sm:min-h-[54px] sm:px-5 sm:text-sm"
+>
   Close
 </ActionButton>
 
-<ActionButton onClick={handleCompleteHunt} disabled={!isAdmin} variant="gold" className="min-h-[44px] px-1.5 py-1 text-[9px] sm:min-h-[54px] sm:px-5 sm:py-3 sm:text-sm">
-  Complete
+<ActionButton
+  onClick={handleCompleteHunt}
+  disabled={!isAdmin}
+  variant="gold"
+  className="min-h-[46px] px-1 py-2 text-[9px] tracking-[0.08em] sm:min-h-[54px] sm:px-5 sm:text-sm"
+>
+  Done
 </ActionButton>
             </div>
 
