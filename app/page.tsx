@@ -2355,70 +2355,80 @@ const handleGenerateBracket = () => {
       </div>
     </section>
 
-    <div className="mx-auto mt-2 grid max-w-4xl grid-cols-3 gap-2 sm:mt-10 sm:gap-4">
-      <div className="flex min-h-[92px] flex-col items-center justify-center rounded-xl border border-cyan-300/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(0,245,255,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] sm:p-5">
-        <div className="text-base sm:text-3xl">👑</div>
-        <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
-          VIP Rewards
-        </div>
-        <div className="mt-1 text-[9px] leading-4 text-white/55 sm:mt-2 sm:max-w-[210px] sm:text-sm sm:leading-6">
-          Wager 2k+ for rewards.
-        </div>
-      </div>
+<div className="mx-auto mt-2 grid max-w-4xl grid-cols-3 gap-2 sm:mt-10 sm:gap-4">
+  <div className="flex min-h-[110px] flex-col items-center justify-center rounded-xl border border-cyan-300/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(0,245,255,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] sm:p-5">
+    <div className="text-base sm:text-3xl">👑</div>
 
-      <div className="flex min-h-[92px] flex-col items-center justify-center rounded-xl border border-yellow-500/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(234,179,8,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] sm:p-5">
-        <div className="text-base sm:text-4xl">🏆</div>
-        <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
-          Monthly
-        </div>
-        <div className="mt-1 text-[9px] leading-4 text-white/55 sm:mt-2 sm:max-w-[210px] sm:text-sm sm:leading-6">
-          Leaderboard prizes.
-        </div>
-      </div>
-
-      <div className="flex min-h-[92px] flex-col items-center justify-center rounded-xl border border-fuchsia-500/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(217,70,239,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] sm:p-5">
-        <div className="text-base sm:text-4xl">🎁</div>
-        <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
-          Giveaways
-        </div>
-        <div className="mt-1 text-[9px] leading-4 text-white/55 sm:mt-2 sm:max-w-[210px] sm:text-sm sm:leading-6">
-          Daily stream rewards.
-        </div>
-      </div>
+    <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
+      VIP Rewards
     </div>
 
-    <section className="relative py-2 sm:py-6">
-      <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2 sm:max-w-5xl sm:grid-cols-4 sm:gap-4">
-        {socials.map((social) => {
-          const Icon = social.icon;
+    <div className="mt-1 max-w-[210px] text-[9px] leading-4 text-white/55 sm:mt-2 sm:text-sm sm:leading-6">
+      Wager 2k+ for exclusive VIP rewards.
+    </div>
+  </div>
 
-          return (
-            <a
-              key={social.name}
-              href={social.href}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={social.name}
-              className="group flex min-h-[58px] items-center justify-center rounded-xl border border-white/10 bg-black/50 p-2 backdrop-blur-md transition hover:-translate-y-0.5 hover:border-cyan-300/35 hover:bg-cyan-400/10 sm:min-h-[92px] sm:rounded-2xl sm:p-4"
-            >
-              <Icon
-                className={`text-2xl transition group-hover:scale-110 sm:text-4xl ${
-                  social.name === "Discord"
-                    ? "text-[#5865F2]"
-                    : social.name === "YouTube"
-                    ? "text-[#FF0000]"
-                    : social.name === "Instagram"
-                    ? "text-[#E1306C]"
-                    : social.name === "Twitter / X"
-                    ? "text-white"
-                    : "text-cyan-200"
-                }`}
-              />
-            </a>
-          );
-        })}
-      </div>
-    </section>
+  <div className="flex min-h-[110px] flex-col items-center justify-center rounded-xl border border-yellow-500/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(234,179,8,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] sm:p-5">
+    <div className="text-base sm:text-4xl">🏆</div>
+
+    <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
+      Monthly
+    </div>
+
+    <div className="mt-1 max-w-[210px] text-[9px] leading-4 text-white/55 sm:mt-2 sm:text-sm sm:leading-6">
+      Leaderboard prizes and more.
+    </div>
+  </div>
+
+  <div className="flex min-h-[110px] flex-col items-center justify-center rounded-xl border border-fuchsia-500/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(217,70,239,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] sm:p-5">
+    <div className="text-base sm:text-4xl">🎁</div>
+
+    <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
+      Giveaways
+    </div>
+
+    <div className="mt-1 max-w-[210px] text-[9px] leading-4 text-white/55 sm:mt-2 sm:text-sm sm:leading-6">
+      Daily stream giveaways. VIPs/affiliates are awarded extra odds.
+    </div>
+  </div>
+</div>
+
+<section className="relative py-2 sm:py-6">
+  <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2 sm:max-w-5xl sm:grid-cols-4 sm:gap-4">
+    {socials.map((social) => {
+      const Icon = social.icon;
+
+      return (
+        <a
+          key={social.name}
+          href={social.href}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={social.name}
+          className="group flex min-h-[72px] flex-col items-center justify-center rounded-xl border border-white/10 bg-black/50 p-2 backdrop-blur-md transition hover:-translate-y-0.5 hover:border-cyan-300/35 hover:bg-cyan-400/10 sm:min-h-[110px] sm:rounded-2xl sm:p-4"
+        >
+          <Icon
+            className={`text-2xl transition group-hover:scale-110 sm:text-4xl ${
+              social.name === "Discord"
+                ? "text-[#5865F2]"
+                : social.name === "YouTube"
+                ? "text-[#FF0000]"
+                : social.name === "Instagram"
+                ? "text-[#E1306C]"
+                : social.name === "Twitter / X"
+                ? "text-white"
+                : "text-cyan-200"
+            }`}
+          />
+
+          <div className="mt-1 text-[9px] font-black uppercase tracking-[0.14em] text-white/55 sm:mt-2 sm:text-xs">
+            {social.name}
+          </div>
+        </a>
+      );
+    })}
+  </div>
+</section>
 
     <section className="relative py-5 sm:py-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
