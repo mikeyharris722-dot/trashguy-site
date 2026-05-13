@@ -2355,42 +2355,43 @@ const handleGenerateBracket = () => {
         </div>
       </section>
 
-      <div className="mx-auto mt-3 grid max-w-5xl gap-3 sm:mt-14 sm:gap-5 md:grid-cols-3">
-        <div className="flex flex-col items-center rounded-[1.2rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] p-4 text-center shadow-[0_0_22px_rgba(0,245,255,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 sm:rounded-[1.6rem] sm:p-6">
-          <div className="text-2xl sm:text-3xl">👑</div>
+ <div className="mx-auto mt-3 grid max-w-4xl gap-3 sm:mt-10 sm:gap-4 md:grid-cols-3">
 
-          <div className="mt-3 text-xl font-black text-white sm:mt-4 sm:text-2xl">
-            VIP Rewards
-          </div>
+  <div className="flex flex-col items-center rounded-[1rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] p-3 text-center shadow-[0_0_18px_rgba(0,245,255,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 sm:rounded-[1.4rem] sm:p-5">
+    <div className="text-xl sm:text-3xl">👑</div>
 
-          <div className="mt-2 max-w-[220px] text-sm leading-6 text-white/65 sm:mt-3">
-            Wager 2k or more on my code to earn exclusive rewards.
-          </div>
-        </div>
+    <div className="mt-2 text-lg font-black text-white sm:mt-3 sm:text-2xl">
+      VIP Rewards
+    </div>
 
-        <div className="flex flex-col items-center rounded-[1.2rem] border border-yellow-500/20 bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] p-4 text-center shadow-[0_0_22px_rgba(234,179,8,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40 sm:rounded-[1.6rem] sm:p-6">
-          <div className="text-2xl sm:text-4xl">🏆</div>
+    <div className="mt-2 max-w-[210px] text-[13px] leading-5 text-white/65 sm:text-sm sm:leading-6">
+      Wager 2k or more on my code to earn exclusive rewards.
+    </div>
+  </div>
 
-          <div className="mt-3 text-xl font-black text-white sm:mt-4 sm:text-2xl">
-            Monthly Prizes
-          </div>
+  <div className="flex flex-col items-center rounded-[1rem] border border-yellow-500/20 bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] p-3 text-center shadow-[0_0_18px_rgba(234,179,8,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40 sm:rounded-[1.4rem] sm:p-5">
+    <div className="text-xl sm:text-4xl">🏆</div>
 
-          <div className="mt-2 max-w-[220px] text-sm leading-6 text-white/65 sm:mt-3">
-            Compete for monthly leaderboard prizes and special events.
-          </div>
-        </div>
+    <div className="mt-2 text-lg font-black text-white sm:mt-3 sm:text-2xl">
+      Monthly Prizes
+    </div>
 
-        <div className="flex flex-col items-center rounded-[1.2rem] border border-fuchsia-500/20 bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] p-4 text-center shadow-[0_0_22px_rgba(217,70,239,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40 sm:rounded-[1.6rem] sm:p-6">
-          <div className="text-2xl sm:text-4xl">🎁</div>
+    <div className="mt-2 max-w-[210px] text-[13px] leading-5 text-white/65 sm:text-sm sm:leading-6">
+      Compete for monthly leaderboard prizes and special events.
+    </div>
+  </div>
 
-          <div className="mt-3 text-xl font-black text-white sm:mt-4 sm:text-2xl">
-            Daily Giveaways
-          </div>
+  <div className="flex flex-col items-center rounded-[1rem] border border-fuchsia-500/20 bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] p-3 text-center shadow-[0_0_18px_rgba(217,70,239,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40 sm:rounded-[1.4rem] sm:p-5">
+    <div className="text-xl sm:text-4xl">🎁</div>
 
-          <div className="mt-2 max-w-[220px] text-sm leading-6 text-white/65 sm:mt-3">
-            Stream rewards and bonus buys for all Twitch viewers.
-          </div>
-        </div>
+    <div className="mt-2 text-lg font-black text-white sm:mt-3 sm:text-2xl">
+      Daily Giveaways
+    </div>
+
+    <div className="mt-2 max-w-[210px] text-[13px] leading-5 text-white/65 sm:text-sm sm:leading-6">
+      Stream rewards and bonus buys for all Twitch viewers.
+    </div>
+  </div>
       </div>
 
       <section className="relative py-2 sm:py-6">
@@ -2512,37 +2513,37 @@ const handleGenerateBracket = () => {
     </section>
   )}
 
-            {activeSection === "leaderboard" && (
-  <section className="space-y-6">
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] shadow-[0_0_50px_rgba(0,245,255,0.10)]">
+{activeSection === "leaderboard" && (
+  <section className="space-y-3 sm:space-y-6">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-4 shadow-[0_0_35px_rgba(0,245,255,0.08)] sm:p-8 sm:shadow-[0_0_50px_rgba(0,245,255,0.10)]">
       <div className="text-center">
         <SectionLabel>Leaderboard</SectionLabel>
 
-        <h2 className="mt-4 text-[clamp(2.5rem,6vw,4.5rem)] font-black leading-[1.05] tracking-tight text-white">
+        <h2 className="mt-3 text-[clamp(1.7rem,9vw,4.5rem)] font-black leading-[1.02] tracking-tight text-white sm:mt-4">
           ${leaderboardTotal}
-<br />
-LEADERBOARD
+          <br />
+          LEADERBOARD
         </h2>
 
-        <div className="mt-4 text-sm text-white/50">
+        <div className="mt-2 text-xs text-white/50 sm:mt-4 sm:text-sm">
           Updated 15 mins ago
         </div>
 
-        <div className="mt-4 text-[clamp(2rem,5vw,3.8rem)] font-black leading-none text-[#8fffd0]">
-  Ends in: {leaderboardCountdown}
-</div>
+        <div className="mx-auto mt-3 max-w-[310px] text-[clamp(1.2rem,7vw,3.8rem)] font-black leading-tight text-[#8fffd0] sm:mt-4 sm:max-w-none">
+          Ends in: {leaderboardCountdown}
+        </div>
 
-        <div className="mx-auto mt-6 h-3 w-full max-w-4xl overflow-hidden rounded-full border border-[rgba(0,245,255,0.18)] bg-[rgba(255,255,255,0.03)]">
+        <div className="mx-auto mt-4 h-2 w-full max-w-4xl overflow-hidden rounded-full border border-[rgba(0,245,255,0.18)] bg-[rgba(255,255,255,0.03)] sm:mt-6 sm:h-3">
           <div
-  className="h-full rounded-full bg-[linear-gradient(90deg,#00ff88,#19d38a)] shadow-[0_0_20px_rgba(0,245,255,0.35)]"
-  style={{ width: `${leaderboardProgress}%` }}
-/>
+            className="h-full rounded-full bg-[linear-gradient(90deg,#00f5ff,#19d3ff)] shadow-[0_0_20px_rgba(0,245,255,0.35)]"
+            style={{ width: `${leaderboardProgress}%` }}
+          />
         </div>
       </div>
     </Panel>
 
-    <Panel className="mx-auto max-w-5xl overflow-hidden border-[rgba(0,245,255,0.16)] shadow-[0_0_55px_rgba(0,245,255,0.10)]">
-      <div className="grid grid-cols-[82px_1fr_150px] border-b border-[rgba(0,245,255,0.12)] bg-[linear-gradient(180deg,rgba(0,245,255,0.08),rgba(0,245,255,0.03))] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.24em] text-white/45 sm:grid-cols-[100px_1fr_190px_170px] sm:px-6">
+    <Panel className="mx-auto max-w-5xl overflow-hidden border-[rgba(0,245,255,0.16)] p-0 shadow-[0_0_40px_rgba(0,245,255,0.08)] sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
+      <div className="grid grid-cols-[52px_1fr_105px] border-b border-[rgba(0,245,255,0.12)] bg-[linear-gradient(180deg,rgba(0,245,255,0.08),rgba(0,245,255,0.03))] px-3 py-3 text-[9px] font-bold uppercase tracking-[0.18em] text-white/45 sm:grid-cols-[100px_1fr_190px_170px] sm:px-6 sm:py-4 sm:text-[11px] sm:tracking-[0.24em]">
         <div>Rank</div>
         <div>Player</div>
         <div className="text-right">Wagered</div>
@@ -2550,8 +2551,10 @@ LEADERBOARD
       </div>
 
       {leaderboardLoading && leaderboardData.length === 0 ? (
-  <div className="px-6 py-10 text-white/60">Loading leaderboard...</div>
-) : (
+        <div className="px-4 py-8 text-sm text-white/60 sm:px-6 sm:py-10">
+          Loading leaderboard...
+        </div>
+      ) : (
         <div className="divide-y divide-white/5">
           {leaderboardData.map((player) => {
             const prize = leaderboardPrizes[player.rank] || 0;
@@ -2559,11 +2562,11 @@ LEADERBOARD
             return (
               <div
                 key={`${player.rank}-${player.username}`}
-                className="grid grid-cols-[82px_1fr_150px] items-center px-4 py-4 transition hover:bg-white/[0.02] sm:grid-cols-[100px_1fr_190px_170px] sm:px-6 sm:py-5"
+                className="grid grid-cols-[52px_1fr_105px] items-center px-3 py-3 transition hover:bg-white/[0.02] sm:grid-cols-[100px_1fr_190px_170px] sm:px-6 sm:py-5"
               >
                 <div className="flex items-center">
                   <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-full border text-sm sm:text-sm sm:text-lg font-black ${
+                    className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-black sm:h-12 sm:w-12 sm:text-lg ${
                       player.rank === 1
                         ? "border-yellow-400/55 text-yellow-300 shadow-[0_0_18px_rgba(250,204,21,0.22)]"
                         : player.rank === 2
@@ -2578,23 +2581,23 @@ LEADERBOARD
                 </div>
 
                 <div className="min-w-0">
-                  <div className="truncate text-xl font-bold text-white sm:text-2xl">
+                  <div className="truncate text-base font-black text-white sm:text-2xl">
                     {player.username}
                   </div>
 
-                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/28 sm:hidden">
+                  <div className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-white/28 sm:hidden">
                     Prize ${prize.toLocaleString()}
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <div className="text-sm sm:text-lg font-black text-white sm:text-xl">
+                  <div className="text-sm font-black text-white sm:text-xl">
                     {formatMoney(player.wagered)}
                   </div>
                 </div>
 
                 <div className="hidden text-right sm:block">
-                  <div className="text-sm sm:text-lg font-black text-[#f5c451] sm:text-xl">
+                  <div className="text-xl font-black text-[#f5c451]">
                     ${prize.toLocaleString()}
                   </div>
                 </div>
@@ -2608,300 +2611,315 @@ LEADERBOARD
 )}
 
 {activeSection === "giveaways" && (
-  <section className="space-y-6">
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] shadow-[0_0_55px_rgba(0,245,255,0.10)]">
+  <section className="space-y-3 sm:space-y-6">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-4 shadow-[0_0_35px_rgba(0,245,255,0.08)] sm:p-8 sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
       <div className="text-center">
         <SectionLabel>Giveaways</SectionLabel>
 
-        <h2 className="mt-3 text-[clamp(1.8rem,4vw,3.2rem)] font-black leading-[1.05] tracking-tight text-white">
+        <h2 className="mt-2 text-[clamp(1.35rem,7vw,3.2rem)] font-black leading-[1.05] tracking-tight text-white sm:mt-3">
           TOTAL
           <br />
           GIVEN AWAY
         </h2>
 
-        <div className="mt-6 text-[clamp(2.4rem,7vw,5rem)] font-black leading-none text-[#8fffd0]">
+        <div className="mt-3 text-[clamp(2rem,10vw,5rem)] font-black leading-none text-[#8fffd0] sm:mt-6">
           ${giveawayTotal.toLocaleString()}
         </div>
       </div>
     </Panel>
 
-    {viewerName.toLowerCase() !== "trashguy__" && viewerName.toLowerCase() !== "trashguy" && (
-    <Panel className="mx-auto max-w-5xl border-fuchsia-300/20 shadow-[0_0_55px_rgba(217,70,239,0.10)]">
+    {viewerName.toLowerCase() !== "trashguy__" &&
+      viewerName.toLowerCase() !== "trashguy" && (
+        <Panel className="mx-auto max-w-5xl border-fuchsia-300/20 p-4 shadow-[0_0_35px_rgba(217,70,239,0.08)] sm:p-8 sm:shadow-[0_0_55px_rgba(217,70,239,0.10)]">
+          <div className="text-center">
+            <SectionLabel>Prize Portal</SectionLabel>
 
-  <div className="text-center">
-    <SectionLabel>Prize Portal</SectionLabel>
+            <h2 className="mt-2 text-[clamp(1.35rem,7vw,3.5rem)] font-black leading-[1.05] tracking-tight text-white sm:mt-4">
+              MY REWARDS
+            </h2>
 
-    <h2 className="mt-4 text-[clamp(2rem,5vw,3.5rem)] font-black leading-[1.05] tracking-tight text-white">
-      MY REWARDS
-    </h2>
+            {isTwitchConnected && (
+              <div className="mt-4 rounded-[1.2rem] border border-cyan-300/20 bg-black/30 p-4 text-left sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
+                  Roulo Account
+                </div>
 
-    {isTwitchConnected && (
-  <div className="mt-6 rounded-[1.5rem] border border-cyan-300/20 bg-black/30 p-5 text-left">
-    <div className="text-xs uppercase tracking-[0.24em] text-cyan-300/80">
-      Roulo Account
-    </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-[1fr_auto] sm:gap-3">
+                  <input
+                    value={rouloUsernameInput}
+                    onChange={(e) => setRouloUsernameInput(e.target.value)}
+                    placeholder="Enter your Roulo username"
+                    className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none sm:px-4 sm:py-3 sm:text-base"
+                  />
 
-    <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
-      <input
-        value={rouloUsernameInput}
-        onChange={(e) => setRouloUsernameInput(e.target.value)}
-        placeholder="Enter your Roulo username"
-        className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-      />
+                  <button
+                    onClick={handleLinkRoulo}
+                    className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-4 py-2.5 text-sm font-bold text-cyan-200 hover:bg-cyan-400/20 sm:px-5 sm:py-3 sm:text-base"
+                  >
+                    Link Roulo
+                  </button>
+                </div>
 
-      <button
-        onClick={handleLinkRoulo}
-        className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-5 py-3 font-bold text-cyan-200 hover:bg-cyan-400/20"
-      >
-        Link Roulo
-      </button>
-    </div>
-
-    {rouloLink && (
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
-        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-          <div className="text-xs uppercase tracking-[0.2em] text-white/35">
-            Wagered
-          </div>
-          <div className="mt-1 text-xl font-black text-white">
-            ${Number(rouloLink.wagered || 0).toLocaleString()}
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-          <div className="text-xs uppercase tracking-[0.2em] text-white/35">
-            Role
-          </div>
-          <div className="mt-1 text-xl font-black text-[#8fffd0] uppercase">
-            {rouloLink.role}
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-          <div className="text-xs uppercase tracking-[0.2em] text-white/35">
-            Giveaway Chance
-          </div>
-          <div className="mt-1 text-xl font-black text-[#f5c451]">
-            x{rouloLink.weight || 1}
-          </div>
-        </div>
-      </div>
-    )}
-
-    {rouloLinkMessage && (
-      <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white/70">
-        {rouloLinkMessage}
-      </div>
-    )}
-  </div>
-)}
-
-    {!isTwitchConnected ? (
-      <div className="mt-6">
-        <button
-          onClick={handleTwitchLogin}
-          className="rounded-2xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-6 py-4 font-bold text-white transition hover:bg-[#9146FF]/30"
-        >
-          Connect Twitch to View Rewards
-        </button>
-      </div>
-    ) : (
-      <>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-yellow-300/20 bg-yellow-400/10 p-5">
-            <div className="text-xs uppercase tracking-[0.22em] text-yellow-200/70">
-              Pending
-            </div>
-            <div className="mt-2 text-2xl sm:text-3xl font-black text-yellow-200">
-              ${viewerRewardsPending.toLocaleString()}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-5">
-            <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">
-              Paid
-            </div>
-            <div className="mt-2 text-2xl sm:text-3xl font-black text-cyan-200">
-              ${viewerRewardsPaid.toLocaleString()}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
-          {viewerRewards.length === 0 ? (
-            <div className="px-6 py-10 text-center text-white/45">
-              {viewerRewardsMessage || "No rewards yet."}
-            </div>
-          ) : (
-            <div className="divide-y divide-white/5">
-              {viewerRewards.map((reward) => (
-                <div
-                  key={reward.id}
-                  className="flex items-center justify-between gap-4 px-5 py-4"
-                >
-                  <div className="min-w-0 text-left">
-                    <div className="truncate font-black text-white">
-                      {reward.title || "Chat Giveaway"}
+                {rouloLink && (
+                  <div className="mt-3 grid gap-2 sm:mt-4 md:grid-cols-3 sm:gap-3">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
+                        Wagered
+                      </div>
+                      <div className="mt-1 text-lg font-black text-white sm:text-xl">
+                        ${Number(rouloLink.wagered || 0).toLocaleString()}
+                      </div>
                     </div>
-                    <div className="mt-1 text-xs text-white/35">
-                      {reward.created_at
-                        ? new Date(reward.created_at).toLocaleString()
-                        : "Recently"}
+
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
+                        Role
+                      </div>
+                      <div className="mt-1 text-lg font-black uppercase text-[#8fffd0] sm:text-xl">
+                        {rouloLink.role}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
+                        Chance
+                      </div>
+                      <div className="mt-1 text-lg font-black text-[#f5c451] sm:text-xl">
+                        x{rouloLink.weight || 1}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {rouloLinkMessage && (
+                  <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/70 sm:mt-4 sm:text-sm">
+                    {rouloLinkMessage}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!isTwitchConnected ? (
+              <div className="mt-4 sm:mt-6">
+                <button
+                  onClick={handleTwitchLogin}
+                  className="rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-[#9146FF]/30 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base"
+                >
+                  Connect Twitch to View Rewards
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-4 sm:rounded-2xl sm:p-5">
+                    <div className="text-[10px] uppercase tracking-[0.2em] text-yellow-200/70 sm:text-xs sm:tracking-[0.22em]">
+                      Pending
+                    </div>
+                    <div className="mt-1 text-2xl font-black text-yellow-200 sm:mt-2 sm:text-3xl">
+                      ${viewerRewardsPending.toLocaleString()}
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <div className="text-xl font-black text-[#8fffd0]">
-                      ${Number(reward.amount || 0).toLocaleString()}
+                  <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-4 sm:rounded-2xl sm:p-5">
+                    <div className="text-[10px] uppercase tracking-[0.2em] text-cyan-200/70 sm:text-xs sm:tracking-[0.22em]">
+                      Paid
                     </div>
-                    <div
-                      className={`mt-1 inline-flex rounded-full px-3 py-1 text-xs font-black ${
-                       reward.status === "complete"
-                          ? "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
-                          : "border border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
-                      }`}
-                    >
-                      {reward.status === "complete" ? "Completed" : "Pending"}
+                    <div className="mt-1 text-2xl font-black text-cyan-200 sm:mt-2 sm:text-3xl">
+                      ${viewerRewardsPaid.toLocaleString()}
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </>
-    )}
-  </div>
-</Panel>
-)}
 
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] shadow-[0_0_55px_rgba(0,245,255,0.10)]">
+                <div className="mt-4 overflow-hidden rounded-[1.2rem] border border-white/10 bg-black/30 sm:mt-6 sm:rounded-[1.5rem]">
+                  {viewerRewards.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-sm text-white/45 sm:px-6 sm:py-10">
+                      {viewerRewardsMessage || "No rewards yet."}
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-white/5">
+                      {viewerRewards.map((reward) => (
+                        <div
+                          key={reward.id}
+                          className="flex items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-5 sm:py-4"
+                        >
+                          <div className="min-w-0 text-left">
+                            <div className="truncate text-sm font-black text-white sm:text-base">
+                              {reward.title || "Chat Giveaway"}
+                            </div>
+                            <div className="mt-1 text-[11px] text-white/35 sm:text-xs">
+                              {reward.created_at
+                                ? new Date(reward.created_at).toLocaleString()
+                                : "Recently"}
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 text-right">
+                            <div className="text-lg font-black text-[#8fffd0] sm:text-xl">
+                              ${Number(reward.amount || 0).toLocaleString()}
+                            </div>
+                            <div
+                              className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-[10px] font-black sm:px-3 sm:text-xs ${
+                                reward.status === "complete"
+                                  ? "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
+                                  : "border border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
+                              }`}
+                            >
+                              {reward.status === "complete"
+                                ? "Completed"
+                                : "Pending"}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </Panel>
+      )}
+
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-4 shadow-[0_0_35px_rgba(0,245,255,0.08)] sm:p-8 sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
       {giveawayLoading ? (
-        <div className="px-6 py-10 text-white/60">Loading giveaways...</div>
+        <div className="px-4 py-8 text-sm text-white/60 sm:px-6 sm:py-10">
+          Loading giveaways...
+        </div>
       ) : giveaways.length === 0 ? (
-        <div className="px-6 py-10 text-center text-white/45">
+        <div className="px-4 py-8 text-center text-sm text-white/45 sm:px-6 sm:py-10">
           No giveaways logged yet.
         </div>
       ) : (
         <>
           {biggestGiveaway && (
-  <div className="mb-6 rounded-[1.5rem] border border-yellow-400/25 bg-[linear-gradient(180deg,rgba(250,204,21,0.10),rgba(0,245,255,0.04))] p-5 shadow-[0_0_28px_rgba(250,204,21,0.08)]">
-    <div className="text-xs uppercase tracking-[0.3em] text-yellow-300/70">
-      Biggest Giveaway
-    </div>
+            <div className="mb-4 rounded-[1.2rem] border border-yellow-400/25 bg-[linear-gradient(180deg,rgba(250,204,21,0.10),rgba(0,245,255,0.04))] p-4 shadow-[0_0_20px_rgba(250,204,21,0.08)] sm:mb-6 sm:rounded-[1.5rem] sm:p-5 sm:shadow-[0_0_28px_rgba(250,204,21,0.08)]">
+              <div className="text-[10px] uppercase tracking-[0.24em] text-yellow-300/70 sm:text-xs sm:tracking-[0.3em]">
+                Biggest Giveaway
+              </div>
 
-    <div className="mt-3 flex items-center justify-between gap-4">
-      <div className="min-w-0">
-        <div className="truncate text-2xl font-black text-white">
-          🏆 {biggestGiveaway.winner_name}
-        </div>
+              <div className="mt-3 flex items-center justify-between gap-3 sm:gap-4">
+                <div className="min-w-0">
+                  <div className="truncate text-lg font-black text-white sm:text-2xl">
+                    🏆 {biggestGiveaway.winner_name}
+                  </div>
 
-        {biggestGiveaway.note && (
-          <div className="mt-1 truncate text-sm text-white/40">
-            {biggestGiveaway.note}
-          </div>
-        )}
-      </div>
+                  {biggestGiveaway.note && (
+                    <div className="mt-1 truncate text-xs text-white/40 sm:text-sm">
+                      {biggestGiveaway.note}
+                    </div>
+                  )}
+                </div>
 
-      <div className="shrink-0 text-2xl font-black text-[#f5c451]">
-        ${Number(biggestGiveaway.amount || 0).toLocaleString()}
-      </div>
-    </div>
-  </div>
-)}
-
-          <div className="overflow-hidden rounded-[1.5rem] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)]">
-  {/* HEADER */}
-  <div className={`grid ${isAdmin ? "grid-cols-[52px_minmax(0,1fr)_90px_74px]" : "grid-cols-[52px_minmax(0,1fr)_90px]"} border-b border-white/5 px-4 py-4 text-xs font-bold uppercase tracking-[0.18em] text-white/35 sm:px-5 sm:tracking-[0.22em]`}>
-    <div>#</div>
-    <div>Winner</div>
-    <div className="text-center">Amount</div>
-    <div className="text-right">{isAdmin ? "Edit" : ""}</div>
-  </div>
-
-  {/* BODY */}
-  <div className="max-h-[520px] overflow-y-auto">
-    {giveaways.map((giveaway, index) => (
-      <div
-        key={giveaway.id}
-        className={`grid ${isAdmin ? "grid-cols-[52px_minmax(0,1fr)_90px_74px]" : "grid-cols-[52px_minmax(0,1fr)_90px]"} items-center border-b border-white/5 px-4 py-4 last:border-b-0 sm:px-5`}
-      >
-        {/* RANK */}
-        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(0,245,255,0.20)] bg-[rgba(0,245,255,0.08)] text-xs font-black text-[#8fffd0]">
-          {index + 1}
-        </div>
-
-        {/* NAME */}
-        <div className="min-w-0 overflow-hidden">
-  <div className="truncate text-sm font-semibold text-white sm:text-base">
-    {giveaway.winner_name}
-  </div>
-
-          {giveaway.note && (
-            <div className="mt-1 truncate text-xs text-white/35">
-              {giveaway.note}
+                <div className="shrink-0 text-xl font-black text-[#f5c451] sm:text-2xl">
+                  ${Number(biggestGiveaway.amount || 0).toLocaleString()}
+                </div>
+              </div>
             </div>
           )}
-        </div>
 
-        {/* AMOUNT */}
-        <div className="text-center text-sm sm:text-lg font-black text-[#b8ffd8]">
-  ${Number(giveaway.amount || 0).toLocaleString()}
-</div>
-
-        {/* BUTTONS */}
-        {isAdmin ? (
-          <div className="flex justify-end gap-2">
-            {/* EDIT */}
-            <button
-              onClick={async () => {
-                const newName = prompt("Edit name:", giveaway.winner_name);
-                const newAmount = prompt("Edit winnings:", String(giveaway.amount));
-                const newNote = prompt("Edit note:", giveaway.note || "");
-
-                if (!newName || !newAmount) return;
-
-                await fetch(
-                  `/api/giveaways?id=${giveaway.id}&key=trashguy92`,
-                  {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      winner_name: newName,
-                      amount: Number(newAmount),
-                      note: newNote,
-                    }),
-                  }
-                );
-
-                window.location.reload();
-              }}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400/30 bg-yellow-400/10 text-yellow-300 transition hover:bg-yellow-400/20 hover:shadow-[0_0_12px_rgba(250,204,21,0.45)]"
+          <div className="overflow-hidden rounded-[1.2rem] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)] sm:rounded-[1.5rem]">
+            <div
+              className={`grid ${
+                isAdmin
+                  ? "grid-cols-[38px_minmax(0,1fr)_70px_58px]"
+                  : "grid-cols-[38px_minmax(0,1fr)_70px]"
+              } border-b border-white/5 px-3 py-3 text-[9px] font-bold uppercase tracking-[0.14em] text-white/35 sm:grid-cols-[52px_minmax(0,1fr)_90px_74px] sm:px-5 sm:py-4 sm:text-xs sm:tracking-[0.22em]`}
             >
-              ✎
-            </button>
+              <div>#</div>
+              <div>Winner</div>
+              <div className="text-center">Amount</div>
+              <div className="text-right">{isAdmin ? "Edit" : ""}</div>
+            </div>
 
-            {/* DELETE */}
-            <button
-              onClick={async () => {
-                await fetch(
-                  `/api/giveaways?id=${giveaway.id}&key=trashguy92`,
-                  { method: "DELETE" }
-                );
-                window.location.reload();
-              }}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400/30 bg-red-400/10 text-red-300 transition hover:bg-red-400/20 hover:shadow-[0_0_12px_rgba(248,113,113,0.45)]"
-            >
-              ×
-            </button>
+            <div className="max-h-[460px] overflow-y-auto sm:max-h-[520px]">
+              {giveaways.map((giveaway, index) => (
+                <div
+                  key={giveaway.id}
+                  className={`grid ${
+                    isAdmin
+                      ? "grid-cols-[38px_minmax(0,1fr)_70px_58px]"
+                      : "grid-cols-[38px_minmax(0,1fr)_70px]"
+                  } items-center border-b border-white/5 px-3 py-3 last:border-b-0 sm:grid-cols-[52px_minmax(0,1fr)_90px_74px] sm:px-5 sm:py-4`}
+                >
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[rgba(0,245,255,0.20)] bg-[rgba(0,245,255,0.08)] text-[10px] font-black text-[#8fffd0] sm:h-9 sm:w-9 sm:text-xs">
+                    {index + 1}
+                  </div>
+
+                  <div className="min-w-0 overflow-hidden">
+                    <div className="truncate text-xs font-semibold text-white sm:text-base">
+                      {giveaway.winner_name}
+                    </div>
+
+                    {giveaway.note && (
+                      <div className="mt-0.5 truncate text-[10px] text-white/35 sm:mt-1 sm:text-xs">
+                        {giveaway.note}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-center text-xs font-black text-[#b8ffd8] sm:text-lg">
+                    ${Number(giveaway.amount || 0).toLocaleString()}
+                  </div>
+
+                  {isAdmin ? (
+                    <div className="flex justify-end gap-1 sm:gap-2">
+                      <button
+                        onClick={async () => {
+                          const newName = prompt(
+                            "Edit name:",
+                            giveaway.winner_name
+                          );
+                          const newAmount = prompt(
+                            "Edit winnings:",
+                            String(giveaway.amount)
+                          );
+                          const newNote = prompt(
+                            "Edit note:",
+                            giveaway.note || ""
+                          );
+
+                          if (!newName || !newAmount) return;
+
+                          await fetch(
+                            `/api/giveaways?id=${giveaway.id}&key=trashguy92`,
+                            {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                winner_name: newName,
+                                amount: Number(newAmount),
+                                note: newNote,
+                              }),
+                            }
+                          );
+
+                          window.location.reload();
+                        }}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-yellow-400/30 bg-yellow-400/10 text-xs text-yellow-300 transition hover:bg-yellow-400/20 hover:shadow-[0_0_12px_rgba(250,204,21,0.45)] sm:h-8 sm:w-8"
+                      >
+                        ✎
+                      </button>
+
+                      <button
+                        onClick={async () => {
+                          await fetch(
+                            `/api/giveaways?id=${giveaway.id}&key=trashguy92`,
+                            { method: "DELETE" }
+                          );
+                          window.location.reload();
+                        }}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-400/30 bg-red-400/10 text-xs text-red-300 transition hover:bg-red-400/20 hover:shadow-[0_0_12px_rgba(248,113,113,0.45)] sm:h-8 sm:w-8"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <div />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        ) : (
-          <div />
-        )}
-      </div>
-    ))}
-  </div>
-</div>
         </>
       )}
     </Panel>
@@ -2909,17 +2927,18 @@ LEADERBOARD
 )}
 
 {activeSection === "hunts" && (
-  <section className="space-y-8">
+  <section className="space-y-4 sm:space-y-8">
     <div className="text-center">
-      <div className="text-xs font-black uppercase tracking-[0.35em] text-cyan-300">
+      <div className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300 sm:text-xs sm:tracking-[0.35em]">
         Bonus Hunts
       </div>
-      <h2 className="mt-3 text-[clamp(1.3rem,4vw,4rem)] font-black uppercase tracking-tight text-white drop-shadow-[0_0_28px_rgba(0,245,255,0.22)]">
+
+      <h2 className="mt-2 text-[clamp(1.4rem,7vw,4rem)] font-black uppercase tracking-tight text-white drop-shadow-[0_0_28px_rgba(0,245,255,0.22)] sm:mt-3">
         PREDICTIONS
       </h2>
     </div>
 
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="flex gap-3 overflow-x-auto pb-3 sm:gap-4 sm:pb-4">
       {huntsData.map((hunt) => (
         <button
           key={hunt.id}
@@ -2929,17 +2948,17 @@ LEADERBOARD
               hunt.prediction_status === "open" ? "open" : "locked"
             );
           }}
-          className={`flex min-w-[150px] sm:min-w-[190px] flex-col items-center justify-center rounded-2xl border bg-black/70 p-4 text-center backdrop-blur-md transition hover:-translate-y-1 ${
+          className={`flex min-w-[135px] flex-col items-center justify-center rounded-xl border bg-black/70 p-3 text-center backdrop-blur-md transition hover:-translate-y-1 sm:min-w-[190px] sm:rounded-2xl sm:p-4 ${
             currentPredictionHunt?.id === hunt.id || adminHuntId === hunt.id
-              ? "border-cyan-300/45 shadow-[0_0_30px_rgba(0,245,255,0.18)]"
+              ? "border-cyan-300/45 shadow-[0_0_24px_rgba(0,245,255,0.16)]"
               : "border-white/10 hover:border-cyan-300/25"
           }`}
         >
-          <div className="text-sm font-black text-white">
+          <div className="text-xs font-black text-white sm:text-sm">
             {hunt.title || "Bonus Hunt"}
           </div>
 
-          <div className="mt-3 flex flex-col items-center gap-1 text-xs font-semibold text-white/65">
+          <div className="mt-2 flex flex-col items-center gap-0.5 text-[10px] font-semibold text-white/65 sm:mt-3 sm:gap-1 sm:text-xs">
             <div>Start: {formatMoney(hunt.startCost)}</div>
             <div>Won: {formatMoney(hunt.totalWinnings)}</div>
             <div>
@@ -2961,22 +2980,22 @@ LEADERBOARD
       ))}
     </div>
 
-    <div className="overflow-hidden rounded-[2rem] border border-cyan-300/15 bg-black/70 backdrop-blur-xl shadow-[0_0_70px_rgba(0,245,255,0.08)]">
+    <div className="overflow-hidden rounded-[1.25rem] border border-cyan-300/15 bg-black/70 backdrop-blur-xl shadow-[0_0_42px_rgba(0,245,255,0.07)] sm:rounded-[2rem] sm:shadow-[0_0_70px_rgba(0,245,255,0.08)]">
       <div className="grid lg:grid-cols-[1fr_1.05fr]">
-        <div className="border-b border-white/10 p-4 sm:p-6 lg:border-b-0 lg:border-r">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="border-b border-white/10 p-3 sm:p-6 lg:border-b-0 lg:border-r">
+          <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
             <div>
-              <div className="flex items-center gap-2 text-xl font-black text-white">
-                <span className="h-2.5 w-2.5 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(0,245,255,0.9)]" />
+              <div className="flex items-center gap-2 text-base font-black text-white sm:text-xl">
+                <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(0,245,255,0.9)] sm:h-2.5 sm:w-2.5" />
                 {currentPredictionHunt?.title || "Latest Hunt"}
               </div>
-              <div className="mt-1 text-sm text-white/45">
+              <div className="mt-1 text-xs text-white/45 sm:text-sm">
                 {currentPredictionHunt?.casino || "RouloBets"}
               </div>
             </div>
 
             <div
-              className={`rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.2em] ${
+              className={`rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em] ${
                 predictionStatus === "open"
                   ? "border-cyan-300/30 bg-cyan-400/10 text-cyan-100"
                   : "border-red-300/25 bg-red-400/10 text-red-200"
@@ -2986,181 +3005,182 @@ LEADERBOARD
             </div>
           </div>
 
-<div className="mt-8 space-y-4">
-  {/* TOP ROW */}
-  <div className="grid gap-4 md:grid-cols-2">
-    <div className="rounded-[1.7rem] border border-white/10 bg-black/30 p-4 sm:p-6">
-      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/35">
-        Start
-      </div>
+          <div className="mt-4 space-y-3 sm:mt-8 sm:space-y-4">
+            {/* TOP ROW */}
+            <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+              <div className="rounded-[1.15rem] border border-white/10 bg-black/30 p-3 sm:rounded-[1.7rem] sm:p-6">
+                <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
+                  Start
+                </div>
 
-      <div className="mt-3 text-5xl font-black tracking-tight text-white">
-        {formatMoney(currentPredictionHunt?.startCost || 0)}
-      </div>
-    </div>
+                <div className="mt-2 text-3xl font-black tracking-tight text-white sm:mt-3 sm:text-5xl">
+                  {formatMoney(currentPredictionHunt?.startCost || 0)}
+                </div>
+              </div>
 
-    <div className="rounded-[1.7rem] border border-cyan-400/20 bg-[rgba(0,245,255,0.06)] p-4 sm:p-6">
-      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-cyan-100/45">
-        Won
-      </div>
+              <div className="rounded-[1.15rem] border border-cyan-400/20 bg-[rgba(0,245,255,0.06)] p-3 sm:rounded-[1.7rem] sm:p-6">
+                <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-100/45 sm:text-[11px] sm:tracking-[0.22em]">
+                  Won
+                </div>
 
-      <div className="mt-3 text-5xl font-black tracking-tight text-cyan-200">
-        {formatMoney(
-          currentPredictionHunt?.stats?.totalWinnings ||
-            currentPredictionHunt?.totalWinnings ||
-            0
-        )}
-      </div>
-    </div>
-  </div>
+                <div className="mt-2 text-3xl font-black tracking-tight text-cyan-200 sm:mt-3 sm:text-5xl">
+                  {formatMoney(
+                    currentPredictionHunt?.stats?.totalWinnings ||
+                      currentPredictionHunt?.totalWinnings ||
+                      0
+                  )}
+                </div>
+              </div>
+            </div>
 
-  {/* MIDDLE ROW */}
-  <div className="grid gap-4 md:grid-cols-3">
-    <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
-      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/35">
-        Bonuses
-      </div>
+            {/* MIDDLE ROW */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="rounded-[1rem] border border-white/10 bg-black/30 p-3 sm:rounded-[1.5rem] sm:p-5">
+                <div className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
+                  Bonuses
+                </div>
 
-      <div className="mt-3 text-2xl sm:text-3xl font-black text-white">
-        {currentPredictionHunt?.bonuses?.length || 0}
-      </div>
-    </div>
+                <div className="mt-2 text-xl font-black text-white sm:mt-3 sm:text-3xl">
+                  {currentPredictionHunt?.bonuses?.length || 0}
+                </div>
+              </div>
 
-    <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
-      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/35">
-        Avg X
-      </div>
+              <div className="rounded-[1rem] border border-white/10 bg-black/30 p-3 sm:rounded-[1.5rem] sm:p-5">
+                <div className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
+                  Avg X
+                </div>
 
-      <div className="mt-3 text-2xl sm:text-3xl font-black text-white">
-        {currentPredictionHunt?.stats?.currentAverageMultiplier
-          ? `${Number(
-              currentPredictionHunt.stats.currentAverageMultiplier
-            ).toFixed(2)}x`
-          : `${currentPredictionAvgX}x`}
-      </div>
-    </div>
+                <div className="mt-2 text-xl font-black text-white sm:mt-3 sm:text-3xl">
+                  {currentPredictionHunt?.stats?.currentAverageMultiplier
+                    ? `${Number(
+                        currentPredictionHunt.stats.currentAverageMultiplier
+                      ).toFixed(2)}x`
+                    : `${currentPredictionAvgX}x`}
+                </div>
+              </div>
 
-    <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
-      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/35">
-        Req X
-      </div>
+              <div className="rounded-[1rem] border border-white/10 bg-black/30 p-3 sm:rounded-[1.5rem] sm:p-5">
+                <div className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
+                  Req X
+                </div>
 
-      <div className="mt-3 text-2xl sm:text-3xl font-black text-white">
-        {currentPredictionHunt?.stats?.averagePayoutRequired &&
-        currentPredictionHunt?.stats?.averageBetSize
-          ? `${(
-              Number(currentPredictionHunt.stats.averagePayoutRequired) /
-              Number(currentPredictionHunt.stats.averageBetSize)
-            ).toFixed(2)}x`
-          : "---"}
-      </div>
-    </div>
-  </div>
+                <div className="mt-2 text-xl font-black text-white sm:mt-3 sm:text-3xl">
+                  {currentPredictionHunt?.stats?.averagePayoutRequired &&
+                  currentPredictionHunt?.stats?.averageBetSize
+                    ? `${(
+                        Number(currentPredictionHunt.stats.averagePayoutRequired) /
+                        Number(currentPredictionHunt.stats.averageBetSize)
+                      ).toFixed(2)}x`
+                    : "---"}
+                </div>
+              </div>
+            </div>
 
-{/* BOTTOM ROW */}
-<div className="grid gap-4 md:grid-cols-2">
-  {/* HIGHEST WIN */}
-  <div className="rounded-[1.8rem] border border-white/10 bg-black/30 p-4 sm:p-6">
-    <div className="text-[11px] font-black uppercase tracking-[0.24em] text-white/35">
-      Highest Win
-    </div>
+            {/* BOTTOM ROW */}
+            <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+              <div className="rounded-[1.15rem] border border-white/10 bg-black/30 p-3 sm:rounded-[1.8rem] sm:p-6">
+                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/35 sm:text-[11px] sm:tracking-[0.24em]">
+                  Highest Win
+                </div>
 
-    <div className="mt-4">
-      <div className="text-2xl font-black leading-tight text-white break-words">
-        {currentPredictionHunt?.bonuses?.length
-          ? [...currentPredictionHunt.bonuses].sort(
-              (a: any, b: any) =>
-                Number(b.payout || 0) - Number(a.payout || 0)
-            )[0]?.slotName || "---"
-          : "---"}
-      </div>
+                <div className="mt-3 sm:mt-4">
+                  <div className="break-words text-lg font-black leading-tight text-white sm:text-2xl">
+                    {currentPredictionHunt?.bonuses?.length
+                      ? [...currentPredictionHunt.bonuses].sort(
+                          (a: any, b: any) =>
+                            Number(b.payout || 0) - Number(a.payout || 0)
+                        )[0]?.slotName || "---"
+                      : "---"}
+                  </div>
 
-      <div className="mt-3 text-2xl sm:text-3xl font-black text-cyan-300">
-        {formatMoney(
-          currentPredictionHunt?.bonuses?.length
-            ? [...currentPredictionHunt.bonuses].sort(
-                (a: any, b: any) =>
-                  Number(b.payout || 0) - Number(a.payout || 0)
-              )[0]?.payout || 0
-            : 0
-        )}
-      </div>
-    </div>
-  </div>
+                  <div className="mt-2 text-xl font-black text-cyan-300 sm:mt-3 sm:text-3xl">
+                    {formatMoney(
+                      currentPredictionHunt?.bonuses?.length
+                        ? [...currentPredictionHunt.bonuses].sort(
+                            (a: any, b: any) =>
+                              Number(b.payout || 0) - Number(a.payout || 0)
+                          )[0]?.payout || 0
+                        : 0
+                    )}
+                  </div>
+                </div>
+              </div>
 
-  {/* HIGHEST X */}
-  <div className="rounded-[1.8rem] border border-white/10 bg-black/30 p-4 sm:p-6">
-    <div className="text-[11px] font-black uppercase tracking-[0.24em] text-white/35">
-      Highest X
-    </div>
+              <div className="rounded-[1.15rem] border border-white/10 bg-black/30 p-3 sm:rounded-[1.8rem] sm:p-6">
+                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/35 sm:text-[11px] sm:tracking-[0.24em]">
+                  Highest X
+                </div>
 
-    <div className="mt-4">
-      <div className="text-2xl font-black leading-tight text-white break-words">
-        {currentPredictionHunt?.bonuses?.length
-          ? [...currentPredictionHunt.bonuses].sort(
-              (a: any, b: any) =>
-                Number(b.multiplier || 0) - Number(a.multiplier || 0)
-            )[0]?.slotName || "---"
-          : "---"}
-      </div>
+                <div className="mt-3 sm:mt-4">
+                  <div className="break-words text-lg font-black leading-tight text-white sm:text-2xl">
+                    {currentPredictionHunt?.bonuses?.length
+                      ? [...currentPredictionHunt.bonuses].sort(
+                          (a: any, b: any) =>
+                            Number(b.multiplier || 0) -
+                            Number(a.multiplier || 0)
+                        )[0]?.slotName || "---"
+                      : "---"}
+                  </div>
 
-      <div className="mt-3 text-2xl sm:text-3xl font-black text-cyan-300">
-        {currentPredictionHunt?.bonuses?.length
-          ? `${Number(
-              [...currentPredictionHunt.bonuses].sort(
-                (a: any, b: any) =>
-                  Number(b.multiplier || 0) - Number(a.multiplier || 0)
-              )[0]?.multiplier || 0
-            ).toFixed(2)}x`
-          : "---"}
-      </div>
-    </div>
-  </div>
-</div>
-</div>
+                  <div className="mt-2 text-xl font-black text-cyan-300 sm:mt-3 sm:text-3xl">
+                    {currentPredictionHunt?.bonuses?.length
+                      ? `${Number(
+                          [...currentPredictionHunt.bonuses].sort(
+                            (a: any, b: any) =>
+                              Number(b.multiplier || 0) -
+                              Number(a.multiplier || 0)
+                          )[0]?.multiplier || 0
+                        ).toFixed(2)}x`
+                      : "---"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="p-4 sm:p-6">
+        {/* RIGHT SIDE */}
+        <div className="p-3 sm:p-6">
           <div className="text-center">
-            <div className="text-sm sm:text-lg font-black text-white">
+            <div className="text-sm font-black text-white sm:text-lg">
               Guess the end balance
             </div>
-            <div className="mt-2 text-xs text-white/45">
+            <div className="mt-1 text-[11px] text-white/45 sm:mt-2 sm:text-xs">
               Closest predictions win. One entry per person.
             </div>
 
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-xs font-black text-cyan-100">
+            <div className="mt-3 flex flex-wrap justify-center gap-2 sm:mt-4">
+              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1.5 text-[10px] font-black text-cyan-100 sm:px-4 sm:py-2 sm:text-xs">
                 1st Closest $15
               </div>
-              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-xs font-black text-cyan-100">
+              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1.5 text-[10px] font-black text-cyan-100 sm:px-4 sm:py-2 sm:text-xs">
                 2nd $10
               </div>
             </div>
           </div>
 
-          <div className="mt-6 rounded-2xl border border-cyan-300/15 bg-cyan-400/5 p-5">
-            <div className="grid gap-3 md:grid-cols-3">
+          <div className="mt-4 rounded-xl border border-cyan-300/15 bg-cyan-400/5 p-3 sm:mt-6 sm:rounded-2xl sm:p-5">
+            <div className="grid gap-2 sm:gap-3 md:grid-cols-3">
               {rankedWinners.length === 0 ? (
-                <div className="col-span-full py-8 text-center text-white/45">
+                <div className="col-span-full py-5 text-center text-sm text-white/45 sm:py-8">
                   Winners will appear when the hunt is completed.
                 </div>
               ) : (
                 rankedWinners.slice(0, 3).map((winner, index) => (
                   <div
                     key={winner.id}
-                    className="rounded-xl border border-white/10 bg-black/35 p-4 text-center"
+                    className="rounded-lg border border-white/10 bg-black/35 p-3 text-center sm:rounded-xl sm:p-4"
                   >
-                    <div className="text-xs font-black uppercase text-yellow-300">
+                    <div className="text-[10px] font-black uppercase text-yellow-300 sm:text-xs">
                       {index === 0 ? "1st" : index === 1 ? "2nd" : "3rd"}
                     </div>
-                    <div className="mt-2 font-black text-white">
+                    <div className="mt-1 text-sm font-black text-white sm:mt-2">
                       {winner.username}
                     </div>
-                    <div className="mt-2 text-xl font-black text-cyan-200">
+                    <div className="mt-1 text-base font-black text-cyan-200 sm:mt-2 sm:text-xl">
                       {formatMoney(winner.guess)}
                     </div>
-                    <div className="mt-1 text-xs text-white/45">
+                    <div className="mt-1 text-[10px] text-white/45 sm:text-xs">
                       Off by {formatMoney(winner.distance)}
                     </div>
                   </div>
@@ -3169,11 +3189,11 @@ LEADERBOARD
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-4 sm:mt-6">
             {!isTwitchConnected ? (
               <button
                 onClick={handleTwitchLogin}
-                className="mx-auto flex rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/25 px-6 py-3 text-sm font-black text-white transition hover:bg-[#9146FF]/35"
+                className="mx-auto flex rounded-lg border border-[#9146FF]/40 bg-[#9146FF]/25 px-5 py-2.5 text-xs font-black text-white transition hover:bg-[#9146FF]/35 sm:rounded-xl sm:px-6 sm:py-3 sm:text-sm"
               >
                 Sign in with Twitch
               </button>
@@ -3186,77 +3206,79 @@ LEADERBOARD
                   }
                   placeholder="Enter final hunt balance"
                   disabled={predictionStatus !== "open"}
-                  className="w-full rounded-xl border border-white/10 bg-black/55 px-5 py-4 text-center text-white outline-none transition focus:border-cyan-300/40 disabled:opacity-40"
+                  className="w-full rounded-lg border border-white/10 bg-black/55 px-4 py-3 text-center text-sm text-white outline-none transition focus:border-cyan-300/40 disabled:opacity-40 sm:rounded-xl sm:px-5 sm:py-4 sm:text-base"
                 />
 
                 <button
                   onClick={handlePredictionSubmit}
                   disabled={predictionStatus !== "open"}
-                  className="mt-3 w-full rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-5 py-4 font-black uppercase tracking-[0.18em] text-cyan-100 transition hover:bg-cyan-400/20 disabled:opacity-40"
+                  className="mt-2 w-full rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:bg-cyan-400/20 disabled:opacity-40 sm:mt-3 sm:rounded-xl sm:px-5 sm:py-4 sm:tracking-[0.18em]"
                 >
                   Save Prediction
                 </button>
 
                 {predictionMessage && (
-                  <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-center text-sm text-white/70">
+                  <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-center text-xs text-white/70 sm:mt-3 sm:rounded-xl sm:text-sm">
                     {predictionMessage}
                   </div>
                 )}
-                <div className="mt-6 rounded-2xl border border-white/10 bg-black/35 p-4">
-  <div className="mb-3 flex items-center justify-between">
-    <div className="text-xs font-black uppercase tracking-[0.22em] text-white/45">
-      Live Guesses
-    </div>
 
-    <div className="text-xs font-black text-cyan-200">
-      {currentPredictionCount} Entries
-    </div>
-  </div>
+                <div className="mt-4 rounded-xl border border-white/10 bg-black/35 p-3 sm:mt-6 sm:rounded-2xl sm:p-4">
+                  <div className="mb-2 flex items-center justify-between sm:mb-3">
+                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
+                      Live Guesses
+                    </div>
 
-  <div className="max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-black/30">
-    {sortedPredictionsForTab.length === 0 ? (
-      <div className="p-4 sm:p-6 text-center text-sm text-white/40">
-        No guesses yet.
-      </div>
-    ) : (
-      <div className="divide-y divide-white/5">
-        {sortedPredictionsForTab.map((entry, index) => (
-          <div
-            key={entry.id}
-            className="flex items-center justify-between gap-3 px-4 py-3"
-          >
-            <div className="min-w-0">
-              <div className="truncate font-black text-white">
-                #{index + 1} {entry.username}
-              </div>
-              <div className="text-xs text-white/35">
-                {formatTimeAgo(entry.createdAt)}
-              </div>
-            </div>
+                    <div className="text-[10px] font-black text-cyan-200 sm:text-xs">
+                      {currentPredictionCount} Entries
+                    </div>
+                  </div>
 
-            <div className="font-black text-cyan-200">
-              {formatMoney(entry.guess)}
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-</div>
+                  <div className="max-h-[220px] overflow-y-auto rounded-lg border border-white/10 bg-black/30 sm:max-h-[260px] sm:rounded-xl">
+                    {sortedPredictionsForTab.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-white/40 sm:p-6 sm:text-sm">
+                        No guesses yet.
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-white/5">
+                        {sortedPredictionsForTab.map((entry, index) => (
+                          <div
+                            key={entry.id}
+                            className="flex items-center justify-between gap-3 px-3 py-2.5 sm:px-4 sm:py-3"
+                          >
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-black text-white sm:text-base">
+                                #{index + 1} {entry.username}
+                              </div>
+                              <div className="text-[10px] text-white/35 sm:text-xs">
+                                {formatTimeAgo(entry.createdAt)}
+                              </div>
+                            </div>
+
+                            <div className="text-sm font-black text-cyan-200 sm:text-base">
+                              {formatMoney(entry.guess)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="border-t border-white/10 p-4 sm:p-6">
-        <div className="mb-4 text-xs font-black uppercase tracking-[0.25em] text-white/45">
+      {/* BONUS LIST */}
+      <div className="border-t border-white/10 p-3 sm:p-6">
+        <div className="mb-3 text-[10px] font-black uppercase tracking-[0.22em] text-white/45 sm:mb-4 sm:text-xs sm:tracking-[0.25em]">
           Slots in this hunt
         </div>
 
-        <div className="max-h-[520px] overflow-y-auto rounded-2xl border border-white/10 bg-black/35">
+        <div className="max-h-[420px] overflow-y-auto rounded-xl border border-white/10 bg-black/35 sm:max-h-[520px] sm:rounded-2xl">
           {!currentPredictionHunt?.bonuses?.length ? (
-            <div className="flex h-[160px] items-center justify-center text-white/40">
+            <div className="flex h-[120px] items-center justify-center text-sm text-white/40 sm:h-[160px]">
               No bonuses in this hunt yet.
             </div>
           ) : (
@@ -3264,35 +3286,45 @@ LEADERBOARD
               {currentPredictionHunt.bonuses.map((bonus: any, index: number) => (
                 <div
                   key={bonus.id || index}
-                  className="grid grid-cols-[90px_1fr_90px_110px_110px] items-center gap-4 px-5 py-4 text-sm"
+                  className="grid grid-cols-[1fr_auto] gap-3 px-3 py-3 text-sm sm:grid-cols-[90px_1fr_90px_110px_110px] sm:items-center sm:gap-4 sm:px-5 sm:py-4"
                 >
-                  <div className="font-black text-white/70">
-                    Bonus #{index + 1}
+                  <div className="min-w-0">
+                    <div className="text-xs font-black text-cyan-200 sm:text-white/70">
+                      Bonus #{index + 1}
+                    </div>
+
+                    <div className="mt-1 break-words text-sm font-black text-white sm:hidden">
+                      {bonus.slotName}
+                    </div>
                   </div>
-                  <div className="truncate font-black text-white">
+
+                  <div className="hidden min-w-0 truncate font-black text-white sm:block">
                     {bonus.slotName}
                   </div>
+
                   <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/35">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">
                       Bet
                     </div>
-                    <div className="font-black text-white">
+                    <div className="text-sm font-black text-white sm:text-base">
                       {formatMoney(Number(bonus.betSize || 0))}
                     </div>
                   </div>
+
                   <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/35">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">
                       Multiplier
                     </div>
-                    <div className="font-black text-white">
+                    <div className="text-sm font-black text-white sm:text-base">
                       {Number(bonus.multiplier || 0).toFixed(2)}x
                     </div>
                   </div>
+
                   <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/35">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">
                       Payout
                     </div>
-                    <div className="font-black text-cyan-300">
+                    <div className="text-sm font-black text-cyan-300 sm:text-base">
                       {formatMoney(Number(bonus.payout || 0))}
                     </div>
                   </div>
@@ -3307,28 +3339,26 @@ LEADERBOARD
 )}
 
 {activeSection === "slotpicker" && (
-  <section className="space-y-6">
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] shadow-[0_0_55px_rgba(0,245,255,0.10)]">
+  <section className="space-y-3 sm:space-y-6">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-4 shadow-[0_0_35px_rgba(0,245,255,0.08)] sm:p-8 sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
       <div className="text-center">
         <SectionLabel>Slot Picker</SectionLabel>
 
-        <h2 className="mt-3 text-[clamp(1.8rem,4vw,3.2rem)] font-black leading-[1.05] tracking-tight text-white">
-          RANDOM
-          <br />
-          SLOT PICKER
+        <h2 className="mt-2 text-[clamp(1.45rem,7vw,3.2rem)] font-black leading-[1.05] tracking-tight text-white sm:mt-3">
+          RANDOM SLOT PICKER
         </h2>
 
-        <p className="mx-auto mt-4 max-w-2xl text-white/55">
+        <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-white/55 sm:mt-4 sm:text-base">
           Select providers, spin the picker, and let fate choose the next slot.
         </p>
       </div>
 
-      <div className="mt-8 rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
-        <div className="text-xs font-bold uppercase tracking-[0.24em] text-white/40">
+      <div className="mt-4 rounded-[1.2rem] border border-white/10 bg-black/30 p-3 sm:mt-8 sm:rounded-[1.5rem] sm:p-5">
+        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/40 sm:text-xs sm:tracking-[0.24em]">
           Providers
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
           {slotProviders.map((provider) => {
             const active = selectedProviders.includes(provider);
             const logo = providerLogos[provider];
@@ -3337,32 +3367,34 @@ LEADERBOARD
               <button
                 key={provider}
                 onClick={() => toggleSlotProvider(provider)}
-                className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
+                className={`flex min-h-[70px] items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all duration-200 sm:min-h-[78px] sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3 ${
                   active
-                    ? "border-[#00ff88]/45 bg-[#00ff88]/15 text-white shadow-[0_0_20px_rgba(0,245,255,0.14)]"
+                    ? "border-cyan-300/45 bg-cyan-400/15 text-white shadow-[0_0_20px_rgba(0,245,255,0.14)]"
                     : "border-white/10 bg-white/5 text-white/65 hover:border-white/20 hover:text-white"
                 }`}
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/35">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/35 sm:h-10 sm:w-10 sm:rounded-xl">
                   {logo ? (
                     <img
                       src={logo}
                       alt={provider}
-                      className="h-7 w-7 object-contain"
+                      className="h-6 w-6 object-contain sm:h-7 sm:w-7"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                       }}
                     />
                   ) : (
-                    <span className="text-xs font-black text-[#8fffd0]">
+                    <span className="text-[10px] font-black text-[#8fffd0] sm:text-xs">
                       {provider.charAt(0)}
                     </span>
                   )}
                 </div>
 
                 <div className="min-w-0">
-                  <div className="truncate font-bold">{provider}</div>
-                  <div className="text-xs text-white/35">
+                  <div className="truncate text-xs font-black sm:text-base">
+                    {provider}
+                  </div>
+                  <div className="text-[10px] text-white/35 sm:text-xs">
                     {slotData.filter((slot) => slot.provider === provider).length} slots
                   </div>
                 </div>
@@ -3371,88 +3403,88 @@ LEADERBOARD
           })}
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="text-sm text-white/45">
-  {selectedProviders.length === 0
-    ? `🎲 All Providers Active (${slotData.length} slots)`
-    : `${filteredSlots.length} slots from ${selectedProviders.length} provider(s)`}
-</div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 sm:mt-5 sm:gap-3">
+          <div className="text-xs text-white/45 sm:text-sm">
+            {selectedProviders.length === 0
+              ? `🎲 All Providers Active (${slotData.length} slots)`
+              : `${filteredSlots.length} slots from ${selectedProviders.length} provider(s)`}
+          </div>
 
           <button
             onClick={() => {
               setSelectedProviders([]);
               setPickedSlot(null);
             }}
-            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/55 transition hover:text-white"
+            className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/55 transition hover:text-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.18em]"
           >
             Reset
           </button>
         </div>
       </div>
 
-      <div className="mt-6 rounded-[2rem] border border-[rgba(0,245,255,0.16)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(6,6,6,0.98))] p-4 sm:p-8 text-center shadow-[0_0_45px_rgba(0,245,255,0.08)]">
+      <div className="mt-4 rounded-[1.25rem] border border-[rgba(0,245,255,0.16)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(6,6,6,0.98))] p-3 text-center shadow-[0_0_35px_rgba(0,245,255,0.06)] sm:mt-6 sm:rounded-[2rem] sm:p-8 sm:shadow-[0_0_45px_rgba(0,245,255,0.08)]">
         <button
           onClick={pickRandomSlot}
           disabled={isPickingSlot || filteredSlots.length === 0}
-          className="w-full rounded-2xl border border-[#00ff88]/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.22),rgba(0,245,255,0.08))] px-6 py-4 text-sm sm:text-lg font-black text-[#b8ffd8] shadow-[0_0_25px_rgba(0,245,255,0.12)] transition hover:border-[#00ff88]/45 hover:bg-[#00ff88]/20 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-xl border border-cyan-300/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.22),rgba(0,245,255,0.08))] px-4 py-3 text-xs font-black text-[#b8ffd8] shadow-[0_0_20px_rgba(0,245,255,0.10)] transition hover:border-cyan-300/45 hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-lg sm:shadow-[0_0_25px_rgba(0,245,255,0.12)]"
         >
           {isPickingSlot ? "Spinning..." : "Pick Random Slot"}
         </button>
 
         <div
-  className={`mt-8 rounded-[1.75rem] border bg-black/35 p-4 sm:p-8 transition-all duration-300 ${
-    isPickingSlot
-      ? "scale-[1.03] border-[#00ff88]/40 shadow-[0_0_60px_rgba(0,245,255,0.28)] blur-[0.2px]"
-      : "border-white/10 shadow-[0_0_35px_rgba(0,245,255,0.14)]"
-  }`}
->
+          className={`mt-4 rounded-[1.2rem] border bg-black/35 p-4 transition-all duration-300 sm:mt-8 sm:rounded-[1.75rem] sm:p-8 ${
+            isPickingSlot
+              ? "scale-[1.02] border-cyan-300/40 shadow-[0_0_45px_rgba(0,245,255,0.22)] blur-[0.2px]"
+              : "border-white/10 shadow-[0_0_28px_rgba(0,245,255,0.10)]"
+          }`}
+        >
           {!pickedSlot ? (
-            <div className="py-12 text-white/45">
+            <div className="py-8 text-sm text-white/45 sm:py-12 sm:text-base">
               No slot picked yet.
             </div>
           ) : (
             <>
-              <div className="text-xs font-bold uppercase tracking-[0.3em] text-white/35">
-  Selected Slot
-</div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/35 sm:text-xs sm:tracking-[0.3em]">
+                Selected Slot
+              </div>
 
-{pickedSlot.image && (
-  <img
-    src={pickedSlot.image}
-    alt={pickedSlot.name}
-    className="mx-auto mt-6 mb-4 h-32 object-contain"
-  />
-)}
+              {pickedSlot.image && (
+                <img
+                  src={pickedSlot.image}
+                  alt={pickedSlot.name}
+                  className="mx-auto mb-3 mt-4 h-24 object-contain sm:mb-4 sm:mt-6 sm:h-32"
+                />
+              )}
 
-<div
-  className={`mt-5 text-[clamp(1.3rem,4vw,4rem)]font-black transition-all duration-200 ${
-    isPickingSlot
-      ? "scale-95 text-white/70 blur-[1px]"
-      : "scale-105 text-[#8fffd0] drop-shadow-[0_0_25px_rgba(0,245,255,0.65)]"
-  }`}
->
-  {pickedSlot.name}
-</div>
+              <div
+                className={`mt-3 text-[clamp(1.1rem,6vw,4rem)] font-black transition-all duration-200 sm:mt-5 ${
+                  isPickingSlot
+                    ? "scale-95 text-white/70 blur-[1px]"
+                    : "scale-105 text-[#8fffd0] drop-shadow-[0_0_25px_rgba(0,245,255,0.65)]"
+                }`}
+              >
+                {pickedSlot.name}
+              </div>
 
-<div
-  className={`mt-5 inline-flex items-center gap-3 rounded-full border px-5 py-2 text-sm font-bold transition-all duration-200 ${
-    isPickingSlot
-      ? "border-white/10 bg-white/5 text-white/40 scale-95"
-      : "border-[#00ff88]/20 bg-[#00ff88]/10 text-[#b8ffd8] scale-105 shadow-[0_0_20px_rgba(0,245,255,0.35)]"
-  }`}
->
-  {providerLogos[pickedSlot.provider] && (
-    <img
-      src={providerLogos[pickedSlot.provider]}
-      alt={pickedSlot.provider}
-      className="h-6 w-6 object-contain"
-      onError={(e) => {
-        e.currentTarget.style.display = "none";
-      }}
-    />
-  )}
-  {pickedSlot.provider}
-</div>
+              <div
+                className={`mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-200 sm:mt-5 sm:gap-3 sm:px-5 sm:text-sm ${
+                  isPickingSlot
+                    ? "scale-95 border-white/10 bg-white/5 text-white/40"
+                    : "scale-105 border-cyan-300/20 bg-cyan-400/10 text-[#b8ffd8] shadow-[0_0_20px_rgba(0,245,255,0.35)]"
+                }`}
+              >
+                {providerLogos[pickedSlot.provider] && (
+                  <img
+                    src={providerLogos[pickedSlot.provider]}
+                    alt={pickedSlot.provider}
+                    className="h-5 w-5 object-contain sm:h-6 sm:w-6"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                )}
+                {pickedSlot.provider}
+              </div>
             </>
           )}
         </div>
@@ -3461,53 +3493,58 @@ LEADERBOARD
   </section>
 )}
 
-            {activeSection === "tournaments" && (
-  <section className="space-y-6">
-    <Panel className="border-[rgba(0,245,255,0.16)] shadow-[0_0_65px_rgba(0,245,255,0.10)]">
+ {activeSection === "tournaments" && (
+  <section className="space-y-3 sm:space-y-6">
+    <Panel className="border-[rgba(0,245,255,0.16)] p-4 shadow-[0_0_35px_rgba(0,245,255,0.08)] sm:p-8 sm:shadow-[0_0_65px_rgba(0,245,255,0.10)]">
       <div className="text-center">
         <SectionLabel>Tournaments</SectionLabel>
 
-        <h2 className="mt-4 text-[clamp(2.5rem,6vw,4.5rem)] font-black leading-[1.05] tracking-tight text-white">
+        <h2 className="mt-2 text-[clamp(1.4rem,7vw,4.5rem)] font-black leading-[1.05] tracking-tight text-white sm:mt-4">
           {bracket.title || "Tournament Bracket"}
         </h2>
 
-        <div className="mt-4 inline-flex rounded-full border border-[rgba(0,245,255,0.20)] bg-[rgba(0,245,255,0.08)] px-5 py-2 text-sm font-semibold text-[#b8ffd8]">
+        <div className="mt-3 inline-flex rounded-full border border-[rgba(0,245,255,0.20)] bg-[rgba(0,245,255,0.08)] px-3 py-1.5 text-[10px] font-semibold text-[#b8ffd8] sm:mt-4 sm:px-5 sm:py-2 sm:text-sm">
           Live Bracket
         </div>
       </div>
 
       {bracketLoading ? (
-        <div className="mt-6 sm:mt-10 text-center text-white/55">Loading bracket...</div>
+        <div className="mt-4 text-center text-sm text-white/55 sm:mt-10 sm:text-base">
+          Loading bracket...
+        </div>
       ) : (
-        <div className="mt-6 sm:mt-10 overflow-x-auto pb-2">
-          <div className="flex min-w-[1100px] items-start justify-start gap-6 px-6">
+        <div className="mt-4 overflow-x-auto pb-2 sm:mt-10">
+          <div className="flex min-w-[760px] items-start gap-3 px-1 sm:min-w-[1100px] sm:gap-6 sm:px-6">
             {bracket.rounds.map((round, roundIndex) => {
               const topPadding =
                 roundIndex === 0
-                  ? "pt-2"
+                  ? "pt-1"
                   : roundIndex === 1
-                  ? "pt-14"
+                  ? "pt-8"
                   : roundIndex === 2
-                  ? "pt-28"
-                  : "pt-40";
+                  ? "pt-16"
+                  : "pt-24";
 
               return (
-                <div key={round.id} className={`w-[290px] shrink-0 ${topPadding}`}>
-                  <div className="mb-4 text-center">
-                    <div className="inline-flex rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-5 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[#8fffd0]">
+                <div
+                  key={round.id}
+                  className={`w-[185px] shrink-0 sm:w-[290px] ${topPadding}`}
+                >
+                  <div className="mb-2 text-center sm:mb-4">
+                    <div className="inline-flex rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-3 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-[#8fffd0] sm:px-5 sm:py-2 sm:text-xs sm:tracking-[0.22em]">
                       {round.name}
                     </div>
                   </div>
 
                   <div
-                    className={`space-y-6 ${
+                    className={`space-y-3 sm:space-y-6 ${
                       roundIndex === 0
                         ? ""
                         : roundIndex === 1
-                        ? "pt-8"
+                        ? "pt-4 sm:pt-8"
                         : roundIndex === 2
-                        ? "pt-16"
-                        : "pt-24"
+                        ? "pt-8 sm:pt-16"
+                        : "pt-12 sm:pt-24"
                     }`}
                   >
                     {round.matches.map((match) => (
