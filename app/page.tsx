@@ -1096,10 +1096,8 @@ useEffect(() => {
           }))
         : [],
     }));
-
-    if (normalized.length > 0) {
-  setHuntsData(normalized);
-}
+    
+setHuntsData(normalized);
   } catch (error) {
     console.error("Hunts failed to load", error);
   } finally {
@@ -1793,17 +1791,23 @@ const handleTwitchLogin = async () => {
   };
 
   const handleStartHunt = async () => {
-  const existingHuntId =
-    adminHuntId ||
-    currentPredictionHunt?.id ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem(STORAGE_KEYS.activeHuntId) || ""
-      : "");
+const existingOpenHunt = huntsData.find(
+  (hunt) =>
+    hunt.id !== adminHuntId &&
+    (hunt.prediction_status === "open" || hunt.status === "open" || hunt.isOpening)
+);
 
-  if (existingHuntId && predictionStatus === "open") {
-    setAdminMessage("A hunt is already active.");
-    return;
+if (existingOpenHunt && predictionStatus === "open") {
+  setAdminMessage("A hunt is already active.");
+  setAdminHuntId(existingOpenHunt.id);
+
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEYS.activeHuntId, existingOpenHunt.id);
+    localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
   }
+
+  return;
+}
 
   try {
     const token = await getAccessToken();
@@ -1827,9 +1831,9 @@ const handleTwitchLogin = async () => {
       setAdminMessage(data?.error || "Failed to start hunt.");
       return;
     }
+const newHuntId = data?.hunt?.id || "";
 
-    const newHuntId = data?.hunt?.id || "";
-    if (data?.hunt) {
+if (data?.hunt) {
   const newHunt: HuntItem = {
     id: data.hunt.id,
     title: data.hunt.title || "Live Hunt",
@@ -1852,13 +1856,16 @@ const handleTwitchLogin = async () => {
   ]);
 }
 
-    setAdminHuntId(newHuntId);
-    setPredictionStatus("open");
+setAdminHuntId(newHuntId);
+setPredictionStatus("open");
+setPredictions([]);
+setLatestWinners([]);
+setFinalResult("");
 
-    if (typeof window !== "undefined" && newHuntId) {
-      localStorage.setItem(STORAGE_KEYS.activeHuntId, newHuntId);
-      localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
-    }
+if (typeof window !== "undefined" && newHuntId) {
+  localStorage.setItem(STORAGE_KEYS.activeHuntId, newHuntId);
+  localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
+}
 
     setLatestWinners([]);
     setFinalResult("");
