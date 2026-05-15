@@ -191,6 +191,13 @@ type BracketData = {
   rounds: BracketRound[];
 };
 
+type MonthlyRewardItem = {
+  date: string;
+  title: string;
+  amount: string;
+  note: string;
+};
+
 function playUiSound(type: "click" | "success" | "error" = "click") {
   if (typeof window === "undefined") return;
 
@@ -722,6 +729,103 @@ const setAdminDropdown = (
   const predictionClockRef = useRef<NodeJS.Timeout | null>(null);
   const [countdownTick, setCountdownTick] = useState(Date.now());
 
+  const [calendarDate, setCalendarDate] = useState(() => new Date());
+
+const [monthlyRewards, setMonthlyRewards] = useState<Record<string, MonthlyRewardItem>>({});
+
+const loadMonthlyRewards = useCallback(async () => {
+  try {
+    const res = await fetch("/api/monthly-rewards", { cache: "no-store" });
+    const data = await res.json();
+
+    if (!data.ok) return;
+
+    const mapped: Record<string, MonthlyRewardItem> = {};
+
+    (data.rewards || []).forEach((reward: any) => {
+      mapped[reward.reward_date] = {
+        date: reward.reward_date,
+        title: reward.title || "",
+        amount: String(reward.amount || ""),
+        note: reward.note || "",
+      };
+    });
+
+    setMonthlyRewards(mapped);
+  } catch (error) {
+    console.error("Monthly rewards failed to load", error);
+  }
+}, []);
+
+const monthlyRewardDays = useMemo(() => {
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+
+  const blanks = Array.from({ length: firstDayOfWeek }, (_, index) => ({
+    blank: true,
+    key: `blank-${index}`,
+  }));
+
+  const days = Array.from({ length: daysInMonth }, (_, index) => {
+    const day = index + 1;
+
+    const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+    return {
+      blank: false,
+      key: dateKey,
+      day,
+      dateKey,
+      reward: monthlyRewards[dateKey],
+    };
+  });
+
+  return [...blanks, ...days];
+}, [calendarDate, monthlyRewards]);
+
+const updateMonthlyReward = async (
+  dateKey: string,
+  field: "title" | "amount" | "note",
+  value: string
+) => {
+  const currentReward = monthlyRewards[dateKey] || {
+    date: dateKey,
+    title: "",
+    amount: "",
+    note: "",
+  };
+
+  const nextReward = {
+    ...currentReward,
+    [field]: value,
+  };
+
+  setMonthlyRewards((current) => ({
+    ...current,
+    [dateKey]: nextReward,
+  }));
+
+  try {
+    await fetch("/api/monthly-rewards", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        reward_date: dateKey,
+        title: nextReward.title,
+        amount: nextReward.amount || 0,
+        note: nextReward.note,
+      }),
+    });
+  } catch (error) {
+    console.error("Monthly reward save failed", error);
+  }
+};
+
   const normalizedViewer = viewerName.trim().toLowerCase();
   const adminAllowed = ADMIN_USERS.includes(normalizedViewer);
 
@@ -1228,6 +1332,7 @@ useEffect(() => {
   loadLiveStatus();
   loadBracket();
   loadGiveawayEntries();
+  loadMonthlyRewards();
 
   const liveTimer = setInterval(loadLiveStatus, 60000);
   const predictionTimer = setInterval(loadPredictions, 5000);
@@ -1242,7 +1347,7 @@ return () => {
   clearInterval(giveawayTimer);
   clearInterval(giveawayEntriesTimer);
 };
-}, [loadBracket, loadGiveaways, loadHunts, loadLeaderboard, loadLiveStatus, loadPredictions, loadViewerRewards]);
+}, [loadBracket, loadGiveaways, loadHunts, loadLeaderboard, loadLiveStatus, loadMonthlyRewards, loadPredictions, loadViewerRewards]);
 
 // LOAD USER SESSION
 useEffect(() => {
@@ -2485,11 +2590,11 @@ const handleGenerateBracket = () => {
 
 {activeSection === "leaderboard" && (
   <section className="space-y-2 sm:space-y-6">
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-3 shadow-[0_0_25px_rgba(0,245,255,0.06)] sm:p-8 sm:shadow-[0_0_50px_rgba(0,245,255,0.10)]">
+    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-3 shadow-[0_0_20px_rgba(0,245,255,0.05)] sm:p-5 sm:shadow-[0_0_35px_rgba(0,245,255,0.08)]">
       <div className="text-center">
         <SectionLabel>Leaderboard</SectionLabel>
 
-        <h2 className="mt-2 text-3xl font-black leading-[0.95] tracking-tight text-white sm:mt-4 sm:text-[clamp(2.5rem,6vw,4.5rem)]">
+        <h2 className="mt-1 text-[clamp(1.8rem,4vw,3.2rem)] font-black tracking-[-0.03em] text-white">
           ${leaderboardTotal} LEADERBOARD
         </h2>
 
@@ -2497,7 +2602,7 @@ const handleGenerateBracket = () => {
           Updated 15 mins ago
         </div>
 
-        <div className="mx-auto mt-2 max-w-[290px] text-xl font-black leading-tight text-cyan-200 sm:mt-4 sm:max-w-none sm:text-[clamp(2rem,5vw,3.8rem)]">
+        <div className="mt-3 text-[clamp(1.3rem,4vw,3rem)] font-black text-cyan-200">
           Ends in: {leaderboardCountdown}
         </div>
 
@@ -2584,11 +2689,11 @@ const handleGenerateBracket = () => {
       <div className="text-center">
         <SectionLabel>Giveaways</SectionLabel>
 
-        <h2 className="mt-2 text-2xl font-black leading-[0.95] tracking-tight text-white sm:mt-3 sm:text-[clamp(2.5rem,6vw,4.5rem)]">
-          TOTAL GIVEN AWAY
-        </h2>
+<h2 className="mt-3 text-3xl font-black text-white sm:text-5xl">
+  TOTAL GIVEN AWAY
+</h2>
 
-        <div className="mt-2 text-4xl font-black leading-none text-cyan-200 sm:mt-6 sm:text-[clamp(2.4rem,7vw,5rem)]">
+        <div className="mt-2 text-[clamp(1.5rem,4vw,3rem)] font-black text-cyan-200">
           ${giveawayTotal.toLocaleString()}
         </div>
       </div>
@@ -2763,7 +2868,7 @@ const handleGenerateBracket = () => {
 
               <div className="mt-2 flex items-center justify-between gap-3 sm:mt-3 sm:gap-4">
                 <div className="min-w-0">
-                  <div className="truncate text-base font-black text-white sm:text-2xl">
+                  <div className="truncate text-sm font-black text-white sm:text-xl">
                     🏆 {biggestGiveaway.winner_name}
                   </div>
 
@@ -2774,7 +2879,7 @@ const handleGenerateBracket = () => {
                   )}
                 </div>
 
-                <div className="shrink-0 text-lg font-black text-[#f5c451] sm:text-2xl">
+                <div className="shrink-0 text-sm font-black text-[#f5c451] sm:text-xl">
                   ${Number(biggestGiveaway.amount || 0).toLocaleString()}
                 </div>
               </div>
@@ -2873,6 +2978,165 @@ const handleGenerateBracket = () => {
           </div>
         </>
       )}
+    </Panel>
+  </section>
+)}
+
+{activeSection === "monthlyRewards" && (
+  <section className="space-y-3 sm:space-y-6">
+    <Panel className="mx-auto max-w-7xl border-cyan-300/20 p-3 sm:p-8">
+      <div className="text-center">
+        <SectionLabel>Monthly Rewards</SectionLabel>
+
+        <h2 className="mt-2 text-[clamp(1.5rem,8vw,4rem)] font-black text-white">
+          REWARD CALENDAR
+        </h2>
+
+        <p className="mx-auto mt-3 max-w-2xl text-xs text-white/55 sm:text-base">
+          See what rewards, giveaways, and prize events are happening each day.
+        </p>
+      </div>
+
+      {/* MONTH SWITCHER */}
+      <div className="mt-5 flex items-center justify-between gap-3 sm:mt-8">
+        <button
+          onClick={() =>
+            setCalendarDate(
+              new Date(
+                calendarDate.getFullYear(),
+                calendarDate.getMonth() - 1,
+                1
+              )
+            )
+          }
+          className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs font-black text-white transition hover:border-cyan-300/35 hover:text-cyan-200 sm:px-5 sm:text-sm"
+        >
+          ← Prev
+        </button>
+
+        <div className="text-center">
+          <div className="text-lg font-black text-white sm:text-3xl">
+            {calendarDate.toLocaleString("default", {
+              month: "long",
+              year: "numeric",
+            })}
+          </div>
+        </div>
+
+        <button
+          onClick={() =>
+            setCalendarDate(
+              new Date(
+                calendarDate.getFullYear(),
+                calendarDate.getMonth() + 1,
+                1
+              )
+            )
+          }
+          className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs font-black text-white transition hover:border-cyan-300/35 hover:text-cyan-200 sm:px-5 sm:text-sm"
+        >
+          Next →
+        </button>
+      </div>
+
+      {/* WEEK DAYS */}
+      <div className="mt-5 grid grid-cols-7 gap-1 text-center sm:mt-8 sm:gap-2">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+          <div
+            key={day}
+            className="rounded-lg border border-cyan-300/15 bg-cyan-400/10 py-2 text-[8px] font-black uppercase tracking-[0.12em] text-cyan-200 sm:text-xs"
+          >
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* CALENDAR */}
+      <div className="mt-2 grid grid-cols-7 gap-1 sm:gap-2 lg:gap-3">
+        {monthlyRewardDays.map((rawItem: any) => {
+          const item = rawItem as any;
+
+          if (item.blank) {
+            return (
+              <div
+                key={item.key}
+                className="min-h-[120px] rounded-xl border border-white/5 bg-black/10 sm:min-h-[180px]"
+              />
+            );
+          }
+
+          return (
+            <div
+              key={item.dateKey}
+              className="min-h-[120px] rounded-xl border border-white/10 bg-black/45 p-1.5 text-left shadow-[0_0_18px_rgba(0,245,255,0.05)] sm:min-h-[180px] sm:p-3"
+            >
+              {/* DAY HEADER */}
+<div className="mb-2 flex justify-center">
+  <div className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-300/35 bg-cyan-400/15 text-[11px] font-black text-cyan-100 shadow-[0_0_14px_rgba(0,245,255,0.16)] sm:h-9 sm:w-9 sm:text-sm">
+    {item.day}
+  </div>
+</div>
+
+              {/* ADMIN EDIT MODE */}
+              {isAdmin && adminAllowed ? (
+                <div className="grid gap-1.5">
+                  <textarea
+                    value={item.reward?.title || ""}
+                    onChange={(e) =>
+                      updateMonthlyReward(
+                        item.dateKey,
+                        "title",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Event title"
+                    rows={2}
+                    className="min-h-[42px] w-full resize-none rounded-md border border-white/10 bg-black/50 px-2 py-1.5 text-[9px] font-semibold leading-4 text-white outline-none focus:border-cyan-300/35 sm:min-h-[54px] sm:text-xs"
+                  />
+
+                  <textarea
+                    value={item.reward?.note || ""}
+                    onChange={(e) =>
+                      updateMonthlyReward(
+                        item.dateKey,
+                        "note",
+                        e.target.value
+                      )
+                    }
+                    placeholder=""
+                    rows={5}
+                    className="min-h-[58px] w-full resize-none rounded-md border border-white/10 bg-black/50 px-2 py-1.5 text-[8px] leading-4 text-white outline-none focus:border-cyan-300/35 sm:min-h-[95px] sm:text-xs"
+                  />
+
+                  <div className="rounded-md border border-yellow-300/20 bg-yellow-400/10 px-2 py-1.5 text-center text-[7px] font-black uppercase tracking-[0.08em] text-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.08)] sm:text-[9px]">
+  DAILY GIVEAWAYS FOR ALL TWITCH VIEWERS
+</div>
+                </div>
+              ) : (
+                <div>
+                  {item.reward?.title || item.reward?.note ? (
+                    <>
+                      <div className="break-words text-[9px] font-black leading-4 text-white sm:text-sm">
+                        {item.reward?.title || "Reward Day"}
+                      </div>
+
+                      {item.reward?.note && (
+                        <div className="mt-1 overflow-hidden text-[8px] leading-4 text-white/55 sm:text-xs">
+                          {item.reward.note}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="pt-6 text-center text-[8px] text-white/25 sm:pt-10 sm:text-[10px]">
+                      No event
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </Panel>
   </section>
 )}
