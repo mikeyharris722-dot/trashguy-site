@@ -3052,7 +3052,7 @@ const handleGenerateBracket = () => {
       </div>
 
       {/* CALENDAR */}
-      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-4 lg:grid-cols-7 sm:gap-2 lg:gap-3">
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7 sm:gap-2 lg:gap-3">
         {monthlyRewardDays.map((rawItem: any) => {
           const item = rawItem as any;
 
@@ -3068,7 +3068,7 @@ const handleGenerateBracket = () => {
           return (
             <div
               key={item.dateKey}
-              className="min-h-[120px] rounded-xl border border-white/10 bg-black/45 p-1.5 text-left shadow-[0_0_18px_rgba(0,245,255,0.05)] sm:min-h-[180px] sm:p-3"
+              className="min-h-[175px] rounded-xl border border-white/10 bg-black/45 p-2 text-left shadow-[0_0_18px_rgba(0,245,255,0.05)] sm:min-h-[180px] sm:p-3"
             >
               {/* DAY HEADER */}
 <div className="mb-2 flex justify-center">
