@@ -3052,7 +3052,7 @@ const handleGenerateBracket = () => {
       </div>
 
       {/* CALENDAR */}
-      <div className="mt-2 grid grid-cols-7 gap-1 sm:gap-2 lg:gap-3">
+      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-4 lg:grid-cols-7 sm:gap-2 lg:gap-3">
         {monthlyRewardDays.map((rawItem: any) => {
           const item = rawItem as any;
 
