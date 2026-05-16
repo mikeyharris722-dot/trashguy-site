@@ -3120,24 +3120,28 @@ const handleGenerateBracket = () => {
 </div>
                 </div>
               ) : (
-                <div>
+                <div className="flex h-full flex-col justify-between">
                   {item.reward?.title || item.reward?.note ? (
-                    <>
+                    <div>
                       <div className="break-words text-[9px] font-black leading-4 text-white sm:text-sm">
                         {item.reward?.title || "Reward Day"}
                       </div>
 
                       {item.reward?.note && (
-                        <div className="mt-1 overflow-hidden text-[8px] leading-4 text-white/55 sm:text-xs">
+                        <div className="mt-2 whitespace-pre-line break-words text-[8px] leading-4 text-white/70 sm:text-xs">
                           {item.reward.note}
                         </div>
                       )}
-                    </>
+                    </div>
                   ) : (
-                    <div className="pt-6 text-center text-[8px] text-white/25 sm:pt-10 sm:text-[10px]">
+                    <div className="flex flex-1 items-center justify-center text-[8px] text-white/25 sm:text-[10px]">
                       No event
                     </div>
                   )}
+
+                  <div className="mt-3 rounded-md border border-yellow-300/20 bg-yellow-400/10 px-2 py-1.5 text-center text-[8px] font-black uppercase tracking-[0.08em] text-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.08)] sm:text-[9px]">
+                    DAILY GIVEAWAYS FOR ALL TWITCH VIEWERS
+                  </div>
                 </div>
               )}
             </div>
