@@ -3997,9 +3997,34 @@ const handleGenerateBracket = () => {
 
         <div className="mt-2 flex flex-wrap gap-2">
 
-          <div className="rounded-full border border-yellow-300/20 bg-yellow-400/10 px-3 py-1 text-[10px] font-black text-yellow-200 sm:text-xs">
-            VIP
-          </div>
+{currentGiveawayWinner && (() => {
+  const winnerEntry = giveawayEntries.find(
+    (entry) =>
+      String(entry.username || entry.display_name || "")
+        .toLowerCase()
+        .replace("@", "") === currentGiveawayWinner.toLowerCase()
+  );
+
+  const weight = Number(winnerEntry?.weight || 1);
+
+  return (
+    <div
+      className={`rounded-full border px-3 py-1 text-[10px] font-black sm:text-xs ${
+        weight >= 1.2
+          ? "border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
+          : weight >= 1.1
+          ? "border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
+          : "border-white/10 bg-white/5 text-white/70"
+      }`}
+    >
+      {weight >= 1.2
+        ? "💎 VIP"
+        : weight >= 1.1
+        ? "⭐ Affiliate"
+        : "👤 Viewer"}
+    </div>
+  );
+})()}
 
 {winnerFollowAge && (
   <div className="rounded-full border border-purple-300/20 bg-purple-400/10 px-3 py-1 text-[10px] font-black text-purple-200 sm:text-xs">
