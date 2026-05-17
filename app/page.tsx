@@ -598,6 +598,10 @@ export default function Home() {
 const [giveawayMessage, setGiveawayMessage] = useState("");
 const [currentGiveawayWinner, setCurrentGiveawayWinner] = useState("");
 const [winnerChatMessages, setWinnerChatMessages] = useState<string[]>([]);
+const [giveawayPrizeAmount, setGiveawayPrizeAmount] = useState("");
+const [giveawayDrawTime, setGiveawayDrawTime] = useState<number | null>(null);
+const [giveawayTimerTick, setGiveawayTimerTick] = useState(Date.now());
+const [winnerFollowAge, setWinnerFollowAge] = useState("");
 
 const [slotCalls, setSlotCalls] = useState<
   { username: string; slotName: string; createdAt: number }[]
@@ -918,6 +922,20 @@ const leaderboardProgress = useMemo(() => {
   return (elapsed / total) * 100;
 }, [countdownTick]);
 
+const giveawayResponseTimer = useMemo(() => {
+  if (!giveawayDrawTime) return "0m 00s";
+
+  const totalSeconds = Math.max(
+    0,
+    Math.floor((giveawayTimerTick - giveawayDrawTime) / 1000)
+  );
+
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+}, [giveawayDrawTime, giveawayTimerTick]);
+
 const biggestGiveaway = useMemo(() => {
   if (!giveaways.length) return null;
 
@@ -1018,6 +1036,14 @@ const pickRandomSlot = () => {
 useEffect(() => {
   const timer = setInterval(() => {
     setCountdownTick(Date.now());
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, []);
+
+useEffect(() => {
+  const timer = setInterval(() => {
+    setGiveawayTimerTick(Date.now());
   }, 1000);
 
   return () => clearInterval(timer);
@@ -2069,11 +2095,79 @@ const handleDrawGiveawayWinner = async () => {
     .trim()
     .toLowerCase();
 
-  setCurrentGiveawayWinner(winnerName);
-  setWinnerChatMessages([]);
-  setGiveawayMessage(winnerName);
+setCurrentGiveawayWinner(winnerName);
+setWinnerChatMessages([]);
+setGiveawayMessage(winnerName);
+setGiveawayDrawTime(Date.now());
+setWinnerFollowAge("");
+
+try {
+  const followRes = await fetch(
+    `/api/twitch/follow-age?user=${encodeURIComponent(winnerName)}`
+  );
+
+  const followData = await followRes.json();
+
+if (followData?.ok) {
+  setWinnerFollowAge(followData.followAge || "");
+} else {
+  console.log("Follow age error:", followData);
+  setWinnerFollowAge(followData?.error || "Unknown");
+}
+} catch {
+  setWinnerFollowAge("Unknown");
+}
 
   loadAdminRewards();
+};
+
+const handleAwardGiveawayPrize = async () => {
+  if (!currentGiveawayWinner) {
+    alert("Draw a winner first.");
+    return;
+  }
+
+  const amount = Number(giveawayPrizeAmount || 0);
+
+  if (!amount || Number.isNaN(amount)) {
+    alert("Enter a valid prize amount.");
+    return;
+  }
+
+  const latestReward = adminRewards.find(
+    (reward) =>
+      String(reward.twitch_username || reward.display_name || "")
+        .toLowerCase()
+        .includes(currentGiveawayWinner.toLowerCase())
+  );
+
+  if (!latestReward?.id) {
+    alert("Reward not found yet. Try clicking Refresh Rewards, then award again.");
+    loadAdminRewards();
+    return;
+  }
+
+  const res = await fetch(`/api/admin/rewards?id=${latestReward.id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      amount,
+      status: "pending",
+    }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.ok) {
+    alert(data.error || "Award failed.");
+    return;
+  }
+
+  setGiveawayPrizeAmount("");
+  loadAdminRewards();
+  loadViewerRewards();
+
+  alert(`Awarded $${amount} to ${currentGiveawayWinner}`);
 };
 
 const handleSpinSlotWheel = () => {
@@ -2211,23 +2305,36 @@ const handleAdminMarkRewardPending = async (id: string) => {
 };
 
 const handleAdminDeleteReward = async (id: string) => {
+  if (!id) return;
   if (!confirm("Delete this reward?")) return;
 
-  const res = await fetch(`/api/admin/rewards?id=${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "delete" }),
-  });
+  try {
+    const res = await fetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete" }),
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!res.ok || !data.ok) {
-    alert(data.error || "Delete failed.");
-    return;
+    if (!res.ok || !data.ok) {
+      alert(data.error || "Delete failed.");
+      return;
+    }
+
+    setAdminRewards((current) =>
+      current.filter((reward) => reward.id !== id)
+    );
+
+    setViewerRewards((current) =>
+      current.filter((reward) => reward.id !== id)
+    );
+
+    await loadAdminRewards();
+    await loadViewerRewards();
+  } catch {
+    alert("Delete failed.");
   }
-
-  setAdminRewards((current) => current.filter((r) => r.id !== id));
-  setViewerRewards((current) => current.filter((r) => r.id !== id));
 };
 
 const filteredAdminRewards = adminRewards.filter((reward) => {
@@ -3858,104 +3965,157 @@ const handleGenerateBracket = () => {
             Giveaway System
           </summary>
 
-          <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              <ActionButton onClick={handleStartGiveaway} disabled={!isAdmin} variant="green">
-                Start Giveaway
-              </ActionButton>
+<div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
+  <div className="grid grid-cols-2 gap-2 sm:gap-3">
+    <ActionButton
+      onClick={handleStartGiveaway}
+      disabled={!isAdmin}
+      variant="green"
+    >
+      Start Giveaway
+    </ActionButton>
 
-              <ActionButton onClick={handleDrawGiveawayWinner} disabled={!isAdmin} variant="purple">
-                Draw Winner
-              </ActionButton>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-center sm:rounded-2xl sm:p-6">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-white/40 sm:text-xs sm:tracking-[0.25em]">
-                🎯 Current Winner
-              </div>
-
-              <div className="mt-2 truncate text-xl font-black text-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.75)] sm:mt-3 sm:text-3xl md:text-4xl">
-                {giveawayMessage || "Waiting..."}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-cyan-300/20 bg-black/40 p-3 sm:rounded-2xl sm:p-5">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/70 sm:text-xs sm:tracking-[0.25em]">
-                  Winner Chat
-                </div>
-
-                <ActionButton
-                  onClick={() => setWinnerChatMessages([])}
-                  disabled={!isAdmin}
-                  variant="red"
-                  className="min-h-[34px] px-3 py-1 text-[9px]"
-                >
-                  Clear
-                </ActionButton>
-              </div>
-
-              <div className="mt-3 max-h-[160px] min-h-[70px] space-y-2 overflow-y-auto sm:mt-4 sm:min-h-[120px]">
-                {!currentGiveawayWinner ? (
-                  <div className="text-xs text-white/35 sm:text-sm">
-                    Draw a winner to track their chat.
-                  </div>
-                ) : winnerChatMessages.length === 0 ? (
-                  <div className="text-xs text-white/35 sm:text-sm">
-                    Waiting for @{currentGiveawayWinner} to type...
-                  </div>
-                ) : (
-                  winnerChatMessages.map((msg, index) => (
-                    <div
-                      key={index}
-                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
-                    >
-                      {msg}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-            </div>
-
-<div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-4">
-  <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-white/45 sm:mb-3 sm:text-xs sm:tracking-[0.22em]">
-    Live Entries ({giveawayEntries.length})
+    <ActionButton
+      onClick={handleDrawGiveawayWinner}
+      disabled={!isAdmin}
+      variant="purple"
+    >
+      Draw Winner
+    </ActionButton>
   </div>
 
-  <div className="grid max-h-[260px] grid-cols-2 gap-2 overflow-y-auto sm:max-h-[420px] sm:grid-cols-3 xl:grid-cols-4">
-    {giveawayEntries.length === 0 ? (
-      <div className="col-span-full text-center text-xs text-white/40 sm:text-sm">
-        No entries yet
-      </div>
-    ) : (
-      giveawayEntries.map((entry, index) => (
-        <div
-          key={index}
-          className="flex min-w-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-white/5 px-2 py-3 text-center sm:rounded-xl sm:px-3 sm:py-4"
-        >
-          <div className="truncate text-xs font-semibold text-white sm:text-sm">
-            {entry.display_name || entry.username}
+  <div className="rounded-xl border border-cyan-300/20 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.10),rgba(0,0,0,0.92))] p-3 sm:rounded-2xl sm:p-5">
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/70 sm:text-xs sm:tracking-[0.25em]">
+          🎯 Current Winner
+        </div>
+
+        <div className="mt-2 text-xl font-black text-cyan-200 drop-shadow-[0_0_18px_rgba(0,245,255,0.75)] sm:text-3xl">
+          {giveawayMessage || "Waiting..."}
+        </div>
+
+        <div className="mt-2 flex flex-wrap gap-2">
+
+          <div className="rounded-full border border-yellow-300/20 bg-yellow-400/10 px-3 py-1 text-[10px] font-black text-yellow-200 sm:text-xs">
+            VIP
           </div>
 
-          <div
-            className={`mt-2 inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[9px] font-black sm:px-3 sm:py-1 sm:text-xs ${
-              Number(entry.weight || 1) >= 1.2
-                ? "border border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
-                : Number(entry.weight || 1) >= 1.1
-                ? "border border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
-                : "border border-white/10 bg-white/5 text-white/70"
-            }`}
-          >
-{Number(entry.weight || 1) >= 1.2
-  ? "💎 1.2x VIP"
-  : Number(entry.weight || 1) >= 1.1
-  ? "⭐ 1.1x Affiliate"
-  : "👤 1x Viewer"}
-          </div>
+{winnerFollowAge && (
+  <div className="rounded-full border border-purple-300/20 bg-purple-400/10 px-3 py-1 text-[10px] font-black text-purple-200 sm:text-xs">
+    FOLLOWING {winnerFollowAge}
+  </div>
+)}
         </div>
-      ))
-    )}
+      </div>
+
+      <div className="shrink-0 rounded-xl border border-green-300/20 bg-green-400/10 px-3 py-2 text-center">
+        <div className="text-[9px] uppercase tracking-[0.14em] text-green-200/70">
+          RESPONDED
+        </div>
+
+        <div className="mt-1 text-sm font-black text-green-200 sm:text-lg">
+          {giveawayResponseTimer}
+        </div>
+      </div>
+    </div>
+
+    <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3">
+      <div className="text-[10px] uppercase tracking-[0.18em] text-white/40 sm:text-xs">
+        Winner Chat
+      </div>
+
+      <div className="mt-3 max-h-[160px] min-h-[100px] space-y-2 overflow-y-auto">
+        {!currentGiveawayWinner ? (
+          <div className="text-xs text-white/35">
+            Draw a winner to track their chat.
+          </div>
+        ) : winnerChatMessages.length === 0 ? (
+          <div className="text-xs text-white/35">
+            Waiting for @{currentGiveawayWinner} to type...
+          </div>
+        ) : (
+          winnerChatMessages.map((msg, index) => (
+            <div
+              key={index}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white"
+            >
+              {msg}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+
+    <div className="mt-4 flex justify-end">
+
+      <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-white/45 sm:text-xs">
+          Award Prize $
+        </div>
+
+<input
+  value={giveawayPrizeAmount}
+  onChange={(e) =>
+    setGiveawayPrizeAmount(
+      e.target.value.replace(/[^0-9.]/g, "")
+    )
+  }
+  placeholder="e.g. 50"
+  className="mt-3 w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-sm font-black text-white outline-none focus:border-cyan-300/35"
+/>
+
+<ActionButton
+  onClick={handleAwardGiveawayPrize}
+  disabled={!isAdmin || !currentGiveawayWinner}
+  className="mt-3 w-full"
+  variant="purple"
+>
+  Award Prize
+</ActionButton>
+      </div>
+    </div>
+  </div>
+
+  <div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-4">
+    <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-white/45 sm:mb-3 sm:text-xs sm:tracking-[0.22em]">
+      Live Entries ({giveawayEntries.length})
+    </div>
+
+    <div className="grid max-h-[260px] grid-cols-2 gap-2 overflow-y-auto sm:max-h-[420px] sm:grid-cols-3 xl:grid-cols-4">
+      {giveawayEntries.length === 0 ? (
+        <div className="col-span-full text-center text-xs text-white/40 sm:text-sm">
+          No entries yet
+        </div>
+      ) : (
+        giveawayEntries.map((entry, index) => (
+          <div
+            key={index}
+            className="flex min-w-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-white/5 px-2 py-3 text-center sm:rounded-xl sm:px-3 sm:py-4"
+          >
+            <div className="truncate text-xs font-semibold text-white sm:text-sm">
+              {entry.display_name || entry.username}
+            </div>
+
+            <div
+              className={`mt-2 inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[9px] font-black sm:px-3 sm:py-1 sm:text-xs ${
+                Number(entry.weight || 1) >= 1.2
+                  ? "border border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
+                  : Number(entry.weight || 1) >= 1.1
+                  ? "border border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
+                  : "border border-white/10 bg-white/5 text-white/70"
+              }`}
+            >
+              {Number(entry.weight || 1) >= 1.2
+                ? "💎 1.2x VIP"
+                : Number(entry.weight || 1) >= 1.1
+                ? "⭐ 1.1x Affiliate"
+                : "👤 1x Viewer"}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
   </div>
 </div>
         </details>
