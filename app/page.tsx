@@ -602,6 +602,7 @@ const [giveawayPrizeAmount, setGiveawayPrizeAmount] = useState("");
 const [giveawayDrawTime, setGiveawayDrawTime] = useState<number | null>(null);
 const [giveawayTimerTick, setGiveawayTimerTick] = useState(Date.now());
 const [winnerFollowAge, setWinnerFollowAge] = useState("");
+const [giveawayRespondedTime, setGiveawayRespondedTime] = useState<number | null>(null);
 
 const [slotCalls, setSlotCalls] = useState<
   { username: string; slotName: string; createdAt: number }[]
@@ -925,16 +926,18 @@ const leaderboardProgress = useMemo(() => {
 const giveawayResponseTimer = useMemo(() => {
   if (!giveawayDrawTime) return "0m 00s";
 
+  const endTime = giveawayRespondedTime || giveawayTimerTick;
+
   const totalSeconds = Math.max(
     0,
-    Math.floor((giveawayTimerTick - giveawayDrawTime) / 1000)
+    Math.floor((endTime - giveawayDrawTime) / 1000)
   );
 
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
 
   return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
-}, [giveawayDrawTime, giveawayTimerTick]);
+}, [giveawayDrawTime, giveawayRespondedTime, giveawayTimerTick]);
 
 const biggestGiveaway = useMemo(() => {
   if (!giveaways.length) return null;
@@ -1592,6 +1595,8 @@ useEffect(() => {
 
       if (chatter !== currentGiveawayWinner) return;
 
+      setGiveawayRespondedTime((current) => current || Date.now());
+
       setWinnerChatMessages((current) =>
         [`${tags["display-name"] || chatter}: ${message}`, ...current].slice(0, 6)
       );
@@ -2100,6 +2105,7 @@ setWinnerChatMessages([]);
 setGiveawayMessage(winnerName);
 setGiveawayDrawTime(Date.now());
 setWinnerFollowAge("");
+setGiveawayRespondedTime(null);
 
 try {
   const followRes = await fetch(
@@ -4036,7 +4042,7 @@ const handleGenerateBracket = () => {
 
       <div className="shrink-0 rounded-xl border border-green-300/20 bg-green-400/10 px-3 py-2 text-center">
         <div className="text-[9px] uppercase tracking-[0.14em] text-green-200/70">
-          RESPONDED
+          TIMER
         </div>
 
         <div className="mt-1 text-sm font-black text-green-200 sm:text-lg">
