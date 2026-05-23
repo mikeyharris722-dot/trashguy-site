@@ -29,29 +29,19 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Missing reward id" });
   }
 
-  // 🔥 DELETE HANDLER
+// 🔥 DELETE HANDLER
 if (body.action === "delete") {
-  const { data: rewardToDelete, error: findError } = await supabase
+  const { data, error } = await supabase
     .from("rewards")
-    .select("*")
+    .delete()
     .eq("id", id)
-    .single();
-
-  if (findError || !rewardToDelete) {
-    return NextResponse.json({
-      ok: false,
-      error: "Reward not found.",
-    });
-  }
-
-  const deleteQuery = rewardToDelete.giveaway_id
-    ? supabase.from("rewards").delete().eq("giveaway_id", rewardToDelete.giveaway_id)
-    : supabase.from("rewards").delete().eq("id", id);
-
-  const { data, error } = await deleteQuery.select("*");
+    .select("*");
 
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message });
+    return NextResponse.json({
+      ok: false,
+      error: error.message,
+    });
   }
 
   return NextResponse.json({
