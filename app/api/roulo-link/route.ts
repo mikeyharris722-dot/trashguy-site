@@ -24,7 +24,7 @@ function getDateRange() {
 }
 
 function getRoleAndWeight(wagered: number) {
-  if (wagered >= 2000) {
+  if (wagered >= 5000) {
     return { role: "vip", weight: 1.2 };
   }
 
