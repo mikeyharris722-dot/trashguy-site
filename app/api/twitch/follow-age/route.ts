@@ -22,23 +22,31 @@ function formatFollowAge(followedAt: string) {
   return "today";
 }
 
-async function getAppToken(clientId: string, clientSecret: string) {
-  const tokenResponse = await fetch(TWITCH_TOKEN_URL, {
+async function getModeratorAccessToken(
+  clientId: string,
+  clientSecret: string,
+  refreshToken: string
+) {
+  const response = await fetch(TWITCH_TOKEN_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
     body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
       client_id: clientId,
       client_secret: clientSecret,
-      grant_type: "client_credentials",
     }),
     cache: "no-store",
   });
 
-  const tokenData = await tokenResponse.json();
+  const data = await response.json();
 
   return {
-    accessToken: tokenData?.access_token || "",
-    error: tokenResponse.ok ? "" : JSON.stringify(tokenData),
+    accessToken: data?.access_token || "",
+    refreshToken: data?.refresh_token || refreshToken,
+    error: response.ok ? "" : JSON.stringify(data),
   };
 }
 
@@ -66,12 +74,12 @@ export async function GET(req: NextRequest) {
   const clientId =
     process.env.TWITCH_CLIENT_ID || process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID;
   const clientSecret = process.env.TWITCH_CLIENT_SECRET;
-  const moderatorToken = process.env.TWITCH_MODERATOR_TOKEN;
+  const moderatorRefreshToken = process.env.TWITCH_MODERATOR_REFRESH_TOKEN;
   const channelLogin = process.env.TWITCH_CHANNEL_LOGIN || "trashguy__";
 
   const winnerLogin = req.nextUrl.searchParams.get("user") || "";
 
-  if (!clientId || !clientSecret || !moderatorToken) {
+  if (!clientId || !clientSecret || !moderatorRefreshToken) {
     return NextResponse.json({
       ok: false,
       following: false,
@@ -80,7 +88,7 @@ export async function GET(req: NextRequest) {
       debug: {
         hasClientId: Boolean(clientId),
         hasClientSecret: Boolean(clientSecret),
-        hasModeratorToken: Boolean(moderatorToken),
+        hasModeratorToken: Boolean(moderatorRefreshToken),
       },
     });
   }
@@ -94,23 +102,25 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  try {
-    const appTokenResult = await getAppToken(clientId, clientSecret);
-    const appToken = appTokenResult.accessToken;
+try {
+  const moderatorTokenResult = await getModeratorAccessToken(
+    clientId,
+    clientSecret,
+    moderatorRefreshToken
+  );
 
-    if (!appToken) {
-      return NextResponse.json({
-        ok: false,
-        following: false,
-        followAge: "",
-        error: "No Twitch app token returned.",
-        twitchError: appTokenResult.error,
-        debug: {
-          hasClientId: Boolean(clientId),
-          hasClientSecret: Boolean(clientSecret),
-        },
-      });
-    }
+  const moderatorToken = moderatorTokenResult.accessToken;
+  const appToken = moderatorToken;
+
+  if (!appToken) {
+    return NextResponse.json({
+      ok: false,
+      following: false,
+      followAge: "",
+      error: "No Twitch access token returned.",
+      twitchError: moderatorTokenResult.error,
+    });
+  }
 
     const broadcasterResult = await getUserId(channelLogin, clientId, appToken);
     const winnerResult = await getUserId(winnerLogin, clientId, appToken);

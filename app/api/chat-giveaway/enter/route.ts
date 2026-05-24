@@ -31,13 +31,35 @@ async function getSavedRouloBoost(twitchUsername: string) {
     };
   }
 
+const wagered = Number(link.wagered || 0);
+
+if (wagered >= 5000) {
   return {
-    weight: Number(link.weight || 1),
-    role: link.role || "viewer",
-    isRouloAffiliate: Number(link.weight || 1) > 1,
-    rouloWagered: Number(link.wagered || 0),
+    weight: 1.2,
+    role: "vip",
+    isRouloAffiliate: true,
+    rouloWagered: wagered,
     rouloUsername: link.roulo_username || null,
   };
+}
+
+if (wagered >= 100) {
+  return {
+    weight: 1.1,
+    role: "affiliate",
+    isRouloAffiliate: true,
+    rouloWagered: wagered,
+    rouloUsername: link.roulo_username || null,
+  };
+}
+
+return {
+  weight: 1,
+  role: "viewer",
+  isRouloAffiliate: false,
+  rouloWagered: wagered,
+  rouloUsername: link.roulo_username || null,
+};
 }
 
 export async function POST(req: NextRequest) {
