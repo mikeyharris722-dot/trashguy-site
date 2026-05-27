@@ -377,17 +377,17 @@ function Panel({
   return (
     <div
       className={[
-        "relative overflow-hidden rounded-[30px]",
-        "border border-[rgba(0,245,255,0.16)]",
-        "bg-[linear-gradient(180deg,rgba(17,17,17,0.96),rgba(8,8,8,0.96))]",
-        "shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_0_35px_rgba(0,245,255,0.08),inset_0_1px_0_rgba(255,255,255,0.03)]",
-        "backdrop-blur-xl",
+        "relative overflow-hidden rounded-[22px]",
+        "bg-black/28",
+        "backdrop-blur-[6px]",
+        "border border-white/[0.04]",
+        "shadow-[0_0_30px_rgba(0,0,0,0.18)]",
         className,
       ].join(" ")}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.10),transparent_32%)]" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[rgba(255,255,255,0.07)]" />
-      <div className="relative z-10 p-5 sm:p-7">{children}</div>
+      <div className="relative z-10 p-4 sm:p-5">
+        {children}
+      </div>
     </div>
   );
 }
@@ -2185,27 +2185,34 @@ const handleSpinSlotWheel = () => {
   const winnerIndex = Math.floor(Math.random() * slotCalls.length);
   const segmentSize = 360 / slotCalls.length;
 
-const randomSliceOffset =
-  Math.random() * (segmentSize * 0.7) - segmentSize * 0.35;
+  const winnerCenter =
+    winnerIndex * segmentSize + segmentSize / 2;
 
-const targetAngle =
-  360 -
-  (winnerIndex * segmentSize + segmentSize / 2) +
-  90 +
-  randomSliceOffset;
+  const randomOffset =
+    Math.random() * (segmentSize * 0.55) -
+    segmentSize * 0.275;
 
-const extraSpins = 360 * (5 + Math.floor(Math.random() * 4));
+  const targetRotation =
+    (360 - (winnerCenter + randomOffset)) % 360;
 
-const finalRotation =
-  slotWheelRotation + extraSpins + targetAngle;
+  const currentRotation =
+    ((slotWheelRotation % 360) + 360) % 360;
 
-  
+  const rotationNeeded =
+    (targetRotation - currentRotation + 360) % 360;
+
+  const extraSpins =
+    360 * (6 + Math.floor(Math.random() * 3));
+
+  const finalRotation =
+    slotWheelRotation + extraSpins + rotationNeeded;
+
   setSlotWheelRotation(finalRotation);
 
   setTimeout(() => {
     setPickedSlotCall(slotCalls[winnerIndex]);
     setIsSlotWheelSpinning(false);
-  }, 4200);
+  }, 5200);
 };
 
 const handleShuffleSlotWheel = () => {
@@ -2541,8 +2548,8 @@ const handleGenerateBracket = () => {
 
 <main className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-10">
 {activeSection === "home" && (
-  <section className="space-y-3 sm:space-y-10">
-    <section className="relative -mx-3 overflow-hidden px-3 py-5 text-center sm:-mx-6 sm:px-6 sm:py-24">
+  <section className="space-y-1 sm:space-y-3">
+    <section className="relative -mx-3 overflow-hidden px-3 py-2 text-center sm:-mx-6 sm:px-6 sm:py-8">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,245,255,0.14),transparent_58%)]" />
 
       <div className="relative z-10 mx-auto max-w-5xl">
@@ -2553,7 +2560,7 @@ const handleGenerateBracket = () => {
         />
 
         <h1
-          className={`${russo.className} mx-auto mt-2 max-w-5xl text-center text-[clamp(0.95rem,4.8vw,4rem)] leading-[1.02] tracking-[-0.03em] text-white`}
+          className={`${russo.className} mx-auto mt-1 max-w-5xl text-center text-[clamp(0.95rem,4.8vw,4rem)] leading-[1.02] tracking-[-0.03em] text-white`}
           style={{
             textShadow:
               "0 0 14px rgba(0,245,255,0.16), 0 0 34px rgba(0,245,255,0.08)",
@@ -2562,7 +2569,7 @@ const handleGenerateBracket = () => {
           ONE MAN’S TRASH IS ANOTHER MAN’S MAX WIN
         </h1>
 
-        <p className="mx-auto mt-3 max-w-2xl text-xs font-semibold leading-5 text-white/70 sm:mt-7 sm:text-lg sm:leading-8">
+        <p className="mx-auto mt-2 max-w-2xl text-xs font-semibold leading-5 text-white/70 sm:mt-4 sm:text-lg sm:leading-8">
           Sign up on RouloBets under code{" "}
           <span className="font-black text-[#8fffd0]">trashguy</span>{" "}
           to earn monthly prizes, VIP rewards, and daily stream giveaways.
@@ -2572,7 +2579,7 @@ const handleGenerateBracket = () => {
           href="https://roulobets.com/?r=trashguy"
           target="_blank"
           rel="noreferrer"
-          className="group relative mt-4 inline-flex min-h-[44px] min-w-[220px] items-center justify-center overflow-hidden rounded-xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.34),rgba(0,120,255,0.24))] px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_30px_rgba(0,255,255,0.28)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)] sm:mt-9 sm:min-h-[66px] sm:min-w-[280px] sm:rounded-2xl sm:px-8 sm:py-4 sm:text-sm sm:tracking-[0.22em]"
+          className="group relative mt-3 inline-flex min-h-[44px] min-w-[220px] items-center justify-center overflow-hidden rounded-xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.34),rgba(0,120,255,0.24))] px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_30px_rgba(0,255,255,0.28)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)] sm:mt-6 sm:min-h-[66px] sm:min-w-[280px] sm:rounded-2xl sm:px-8 sm:py-4 sm:text-sm sm:tracking-[0.22em]"
         >
           <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
           <span className="relative z-10">Claim Rewards On Roulo</span>
@@ -2580,82 +2587,82 @@ const handleGenerateBracket = () => {
       </div>
     </section>
 
-<div className="mx-auto mt-2 grid max-w-4xl grid-cols-3 gap-2 sm:mt-10 sm:gap-4">
-  <div className="flex min-h-[110px] flex-col items-center justify-center rounded-xl border border-cyan-300/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(0,245,255,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] sm:p-5">
-    <div className="text-base sm:text-3xl">👑</div>
+    <div className="mx-auto -mt-1 grid max-w-4xl grid-cols-3 gap-2 sm:-mt-3 sm:gap-4">
+      <div className="flex min-h-[110px] flex-col items-center justify-center rounded-xl border border-cyan-300/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(0,245,255,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] sm:p-5">
+        <div className="text-base sm:text-3xl">👑</div>
 
-    <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
-      VIP Rewards
+        <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
+          VIP Rewards
+        </div>
+
+        <div className="mt-1 max-w-[210px] text-[9px] leading-4 text-white/55 sm:mt-2 sm:text-sm sm:leading-6">
+          Wager 2k+ for exclusive VIP rewards.
+        </div>
+      </div>
+
+      <div className="flex min-h-[110px] flex-col items-center justify-center rounded-xl border border-yellow-500/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(234,179,8,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] sm:p-5">
+        <div className="text-base sm:text-4xl">🏆</div>
+
+        <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
+          Monthly
+        </div>
+
+        <div className="mt-1 max-w-[210px] text-[9px] leading-4 text-white/55 sm:mt-2 sm:text-sm sm:leading-6">
+          Leaderboard prizes and more.
+        </div>
+      </div>
+
+      <div className="flex min-h-[110px] flex-col items-center justify-center rounded-xl border border-fuchsia-500/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(217,70,239,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] sm:p-5">
+        <div className="text-base sm:text-4xl">🎁</div>
+
+        <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
+          Giveaways
+        </div>
+
+        <div className="mt-1 max-w-[210px] text-[9px] leading-4 text-white/55 sm:mt-2 sm:text-sm sm:leading-6">
+          Daily stream giveaways. VIPs/affiliates are awarded extra odds.
+        </div>
+      </div>
     </div>
 
-    <div className="mt-1 max-w-[210px] text-[9px] leading-4 text-white/55 sm:mt-2 sm:text-sm sm:leading-6">
-      Wager 2k+ for exclusive VIP rewards.
-    </div>
-  </div>
+    <section className="relative py-1 sm:py-3">
+      <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2 sm:max-w-5xl sm:grid-cols-4 sm:gap-4">
+        {socials.map((social) => {
+          const Icon = social.icon;
 
-  <div className="flex min-h-[110px] flex-col items-center justify-center rounded-xl border border-yellow-500/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(234,179,8,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] sm:p-5">
-    <div className="text-base sm:text-4xl">🏆</div>
+          return (
+            <a
+              key={social.name}
+              href={social.href}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={social.name}
+              className="group flex min-h-[72px] flex-col items-center justify-center rounded-xl border border-white/10 bg-black/50 p-2 backdrop-blur-md transition hover:-translate-y-0.5 hover:border-cyan-300/35 hover:bg-cyan-400/10 sm:min-h-[110px] sm:rounded-2xl sm:p-4"
+            >
+              <Icon
+                className={`text-2xl transition group-hover:scale-110 sm:text-4xl ${
+                  social.name === "Discord"
+                    ? "text-[#5865F2]"
+                    : social.name === "YouTube"
+                    ? "text-[#FF0000]"
+                    : social.name === "Instagram"
+                    ? "text-[#E1306C]"
+                    : social.name === "Twitter / X"
+                    ? "text-white"
+                    : "text-cyan-200"
+                }`}
+              />
 
-    <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
-      Monthly
-    </div>
+              <div className="mt-1 text-[9px] font-black uppercase tracking-[0.14em] text-white/55 sm:mt-2 sm:text-xs">
+                {social.name}
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </section>
 
-    <div className="mt-1 max-w-[210px] text-[9px] leading-4 text-white/55 sm:mt-2 sm:text-sm sm:leading-6">
-      Leaderboard prizes and more.
-    </div>
-  </div>
-
-  <div className="flex min-h-[110px] flex-col items-center justify-center rounded-xl border border-fuchsia-500/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(217,70,239,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] sm:p-5">
-    <div className="text-base sm:text-4xl">🎁</div>
-
-    <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
-      Giveaways
-    </div>
-
-    <div className="mt-1 max-w-[210px] text-[9px] leading-4 text-white/55 sm:mt-2 sm:text-sm sm:leading-6">
-      Daily stream giveaways. VIPs/affiliates are awarded extra odds.
-    </div>
-  </div>
-</div>
-
-<section className="relative py-2 sm:py-6">
-  <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2 sm:max-w-5xl sm:grid-cols-4 sm:gap-4">
-    {socials.map((social) => {
-      const Icon = social.icon;
-
-      return (
-        <a
-          key={social.name}
-          href={social.href}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={social.name}
-          className="group flex min-h-[72px] flex-col items-center justify-center rounded-xl border border-white/10 bg-black/50 p-2 backdrop-blur-md transition hover:-translate-y-0.5 hover:border-cyan-300/35 hover:bg-cyan-400/10 sm:min-h-[110px] sm:rounded-2xl sm:p-4"
-        >
-          <Icon
-            className={`text-2xl transition group-hover:scale-110 sm:text-4xl ${
-              social.name === "Discord"
-                ? "text-[#5865F2]"
-                : social.name === "YouTube"
-                ? "text-[#FF0000]"
-                : social.name === "Instagram"
-                ? "text-[#E1306C]"
-                : social.name === "Twitter / X"
-                ? "text-white"
-                : "text-cyan-200"
-            }`}
-          />
-
-          <div className="mt-1 text-[9px] font-black uppercase tracking-[0.14em] text-white/55 sm:mt-2 sm:text-xs">
-            {social.name}
-          </div>
-        </a>
-      );
-    })}
-  </div>
-</section>
-
-    <section className="relative py-5 sm:py-8">
+    <section className="relative py-2 sm:py-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <SectionLabel>Live Stream</SectionLabel>
@@ -2674,7 +2681,7 @@ const handleGenerateBracket = () => {
         </a>
       </div>
 
-      <div className="mt-4 aspect-video overflow-hidden rounded-[1.25rem] border border-cyan-300/20 bg-black sm:rounded-[2rem]">
+      <div className="mt-3 aspect-video overflow-hidden rounded-[1.25rem] border border-cyan-300/20 bg-black sm:rounded-[2rem]">
         {liveStatus.isLive ? (
           <iframe
             src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
@@ -2709,34 +2716,28 @@ const handleGenerateBracket = () => {
 )}
 
 {activeSection === "leaderboard" && (
-  <section className="space-y-2 sm:space-y-6">
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-3 shadow-[0_0_20px_rgba(0,245,255,0.05)] sm:p-5 sm:shadow-[0_0_35px_rgba(0,245,255,0.08)]">
-      <div className="text-center">
-        <SectionLabel>Leaderboard</SectionLabel>
+  <section className="space-y-4 sm:space-y-6">
+    <div className="mx-auto max-w-5xl text-center">
+      <SectionLabel>Leaderboard</SectionLabel>
 
-        <h2 className="mt-1 text-[clamp(1.8rem,4vw,3.2rem)] font-black tracking-[-0.03em] text-white">
-          ${leaderboardTotal} LEADERBOARD
-        </h2>
+      <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-white drop-shadow-[0_0_22px_rgba(0,245,255,0.18)] sm:mt-3 sm:text-[clamp(2.5rem,6vw,4rem)]">
+        ${leaderboardTotal} LEADERBOARD
+      </h2>
 
-        <div className="mt-1 text-[11px] text-white/45 sm:mt-4 sm:text-sm">
-          Updated 15 mins ago
-        </div>
-
-        <div className="mt-3 text-[clamp(1.3rem,4vw,3rem)] font-black text-cyan-200">
-          Ends in: {leaderboardCountdown}
-        </div>
-
-        <div className="mx-auto mt-3 h-1.5 w-full max-w-4xl overflow-hidden rounded-full border border-[rgba(0,245,255,0.18)] bg-[rgba(255,255,255,0.03)] sm:mt-6 sm:h-3">
-          <div
-            className="h-full rounded-full bg-[linear-gradient(90deg,#00f5ff,#19d3ff)] shadow-[0_0_20px_rgba(0,245,255,0.35)]"
-            style={{ width: `${leaderboardProgress}%` }}
-          />
-        </div>
+      <div className="mt-4 text-2xl font-black text-cyan-200 sm:text-4xl">
+        Ends in: {leaderboardCountdown}
       </div>
-    </Panel>
 
-    <Panel className="mx-auto max-w-5xl overflow-hidden border-[rgba(0,245,255,0.16)] p-0 shadow-[0_0_30px_rgba(0,245,255,0.06)] sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
-      <div className="grid grid-cols-[42px_1fr_92px] border-b border-[rgba(0,245,255,0.12)] bg-[linear-gradient(180deg,rgba(0,245,255,0.08),rgba(0,245,255,0.03))] px-2.5 py-2 text-[8px] font-bold uppercase tracking-[0.14em] text-white/45 sm:grid-cols-[100px_1fr_190px_170px] sm:px-6 sm:py-4 sm:text-[11px] sm:tracking-[0.24em]">
+      <div className="mx-auto mt-4 h-2 w-full max-w-5xl overflow-hidden rounded-full bg-white/10 sm:h-3">
+        <div
+          className="h-full rounded-full bg-[linear-gradient(90deg,#00f5ff,#19d3ff)] shadow-[0_0_20px_rgba(0,245,255,0.35)]"
+          style={{ width: `${leaderboardProgress}%` }}
+        />
+      </div>
+    </div>
+
+    <div className="mx-auto max-w-5xl space-y-1.5 sm:space-y-2">
+      <div className="grid grid-cols-[52px_1fr_100px] rounded-xl bg-black/55 px-3 py-2 text-[9px] font-black uppercase tracking-[0.16em] text-white/55 sm:grid-cols-[80px_1fr_180px_140px] sm:px-5 sm:text-[11px]">
         <div>Rank</div>
         <div>Player</div>
         <div className="text-right">Wagered</div>
@@ -2744,524 +2745,78 @@ const handleGenerateBracket = () => {
       </div>
 
       {leaderboardLoading && leaderboardData.length === 0 ? (
-        <div className="px-4 py-6 text-sm text-white/60 sm:px-6 sm:py-10">
+        <div className="rounded-2xl border border-white/10 bg-black/35 px-4 py-6 text-sm text-white/60">
           Loading leaderboard...
         </div>
       ) : (
-        <div className="divide-y divide-white/5">
-          {leaderboardData.map((player) => {
-            const prize = leaderboardPrizes[player.rank] || 0;
+        leaderboardData.map((player) => {
+          const prize = leaderboardPrizes[player.rank] || 0;
 
-            return (
-              <div
-                key={`${player.rank}-${player.username}`}
-                className="grid grid-cols-[42px_1fr_92px] items-center px-2.5 py-2.5 transition hover:bg-white/[0.02] sm:grid-cols-[100px_1fr_190px_170px] sm:px-6 sm:py-5"
-              >
-                <div className="flex items-center">
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-black sm:h-12 sm:w-12 sm:text-lg ${
-                      player.rank === 1
-                        ? "border-yellow-400/55 text-yellow-300 shadow-[0_0_18px_rgba(250,204,21,0.22)]"
-                        : player.rank === 2
-                        ? "border-zinc-300/40 text-zinc-200"
-                        : player.rank === 3
-                        ? "border-amber-500/50 text-amber-300"
-                        : "border-[rgba(0,245,255,0.28)] text-cyan-200"
-                    }`}
-                  >
-                    {player.rank}
-                  </div>
-                </div>
+          const rankIcons: Record<number, string> = {
+            1: "🥇",
+            2: "🥈",
+            3: "🥉",
+          };
 
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-black text-white sm:text-2xl">
-                    {player.username}
-                  </div>
+const rowBg =
+  player.rank === 1
+    ? "border-yellow-300/35 bg-[linear-gradient(90deg,rgba(90,60,0,0.96),rgba(15,10,0,0.98))]"
+    : player.rank === 2
+    ? "border-zinc-200/30 bg-[linear-gradient(90deg,rgba(85,85,95,0.96),rgba(18,18,18,0.98))]"
+    : player.rank === 3
+    ? "border-amber-500/35 bg-[linear-gradient(90deg,rgba(95,45,10,0.96),rgba(20,10,0,0.98))]"
+    : player.rank === 4
+    ? "border-cyan-300/25 bg-[linear-gradient(90deg,rgba(0,140,255,0.22),rgba(0,0,0,0.97))]"
+    : player.rank === 5
+    ? "border-cyan-300/22 bg-[linear-gradient(90deg,rgba(0,180,255,0.18),rgba(0,0,0,0.97))]"
+    : "border-white/8 bg-black/95";
 
-                  <div className="mt-0.5 text-[9px] uppercase tracking-[0.12em] text-white/28 sm:hidden">
-                    Prize ${prize.toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-xs font-black text-white sm:text-xl">
-                    {formatMoney(player.wagered)}
-                  </div>
-                </div>
-
-                <div className="hidden text-right sm:block">
-                  <div className="text-xl font-black text-[#f5c451]">
-                    ${prize.toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </Panel>
-  </section>
-)}
-
-{activeSection === "giveaways" && (
-  <section className="space-y-2 sm:space-y-6">
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-3 shadow-[0_0_25px_rgba(0,245,255,0.06)] sm:p-8 sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
-      <div className="text-center">
-        <SectionLabel>Giveaways</SectionLabel>
-
-<h2 className="mt-3 text-3xl font-black text-white sm:text-5xl">
-  TOTAL GIVEN AWAY
-</h2>
-
-        <div className="mt-2 text-[clamp(1.5rem,4vw,3rem)] font-black text-cyan-200">
-          ${giveawayTotal.toLocaleString()}
-        </div>
-      </div>
-    </Panel>
-
-    {viewerName.toLowerCase() !== "trashguy__" &&
-      viewerName.toLowerCase() !== "trashguy" && (
-        <Panel className="mx-auto max-w-5xl border-fuchsia-300/20 p-3 shadow-[0_0_25px_rgba(217,70,239,0.06)] sm:p-8 sm:shadow-[0_0_55px_rgba(217,70,239,0.10)]">
-          <div className="text-center">
-            <SectionLabel>Prize Portal</SectionLabel>
-
-            <h2 className="mt-2 text-2xl font-black leading-[1] tracking-tight text-white sm:mt-4 sm:text-[clamp(2rem,5vw,3.5rem)]">
-              MY REWARDS
-            </h2>
-
-            {isTwitchConnected && (
-              <div className="mt-3 rounded-xl border border-cyan-300/20 bg-black/30 p-3 text-left sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
-                <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
-                  Roulo Account
-                </div>
-
-                <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto] sm:mt-3 sm:gap-3">
-                  <input
-                    value={rouloUsernameInput}
-                    onChange={(e) => setRouloUsernameInput(e.target.value)}
-                    placeholder="Enter your Roulo username"
-                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
-                  />
-
-                  <button
-                    onClick={handleLinkRoulo}
-                    className="rounded-lg border border-cyan-300/25 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 hover:bg-cyan-400/20 sm:rounded-xl sm:px-5 sm:py-3 sm:text-base"
-                  >
-                    Link Roulo
-                  </button>
-                </div>
-
-                {rouloLink && (
-                  <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-3">
-                    <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-                      <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
-                        Wagered
-                      </div>
-                      <div className="mt-1 truncate text-sm font-black text-white sm:text-xl">
-                        ${Number(rouloLink.wagered || 0).toLocaleString()}
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-                      <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
-                        Role
-                      </div>
-                      <div className="mt-1 truncate text-sm font-black uppercase text-cyan-200 sm:text-xl">
-                        {rouloLink.role}
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-                      <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
-                        Chance
-                      </div>
-                      <div className="mt-1 text-sm font-black text-[#f5c451] sm:text-xl">
-                        x{rouloLink.weight || 1}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {rouloLinkMessage && (
-                  <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-2 text-xs text-white/70 sm:mt-4 sm:rounded-xl sm:p-3 sm:text-sm">
-                    {rouloLinkMessage}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {!isTwitchConnected ? (
-              <div className="mt-3 sm:mt-6">
-                <button
-                  onClick={handleTwitchLogin}
-                  className="rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-[#9146FF]/30 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base"
-                >
-                  Connect Twitch to View Rewards
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-4">
-                  <div className="rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-3 sm:rounded-2xl sm:p-5">
-                    <div className="text-[9px] uppercase tracking-[0.16em] text-yellow-200/70 sm:text-xs sm:tracking-[0.22em]">
-                      Pending
-                    </div>
-                    <div className="mt-1 text-xl font-black text-yellow-200 sm:mt-2 sm:text-3xl">
-                      ${viewerRewardsPending.toLocaleString()}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3 sm:rounded-2xl sm:p-5">
-                    <div className="text-[9px] uppercase tracking-[0.16em] text-cyan-200/70 sm:text-xs sm:tracking-[0.22em]">
-                      Paid
-                    </div>
-                    <div className="mt-1 text-xl font-black text-cyan-200 sm:mt-2 sm:text-3xl">
-                      ${viewerRewardsPaid.toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-black/30 sm:mt-6 sm:rounded-[1.5rem]">
-                  {viewerRewards.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-sm text-white/45 sm:px-6 sm:py-10">
-                      {viewerRewardsMessage || "No rewards yet."}
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-white/5">
-                      {viewerRewards.map((reward) => (
-                        <div
-                          key={reward.id}
-                          className="flex items-center justify-between gap-3 px-3 py-2.5 sm:gap-4 sm:px-5 sm:py-4"
-                        >
-                          <div className="min-w-0 text-left">
-                            <div className="truncate text-sm font-black text-white sm:text-base">
-                              {reward.title || "Chat Giveaway"}
-                            </div>
-                            <div className="mt-0.5 text-[10px] text-white/35 sm:mt-1 sm:text-xs">
-                              {reward.created_at
-                                ? new Date(reward.created_at).toLocaleString()
-                                : "Recently"}
-                            </div>
-                          </div>
-
-                          <div className="shrink-0 text-right">
-                            <div className="text-base font-black text-cyan-200 sm:text-xl">
-                              ${Number(reward.amount || 0).toLocaleString()}
-                            </div>
-                            <div
-                              className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[9px] font-black sm:px-3 sm:py-1 sm:text-xs ${
-                                reward.status === "complete"
-                                  ? "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
-                                  : "border border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
-                              }`}
-                            >
-                              {reward.status === "complete" ? "Done" : "Pending"}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        </Panel>
-      )}
-
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-3 shadow-[0_0_25px_rgba(0,245,255,0.06)] sm:p-8 sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
-      {giveawayLoading ? (
-        <div className="px-4 py-6 text-sm text-white/60 sm:px-6 sm:py-10">
-          Loading giveaways...
-        </div>
-      ) : giveaways.length === 0 ? (
-        <div className="px-4 py-6 text-center text-sm text-white/45 sm:px-6 sm:py-10">
-          No giveaways logged yet.
-        </div>
-      ) : (
-        <>
-          {biggestGiveaway && (
-            <div className="mb-3 rounded-xl border border-yellow-400/25 bg-[linear-gradient(180deg,rgba(250,204,21,0.10),rgba(0,245,255,0.04))] p-3 shadow-[0_0_16px_rgba(250,204,21,0.06)] sm:mb-6 sm:rounded-[1.5rem] sm:p-5 sm:shadow-[0_0_28px_rgba(250,204,21,0.08)]">
-              <div className="text-[9px] uppercase tracking-[0.18em] text-yellow-300/70 sm:text-xs sm:tracking-[0.3em]">
-                Biggest Giveaway
-              </div>
-
-              <div className="mt-2 flex items-center justify-between gap-3 sm:mt-3 sm:gap-4">
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-black text-white sm:text-xl">
-                    🏆 {biggestGiveaway.winner_name}
-                  </div>
-
-                  {biggestGiveaway.note && (
-                    <div className="mt-0.5 truncate text-[10px] text-white/40 sm:mt-1 sm:text-sm">
-                      {biggestGiveaway.note}
-                    </div>
-                  )}
-                </div>
-
-                <div className="shrink-0 text-sm font-black text-[#f5c451] sm:text-xl">
-                  ${Number(biggestGiveaway.amount || 0).toLocaleString()}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="overflow-hidden rounded-xl border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.02)] sm:rounded-[1.5rem]">
-            <div
-              className={`grid ${
-                isAdmin
-                  ? "grid-cols-[30px_minmax(0,1fr)_56px_50px]"
-                  : "grid-cols-[30px_minmax(0,1fr)_56px]"
-              } border-b border-white/5 px-2.5 py-2 text-[8px] font-bold uppercase tracking-[0.12em] text-white/35 sm:grid-cols-[52px_minmax(0,1fr)_90px_74px] sm:px-5 sm:py-4 sm:text-xs sm:tracking-[0.22em]`}
-            >
-              <div>#</div>
-              <div>Winner</div>
-              <div className="text-center">Amount</div>
-              <div className="text-right">{isAdmin ? "Edit" : ""}</div>
-            </div>
-
-            <div className="max-h-[420px] overflow-y-auto sm:max-h-[520px]">
-              {giveaways.map((giveaway, index) => (
-                <div
-                  key={giveaway.id}
-                  className={`grid ${
-                    isAdmin
-                      ? "grid-cols-[30px_minmax(0,1fr)_56px_50px]"
-                      : "grid-cols-[30px_minmax(0,1fr)_56px]"
-                  } items-center border-b border-white/5 px-2.5 py-2.5 last:border-b-0 sm:grid-cols-[52px_minmax(0,1fr)_90px_74px] sm:px-5 sm:py-4`}
-                >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full border border-[rgba(0,245,255,0.20)] bg-[rgba(0,245,255,0.08)] text-[9px] font-black text-cyan-200 sm:h-9 sm:w-9 sm:text-xs">
-                    {index + 1}
-                  </div>
-
-                  <div className="min-w-0 overflow-hidden">
-                    <div className="truncate text-xs font-semibold text-white sm:text-base">
-                      {giveaway.winner_name}
-                    </div>
-
-                    {giveaway.note && (
-                      <div className="mt-0.5 truncate text-[9px] text-white/35 sm:mt-1 sm:text-xs">
-                        {giveaway.note}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="text-center text-xs font-black text-cyan-200 sm:text-lg">
-                    ${Number(giveaway.amount || 0).toLocaleString()}
-                  </div>
-
-                  {isAdmin ? (
-                    <div className="flex justify-end gap-1 sm:gap-2">
-                      <button
-                        onClick={async () => {
-                          const newName = prompt("Edit name:", giveaway.winner_name);
-                          const newAmount = prompt("Edit winnings:", String(giveaway.amount));
-                          const newNote = prompt("Edit note:", giveaway.note || "");
-
-                          if (!newName || !newAmount) return;
-
-                          await fetch(`/api/giveaways?id=${giveaway.id}&key=trashguy92`, {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              winner_name: newName,
-                              amount: Number(newAmount),
-                              note: newNote,
-                            }),
-                          });
-
-                          window.location.reload();
-                        }}
-                        className="flex h-6 w-6 items-center justify-center rounded-md border border-yellow-400/30 bg-yellow-400/10 text-[10px] text-yellow-300 transition hover:bg-yellow-400/20 sm:h-8 sm:w-8 sm:rounded-lg sm:text-xs"
-                      >
-                        ✎
-                      </button>
-
-                      <button
-                        onClick={async () => {
-                          await fetch(`/api/giveaways?id=${giveaway.id}&key=trashguy92`, {
-                            method: "DELETE",
-                          });
-                          window.location.reload();
-                        }}
-                        className="flex h-6 w-6 items-center justify-center rounded-md border border-red-400/30 bg-red-400/10 text-[10px] text-red-300 transition hover:bg-red-400/20 sm:h-8 sm:w-8 sm:rounded-lg sm:text-xs"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ) : (
-                    <div />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-    </Panel>
-  </section>
-)}
-
-{activeSection === "monthlyRewards" && (
-  <section className="space-y-3 sm:space-y-6">
-    <Panel className="mx-auto max-w-7xl border-cyan-300/20 p-3 sm:p-8">
-      <div className="text-center">
-        <SectionLabel>Monthly Rewards</SectionLabel>
-
-        <h2 className="mt-2 text-[clamp(1.5rem,8vw,4rem)] font-black text-white">
-          REWARD CALENDAR
-        </h2>
-
-        <p className="mx-auto mt-3 max-w-2xl text-xs text-white/55 sm:text-base">
-          See what rewards, giveaways, and prize events are happening each day.
-        </p>
-      </div>
-
-      {/* MONTH SWITCHER */}
-      <div className="mt-5 flex items-center justify-between gap-3 sm:mt-8">
-        <button
-          onClick={() =>
-            setCalendarDate(
-              new Date(
-                calendarDate.getFullYear(),
-                calendarDate.getMonth() - 1,
-                1
-              )
-            )
-          }
-          className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs font-black text-white transition hover:border-cyan-300/35 hover:text-cyan-200 sm:px-5 sm:text-sm"
-        >
-          ← Prev
-        </button>
-
-        <div className="text-center">
-          <div className="text-lg font-black text-white sm:text-3xl">
-            {calendarDate.toLocaleString("default", {
-              month: "long",
-              year: "numeric",
-            })}
-          </div>
-        </div>
-
-        <button
-          onClick={() =>
-            setCalendarDate(
-              new Date(
-                calendarDate.getFullYear(),
-                calendarDate.getMonth() + 1,
-                1
-              )
-            )
-          }
-          className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs font-black text-white transition hover:border-cyan-300/35 hover:text-cyan-200 sm:px-5 sm:text-sm"
-        >
-          Next →
-        </button>
-      </div>
-
-      {/* WEEK DAYS */}
-      <div className="mt-5 grid grid-cols-7 gap-1 text-center sm:mt-8 sm:gap-2">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <div
-            key={day}
-            className="rounded-lg border border-cyan-300/15 bg-cyan-400/10 py-2 text-[8px] font-black uppercase tracking-[0.12em] text-cyan-200 sm:text-xs"
-          >
-            {day}
-          </div>
-        ))}
-      </div>
-
-      {/* CALENDAR */}
-      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7 sm:gap-2 lg:gap-3">
-        {monthlyRewardDays.map((rawItem: any) => {
-          const item = rawItem as any;
-
-          if (item.blank) {
-            return (
-              <div
-                key={item.key}
-                className="min-h-[120px] rounded-xl border border-white/5 bg-black/10 sm:min-h-[180px]"
-              />
-            );
-          }
+const rankBox =
+  player.rank === 1
+    ? "text-yellow-300"
+    : player.rank === 2
+    ? "text-zinc-200"
+    : player.rank === 3
+    ? "text-amber-400"
+    : player.rank === 4 || player.rank === 5
+    ? "text-cyan-200"
+    : "text-white/80";
 
           return (
             <div
-              key={item.dateKey}
-              className="min-h-[175px] rounded-xl border border-white/10 bg-black/45 p-2 text-left shadow-[0_0_18px_rgba(0,245,255,0.05)] sm:min-h-[180px] sm:p-3"
+              key={`${player.rank}-${player.username}`}
+              className={`grid grid-cols-[52px_1fr_100px] items-center rounded-2xl border px-3 py-2.5 shadow-[0_0_18px_rgba(0,0,0,0.22)] transition hover:bg-white/[0.04] sm:grid-cols-[80px_1fr_180px_140px] sm:px-5 sm:py-3.5 ${rowBg}`}
             >
-              {/* DAY HEADER */}
-<div className="mb-2 flex justify-center">
-  <div className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-300/35 bg-cyan-400/15 text-[11px] font-black text-cyan-100 shadow-[0_0_14px_rgba(0,245,255,0.16)] sm:h-9 sm:w-9 sm:text-sm">
-    {item.day}
+<div>
+  <div
+    className={`flex h-9 w-9 items-center justify-center text-base font-black sm:h-11 sm:w-11 sm:text-xl ${rankBox}`}
+  >
+    {rankIcons[player.rank] || player.rank}
   </div>
 </div>
 
-              {/* ADMIN EDIT MODE */}
-              {isAdmin && adminAllowed ? (
-                <div className="grid gap-1.5">
-                  <textarea
-                    value={item.reward?.title || ""}
-                    onChange={(e) =>
-                      updateMonthlyReward(
-                        item.dateKey,
-                        "title",
-                        e.target.value
-                      )
-                    }
-                    placeholder="Event title"
-                    rows={2}
-                    className="min-h-[42px] w-full resize-none rounded-md border border-white/10 bg-black/50 px-2 py-1.5 text-[9px] font-semibold leading-4 text-white outline-none focus:border-cyan-300/35 sm:min-h-[54px] sm:text-xs"
-                  />
-
-                  <textarea
-                    value={item.reward?.note || ""}
-                    onChange={(e) =>
-                      updateMonthlyReward(
-                        item.dateKey,
-                        "note",
-                        e.target.value
-                      )
-                    }
-                    placeholder=""
-                    rows={5}
-                    className="min-h-[58px] w-full resize-none rounded-md border border-white/10 bg-black/50 px-2 py-1.5 text-[8px] leading-4 text-white outline-none focus:border-cyan-300/35 sm:min-h-[95px] sm:text-xs"
-                  />
-
-                  <div className="rounded-md border border-yellow-300/20 bg-yellow-400/10 px-2 py-1.5 text-center text-[7px] font-black uppercase tracking-[0.08em] text-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.08)] sm:text-[9px]">
-  DAILY GIVEAWAYS FOR ALL TWITCH VIEWERS
-</div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-black text-white sm:text-xl">
+                  {player.username}
                 </div>
-              ) : (
-                <div className="flex h-full flex-col justify-between">
-                  {item.reward?.title || item.reward?.note ? (
-                    <div>
-                      <div className="break-words text-[9px] font-black leading-4 text-white sm:text-sm">
-                        {item.reward?.title || "Reward Day"}
-                      </div>
 
-                      {item.reward?.note && (
-                        <div className="mt-2 whitespace-pre-line break-words text-[8px] leading-4 text-white/70 sm:text-xs">
-                          {item.reward.note}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex flex-1 items-center justify-center text-[8px] text-white/25 sm:text-[10px]">
-                      No event
-                    </div>
-                  )}
-
-                  <div className="mt-3 rounded-md border border-yellow-300/20 bg-yellow-400/10 px-2 py-1.5 text-center text-[8px] font-black uppercase tracking-[0.08em] text-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.08)] sm:text-[9px]">
-                    DAILY GIVEAWAYS FOR ALL TWITCH VIEWERS
-                  </div>
+                <div className="mt-0.5 text-[10px] font-black text-[#f5c451] sm:hidden">
+                  {prize > 0 ? `$${prize.toLocaleString()}` : "-"}
                 </div>
-              )}
+              </div>
+
+              <div className="text-right text-[11px] font-black text-white/90 sm:text-lg">
+                {formatMoney(player.wagered)}
+              </div>
+
+              <div className="hidden text-right text-lg font-black text-[#f5c451] sm:block">
+                {prize > 0 ? `$${prize.toLocaleString()}` : "-"}
+              </div>
             </div>
           );
-        })}
-      </div>
-    </Panel>
+        })
+      )}
+    </div>
   </section>
 )}
 
@@ -3313,7 +2868,7 @@ const handleGenerateBracket = () => {
       ))}
     </div>
 
-    <div className="overflow-hidden rounded-xl border border-cyan-300/15 bg-black/70 backdrop-blur-xl shadow-[0_0_30px_rgba(0,245,255,0.05)] sm:rounded-[2rem] sm:shadow-[0_0_70px_rgba(0,245,255,0.08)]">
+    <div className="overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 backdrop-blur-sm shadow-[0_0_24px_rgba(0,245,255,0.08)] sm:rounded-[2rem]">
       <div className="grid lg:grid-cols-[1fr_1.05fr]">
         <div className="border-b border-white/10 p-2.5 sm:p-6 lg:border-b-0 lg:border-r">
           <div className="flex items-center justify-between gap-2">
@@ -3670,243 +3225,766 @@ const handleGenerateBracket = () => {
   </section>
 )}
 
-{activeSection === "slotpicker" && (
-  <section className="space-y-3 sm:space-y-6">
-    <Panel className="mx-auto max-w-5xl border-[rgba(0,245,255,0.16)] p-4 shadow-[0_0_35px_rgba(0,245,255,0.08)] sm:p-8 sm:shadow-[0_0_55px_rgba(0,245,255,0.10)]">
-      <div className="text-center">
-        <SectionLabel>Slot Picker</SectionLabel>
+{activeSection === "giveaways" && (
+  <section className="space-y-4 sm:space-y-6">
+    <div className="mx-auto max-w-5xl text-center">
+      <SectionLabel>Giveaways</SectionLabel>
 
-        <h2 className="mt-2 text-[clamp(1.45rem,7vw,3.2rem)] font-black leading-[1.05] tracking-tight text-white sm:mt-3">
-          RANDOM SLOT PICKER
-        </h2>
+      <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-white drop-shadow-[0_0_22px_rgba(0,245,255,0.18)] sm:mt-3 sm:text-[clamp(2.5rem,6vw,4rem)]">
+        TOTAL GIVEN AWAY
+      </h2>
 
-        <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-white/55 sm:mt-4 sm:text-base">
-          Select providers, spin the picker, and let fate choose the next slot.
-        </p>
+      <div className="mt-2 text-[clamp(1.5rem,4vw,3rem)] font-black text-cyan-200">
+        ${giveawayTotal.toLocaleString()}
       </div>
+    </div>
 
-      <div className="mt-4 rounded-[1.2rem] border border-white/10 bg-black/30 p-3 sm:mt-8 sm:rounded-[1.5rem] sm:p-5">
-        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/40 sm:text-xs sm:tracking-[0.24em]">
-          Providers
+    {biggestGiveaway && (
+      <div className="mx-auto max-w-3xl rounded-2xl border border-yellow-400/35 bg-[linear-gradient(90deg,rgba(90,60,0,0.96),rgba(0,0,0,0.97))] p-4 shadow-[0_0_22px_rgba(250,204,21,0.08)] sm:rounded-[1.5rem] sm:p-5">
+        <div className="text-[9px] uppercase tracking-[0.22em] text-yellow-300/75 sm:text-xs sm:tracking-[0.3em]">
+          Biggest Giveaway
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
-          {slotProviders.map((provider) => {
-            const active = selectedProviders.includes(provider);
-            const logo = providerLogos[provider];
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="truncate text-base font-black text-white sm:text-2xl">
+              🏆 {biggestGiveaway.winner_name}
+            </div>
 
-            return (
-              <button
-                key={provider}
-                onClick={() => toggleSlotProvider(provider)}
-                className={`flex min-h-[70px] items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all duration-200 sm:min-h-[78px] sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3 ${
-                  active
-                    ? "border-cyan-300/45 bg-cyan-400/15 text-white shadow-[0_0_20px_rgba(0,245,255,0.14)]"
-                    : "border-white/10 bg-white/5 text-white/65 hover:border-white/20 hover:text-white"
-                }`}
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/35 sm:h-10 sm:w-10 sm:rounded-xl">
-                  {logo ? (
-                    <img
-                      src={logo}
-                      alt={provider}
-                      className="h-6 w-6 object-contain sm:h-7 sm:w-7"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <span className="text-[10px] font-black text-[#8fffd0] sm:text-xs">
-                      {provider.charAt(0)}
-                    </span>
-                  )}
-                </div>
-
-                <div className="min-w-0">
-                  <div className="truncate text-xs font-black sm:text-base">
-                    {provider}
-                  </div>
-                  <div className="text-[10px] text-white/35 sm:text-xs">
-                    {slotData.filter((slot) => slot.provider === provider).length} slots
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 sm:mt-5 sm:gap-3">
-          <div className="text-xs text-white/45 sm:text-sm">
-            {selectedProviders.length === 0
-              ? `🎲 All Providers Active (${slotData.length} slots)`
-              : `${filteredSlots.length} slots from ${selectedProviders.length} provider(s)`}
+            {biggestGiveaway.note && (
+              <div className="mt-1 truncate text-[10px] text-white/45 sm:text-sm">
+                {biggestGiveaway.note}
+              </div>
+            )}
           </div>
 
-          <button
-            onClick={() => {
-              setSelectedProviders([]);
-              setPickedSlot(null);
-            }}
-            className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/55 transition hover:text-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.18em]"
-          >
-            Reset
-          </button>
+          <div className="shrink-0 text-lg font-black text-[#f5c451] sm:text-2xl">
+            ${Number(biggestGiveaway.amount || 0).toLocaleString()}
+          </div>
         </div>
       </div>
+    )}
 
-      <div className="mt-4 rounded-[1.25rem] border border-[rgba(0,245,255,0.16)] bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(6,6,6,0.98))] p-3 text-center shadow-[0_0_35px_rgba(0,245,255,0.06)] sm:mt-6 sm:rounded-[2rem] sm:p-8 sm:shadow-[0_0_45px_rgba(0,245,255,0.08)]">
-        <button
-          onClick={pickRandomSlot}
-          disabled={isPickingSlot || filteredSlots.length === 0}
-          className="w-full rounded-xl border border-cyan-300/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.22),rgba(0,245,255,0.08))] px-4 py-3 text-xs font-black text-[#b8ffd8] shadow-[0_0_20px_rgba(0,245,255,0.10)] transition hover:border-cyan-300/45 hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-lg sm:shadow-[0_0_25px_rgba(0,245,255,0.12)]"
-        >
-          {isPickingSlot ? "Spinning..." : "Pick Random Slot"}
-        </button>
+    {viewerName.toLowerCase() !== "trashguy__" &&
+      viewerName.toLowerCase() !== "trashguy" && (
+        <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] sm:rounded-[1.5rem] sm:p-6">
+          <div className="text-center">
+            <SectionLabel>Prize Portal</SectionLabel>
 
-        <div
-          className={`mt-4 rounded-[1.2rem] border bg-black/35 p-4 transition-all duration-300 sm:mt-8 sm:rounded-[1.75rem] sm:p-8 ${
-            isPickingSlot
-              ? "scale-[1.02] border-cyan-300/40 shadow-[0_0_45px_rgba(0,245,255,0.22)] blur-[0.2px]"
-              : "border-white/10 shadow-[0_0_28px_rgba(0,245,255,0.10)]"
-          }`}
-        >
-          {!pickedSlot ? (
-            <div className="py-8 text-sm text-white/45 sm:py-12 sm:text-base">
-              No slot picked yet.
+            <h2 className="mt-2 text-2xl font-black leading-[1] tracking-tight text-white sm:mt-4 sm:text-[clamp(2rem,5vw,3.5rem)]">
+              MY REWARDS
+            </h2>
+          </div>
+
+          {isTwitchConnected && (
+            <div className="mt-4 rounded-xl border border-cyan-300/20 bg-black/70 p-3 text-left sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
+                Roulo Account
+              </div>
+
+              <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto] sm:mt-3 sm:gap-3">
+                <input
+                  value={rouloUsernameInput}
+                  onChange={(e) => setRouloUsernameInput(e.target.value)}
+                  placeholder="Enter your Roulo username"
+                  className="w-full rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-sm text-white outline-none sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
+                />
+
+                <button
+                  onClick={handleLinkRoulo}
+                  className="rounded-lg border border-cyan-300/25 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 hover:bg-cyan-400/20 sm:rounded-xl sm:px-5 sm:py-3 sm:text-base"
+                >
+                  Link Roulo
+                </button>
+              </div>
+
+              {rouloLink && (
+                <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-3">
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
+                      Wagered
+                    </div>
+                    <div className="mt-1 truncate text-sm font-black text-white sm:text-xl">
+                      ${Number(rouloLink.wagered || 0).toLocaleString()}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
+                      Role
+                    </div>
+                    <div className="mt-1 truncate text-sm font-black uppercase text-cyan-200 sm:text-xl">
+                      {rouloLink.role}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
+                      Chance
+                    </div>
+                    <div className="mt-1 text-sm font-black text-[#f5c451] sm:text-xl">
+                      x{rouloLink.weight || 1}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {rouloLinkMessage && (
+                <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-2 text-xs text-white/70 sm:mt-4 sm:rounded-xl sm:p-3 sm:text-sm">
+                  {rouloLinkMessage}
+                </div>
+              )}
+            </div>
+          )}
+
+          {!isTwitchConnected ? (
+            <div className="mt-4 text-center sm:mt-6">
+              <button
+                onClick={handleTwitchLogin}
+                className="rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-[#9146FF]/30 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base"
+              >
+                Connect Twitch to View Rewards
+              </button>
             </div>
           ) : (
             <>
-              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/35 sm:text-xs sm:tracking-[0.3em]">
-                Selected Slot
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-4">
+                <div className="rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-3 sm:rounded-2xl sm:p-5">
+                  <div className="text-[9px] uppercase tracking-[0.16em] text-yellow-200/70 sm:text-xs sm:tracking-[0.22em]">
+                    Pending
+                  </div>
+                  <div className="mt-1 text-xl font-black text-yellow-200 sm:mt-2 sm:text-3xl">
+                    ${viewerRewardsPending.toLocaleString()}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3 sm:rounded-2xl sm:p-5">
+                  <div className="text-[9px] uppercase tracking-[0.16em] text-cyan-200/70 sm:text-xs sm:tracking-[0.22em]">
+                    Paid
+                  </div>
+                  <div className="mt-1 text-xl font-black text-cyan-200 sm:mt-2 sm:text-3xl">
+                    ${viewerRewardsPaid.toLocaleString()}
+                  </div>
+                </div>
               </div>
 
-              {pickedSlot.image && (
-                <img
-                  src={pickedSlot.image}
-                  alt={pickedSlot.name}
-                  className="mx-auto mb-3 mt-4 h-24 object-contain sm:mb-4 sm:mt-6 sm:h-32"
-                />
-              )}
+              <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-black/60 sm:mt-6 sm:rounded-[1.5rem]">
+                {viewerRewards.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-sm text-white/45 sm:px-6 sm:py-10">
+                    {viewerRewardsMessage || "No rewards yet."}
+                  </div>
+                ) : (
+                  <div className="divide-y divide-white/5">
+                    {viewerRewards.map((reward) => (
+                      <div
+                        key={reward.id}
+                        className="flex items-center justify-between gap-3 px-3 py-2.5 sm:gap-4 sm:px-5 sm:py-4"
+                      >
+                        <div className="min-w-0 text-left">
+                          <div className="truncate text-sm font-black text-white sm:text-base">
+                            {reward.title || "Chat Giveaway"}
+                          </div>
+                          <div className="mt-0.5 text-[10px] text-white/35 sm:mt-1 sm:text-xs">
+                            {reward.created_at
+                              ? new Date(reward.created_at).toLocaleString()
+                              : "Recently"}
+                          </div>
+                        </div>
 
-              <div
-                className={`mt-3 text-[clamp(1.1rem,6vw,4rem)] font-black transition-all duration-200 sm:mt-5 ${
-                  isPickingSlot
-                    ? "scale-95 text-white/70 blur-[1px]"
-                    : "scale-105 text-[#8fffd0] drop-shadow-[0_0_25px_rgba(0,245,255,0.65)]"
-                }`}
-              >
-                {pickedSlot.name}
-              </div>
-
-              <div
-                className={`mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-200 sm:mt-5 sm:gap-3 sm:px-5 sm:text-sm ${
-                  isPickingSlot
-                    ? "scale-95 border-white/10 bg-white/5 text-white/40"
-                    : "scale-105 border-cyan-300/20 bg-cyan-400/10 text-[#b8ffd8] shadow-[0_0_20px_rgba(0,245,255,0.35)]"
-                }`}
-              >
-                {providerLogos[pickedSlot.provider] && (
-                  <img
-                    src={providerLogos[pickedSlot.provider]}
-                    alt={pickedSlot.provider}
-                    className="h-5 w-5 object-contain sm:h-6 sm:w-6"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
+                        <div className="shrink-0 text-right">
+                          <div className="text-base font-black text-cyan-200 sm:text-xl">
+                            ${Number(reward.amount || 0).toLocaleString()}
+                          </div>
+                          <div
+                            className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[9px] font-black sm:px-3 sm:py-1 sm:text-xs ${
+                              reward.status === "complete"
+                                ? "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
+                                : "border border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
+                            }`}
+                          >
+                            {reward.status === "complete" ? "Done" : "Pending"}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
-                {pickedSlot.provider}
               </div>
             </>
           )}
         </div>
+      )}
+
+    <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] sm:rounded-[1.5rem] sm:p-6">
+      {giveawayLoading ? (
+        <div className="px-4 py-6 text-sm text-white/60 sm:px-6 sm:py-10">
+          Loading giveaways...
+        </div>
+      ) : giveaways.length === 0 ? (
+        <div className="px-4 py-6 text-center text-sm text-white/45 sm:px-6 sm:py-10">
+          No giveaways logged yet.
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-white/10 bg-black/60 sm:rounded-[1.5rem]">
+          <div
+            className={`grid ${
+              isAdmin
+                ? "grid-cols-[30px_minmax(0,1fr)_56px_50px]"
+                : "grid-cols-[30px_minmax(0,1fr)_56px]"
+            } border-b border-white/5 px-2.5 py-2 text-[8px] font-bold uppercase tracking-[0.12em] text-white/35 sm:grid-cols-[52px_minmax(0,1fr)_90px_74px] sm:px-5 sm:py-4 sm:text-xs sm:tracking-[0.22em]`}
+          >
+            <div>#</div>
+            <div>Winner</div>
+            <div className="text-center">Amount</div>
+            <div className="text-right">{isAdmin ? "Edit" : ""}</div>
+          </div>
+
+          <div className="max-h-[420px] overflow-y-auto sm:max-h-[520px]">
+            {giveaways.map((giveaway, index) => (
+              <div
+                key={giveaway.id}
+                className={`grid ${
+                  isAdmin
+                    ? "grid-cols-[30px_minmax(0,1fr)_56px_50px]"
+                    : "grid-cols-[30px_minmax(0,1fr)_56px]"
+                } items-center border-b border-white/5 px-2.5 py-2.5 last:border-b-0 sm:grid-cols-[52px_minmax(0,1fr)_90px_74px] sm:px-5 sm:py-4`}
+              >
+                <div className="flex h-6 w-6 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-400/10 text-[9px] font-black text-cyan-200 sm:h-9 sm:w-9 sm:text-xs">
+                  {index + 1}
+                </div>
+
+                <div className="min-w-0 overflow-hidden">
+                  <div className="truncate text-xs font-semibold text-white sm:text-base">
+                    {giveaway.winner_name}
+                  </div>
+
+                  {giveaway.note && (
+                    <div className="mt-0.5 truncate text-[9px] text-white/35 sm:mt-1 sm:text-xs">
+                      {giveaway.note}
+                    </div>
+                  )}
+                </div>
+
+                <div className="text-center text-xs font-black text-cyan-200 sm:text-lg">
+                  ${Number(giveaway.amount || 0).toLocaleString()}
+                </div>
+
+                {isAdmin ? (
+                  <div className="flex justify-end gap-1 sm:gap-2">
+                    <button
+                      onClick={async () => {
+                        const newName = prompt("Edit name:", giveaway.winner_name);
+                        const newAmount = prompt("Edit winnings:", String(giveaway.amount));
+                        const newNote = prompt("Edit note:", giveaway.note || "");
+
+                        if (!newName || !newAmount) return;
+
+                        await fetch(`/api/giveaways?id=${giveaway.id}&key=trashguy92`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            winner_name: newName,
+                            amount: Number(newAmount),
+                            note: newNote,
+                          }),
+                        });
+
+                        window.location.reload();
+                      }}
+                      className="flex h-6 w-6 items-center justify-center rounded-md border border-yellow-400/30 bg-yellow-400/10 text-[10px] text-yellow-300 transition hover:bg-yellow-400/20 sm:h-8 sm:w-8 sm:rounded-lg sm:text-xs"
+                    >
+                      ✎
+                    </button>
+
+                    <button
+                      onClick={async () => {
+                        await fetch(`/api/giveaways?id=${giveaway.id}&key=trashguy92`, {
+                          method: "DELETE",
+                        });
+                        window.location.reload();
+                      }}
+                      className="flex h-6 w-6 items-center justify-center rounded-md border border-red-400/30 bg-red-400/10 text-[10px] text-red-300 transition hover:bg-red-400/20 sm:h-8 sm:w-8 sm:rounded-lg sm:text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <div />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </section>
+)}
+
+{activeSection === "monthlyRewards" && (
+  <section className="space-y-4 sm:space-y-6">
+    <div className="mx-auto max-w-7xl text-center">
+      <SectionLabel>Monthly Rewards</SectionLabel>
+
+      <h2 className="mt-2 text-[clamp(1.5rem,8vw,4rem)] font-black text-white">
+        REWARD CALENDAR
+      </h2>
+
+      <p className="mx-auto mt-3 max-w-2xl text-xs text-white/55 sm:text-base">
+        See what rewards, giveaways, and prize events are happening each day.
+      </p>
+    </div>
+
+    <div className="mx-auto max-w-7xl">
+      <div className="flex items-center justify-between gap-3">
+        <button
+          onClick={() =>
+            setCalendarDate(
+              new Date(
+                calendarDate.getFullYear(),
+                calendarDate.getMonth() - 1,
+                1
+              )
+            )
+          }
+          className="rounded-xl border border-white/10 bg-black/85 px-3 py-2 text-xs font-black text-white transition hover:border-cyan-300/35 hover:text-cyan-200 sm:px-5 sm:text-sm"
+        >
+          ← Prev
+        </button>
+
+        <div className="text-center text-lg font-black text-white sm:text-3xl">
+          {calendarDate.toLocaleString("default", {
+            month: "long",
+            year: "numeric",
+          })}
+        </div>
+
+        <button
+          onClick={() =>
+            setCalendarDate(
+              new Date(
+                calendarDate.getFullYear(),
+                calendarDate.getMonth() + 1,
+                1
+              )
+            )
+          }
+          className="rounded-xl border border-white/10 bg-black/85 px-3 py-2 text-xs font-black text-white transition hover:border-cyan-300/35 hover:text-cyan-200 sm:px-5 sm:text-sm"
+        >
+          Next →
+        </button>
       </div>
-    </Panel>
+
+      <div className="mt-5 grid grid-cols-7 gap-1 text-center sm:mt-8 sm:gap-2">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+          <div
+            key={day}
+            className="rounded-lg border border-cyan-300/15 bg-black/85 py-2 text-[8px] font-black uppercase tracking-[0.12em] text-cyan-200 sm:text-xs"
+          >
+            {day}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2 lg:grid-cols-7 lg:gap-3">
+        {monthlyRewardDays.map((rawItem: any) => {
+          const item = rawItem as any;
+
+          if (item.blank) {
+            return (
+              <div
+                key={item.key}
+                className="hidden min-h-[120px] rounded-xl border border-white/5 bg-black/40 sm:block sm:min-h-[180px]"
+              />
+            );
+          }
+
+          return (
+            <div
+              key={item.dateKey}
+              className="flex min-h-[185px] flex-col rounded-xl border border-cyan-300/15 bg-black/85 p-2 text-left shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:min-h-[210px] sm:p-3"
+            >
+              <div className="mb-2 flex justify-center">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-300/35 bg-cyan-400/15 text-[11px] font-black text-cyan-100 shadow-[0_0_14px_rgba(0,245,255,0.16)] sm:h-9 sm:w-9 sm:text-sm">
+                  {item.day}
+                </div>
+              </div>
+
+              {isAdmin && adminAllowed ? (
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <textarea
+                    value={item.reward?.title || ""}
+                    onChange={(e) =>
+                      updateMonthlyReward(item.dateKey, "title", e.target.value)
+                    }
+                    placeholder="Event title"
+                    rows={2}
+                    className="min-h-[42px] w-full resize-none rounded-md border border-white/10 bg-black/80 px-2 py-1.5 text-[9px] font-semibold leading-4 text-white outline-none focus:border-cyan-300/35 sm:min-h-[54px] sm:text-xs"
+                  />
+
+                  <textarea
+                    value={item.reward?.note || ""}
+                    onChange={(e) =>
+                      updateMonthlyReward(item.dateKey, "note", e.target.value)
+                    }
+                    placeholder=""
+                    rows={4}
+                    className="min-h-[58px] w-full flex-1 resize-none rounded-md border border-white/10 bg-black/80 px-2 py-1.5 text-[8px] leading-4 text-white outline-none focus:border-cyan-300/35 sm:min-h-[80px] sm:text-xs"
+                  />
+
+                  <div className="mt-auto rounded-md border border-yellow-300/20 bg-yellow-400/10 px-2 py-1.5 text-center text-[7px] font-black uppercase leading-3 tracking-[0.08em] text-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.08)] sm:text-[8px]">
+                    Daily Giveaways For All Twitch Viewers
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-1 flex-col">
+                  <div className="flex flex-1 flex-col justify-center">
+                    {item.reward?.title || item.reward?.note ? (
+                      <div>
+                        <div className="break-words text-[10px] font-black leading-4 text-white sm:text-sm">
+                          {item.reward?.title || "Reward Day"}
+                        </div>
+
+                        {item.reward?.note && (
+                          <div className="mt-2 whitespace-pre-line break-words text-[8px] leading-4 text-white/70 sm:text-xs">
+                            {item.reward.note}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center text-[8px] text-white/25 sm:text-[10px]">
+                        No event
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-3 rounded-md border border-yellow-300/20 bg-yellow-400/10 px-2 py-1.5 text-center text-[7px] font-black uppercase leading-3 tracking-[0.08em] text-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.08)] sm:text-[8px]">
+                    Daily Giveaways For All Twitch Viewers
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   </section>
 )}
 
  {activeSection === "tournaments" && (
-  <section className="space-y-2 sm:space-y-6">
-    <Panel className="border-[rgba(0,245,255,0.16)] p-3 shadow-[0_0_25px_rgba(0,245,255,0.06)] sm:p-8 sm:shadow-[0_0_65px_rgba(0,245,255,0.10)]">
-      <div className="text-center">
-        <SectionLabel>Tournaments</SectionLabel>
+  <section className="space-y-4 sm:space-y-5">
+    <div className="mx-auto max-w-7xl text-center">
+      <SectionLabel>Tournaments</SectionLabel>
 
-        <h2 className="mx-auto mt-2 max-w-[320px] text-2xl font-black leading-[1] tracking-tight text-white sm:mt-4 sm:max-w-none sm:text-[clamp(2.5rem,6vw,4.5rem)]">
-          {bracket.title || "Tournament Bracket"}
-        </h2>
+      <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-white drop-shadow-[0_0_22px_rgba(0,245,255,0.18)] sm:mt-3 sm:text-[clamp(2.5rem,6vw,4rem)]">
+        {bracket.title || "Tournament Bracket"}
+      </h2>
 
-        <div className="mt-2 inline-flex rounded-full border border-[rgba(0,245,255,0.20)] bg-[rgba(0,245,255,0.08)] px-3 py-1 text-[9px] font-semibold text-cyan-100 sm:mt-4 sm:px-5 sm:py-2 sm:text-sm">
-          Live Bracket
-        </div>
+      <div className="mt-3 inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-1.5 text-xs font-black text-cyan-100">
+        Live Bracket
       </div>
+    </div>
 
-      {bracketLoading ? (
-        <div className="mt-4 text-center text-sm text-white/55 sm:mt-10 sm:text-base">
-          Loading bracket...
-        </div>
-      ) : (
-        <div className="mt-4 overflow-x-auto pb-2 sm:mt-10">
-          <div className="flex min-w-[560px] items-start gap-2 px-1 sm:min-w-[1100px] sm:gap-6 sm:px-6">
+    {bracketLoading ? (
+      <div className="text-center text-sm text-white/55">
+        Loading bracket...
+      </div>
+    ) : (
+      <div className="mx-auto max-w-7xl rounded-2xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:rounded-[1.5rem] sm:p-4">
+        <div
+          className="cursor-grab overflow-x-auto active:cursor-grabbing"
+          onMouseDown={(e) => {
+            const slider = e.currentTarget;
+            const startX = e.pageX - slider.offsetLeft;
+            const scrollLeft = slider.scrollLeft;
+
+            const onMouseMove = (moveEvent: MouseEvent) => {
+              const x = moveEvent.pageX - slider.offsetLeft;
+              const walk = (x - startX) * 1.4;
+              slider.scrollLeft = scrollLeft - walk;
+            };
+
+            const onMouseUp = () => {
+              document.removeEventListener("mousemove", onMouseMove);
+              document.removeEventListener("mouseup", onMouseUp);
+            };
+
+            document.addEventListener("mousemove", onMouseMove);
+            document.addEventListener("mouseup", onMouseUp);
+          }}
+        >
+          <div className="flex min-w-[760px] items-start gap-4 pb-2 sm:min-w-[1050px] sm:gap-5">
             {bracket.rounds.map((round, roundIndex) => {
               const topPadding =
                 roundIndex === 0
-                  ? "pt-1"
+                  ? "pt-0"
                   : roundIndex === 1
-                  ? "pt-6"
+                  ? "pt-8"
                   : roundIndex === 2
-                  ? "pt-12"
-                  : "pt-16";
+                  ? "pt-16"
+                  : "pt-24";
 
               return (
                 <div
                   key={round.id}
-                  className={`w-[135px] shrink-0 sm:w-[290px] ${topPadding}`}
+                  className={`w-[220px] shrink-0 sm:w-[300px] ${topPadding}`}
                 >
-                  <div className="mb-2 text-center sm:mb-4">
-                    <div className="inline-flex max-w-full rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.12em] text-cyan-200 sm:px-5 sm:py-2 sm:text-xs sm:tracking-[0.22em]">
+                  <div className="mb-3 text-center">
+                    <div className="inline-flex max-w-full rounded-full border border-cyan-300/15 bg-black/85 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200 sm:text-[10px]">
                       <span className="truncate">{round.name}</span>
                     </div>
                   </div>
 
                   <div
-                    className={`space-y-2 sm:space-y-6 ${
+                    className={`space-y-3 ${
                       roundIndex === 0
                         ? ""
                         : roundIndex === 1
-                        ? "pt-3 sm:pt-8"
+                        ? "pt-4"
                         : roundIndex === 2
-                        ? "pt-6 sm:pt-16"
-                        : "pt-8 sm:pt-24"
+                        ? "pt-10"
+                        : "pt-16"
                     }`}
                   >
-                    {round.matches.map((match) => (
-                      <MatchCard key={match.id} match={match} compact />
-                    ))}
+                    {round.matches.map((match) => {
+                      const isWinner1 = match.winner && match.winner === match.player1;
+                      const isWinner2 = match.winner && match.winner === match.player2;
+
+                      return (
+                        <div
+                          key={match.id}
+                          className="rounded-2xl border border-white/10 bg-black/90 p-3 shadow-[0_0_20px_rgba(0,0,0,0.35)] sm:p-4"
+                        >
+                          <div
+                            className={`rounded-xl border px-3 py-3 text-sm font-black sm:text-base ${
+                              isWinner1
+                                ? "border-cyan-300/35 bg-cyan-400/10 text-white"
+                                : "border-white/10 bg-white/[0.03] text-white/75"
+                            }`}
+                          >
+                            <div className="truncate">{match.player1 || ""}</div>
+                            {match.player1Amount && (
+                              <div className="mt-1 text-xs font-black text-[#f5c451] sm:text-sm">
+                                ${match.player1Amount}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="py-1 text-center text-[8px] font-black uppercase tracking-[0.18em] text-white/25">
+                            vs
+                          </div>
+
+                          <div
+                            className={`rounded-xl border px-3 py-3 text-sm font-black sm:text-base ${
+                              isWinner2
+                                ? "border-cyan-300/35 bg-cyan-400/10 text-white"
+                                : "border-white/10 bg-white/[0.03] text-white/75"
+                            }`}
+                          >
+                            <div className="truncate">{match.player2 || ""}</div>
+                            {match.player2Amount && (
+                              <div className="mt-1 text-xs font-black text-[#f5c451] sm:text-sm">
+                                ${match.player2Amount}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="mt-2 truncate text-center text-[8px] font-black uppercase tracking-[0.18em] text-white/35">
+                            {match.winner ? `Winner: ${match.winner}` : "No winner"}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
             })}
           </div>
         </div>
-      )}
-    </Panel>
+
+        <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+          Drag left or right to move bracket
+        </div>
+      </div>
+    )}
+  </section>
+)}
+
+{activeSection === "slotpicker" && (
+  <section className="space-y-4 sm:space-y-6">
+    <div className="mx-auto max-w-5xl text-center">
+      <SectionLabel>Slot Picker</SectionLabel>
+
+      <h2 className="mt-2 text-[clamp(1.5rem,7vw,4rem)] font-black leading-[1] tracking-tight text-white">
+        RANDOM SLOT PICKER
+      </h2>
+
+      <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-white/55 sm:text-base">
+        Select providers, spin the picker, and let fate decide the next slot.
+      </p>
+    </div>
+
+    <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6">
+      <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/40 sm:text-xs sm:tracking-[0.24em]">
+        Providers
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
+        {slotProviders.map((provider) => {
+          const active = selectedProviders.includes(provider);
+          const logo = providerLogos[provider];
+
+          return (
+            <button
+              key={provider}
+              onClick={() => toggleSlotProvider(provider)}
+              className={`flex min-h-[72px] items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all duration-200 sm:min-h-[82px] sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3 ${
+                active
+                  ? "border-cyan-300/40 bg-cyan-400/12 text-white shadow-[0_0_20px_rgba(0,245,255,0.14)]"
+                  : "border-white/10 bg-black/70 text-white/65 hover:border-white/20 hover:text-white"
+              }`}
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/80 sm:h-11 sm:w-11 sm:rounded-xl">
+                {logo ? (
+                  <img
+                    src={logo}
+                    alt={provider}
+                    className="h-6 w-6 object-contain sm:h-7 sm:w-7"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <span className="text-[10px] font-black text-[#8fffd0] sm:text-xs">
+                    {provider.charAt(0)}
+                  </span>
+                )}
+              </div>
+
+              <div className="min-w-0">
+                <div className="truncate text-xs font-black sm:text-base">
+                  {provider}
+                </div>
+
+                <div className="text-[10px] text-white/35 sm:text-xs">
+                  {
+                    slotData.filter(
+                      (slot) => slot.provider === provider
+                    ).length
+                  }{" "}
+                  slots
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 sm:mt-5 sm:gap-3">
+        <div className="text-xs text-white/45 sm:text-sm">
+          {selectedProviders.length === 0
+            ? `🎲 All Providers Active (${slotData.length} slots)`
+            : `${filteredSlots.length} slots from ${selectedProviders.length} provider(s)`}
+        </div>
+
+        <button
+          onClick={() => {
+            setSelectedProviders([]);
+            setPickedSlot(null);
+          }}
+          className="rounded-full border border-white/10 bg-black/70 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/55 transition hover:text-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.18em]"
+        >
+          Reset
+        </button>
+      </div>
+    </div>
+
+    <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 text-center shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:rounded-[1.5rem] sm:p-8">
+      <button
+        onClick={pickRandomSlot}
+        disabled={isPickingSlot || filteredSlots.length === 0}
+        className="w-full rounded-xl border border-cyan-300/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.22),rgba(0,245,255,0.08))] px-4 py-3 text-xs font-black text-[#b8ffd8] shadow-[0_0_20px_rgba(0,245,255,0.10)] transition hover:border-cyan-300/45 hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-lg"
+      >
+        {isPickingSlot ? "Spinning..." : "Pick Random Slot"}
+      </button>
+
+      <div
+        className={`mt-4 rounded-2xl border bg-black/90 p-4 transition-all duration-300 sm:mt-8 sm:p-8 ${
+          isPickingSlot
+            ? "scale-[1.02] border-cyan-300/40 shadow-[0_0_45px_rgba(0,245,255,0.22)] blur-[0.2px]"
+            : "border-white/10 shadow-[0_0_28px_rgba(0,245,255,0.10)]"
+        }`}
+      >
+        {!pickedSlot ? (
+          <div className="py-8 text-sm text-white/45 sm:py-12 sm:text-base">
+            No slot picked yet.
+          </div>
+        ) : (
+          <>
+            <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/35 sm:text-xs sm:tracking-[0.3em]">
+              Selected Slot
+            </div>
+
+            {pickedSlot.image && (
+              <img
+                src={pickedSlot.image}
+                alt={pickedSlot.name}
+                className="mx-auto mb-3 mt-4 h-24 object-contain sm:mb-4 sm:mt-6 sm:h-32"
+              />
+            )}
+
+            <div
+              className={`mt-3 text-[clamp(1.2rem,6vw,4rem)] font-black transition-all duration-200 sm:mt-5 ${
+                isPickingSlot
+                  ? "scale-95 text-white/70 blur-[1px]"
+                  : "scale-105 text-[#8fffd0] drop-shadow-[0_0_25px_rgba(0,245,255,0.65)]"
+              }`}
+            >
+              {pickedSlot.name}
+            </div>
+
+            <div
+              className={`mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-200 sm:mt-5 sm:gap-3 sm:px-5 sm:text-sm ${
+                isPickingSlot
+                  ? "scale-95 border-white/10 bg-white/5 text-white/40"
+                  : "scale-105 border-cyan-300/20 bg-cyan-400/10 text-[#b8ffd8] shadow-[0_0_20px_rgba(0,245,255,0.35)]"
+              }`}
+            >
+              {providerLogos[pickedSlot.provider] && (
+                <img
+                  src={providerLogos[pickedSlot.provider]}
+                  alt={pickedSlot.provider}
+                  className="h-5 w-5 object-contain sm:h-6 sm:w-6"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              )}
+
+              {pickedSlot.provider}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   </section>
 )}
 
 {activeSection === "admin" && adminAllowed && (
-  <section className="grid gap-3 sm:gap-6">
-    <Panel className="border-cyan-300/25 p-2 shadow-[0_0_28px_rgba(0,245,255,0.07)] sm:p-8 sm:shadow-[0_0_65px_rgba(0,245,255,0.10)]">
-      <SectionLabel>Admin</SectionLabel>
+  <section className="mx-auto grid max-w-6xl gap-2 sm:gap-3">
+    <div>
+<div className="text-center">
+  <SectionLabel>Admin</SectionLabel>
 
-      <h2 className="mt-2 text-xl font-black tracking-wide sm:mt-3 sm:text-4xl">
-        CONTROL CENTER
-      </h2>
+  <h2 className="mt-2 text-[clamp(1.8rem,7vw,4rem)] font-black leading-[1] tracking-tight text-white">
+    CONTROL CENTER
+  </h2>
 
-      <p className="mt-2 text-xs text-white/60 sm:mt-4 sm:text-base">
-        Admin panel is only shown for approved Twitch accounts.
-      </p>
+  <p className="mx-auto mt-3 max-w-2xl text-sm text-white/55 sm:text-base">
+    Admin panel is only shown for approved Twitch accounts.
+  </p>
+</div>
 
-      <div className="mt-3 rounded-xl border border-cyan-300/20 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.08),rgba(0,0,0,0.55)_55%)] p-2 shadow-[0_0_20px_rgba(0,245,255,0.05)] sm:mt-8 sm:rounded-[2rem] sm:p-5">
+      <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
         <div className="grid gap-2 sm:gap-3 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
           <div className="rounded-xl border border-white/10 bg-black/35 p-2.5 sm:p-4">
             <div className="text-[9px] uppercase tracking-[0.16em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
@@ -3965,7 +4043,7 @@ const handleGenerateBracket = () => {
         <details
           open={adminDropdowns.giveaway}
           onToggle={(e) => setAdminDropdown("giveaway", e.currentTarget.open)}
-          className="rounded-xl border border-cyan-300/20 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
+          className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
         >
           <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
             Giveaway System
@@ -4154,7 +4232,7 @@ const handleGenerateBracket = () => {
         <details
           open={adminDropdowns.prizePortal}
           onToggle={(e) => setAdminDropdown("prizePortal", e.currentTarget.open)}
-          className="rounded-xl border border-cyan-300/20 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
+          className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
         >
           <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
             Prize Portal Manager
@@ -4329,7 +4407,7 @@ const handleGenerateBracket = () => {
         <details
           open={adminDropdowns.predictions}
           onToggle={(e) => setAdminDropdown("predictions", e.currentTarget.open)}
-          className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
+          className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
         >
           <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
             Predictions / Hunt
@@ -4427,7 +4505,7 @@ const handleGenerateBracket = () => {
         <details
           open={adminDropdowns.tournament}
           onToggle={(e) => setAdminDropdown("tournament", e.currentTarget.open)}
-          className="rounded-xl border border-cyan-300/20 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
+          className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
         >
           <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
             Tournament Editor
@@ -4638,7 +4716,7 @@ const handleGenerateBracket = () => {
         <details
           open={adminDropdowns.slotWheel}
           onToggle={(e) => setAdminDropdown("slotWheel", e.currentTarget.open)}
-          className="rounded-xl border border-cyan-300/20 bg-black/30 p-3 sm:rounded-2xl sm:p-5"
+          className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
         >
           <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
             Slot Call Wheel
@@ -4772,10 +4850,6 @@ const handleGenerateBracket = () => {
                   <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
                     Live Slot Calls
                   </div>
-
-                  <div className="mt-1 text-xs text-white/45 sm:mt-2 sm:text-sm">
-                    Viewers type <span className="font-bold text-white">!slot wanted</span>.
-                  </div>
                 </div>
 
                 <ActionButton
@@ -4827,7 +4901,7 @@ const handleGenerateBracket = () => {
           </div>
         </details>
       </div>
-    </Panel>
+    </div>
   </section>
 )}
           </main>
