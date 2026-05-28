@@ -112,7 +112,6 @@ export async function POST(req: NextRequest) {
         is_roulo_affiliate: boost.isRouloAffiliate,
         roulo_wagered: boost.rouloWagered,
         roulo_username: boost.rouloUsername,
-        updated_at: new Date().toISOString(),
       },
       { onConflict: "giveaway_id,username" }
     )
