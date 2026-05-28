@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { syncRouloLinks } from "@/app/lib/roulo-sync";
 
 export const runtime = "nodejs";
 
@@ -83,6 +84,7 @@ async function getRouloAffiliate(rouloUsername: string) {
 }
 
 export async function GET(req: NextRequest) {
+  await syncRouloLinks();
   const twitchUsername = normalize(req.nextUrl.searchParams.get("twitch") || "");
 
   if (!twitchUsername) {

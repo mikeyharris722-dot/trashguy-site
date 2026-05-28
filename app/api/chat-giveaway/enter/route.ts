@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { syncRouloLinks } from "@/app/lib/roulo-sync";
 
 export const runtime = "nodejs";
 
@@ -89,6 +90,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  await syncRouloLinks();
+  
   const boost = await getSavedRouloBoost(username);
 
   const { data, error } = await supabase
