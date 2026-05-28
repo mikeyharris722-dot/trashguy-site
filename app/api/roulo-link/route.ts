@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { syncRouloLinks } from "@/app/lib/roulo-sync";
+import { syncRouloLinks } from "@/lib/roulo-sync";
 
 export const runtime = "nodejs";
 
@@ -15,24 +15,16 @@ function normalize(value: string) {
 
 function getDateRange() {
   const end = new Date();
-  const start = new Date();
-  start.setDate(end.getDate() - 30);
 
   return {
-    start_at: start.toISOString().slice(0, 10),
+    start_at: "2024-01-01",
     end_at: end.toISOString().slice(0, 10),
   };
 }
 
 function getRoleAndWeight(wagered: number) {
-  if (wagered >= 5000) {
-    return { role: "vip", weight: 1.2 };
-  }
-
-  if (wagered >= 100) {
-    return { role: "affiliate", weight: 1.1 };
-  }
-
+  if (wagered >= 5000) return { role: "vip", weight: 1.2 };
+  if (wagered >= 100) return { role: "affiliate", weight: 1.1 };
   return { role: "viewer", weight: 1 };
 }
 
@@ -51,7 +43,11 @@ async function getRouloAffiliate(rouloUsername: string) {
   );
 
   const json = await res.json();
-  const affiliates = json.affiliates || json.data || [];
+  const affiliates = Array.isArray(json?.affiliates)
+    ? json.affiliates
+    : Array.isArray(json?.data)
+    ? json.data
+    : [];
 
   const match = affiliates.find((player: any) => {
     const name = normalize(
@@ -65,9 +61,7 @@ async function getRouloAffiliate(rouloUsername: string) {
     return name === normalize(rouloUsername);
   });
 
-  if (!match) {
-    return null;
-  }
+  if (!match) return null;
 
   const wagered = Number(
     match.wagered_amount ||
@@ -84,27 +78,80 @@ async function getRouloAffiliate(rouloUsername: string) {
 }
 
 export async function GET(req: NextRequest) {
-  await syncRouloLinks();
+  const debugUser = normalize(req.nextUrl.searchParams.get("debugUser") || "");
+
+if (debugUser) {
+  const affiliate = await getRouloAffiliate(debugUser);
+
+  return NextResponse.json({
+    ok: true,
+    debugUser,
+    affiliate,
+  });
+}
   const twitchUsername = normalize(req.nextUrl.searchParams.get("twitch") || "");
 
   if (!twitchUsername) {
     return NextResponse.json({ ok: false, error: "Missing Twitch username" });
   }
 
-  const { data, error } = await supabase
+  const { data: existingLink, error } = await supabase
     .from("roulo_links")
     .select("*")
     .eq("twitch_username", twitchUsername)
-    .single();
+    .maybeSingle();
 
-  if (error && error.code !== "PGRST116") {
+  if (error) {
     return NextResponse.json({ ok: false, error: error.message });
   }
 
-  return NextResponse.json({
-    ok: true,
-    link: data || null,
-  });
+  if (!existingLink?.roulo_username) {
+    return NextResponse.json({
+      ok: true,
+      link: existingLink || null,
+    });
+  }
+
+  try {
+    const affiliate = await getRouloAffiliate(existingLink.roulo_username);
+
+    if (!affiliate) {
+      return NextResponse.json({
+        ok: true,
+        link: existingLink,
+        warning: "Roulo username was not found during refresh.",
+      });
+    }
+
+    const { role, weight } = getRoleAndWeight(affiliate.wagered);
+
+    const { data: updatedLink, error: updateError } = await supabase
+      .from("roulo_links")
+      .update({
+        wagered: affiliate.wagered,
+        role,
+        weight,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("twitch_username", twitchUsername)
+      .select("*")
+      .single();
+
+    if (updateError) {
+      return NextResponse.json({ ok: false, error: updateError.message });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      link: updatedLink,
+    });
+  } catch (err: any) {
+    return NextResponse.json({
+      ok: true,
+      link: existingLink,
+      warning: err?.message || "Could not refresh Roulo stats.",
+    });
+  }
 }
 
 export async function POST(req: NextRequest) {

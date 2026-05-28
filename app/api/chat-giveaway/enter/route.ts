@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { syncRouloLinks } from "@/app/lib/roulo-sync";
+import { syncRouloLinks } from "@/lib/roulo-sync";
 
 export const runtime = "nodejs";
 
@@ -13,14 +13,38 @@ function normalize(value: string) {
   return String(value || "").replace("@", "").trim().toLowerCase();
 }
 
+function getRoleAndWeight(wagered: number) {
+  if (wagered >= 5000) {
+    return { role: "vip", weight: 1.2, isRouloAffiliate: true };
+  }
+
+  if (wagered >= 100) {
+    return { role: "affiliate", weight: 1.1, isRouloAffiliate: true };
+  }
+
+  return { role: "viewer", weight: 1, isRouloAffiliate: false };
+}
+
 async function getSavedRouloBoost(twitchUsername: string) {
   const cleanTwitch = normalize(twitchUsername);
 
-  const { data: link } = await supabase
+  // Refresh all linked Roulo accounts before reading this entry.
+  // This makes giveaway entries update automatically.
+  try {
+    await syncRouloLinks();
+  } catch (error) {
+    console.error("Roulo sync failed before giveaway entry:", error);
+  }
+
+  const { data: link, error } = await supabase
     .from("roulo_links")
     .select("roulo_username, wagered, role, weight")
     .eq("twitch_username", cleanTwitch)
     .maybeSingle();
+
+  if (error) {
+    console.error("Roulo link lookup failed:", error);
+  }
 
   if (!link) {
     return {
@@ -32,35 +56,16 @@ async function getSavedRouloBoost(twitchUsername: string) {
     };
   }
 
-const wagered = Number(link.wagered || 0);
+  const wagered = Number(link.wagered || 0);
+  const resolved = getRoleAndWeight(wagered);
 
-if (wagered >= 5000) {
   return {
-    weight: 1.2,
-    role: "vip",
-    isRouloAffiliate: true,
+    weight: resolved.weight,
+    role: resolved.role,
+    isRouloAffiliate: resolved.isRouloAffiliate,
     rouloWagered: wagered,
     rouloUsername: link.roulo_username || null,
   };
-}
-
-if (wagered >= 100) {
-  return {
-    weight: 1.1,
-    role: "affiliate",
-    isRouloAffiliate: true,
-    rouloWagered: wagered,
-    rouloUsername: link.roulo_username || null,
-  };
-}
-
-return {
-  weight: 1,
-  role: "viewer",
-  isRouloAffiliate: false,
-  rouloWagered: wagered,
-  rouloUsername: link.roulo_username || null,
-};
 }
 
 export async function POST(req: NextRequest) {
@@ -81,7 +86,7 @@ export async function POST(req: NextRequest) {
     .eq("status", "live")
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (giveawayError || !giveaway) {
     return NextResponse.json(
@@ -90,8 +95,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  await syncRouloLinks();
-  
   const boost = await getSavedRouloBoost(username);
 
   const { data, error } = await supabase
@@ -109,6 +112,7 @@ export async function POST(req: NextRequest) {
         is_roulo_affiliate: boost.isRouloAffiliate,
         roulo_wagered: boost.rouloWagered,
         roulo_username: boost.rouloUsername,
+        updated_at: new Date().toISOString(),
       },
       { onConflict: "giveaway_id,username" }
     )
