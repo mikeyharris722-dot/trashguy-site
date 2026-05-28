@@ -78,17 +78,6 @@ async function getRouloAffiliate(rouloUsername: string) {
 }
 
 export async function GET(req: NextRequest) {
-  const debugUser = normalize(req.nextUrl.searchParams.get("debugUser") || "");
-
-if (debugUser) {
-  const affiliate = await getRouloAffiliate(debugUser);
-
-  return NextResponse.json({
-    ok: true,
-    debugUser,
-    affiliate,
-  });
-}
   const twitchUsername = normalize(req.nextUrl.searchParams.get("twitch") || "");
 
   if (!twitchUsername) {
