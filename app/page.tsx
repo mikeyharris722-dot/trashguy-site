@@ -2183,36 +2183,31 @@ const handleSpinSlotWheel = () => {
   setPickedSlotCall(null);
 
   const winnerIndex = Math.floor(Math.random() * slotCalls.length);
-  const segmentSize = 360 / slotCalls.length;
 
-  const winnerCenter =
-    winnerIndex * segmentSize + segmentSize / 2;
+  if (slotCalls.length < 5) {
+    setSlotWheelRotation(0);
 
-  const randomOffset =
-    Math.random() * (segmentSize * 0.55) -
-    segmentSize * 0.275;
+    setTimeout(() => {
+      setPickedSlotCall(slotCalls[winnerIndex]);
+      setIsSlotWheelSpinning(false);
+    }, 700);
 
-  const targetRotation =
-    (360 - (winnerCenter + randomOffset)) % 360;
+    return;
+  }
 
-  const currentRotation =
-    ((slotWheelRotation % 360) + 360) % 360;
+  const rowHeight = 58;
+  const centerRowOffset = 2;
+  const loops = 8;
 
-  const rotationNeeded =
-    (targetRotation - currentRotation + 360) % 360;
+  const targetIndex = loops * slotCalls.length + winnerIndex;
+  const finalOffset = Math.max(0, (targetIndex - centerRowOffset) * rowHeight);
 
-  const extraSpins =
-    360 * (6 + Math.floor(Math.random() * 3));
-
-  const finalRotation =
-    slotWheelRotation + extraSpins + rotationNeeded;
-
-  setSlotWheelRotation(finalRotation);
+  setSlotWheelRotation(finalOffset);
 
   setTimeout(() => {
     setPickedSlotCall(slotCalls[winnerIndex]);
     setIsSlotWheelSpinning(false);
-  }, 5200);
+  }, 4200);
 };
 
 const handleShuffleSlotWheel = () => {
@@ -4713,193 +4708,180 @@ const rankBox =
           </div>
         </details>
 
-        <details
-          open={adminDropdowns.slotWheel}
-          onToggle={(e) => setAdminDropdown("slotWheel", e.currentTarget.open)}
-          className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
-        >
-          <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
-            Slot Call Wheel
-          </summary>
+<details
+  open={adminDropdowns.slotWheel}
+  onToggle={(e) => setAdminDropdown("slotWheel", e.currentTarget.open)}
+  className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
+>
+  <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
+    Slot Call Wheel
+  </summary>
 
-          <div className="grid gap-4 p-0 pt-4 sm:gap-6 sm:p-4 lg:grid-cols-[420px_1fr] lg:p-6">
-            <div className="rounded-xl border border-cyan-300/20 bg-black/45 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:rounded-[2rem] sm:p-5">
-              <div className="text-[10px] uppercase tracking-[0.2em] text-cyan-300/70 sm:text-xs sm:tracking-[0.28em]">
-                Community Picker
-              </div>
+  <div className="pt-4 sm:p-4">
+    <div className="mx-auto max-w-4xl rounded-[1.7rem] border border-cyan-300/35 bg-[linear-gradient(180deg,rgba(0,245,255,0.08),rgba(0,0,0,0.94))] p-4 text-center shadow-[0_0_38px_rgba(0,245,255,0.16)] sm:p-6">
 
-              <div className="relative mx-auto mt-4 h-[230px] w-[230px] sm:mt-6 sm:h-[360px] sm:w-[360px]">
-                <div className="absolute inset-0 rounded-full bg-cyan-400/10 blur-3xl" />
+      <div className="mt-2 text-3xl font-black uppercase tracking-[0.12em] text-cyan-200 drop-shadow-[0_0_18px_rgba(0,245,255,0.55)] sm:text-5xl">
+        Trashguy Wheel
+      </div>
 
-                <div className="absolute left-1/2 top-0 z-30 -translate-x-1/2">
-                  <div className="h-0 w-0 border-l-[16px] border-r-[16px] border-t-[28px] border-l-transparent border-r-transparent border-t-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.9)] sm:border-l-[22px] sm:border-r-[22px] sm:border-t-[38px]" />
+      <div className="relative mx-auto mt-5 h-[260px] max-w-3xl overflow-hidden rounded-2xl border border-cyan-300/25 bg-black/90 shadow-[inset_0_0_28px_rgba(0,245,255,0.08)] sm:h-[300px]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 bg-gradient-to-b from-black via-black/80 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24 bg-gradient-to-t from-black via-black/80 to-transparent" />
+
+        <div className="pointer-events-none absolute left-0 right-0 top-1/2 z-30 h-[68px] -translate-y-1/2 border-y border-cyan-300/45 bg-cyan-400/10 shadow-[0_0_28px_rgba(0,245,255,0.18)]" />
+
+        {slotCalls.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm font-semibold text-white/40">
+            Waiting for slot calls...
+          </div>
+        ) : (
+          <div
+            className="transition-transform duration-[4200ms] ease-out"
+            style={{
+              transform:
+                slotCalls.length < 5
+                  ? "translateY(118px)"
+                  : `translateY(-${slotWheelRotation}px)`,
+            }}
+          >
+            {(
+              slotCalls.length < 5
+                ? slotCalls
+                : Array.from({ length: 8 }).flatMap(() => slotCalls)
+            ).map((call, index) => (
+              <div
+                key={`${call.username}-${call.slotName}-${index}`}
+                className="grid h-[60px] grid-cols-[42px_1fr_1fr] items-center gap-4 border-b border-white/5 px-6 leading-none"
+              >
+                <div className="text-xs font-black text-cyan-300/70">
+                  {index + 1}
                 </div>
 
-                <div
-                  className="relative flex h-full w-full items-center justify-center rounded-full border-[8px] border-cyan-300/40 bg-black shadow-[0_0_55px_rgba(0,245,255,0.20)] transition-transform duration-[5200ms] ease-out sm:border-[10px] sm:shadow-[0_0_80px_rgba(0,245,255,0.22)]"
-                  style={{
-                    transform: `rotate(${slotWheelRotation}deg)`,
-                    background:
-                      slotCalls.length === 0
-                        ? "radial-gradient(circle, rgba(0,245,255,0.10), rgba(0,0,0,0.92))"
-                        : `conic-gradient(${slotCalls
-                            .map((_, index) => {
-                              const start = (index / slotCalls.length) * 360;
-                              const end = ((index + 1) / slotCalls.length) * 360;
-                              const color =
-                                index % 2 === 0
-                                  ? "rgba(0,245,255,0.42)"
-                                  : "rgba(0,45,55,0.92)";
-                              return `${color} ${start}deg ${end}deg`;
-                            })
-                            .join(", ")})`,
-                  }}
-                >
-                  <div className="absolute h-[78%] w-[78%] rounded-full border border-cyan-300/15" />
+                <div className="truncate text-left text-lg font-black leading-none text-white sm:text-2xl">
+                  {call.username}
+                </div>
 
-                  {slotCalls.map((slot, index) => {
-                    const total = Math.max(slotCalls.length, 1);
-                    const segmentSize = 360 / total;
-                    const angle = index * segmentSize + segmentSize / 2;
-
-                    return (
-                      <div
-                        key={`${slot.username}-${slot.slotName}-${index}`}
-                        className="absolute left-1/2 top-1/2 z-10"
-                        style={{
-                          transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-84px)`,
-                        }}
-                      >
-                        <div
-                          className="w-[72px] truncate text-center text-[8px] font-black uppercase tracking-wide text-white drop-shadow-[0_0_8px_rgba(0,0,0,1)] sm:w-[110px] sm:text-[10px]"
-                          style={{ transform: "rotate(90deg)" }}
-                        >
-                          {slot.slotName}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  <div className="relative z-20 flex h-20 w-20 items-center justify-center rounded-full border-4 border-cyan-300/25 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.28),rgba(0,0,0,1)_70%)] shadow-[0_0_28px_rgba(0,245,255,0.40)] sm:h-32 sm:w-32 sm:shadow-[0_0_35px_rgba(0,245,255,0.45)]">
-                    <div className="text-center">
-                      <div className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-200 sm:text-sm sm:tracking-[0.2em]">
-                        Trashguy
-                      </div>
-                      <div className="text-sm font-black text-white sm:text-xl">
-                        Wheel
-                      </div>
-                    </div>
-                  </div>
+                <div className="truncate text-right text-lg font-black leading-none text-cyan-100 sm:text-2xl">
+                  {call.slotName}
                 </div>
               </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-              <div className="mt-4 sm:mt-6">
-                {pickedSlotCall ? (
-                  <div className="rounded-xl border border-cyan-300/35 bg-cyan-400/10 p-3 shadow-[0_0_30px_rgba(0,245,255,0.14)] sm:rounded-[1.5rem] sm:p-5">
-                    <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/70 sm:text-xs sm:tracking-[0.25em]">
-                      Picked Slot
-                    </div>
+      <div className="mt-4 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-white/55">
+        Entries
+        <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-cyan-200">
+          {slotCalls.length}
+        </span>
+      </div>
 
-                    <div className="mt-2 truncate text-2xl font-black text-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.8)] sm:text-4xl">
-                      {pickedSlotCall.slotName}
-                    </div>
-
-                    <div className="mt-2 text-xs text-white/45 sm:text-sm">
-                      called by {pickedSlotCall.username}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs font-semibold text-white/45 sm:rounded-2xl sm:p-4 sm:text-sm">
-                    {slotCalls.length === 0 ? "Waiting for slot calls..." : "Ready to spin."}
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4 grid gap-2 sm:mt-5 sm:gap-3">
-                <ActionButton
-                  onClick={handleSpinSlotWheel}
-                  disabled={isSlotWheelSpinning || slotCalls.length === 0}
-                  variant="green"
-                >
-                  {isSlotWheelSpinning ? "Spinning..." : "Spin Wheel"}
-                </ActionButton>
-
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  <ActionButton
-                    onClick={handleShuffleSlotWheel}
-                    disabled={slotCalls.length <= 1 || isSlotWheelSpinning}
-                    variant="purple"
-                  >
-                    Shuffle
-                  </ActionButton>
-
-                  <ActionButton
-                    onClick={handleRemovePickedSlot}
-                    disabled={!pickedSlotCall}
-                    variant="red"
-                  >
-                    Remove
-                  </ActionButton>
-                </div>
-              </div>
+      <div className="mx-auto mt-4 max-w-2xl">
+        {pickedSlotCall ? (
+          <div className="rounded-xl border border-cyan-300/35 bg-cyan-400/10 p-4 shadow-[0_0_30px_rgba(0,245,255,0.14)]">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/70">
+              Picked Slot
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-black/35 p-3 sm:rounded-[2rem] sm:p-5">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                <div>
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
-                    Live Slot Calls
-                  </div>
-                </div>
+            <div className="mt-2 truncate text-3xl font-black text-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.8)] sm:text-5xl">
+              {pickedSlotCall.slotName}
+            </div>
 
-                <ActionButton
-                  onClick={() => setSlotCalls([])}
-                  variant="red"
-                  className="min-h-[34px] px-3 py-1 text-[9px] sm:min-h-[42px] sm:text-xs"
-                >
-                  Clear
-                </ActionButton>
-              </div>
-
-              <div className="mt-3 max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-black/35 p-2 sm:mt-5 sm:max-h-[520px] sm:rounded-2xl sm:p-3">
-                {slotCalls.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-white/40 sm:p-8 sm:text-sm">
-                    No slot calls yet.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
-                    {slotCalls.map((call, index) => (
-                      <div
-                        key={`${call.username}-${call.slotName}-${index}`}
-                        className="rounded-xl border border-white/10 bg-white/[0.04] p-2 transition hover:border-cyan-300/25 hover:bg-cyan-400/[0.06] sm:rounded-2xl sm:p-3"
-                      >
-                        <div className="truncate text-xs font-black text-white sm:text-base">
-                          {call.slotName}
-                        </div>
-
-                        <div className="mt-1 truncate text-[10px] text-white/35 sm:text-xs">
-                          by {call.username}
-                        </div>
-
-                        <ActionButton
-                          onClick={() =>
-                            setSlotCalls((current) =>
-                              current.filter((_, itemIndex) => itemIndex !== index)
-                            )
-                          }
-                          variant="red"
-                          className="mt-2 min-h-[28px] w-full px-2 py-1 text-[8px] sm:mt-3 sm:min-h-[34px] sm:text-[10px]"
-                        >
-                          Remove
-                        </ActionButton>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <div className="mt-2 text-sm text-white/45">
+              called by {pickedSlotCall.username}
             </div>
           </div>
-        </details>
+        ) : (
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm font-semibold text-white/45">
+            {slotCalls.length === 0 ? "Waiting for slot calls..." : "Ready to spin."}
+          </div>
+        )}
+      </div>
+
+      <div className="mx-auto mt-5 grid max-w-2xl gap-3">
+        <ActionButton
+          onClick={handleSpinSlotWheel}
+          disabled={isSlotWheelSpinning || slotCalls.length === 0}
+          variant="green"
+        >
+          {isSlotWheelSpinning ? "Spinning..." : "Spin Wheel"}
+        </ActionButton>
+
+        <div className="grid grid-cols-2 gap-3">
+          <ActionButton
+            onClick={handleShuffleSlotWheel}
+            disabled={slotCalls.length <= 1 || isSlotWheelSpinning}
+            variant="purple"
+          >
+            Shuffle
+          </ActionButton>
+
+          <ActionButton
+            onClick={handleRemovePickedSlot}
+            disabled={!pickedSlotCall}
+            variant="red"
+          >
+            Remove
+          </ActionButton>
+        </div>
+      </div>
+    </div>
+
+    <div className="mt-5 rounded-xl border border-white/10 bg-black/85 p-4 sm:rounded-[2rem] sm:p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
+          Live Slot Calls
+        </div>
+
+        <ActionButton
+          onClick={() => setSlotCalls([])}
+          variant="red"
+          className="min-h-[34px] px-3 py-1 text-[9px] sm:min-h-[42px] sm:text-xs"
+        >
+          Clear
+        </ActionButton>
+      </div>
+
+      <div className="mt-4 max-h-[420px] overflow-y-auto rounded-xl border border-white/10 bg-black/80 p-3 sm:rounded-2xl">
+        {slotCalls.length === 0 ? (
+          <div className="p-6 text-center text-xs text-white/40 sm:text-sm">
+            No slot calls yet.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+            {slotCalls.map((call, index) => (
+              <div
+                key={`${call.username}-${call.slotName}-${index}`}
+                className="rounded-xl border border-white/10 bg-white/[0.04] p-3 transition hover:border-cyan-300/25 hover:bg-cyan-400/[0.06]"
+              >
+                <div className="truncate text-sm font-black text-white">
+                  {call.slotName}
+                </div>
+
+                <div className="mt-1 truncate text-xs text-white/35">
+                  by {call.username}
+                </div>
+
+                <ActionButton
+                  onClick={() =>
+                    setSlotCalls((current) =>
+                      current.filter((_, itemIndex) => itemIndex !== index)
+                    )
+                  }
+                  variant="red"
+                  className="mt-3 min-h-[32px] w-full px-2 py-1 text-[9px]"
+                >
+                  Remove
+                </ActionButton>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</details>
       </div>
     </div>
   </section>
