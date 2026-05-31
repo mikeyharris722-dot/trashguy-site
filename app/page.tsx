@@ -604,6 +604,20 @@ const [giveawayTimerTick, setGiveawayTimerTick] = useState(Date.now());
 const [winnerFollowAge, setWinnerFollowAge] = useState("");
 const [giveawayRespondedTime, setGiveawayRespondedTime] = useState<number | null>(null);
 
+const [snakeCaptainCount, setSnakeCaptainCount] = useState("2");
+const [snakeCaptainsText, setSnakeCaptainsText] = useState("");
+const [snakePlayersText, setSnakePlayersText] = useState("");
+const [snakeCaptains, setSnakeCaptains] = useState<string[]>([]);
+const [snakePlayers, setSnakePlayers] = useState<string[]>([]);
+const [snakeTeams, setSnakeTeams] = useState<Record<string, string[]>>({});
+const [snakePickOrder, setSnakePickOrder] = useState<string[]>([]);
+const [snakeCurrentPickIndex, setSnakeCurrentPickIndex] = useState(0);
+const [snakeMessage, setSnakeMessage] = useState("");
+const [snakeSlotCalls, setSnakeSlotCalls] = useState<Record<string, string>>({});
+const [snakeSlotOrder, setSnakeSlotOrder] = useState<string[]>([]);
+const [snakeSlotAmounts, setSnakeSlotAmounts] = useState<Record<string, string>>({});
+const [snakeSlotHit, setSnakeSlotHit] = useState<Record<string, boolean>>({});
+
 const [slotCalls, setSlotCalls] = useState<
   { username: string; slotName: string; createdAt: number }[]
 >([]);
@@ -2175,6 +2189,177 @@ const handleAwardGiveawayPrize = async () => {
 
   alert(`Awarded $${amount} to ${currentGiveawayWinner}`);
 };
+
+function cleanSnakeNames(text: string) {
+  return text
+    .split("\n")
+    .map((name) => name.replace("@", "").trim())
+    .filter(Boolean);
+}
+
+function shuffleSnakeList(list: string[]) {
+  return [...list].sort(() => Math.random() - 0.5);
+}
+
+function buildSnakeOrder(captains: string[], rounds: number) {
+  const order: string[] = [];
+
+  for (let round = 0; round < rounds; round++) {
+    const roundOrder = round % 2 === 0 ? captains : [...captains].reverse();
+    order.push(...roundOrder);
+  }
+
+  return order;
+}
+
+function handleSetupSnakeDraft() {
+  const captainList = cleanSnakeNames(snakeCaptainsText).slice(
+    0,
+    Number(snakeCaptainCount)
+  );
+
+  const playerList = cleanSnakeNames(snakePlayersText);
+
+  if (captainList.length === 0) {
+    setSnakeMessage("Add captains first.");
+    return;
+  }
+
+  const randomizedCaptains = shuffleSnakeList(captainList);
+
+  const teams: Record<string, string[]> = {};
+  randomizedCaptains.forEach((captain) => {
+    teams[captain] = [];
+  });
+
+  const roundsNeeded = Math.ceil(playerList.length / randomizedCaptains.length);
+  const order = buildSnakeOrder(randomizedCaptains, roundsNeeded);
+
+  setSnakeCaptains(randomizedCaptains);
+  setSnakePlayers(playerList);
+  setSnakeTeams(teams);
+  setSnakePickOrder(order);
+  setSnakeCurrentPickIndex(0);
+  setSnakeMessage("Snake draft ready.");
+}
+
+function handleSnakePickPlayer(player: string) {
+  const captain = snakePickOrder[snakeCurrentPickIndex];
+
+  if (!captain) {
+    setSnakeMessage("Draft complete.");
+    return;
+  }
+
+  setSnakeTeams((current) => ({
+    ...current,
+    [captain]: [...(current[captain] || []), player],
+  }));
+
+  setSnakePlayers((current) => current.filter((name) => name !== player));
+  setSnakeCurrentPickIndex((current) => current + 1);
+
+  setSnakeMessage(`${captain} picked ${player}.`);
+}
+
+function handleResetSnakeDraft() {
+  setSnakeCaptainCount("2");
+  setSnakeCaptainsText("");
+  setSnakePlayersText("");
+  setSnakeCaptains([]);
+  setSnakePlayers([]);
+  setSnakeTeams({});
+  setSnakePickOrder([]);
+  setSnakeCurrentPickIndex(0);
+  setSnakeMessage("");
+}
+
+function buildSnakeSlotOrder() {
+  const rounds = Math.max(
+    ...snakeCaptains.map(
+      (captain) => (snakeTeams[captain] || []).length
+    ),
+    0
+  );
+
+  const baseOrder: string[] = [];
+
+  for (let round = 0; round < rounds + 1; round++) {
+    snakeCaptains.forEach((captain) => {
+      if (round === 0) {
+        baseOrder.push(captain);
+      } else {
+        const player = snakeTeams[captain]?.[round - 1];
+
+        if (player) {
+          baseOrder.push(player);
+        }
+      }
+    });
+  }
+
+  const snakeOrder = [
+    ...baseOrder,
+    ...[...baseOrder].reverse(),
+  ];
+
+  setSnakeSlotOrder(snakeOrder);
+
+  setSnakeSlotCalls((current) => {
+    const next = { ...current };
+
+    snakeOrder.forEach((name, index) => {
+      const key = `${name}-${index}`;
+
+      if (!next[key]) {
+        next[key] = "";
+      }
+    });
+
+    return next;
+  });
+
+  setSnakeMessage("Slot call snake order created.");
+}
+
+function getSnakeTeamForName(name: string) {
+  const captainMatch = snakeCaptains.find((captain) => captain === name);
+  if (captainMatch) return captainMatch;
+
+  return (
+    snakeCaptains.find((captain) =>
+      (snakeTeams[captain] || []).includes(name)
+    ) || ""
+  );
+}
+
+function getSnakeTeamTotal(captain: string) {
+  const teamNames = [captain, ...(snakeTeams[captain] || [])];
+
+  return snakeSlotOrder.reduce((total, name, index) => {
+    const key = `${name}-${index}`;
+    const teamCaptain = getSnakeTeamForName(name);
+
+    if (teamCaptain !== captain) return total;
+
+    return total + Number(snakeSlotAmounts[key] || 0);
+  }, 0);
+}
+
+function getSnakeTeamStyle(captain: string) {
+  const index = snakeCaptains.indexOf(captain);
+
+  const styles = [
+    "border-cyan-300/35 bg-cyan-400/10",
+    "border-purple-300/35 bg-purple-400/10",
+    "border-yellow-300/35 bg-yellow-400/10",
+    "border-emerald-300/35 bg-emerald-400/10",
+    "border-pink-300/35 bg-pink-400/10",
+    "border-orange-300/35 bg-orange-400/10",
+  ];
+
+  return styles[index % styles.length] || styles[0];
+}
 
 const handleSpinSlotWheel = () => {
   if (isSlotWheelSpinning || slotCalls.length === 0) return;
@@ -4707,6 +4892,233 @@ const rankBox =
             </div>
           </div>
         </details>
+
+        <details className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm">
+  <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
+    Snake Draft
+  </summary>
+
+  <div className="mt-4 grid gap-4">
+    <div className="grid gap-3 sm:grid-cols-[180px_1fr_1fr]">
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
+          Captains
+        </div>
+        <input
+          value={snakeCaptainCount}
+          onChange={(e) => setSnakeCaptainCount(e.target.value.replace(/[^0-9]/g, ""))}
+          className="mt-2 w-full rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-white outline-none"
+        />
+      </div>
+
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
+          Captain Names
+        </div>
+<textarea
+  value={snakeCaptainsText}
+  onChange={(e) => setSnakeCaptainsText(e.target.value)}
+  rows={5}
+          className="mt-2 w-full rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-white outline-none"
+        />
+      </div>
+
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
+          Player Pool
+        </div>
+<textarea
+  value={snakePlayersText}
+  onChange={(e) => setSnakePlayersText(e.target.value)}
+  rows={5}
+          className="mt-2 w-full rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-white outline-none"
+        />
+      </div>
+    </div>
+
+    <div className="grid grid-cols-2 gap-2">
+      <ActionButton onClick={handleSetupSnakeDraft} variant="green">
+        Start Snake Draft
+      </ActionButton>
+
+      <ActionButton onClick={handleResetSnakeDraft} variant="red">
+        Reset
+      </ActionButton>
+    </div>
+
+    {snakeMessage && (
+      <div className="rounded-xl border border-cyan-300/15 bg-cyan-400/10 p-3 text-sm text-cyan-100">
+        {snakeMessage}
+      </div>
+    )}
+
+    {snakePickOrder.length > 0 && (
+      <div className="rounded-2xl border border-cyan-300/15 bg-black/80 p-4">
+        <div className="text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">
+          Current Pick
+        </div>
+
+        <div className="mt-2 text-2xl font-black text-white">
+          {snakePickOrder[snakeCurrentPickIndex] || "Draft Complete"}
+        </div>
+
+        <div className="mt-1 text-sm text-white/45">
+          Pick {Math.min(snakeCurrentPickIndex + 1, snakePickOrder.length)} of{" "}
+          {snakePickOrder.length}
+        </div>
+      </div>
+    )}
+
+    <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
+      <div className="rounded-2xl border border-white/10 bg-black/80 p-4">
+        <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
+          Available Players
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {snakePlayers.length === 0 ? (
+            <div className="col-span-full text-sm text-white/35">
+              No players available.
+            </div>
+          ) : (
+            snakePlayers.map((player) => (
+              <button
+                key={player}
+                onClick={() => handleSnakePickPlayer(player)}
+                className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-left text-sm font-black text-white transition hover:border-cyan-300/30 hover:bg-cyan-400/10"
+              >
+                {player}
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-black/80 p-4">
+        <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
+          Teams
+        </div>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {snakeCaptains.map((captain) => (
+            <div
+              key={captain}
+              className="rounded-xl border border-cyan-300/15 bg-black/70 p-3"
+            >
+              <div className="text-base font-black text-cyan-200">
+                {captain}
+              </div>
+              <div className="mt-1 text-sm font-black text-[#f5c451]">
+  Total: ${getSnakeTeamTotal(captain).toLocaleString()}
+</div>
+
+              <div className="mt-2 space-y-1">
+                {(snakeTeams[captain] || []).length === 0 ? (
+                  <div className="text-xs text-white/35">No picks yet.</div>
+                ) : (
+                  snakeTeams[captain].map((player, index) => (
+                    <div key={player} className="text-sm text-white/80">
+                      {index + 1}. {player}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="col-span-full rounded-2xl border border-white/10 bg-black/80 p-4">
+  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
+        Slot Call Draft
+      </div>
+      <div className="mt-1 text-sm text-white/45">
+        Builds a snake order from captains and drafted players.
+      </div>
+    </div>
+
+    <ActionButton onClick={buildSnakeSlotOrder} variant="purple">
+      Build Slot Order
+    </ActionButton>
+  </div>
+
+  {snakeSlotOrder.length > 0 && (
+<div className="mt-4 grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+  {snakeSlotOrder.map((name, index) => {
+    const key = `${name}-${index}`;
+    const teamCaptain = getSnakeTeamForName(name);
+    const hit = snakeSlotHit[key];
+
+    return (
+      <div
+        key={key}
+        className={`rounded-xl border p-3 transition ${
+          getSnakeTeamStyle(teamCaptain)
+        } ${hit ? "ring-2 ring-cyan-300 shadow-[0_0_24px_rgba(0,245,255,0.20)]" : ""}`}
+      >
+        <div className="flex items-center gap-2">
+          <div className="text-xs font-black text-cyan-300">
+            #{index + 1}
+          </div>
+
+          <div className="truncate text-base font-black text-white">
+            {name}
+          </div>
+        </div>
+
+        <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">
+          Team {teamCaptain}
+        </div>
+
+        <input
+          value={snakeSlotCalls[key] || ""}
+          onChange={(e) =>
+            setSnakeSlotCalls((current) => ({
+              ...current,
+              [key]: e.target.value,
+            }))
+          }
+          placeholder="Slot call"
+          className="mt-3 w-full rounded-lg border border-white/10 bg-black/80 px-3 py-2 text-sm text-white outline-none focus:border-cyan-300/35"
+        />
+
+        <input
+          value={snakeSlotAmounts[key] || ""}
+          onChange={(e) =>
+            setSnakeSlotAmounts((current) => ({
+              ...current,
+              [key]: e.target.value.replace(/[^0-9.]/g, ""),
+            }))
+          }
+          placeholder="Paid amount"
+          className="mt-2 w-full rounded-lg border border-white/10 bg-black/80 px-3 py-2 text-sm text-white outline-none focus:border-cyan-300/35"
+        />
+
+        <button
+          onClick={() =>
+            setSnakeSlotHit((current) => ({
+              ...current,
+              [key]: !current[key],
+            }))
+          }
+          className={`mt-2 w-full rounded-lg border px-3 py-2 text-xs font-black uppercase tracking-[0.14em] transition ${
+            hit
+              ? "border-cyan-300/40 bg-cyan-400/20 text-cyan-100"
+              : "border-white/10 bg-black/60 text-white/45 hover:text-white"
+          }`}
+        >
+          {hit ? "Spun Into ✅" : "Mark Spun Into"}
+        </button>
+      </div>
+    );
+  })}
+</div>
+  )}
+</div>
+  </div>
+  </div>
+</details>
 
 <details
   open={adminDropdowns.slotWheel}
