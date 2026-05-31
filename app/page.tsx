@@ -619,6 +619,65 @@ const [snakeSlotAmounts, setSnakeSlotAmounts] = useState<Record<string, string>>
 const [snakeSlotHit, setSnakeSlotHit] = useState<Record<string, boolean>>({});
 const [snakeSlotRounds, setSnakeSlotRounds] = useState("5");
 
+async function saveSnakeDraft() {
+  const res = await fetch("/api/snake-draft", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      snakeCaptainCount,
+      snakeCaptainsText,
+      snakePlayersText,
+      snakeCaptains,
+      snakePlayers,
+      snakeTeams,
+      snakePickOrder,
+      snakeCurrentPickIndex,
+      snakeSlotCalls,
+      snakeSlotOrder,
+      snakeSlotAmounts,
+      snakeSlotHit,
+      snakeSlotRounds,
+    }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.ok) {
+    setSnakeMessage(data.error || "Snake draft save failed.");
+    return;
+  }
+
+  setSnakeMessage("Snake draft saved.");
+}
+
+async function loadSnakeDraft() {
+  const res = await fetch("/api/snake-draft", {
+    cache: "no-store",
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.ok || !data.draft) return;
+
+  const draft = data.draft;
+
+  setSnakeCaptainCount(draft.snakeCaptainCount || "2");
+  setSnakeCaptainsText(draft.snakeCaptainsText || "");
+  setSnakePlayersText(draft.snakePlayersText || "");
+  setSnakeCaptains(draft.snakeCaptains || []);
+  setSnakePlayers(draft.snakePlayers || []);
+  setSnakeTeams(draft.snakeTeams || {});
+  setSnakePickOrder(draft.snakePickOrder || []);
+  setSnakeCurrentPickIndex(draft.snakeCurrentPickIndex || 0);
+  setSnakeSlotCalls(draft.snakeSlotCalls || {});
+  setSnakeSlotOrder(draft.snakeSlotOrder || []);
+  setSnakeSlotAmounts(draft.snakeSlotAmounts || {});
+  setSnakeSlotHit(draft.snakeSlotHit || {});
+  setSnakeSlotRounds(draft.snakeSlotRounds || "5");
+}
+
+const [tournamentView, setTournamentView] = useState<"bracket" | "snake">("bracket");
+
 const [slotCalls, setSlotCalls] = useState<
   { username: string; slotName: string; createdAt: number }[]
 >([]);
@@ -1626,6 +1685,10 @@ useEffect(() => {
     }
   };
 }, [currentGiveawayWinner]);
+
+useEffect(() => {
+  loadSnakeDraft();
+}, []);
 
 useEffect(() => {
   let client: any;
@@ -3850,140 +3913,309 @@ const rankBox =
   </section>
 )}
 
- {activeSection === "tournaments" && (
+{activeSection === "tournaments" && (
   <section className="space-y-4 sm:space-y-5">
     <div className="mx-auto max-w-7xl text-center">
       <SectionLabel>Tournaments</SectionLabel>
 
       <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-white drop-shadow-[0_0_22px_rgba(0,245,255,0.18)] sm:mt-3 sm:text-[clamp(2.5rem,6vw,4rem)]">
-        {bracket.title || "Tournament Bracket"}
+        {tournamentView === "bracket"
+          ? bracket.title || "Tournament Bracket"
+          : "Snake Draft"}
       </h2>
 
       <div className="mt-3 inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-1.5 text-xs font-black text-cyan-100">
-        Live Bracket
+        {tournamentView === "bracket" ? "Live Bracket" : "Team Slot Draft"}
+      </div>
+
+      <div className="mx-auto mt-4 grid max-w-md grid-cols-2 gap-2">
+        <button
+          onClick={() => setTournamentView("bracket")}
+          className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-[0.16em] transition ${
+            tournamentView === "bracket"
+              ? "border-cyan-300/40 bg-cyan-400/20 text-cyan-100"
+              : "border-white/10 bg-black/70 text-white/45 hover:text-white"
+          }`}
+        >
+          Bracket
+        </button>
+
+        <button
+          onClick={() => setTournamentView("snake")}
+          className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-[0.16em] transition ${
+            tournamentView === "snake"
+              ? "border-cyan-300/40 bg-cyan-400/20 text-cyan-100"
+              : "border-white/10 bg-black/70 text-white/45 hover:text-white"
+          }`}
+        >
+          Snake Draft
+        </button>
       </div>
     </div>
 
-    {bracketLoading ? (
-      <div className="text-center text-sm text-white/55">
-        Loading bracket...
-      </div>
-    ) : (
-      <div className="mx-auto max-w-7xl rounded-2xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:rounded-[1.5rem] sm:p-4">
-        <div
-          className="cursor-grab overflow-x-auto active:cursor-grabbing"
-          onMouseDown={(e) => {
-            const slider = e.currentTarget;
-            const startX = e.pageX - slider.offsetLeft;
-            const scrollLeft = slider.scrollLeft;
+    {tournamentView === "bracket" && (
+      <>
+        {bracketLoading ? (
+          <div className="text-center text-sm text-white/55">
+            Loading bracket...
+          </div>
+        ) : (
+          <div className="mx-auto max-w-7xl rounded-2xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:rounded-[1.5rem] sm:p-4">
+            <div
+              className="cursor-grab overflow-x-auto active:cursor-grabbing"
+              onMouseDown={(e) => {
+                const slider = e.currentTarget;
+                const startX = e.pageX - slider.offsetLeft;
+                const scrollLeft = slider.scrollLeft;
 
-            const onMouseMove = (moveEvent: MouseEvent) => {
-              const x = moveEvent.pageX - slider.offsetLeft;
-              const walk = (x - startX) * 1.4;
-              slider.scrollLeft = scrollLeft - walk;
-            };
+                const onMouseMove = (moveEvent: MouseEvent) => {
+                  const x = moveEvent.pageX - slider.offsetLeft;
+                  const walk = (x - startX) * 1.4;
+                  slider.scrollLeft = scrollLeft - walk;
+                };
 
-            const onMouseUp = () => {
-              document.removeEventListener("mousemove", onMouseMove);
-              document.removeEventListener("mouseup", onMouseUp);
-            };
+                const onMouseUp = () => {
+                  document.removeEventListener("mousemove", onMouseMove);
+                  document.removeEventListener("mouseup", onMouseUp);
+                };
 
-            document.addEventListener("mousemove", onMouseMove);
-            document.addEventListener("mouseup", onMouseUp);
-          }}
-        >
-          <div className="flex min-w-[760px] items-start gap-4 pb-2 sm:min-w-[1050px] sm:gap-5">
-            {bracket.rounds.map((round, roundIndex) => {
-              const topPadding =
-                roundIndex === 0
-                  ? "pt-0"
-                  : roundIndex === 1
-                  ? "pt-8"
-                  : roundIndex === 2
-                  ? "pt-16"
-                  : "pt-24";
+                document.addEventListener("mousemove", onMouseMove);
+                document.addEventListener("mouseup", onMouseUp);
+              }}
+            >
+              <div className="flex min-w-[760px] items-start gap-4 pb-2 sm:min-w-[1050px] sm:gap-5">
+                {bracket.rounds.map((round, roundIndex) => {
+                  const topPadding =
+                    roundIndex === 0
+                      ? "pt-0"
+                      : roundIndex === 1
+                      ? "pt-8"
+                      : roundIndex === 2
+                      ? "pt-16"
+                      : "pt-24";
 
-              return (
-                <div
-                  key={round.id}
-                  className={`w-[220px] shrink-0 sm:w-[300px] ${topPadding}`}
-                >
-                  <div className="mb-3 text-center">
-                    <div className="inline-flex max-w-full rounded-full border border-cyan-300/15 bg-black/85 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200 sm:text-[10px]">
-                      <span className="truncate">{round.name}</span>
-                    </div>
-                  </div>
-
-                  <div
-                    className={`space-y-3 ${
-                      roundIndex === 0
-                        ? ""
-                        : roundIndex === 1
-                        ? "pt-4"
-                        : roundIndex === 2
-                        ? "pt-10"
-                        : "pt-16"
-                    }`}
-                  >
-                    {round.matches.map((match) => {
-                      const isWinner1 = match.winner && match.winner === match.player1;
-                      const isWinner2 = match.winner && match.winner === match.player2;
-
-                      return (
-                        <div
-                          key={match.id}
-                          className="rounded-2xl border border-white/10 bg-black/90 p-3 shadow-[0_0_20px_rgba(0,0,0,0.35)] sm:p-4"
-                        >
-                          <div
-                            className={`rounded-xl border px-3 py-3 text-sm font-black sm:text-base ${
-                              isWinner1
-                                ? "border-cyan-300/35 bg-cyan-400/10 text-white"
-                                : "border-white/10 bg-white/[0.03] text-white/75"
-                            }`}
-                          >
-                            <div className="truncate">{match.player1 || ""}</div>
-                            {match.player1Amount && (
-                              <div className="mt-1 text-xs font-black text-[#f5c451] sm:text-sm">
-                                ${match.player1Amount}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="py-1 text-center text-[8px] font-black uppercase tracking-[0.18em] text-white/25">
-                            vs
-                          </div>
-
-                          <div
-                            className={`rounded-xl border px-3 py-3 text-sm font-black sm:text-base ${
-                              isWinner2
-                                ? "border-cyan-300/35 bg-cyan-400/10 text-white"
-                                : "border-white/10 bg-white/[0.03] text-white/75"
-                            }`}
-                          >
-                            <div className="truncate">{match.player2 || ""}</div>
-                            {match.player2Amount && (
-                              <div className="mt-1 text-xs font-black text-[#f5c451] sm:text-sm">
-                                ${match.player2Amount}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="mt-2 truncate text-center text-[8px] font-black uppercase tracking-[0.18em] text-white/35">
-                            {match.winner ? `Winner: ${match.winner}` : "No winner"}
-                          </div>
+                  return (
+                    <div
+                      key={round.id}
+                      className={`w-[220px] shrink-0 sm:w-[300px] ${topPadding}`}
+                    >
+                      <div className="mb-3 text-center">
+                        <div className="inline-flex max-w-full rounded-full border border-cyan-300/15 bg-black/85 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200 sm:text-[10px]">
+                          <span className="truncate">{round.name}</span>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
+                      </div>
+
+                      <div
+                        className={`space-y-3 ${
+                          roundIndex === 0
+                            ? ""
+                            : roundIndex === 1
+                            ? "pt-4"
+                            : roundIndex === 2
+                            ? "pt-10"
+                            : "pt-16"
+                        }`}
+                      >
+                        {round.matches.map((match) => {
+                          const isWinner1 =
+                            match.winner && match.winner === match.player1;
+                          const isWinner2 =
+                            match.winner && match.winner === match.player2;
+
+                          return (
+                            <div
+                              key={match.id}
+                              className="rounded-2xl border border-white/10 bg-black/90 p-3 shadow-[0_0_20px_rgba(0,0,0,0.35)] sm:p-4"
+                            >
+                              <div
+                                className={`rounded-xl border px-3 py-3 text-sm font-black sm:text-base ${
+                                  isWinner1
+                                    ? "border-cyan-300/35 bg-cyan-400/10 text-white"
+                                    : "border-white/10 bg-white/[0.03] text-white/75"
+                                }`}
+                              >
+                                <div className="truncate">
+                                  {match.player1 || ""}
+                                </div>
+
+                                {match.player1Amount && (
+                                  <div className="mt-1 text-xs font-black text-[#f5c451] sm:text-sm">
+                                    ${match.player1Amount}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="py-1 text-center text-[8px] font-black uppercase tracking-[0.18em] text-white/25">
+                                vs
+                              </div>
+
+                              <div
+                                className={`rounded-xl border px-3 py-3 text-sm font-black sm:text-base ${
+                                  isWinner2
+                                    ? "border-cyan-300/35 bg-cyan-400/10 text-white"
+                                    : "border-white/10 bg-white/[0.03] text-white/75"
+                                }`}
+                              >
+                                <div className="truncate">
+                                  {match.player2 || ""}
+                                </div>
+
+                                {match.player2Amount && (
+                                  <div className="mt-1 text-xs font-black text-[#f5c451] sm:text-sm">
+                                    ${match.player2Amount}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="mt-2 truncate text-center text-[8px] font-black uppercase tracking-[0.18em] text-white/35">
+                                {match.winner
+                                  ? `Winner: ${match.winner}`
+                                  : "No winner"}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+              Drag left or right to move bracket
+            </div>
+          </div>
+        )}
+      </>
+    )}
+
+    {tournamentView === "snake" && (
+      <div className="mx-auto max-w-7xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6">
+        <div className="text-center">
+          <SectionLabel>Snake Draft</SectionLabel>
+
+          <h2 className="mt-2 text-2xl font-black uppercase tracking-tight text-white sm:text-4xl">
+            TEAM SLOT DRAFT
+          </h2>
+
+          <div className="mt-2 text-sm text-white/45">
+            View-only board
           </div>
         </div>
 
-        <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
-          Drag left or right to move bracket
-        </div>
+        {snakeCaptains.length === 0 ? (
+          <div className="mt-6 rounded-2xl border border-white/10 bg-black/70 p-8 text-center text-sm text-white/45">
+            No snake draft has been created yet.
+          </div>
+        ) : (
+          <>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {snakeCaptains.map((captain) => (
+                <div
+                  key={captain}
+                  className={`rounded-2xl border p-4 ${getSnakeTeamStyle(
+                    captain
+                  )}`}
+                >
+                  <div className="text-lg font-black text-white">
+                    {captain}
+                  </div>
+
+                  <div className="mt-1 text-sm font-black text-[#f5c451]">
+                    Total: ${getSnakeTeamTotal(captain).toLocaleString()}
+                  </div>
+
+                  <div className="mt-3 text-[10px] uppercase tracking-[0.18em] text-white/40">
+                    Players
+                  </div>
+
+                  <div className="mt-2 space-y-1">
+                    {(snakeTeams[captain] || []).length === 0 ? (
+                      <div className="text-sm text-white/35">
+                        Waiting for picks...
+                      </div>
+                    ) : (
+                      snakeTeams[captain].map((player, index) => (
+                        <div
+                          key={player}
+                          className="text-sm font-semibold text-white/75"
+                        >
+                          {index + 1}. {player}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {snakeSlotOrder.length > 0 && (
+              <div className="mt-6">
+                <div className="mb-3 text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">
+                  Slot Call Board
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {snakeSlotOrder.map((name, index) => {
+                    const key = `${name}-${index}`;
+                    const teamCaptain = getSnakeTeamForName(name);
+                    const hit = snakeSlotHit[key];
+
+                    return (
+                      <div
+                        key={key}
+                        className={`rounded-xl border p-3 transition ${getSnakeTeamStyle(
+                          teamCaptain
+                        )} ${
+                          hit
+                            ? "ring-2 ring-cyan-300 shadow-[0_0_24px_rgba(0,245,255,0.20)]"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs font-black text-cyan-300">
+                            #{index + 1}
+                          </div>
+
+                          <div className="truncate text-sm font-black text-white">
+                            {name}
+                          </div>
+                        </div>
+
+                        <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">
+                          Team {teamCaptain}
+                        </div>
+
+                        <div className="mt-3 min-h-[38px] rounded-lg border border-white/10 bg-black/80 px-3 py-2 text-sm font-black text-white">
+                          {snakeSlotCalls[key] || "Waiting..."}
+                        </div>
+
+                        <div className="mt-2 rounded-lg border border-white/10 bg-black/80 px-3 py-2 text-sm font-black text-[#f5c451]">
+                          {snakeSlotAmounts[key]
+                            ? `$${Number(
+                                snakeSlotAmounts[key]
+                              ).toLocaleString()}`
+                            : "$0"}
+                        </div>
+
+                        <div
+                          className={`mt-2 rounded-lg border px-3 py-2 text-center text-xs font-black uppercase tracking-[0.14em] ${
+                            hit
+                              ? "border-cyan-300/40 bg-cyan-400/20 text-cyan-100"
+                              : "border-white/10 bg-black/60 text-white/35"
+                          }`}
+                        >
+                          {hit ? "Spun Into ✅" : "Not spun yet"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     )}
   </section>
@@ -4936,15 +5168,23 @@ const rankBox =
       </div>
     </div>
 
-    <div className="grid grid-cols-2 gap-2">
-      <ActionButton onClick={handleSetupSnakeDraft} variant="green">
-        Start Snake Draft
-      </ActionButton>
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+<ActionButton onClick={handleSetupSnakeDraft} variant="green">
+  Start Snake Draft
+</ActionButton>
 
-      <ActionButton onClick={handleResetSnakeDraft} variant="red">
-        Reset
-      </ActionButton>
-    </div>
+<ActionButton onClick={saveSnakeDraft} variant="purple">
+  Save Draft
+</ActionButton>
+
+<ActionButton onClick={loadSnakeDraft} variant="dark">
+  Load Draft
+</ActionButton>
+
+<ActionButton onClick={handleResetSnakeDraft} variant="red">
+  Reset
+</ActionButton>
+</div>
 
     {snakeMessage && (
       <div className="rounded-xl border border-cyan-300/15 bg-cyan-400/10 p-3 text-sm text-cyan-100">

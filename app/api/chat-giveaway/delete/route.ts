@@ -14,7 +14,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   const { error } = await supabase
-    .from("chat_giveaways")
+    .from("chat_giveaway_winners")
     .delete()
     .eq("id", id);
 
