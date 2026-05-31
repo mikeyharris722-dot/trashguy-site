@@ -617,6 +617,7 @@ const [snakeSlotCalls, setSnakeSlotCalls] = useState<Record<string, string>>({})
 const [snakeSlotOrder, setSnakeSlotOrder] = useState<string[]>([]);
 const [snakeSlotAmounts, setSnakeSlotAmounts] = useState<Record<string, string>>({});
 const [snakeSlotHit, setSnakeSlotHit] = useState<Record<string, boolean>>({});
+const [snakeSlotRounds, setSnakeSlotRounds] = useState("5");
 
 const [slotCalls, setSlotCalls] = useState<
   { username: string; slotName: string; createdAt: number }[]
@@ -2290,18 +2291,20 @@ function buildSnakeSlotOrder() {
         baseOrder.push(captain);
       } else {
         const player = snakeTeams[captain]?.[round - 1];
-
-        if (player) {
-          baseOrder.push(player);
-        }
+        if (player) baseOrder.push(player);
       }
     });
   }
 
-  const snakeOrder = [
-    ...baseOrder,
-    ...[...baseOrder].reverse(),
-  ];
+  const slotRounds = Math.max(1, Number(snakeSlotRounds || 1));
+  const snakeOrder: string[] = [];
+
+  for (let round = 0; round < slotRounds; round++) {
+    const roundOrder =
+      round % 2 === 0 ? baseOrder : [...baseOrder].reverse();
+
+    snakeOrder.push(...roundOrder);
+  }
 
   setSnakeSlotOrder(snakeOrder);
 
@@ -2310,16 +2313,13 @@ function buildSnakeSlotOrder() {
 
     snakeOrder.forEach((name, index) => {
       const key = `${name}-${index}`;
-
-      if (!next[key]) {
-        next[key] = "";
-      }
+      if (!next[key]) next[key] = "";
     });
 
     return next;
   });
 
-  setSnakeMessage("Slot call snake order created.");
+  setSnakeMessage(`Slot call snake order created for ${slotRounds} rounds.`);
 }
 
 function getSnakeTeamForName(name: string) {
@@ -5028,20 +5028,39 @@ const rankBox =
         </div>
       </div>
       <div className="col-span-full rounded-2xl border border-white/10 bg-black/80 p-4">
-  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <div>
+    <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
+      Slot Call Draft
+    </div>
+
+    <div className="mt-1 text-sm text-white/45">
+      Builds a snake order from captains and drafted players.
+    </div>
+  </div>
+
+  <div className="flex items-end gap-3">
     <div>
-      <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
-        Slot Call Draft
+      <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
+        Slot Rounds
       </div>
-      <div className="mt-1 text-sm text-white/45">
-        Builds a snake order from captains and drafted players.
-      </div>
+
+      <input
+        value={snakeSlotRounds}
+        onChange={(e) =>
+          setSnakeSlotRounds(
+            e.target.value.replace(/[^0-9]/g, "")
+          )
+        }
+        className="mt-2 w-24 rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-white outline-none"
+      />
     </div>
 
     <ActionButton onClick={buildSnakeSlotOrder} variant="purple">
       Build Slot Order
     </ActionButton>
   </div>
+</div>
 
   {snakeSlotOrder.length > 0 && (
 <div className="mt-4 grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
