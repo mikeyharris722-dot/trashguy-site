@@ -2087,54 +2087,63 @@ await loadPredictions();
   }
 };
 
-  const handleCompleteHunt = async () => {
-    if (!adminHuntId) {
-      setAdminMessage("Start a new hunt first.");
+const handleCompleteHunt = async () => {
+  if (!adminHuntId) {
+    setAdminMessage("Start a new hunt first.");
+    return;
+  }
+
+  const amount = Number(
+    currentPredictionHunt?.stats?.totalWinnings ||
+      currentPredictionHunt?.totalWinnings ||
+      adminSelectedHunt?.stats?.totalWinnings ||
+      adminSelectedHunt?.totalWinnings ||
+      0
+  );
+
+  if (!amount) {
+    setAdminMessage("No final hunt balance found yet.");
+    return;
+  }
+
+  try {
+    const token = await getAccessToken();
+
+    const res = await fetch(`/api/admin/hunts/${adminHuntId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        action: "complete",
+        finalAmount: amount,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setAdminMessage(data?.error || "Failed to complete hunt.");
       return;
     }
 
-    const amount = Number(finalResult || 0);
-    if (!amount) {
-      setAdminMessage("Enter a final result first.");
-      return;
+    setFinalResult(String(amount));
+    setPredictionStatus("locked");
+    setLatestWinners(Array.isArray(data?.winners) ? data.winners : []);
+    setAdminMessage(`Hunt completed at ${formatMoney(amount)}. Winners calculated.`);
+
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(STORAGE_KEYS.activeHuntId);
+      localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
     }
 
-    try {
-      const token = await getAccessToken();
-
-      const res = await fetch(`/api/admin/hunts/${adminHuntId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          action: "complete",
-          finalAmount: amount,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setAdminMessage(data?.error || "Failed to complete hunt.");
-        return;
-      }
-
-      setPredictionStatus("locked");
-setLatestWinners(Array.isArray(data?.winners) ? data.winners : []);
-setAdminMessage("Hunt completed and winners calculated.");
-
-if (typeof window !== "undefined") {
-  localStorage.removeItem(STORAGE_KEYS.activeHuntId);
-  localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
-}
-await loadHunts();
-await loadPredictions();
-    } catch {
-      setAdminMessage("Failed to complete hunt.");
-    }
-  };
+    await loadHunts();
+    await loadPredictions();
+  } catch {
+    setAdminMessage("Failed to complete hunt.");
+  }
+};
 
 const handleStartGiveaway = async () => {
   setGiveawayMessage("Starting giveaway...");
@@ -2830,43 +2839,59 @@ const handleGenerateBracket = () => {
       </div>
     </section>
 
-    <div className="mx-auto -mt-1 grid max-w-4xl grid-cols-3 gap-2 sm:-mt-3 sm:gap-4">
-      <div className="flex min-h-[110px] flex-col items-center justify-center rounded-xl border border-cyan-300/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(0,245,255,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(0,40,20,0.65),rgba(0,0,0,0.55))] sm:p-5">
-        <div className="text-base sm:text-3xl">👑</div>
+<div className="mx-auto mt-6 max-w-7xl px-4">
+  <div className="grid gap-6 lg:grid-cols-2">
 
-        <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
-          VIP Rewards
-        </div>
+    <div className="rounded-[1.5rem] border border-cyan-300/20 bg-black/80 p-4 shadow-[0_0_30px_rgba(0,245,255,0.08)]">
+      <div className="text-center text-4xl">👑</div>
 
-        <div className="mt-1 max-w-[210px] text-[9px] leading-4 text-white/55 sm:mt-2 sm:text-sm sm:leading-6">
-          Wager 2k+ for exclusive VIP rewards.
-        </div>
-      </div>
+      <h3 className="mt-4 text-center text-3xl font-black text-cyan-100">
+        VIP REWARDS
+      </h3>
 
-      <div className="flex min-h-[110px] flex-col items-center justify-center rounded-xl border border-yellow-500/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(234,179,8,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(55,45,0,0.60),rgba(0,0,0,0.55))] sm:p-5">
-        <div className="text-base sm:text-4xl">🏆</div>
-
-        <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
-          Monthly
-        </div>
-
-        <div className="mt-1 max-w-[210px] text-[9px] leading-4 text-white/55 sm:mt-2 sm:text-sm sm:leading-6">
-          Leaderboard prizes and more.
-        </div>
-      </div>
-
-      <div className="flex min-h-[110px] flex-col items-center justify-center rounded-xl border border-fuchsia-500/20 bg-black/45 p-2 text-center shadow-[0_0_14px_rgba(217,70,239,0.06)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-fuchsia-400/40 sm:min-h-[190px] sm:rounded-[1.4rem] sm:bg-[linear-gradient(180deg,rgba(50,0,45,0.60),rgba(0,0,0,0.55))] sm:p-5">
-        <div className="text-base sm:text-4xl">🎁</div>
-
-        <div className="mt-1 text-[11px] font-black leading-tight text-white sm:mt-3 sm:text-2xl">
-          Giveaways
-        </div>
-
-        <div className="mt-1 max-w-[210px] text-[9px] leading-4 text-white/55 sm:mt-2 sm:text-sm sm:leading-6">
-          Daily stream giveaways. VIPs/affiliates are awarded extra odds.
-        </div>
+      <div className="mt-6 space-y-4 text-center text-lg text-white/80">
+        <div>⭐ 10k+ wagered</div>
+        <div>⭐ Exclusive VIP giveaways</div>
+        <div>⭐ Exclusive VIP tournaments</div>
+        <div>⭐ Exclusive equity into community hunts</div>
       </div>
     </div>
+
+    <div className="rounded-[1.5rem] border border-cyan-300/20 bg-black/80 p-4 shadow-[0_0_30px_rgba(0,245,255,0.08)]">
+      <div className="text-center text-4xl">🎁</div>
+
+      <h3 className="mt-4 text-center text-3xl font-black text-cyan-100">
+        DAILY STREAM GIVEAWAYS
+      </h3>
+
+      <div className="mt-6 space-y-4 text-center text-lg text-white/80">
+
+        <div>
+          ⭐ VIP ($10,000+ total wagered under code)
+          <div className="font-black text-cyan-300">
+            $80 - $100 bonus buys
+          </div>
+        </div>
+
+        <div>
+          ⭐ Affiliate ($50+ total wagered under code)
+          <div className="font-black text-cyan-300">
+            $40 - $50 bonus buys
+          </div>
+        </div>
+
+        <div>
+          ⭐ Not under code
+          <div className="font-black text-cyan-300">
+            $20 - $30 bonus buys
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
 
     <section className="relative py-1 sm:py-3">
       <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2 sm:max-w-5xl sm:grid-cols-4 sm:gap-4">
@@ -2913,15 +2938,6 @@ const handleGenerateBracket = () => {
             WATCH TRASHGUY LIVE
           </h2>
         </div>
-
-        <a
-          href="https://www.twitch.tv/trashguy__"
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-full border border-[#9146FF]/40 bg-[#9146FF]/20 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white transition hover:bg-[#9146FF]/35 sm:px-5 sm:py-3"
-        >
-          Open Twitch
-        </a>
       </div>
 
       <div className="mt-3 aspect-video overflow-hidden rounded-[1.25rem] border border-cyan-300/20 bg-black sm:rounded-[2rem]">
@@ -3281,15 +3297,52 @@ const rankBox =
 
             <div className="mt-2 flex flex-wrap justify-center gap-1.5 sm:mt-4 sm:gap-2">
               <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black text-cyan-100 sm:px-4 sm:py-2 sm:text-xs">
-                1st Closest $15
+                1st Closest $20
               </div>
               <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black text-cyan-100 sm:px-4 sm:py-2 sm:text-xs">
-                2nd $10
+                2nd $0
               </div>
             </div>
           </div>
 
           <div className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-400/5 p-2.5 sm:mt-6 sm:rounded-2xl sm:p-5">
+          {isAdmin && (
+  <div className="mt-4 rounded-xl border border-cyan-300/15 bg-black/40 p-3">
+    <div className="grid grid-cols-4 gap-2">
+      <ActionButton
+        onClick={handleStartHunt}
+        variant="dark"
+      >
+        Start
+      </ActionButton>
+
+      <ActionButton
+        onClick={handleOpenPredictions}
+        variant="green"
+      >
+        Open
+      </ActionButton>
+
+      <ActionButton
+        onClick={handleLockPredictions}
+        variant="purple"
+      >
+        Close
+      </ActionButton>
+
+      <ActionButton
+        onClick={handleCompleteHunt}
+        variant="gold"
+      >
+        Done
+      </ActionButton>
+    </div>
+
+    <div className="mt-3 text-xs text-white/60">
+      {adminMessage}
+    </div>
+  </div>
+)}
             <div className="grid gap-2 sm:gap-3 md:grid-cols-3">
               {rankedWinners.length === 0 ? (
                 <div className="col-span-full py-4 text-center text-xs text-white/45 sm:py-8 sm:text-sm">
@@ -3319,88 +3372,91 @@ const rankBox =
             </div>
           </div>
 
-          <div className="mt-3 sm:mt-6">
-            {!isTwitchConnected ? (
-              <button
-                onClick={handleTwitchLogin}
-                className="mx-auto flex rounded-lg border border-[#9146FF]/40 bg-[#9146FF]/25 px-4 py-2 text-xs font-black text-white transition hover:bg-[#9146FF]/35 sm:rounded-xl sm:px-6 sm:py-3 sm:text-sm"
-              >
-                Sign in with Twitch
-              </button>
-            ) : (
-              <div className="mx-auto max-w-md">
-                <input
-                  value={predictionInput}
-                  onChange={(e) =>
-                    setPredictionInput(e.target.value.replace(/[^0-9]/g, ""))
-                  }
-                  placeholder="Enter final hunt balance"
-                  disabled={predictionStatus !== "open"}
-                  className="w-full rounded-lg border border-white/10 bg-black/55 px-3 py-2.5 text-center text-sm text-white outline-none transition focus:border-cyan-300/40 disabled:opacity-40 sm:rounded-xl sm:px-5 sm:py-4 sm:text-base"
-                />
+<div className="mt-3 sm:mt-6">
+  {!isTwitchConnected ? (
+    <button
+      onClick={handleTwitchLogin}
+      className="mx-auto flex rounded-lg border border-[#9146FF]/40 bg-[#9146FF]/25 px-4 py-2 text-xs font-black text-white transition hover:bg-[#9146FF]/35 sm:rounded-xl sm:px-6 sm:py-3 sm:text-sm"
+    >
+      Sign in with Twitch
+    </button>
+  ) : (
+    <div className="mx-auto max-w-md">
+      <input
+        value={predictionInput}
+        onChange={(e) =>
+          setPredictionInput(e.target.value.replace(/[^0-9]/g, ""))
+        }
+        placeholder="Enter your end balance prediction"
+        disabled={predictionStatus !== "open"}
+        className="w-full rounded-lg border border-white/10 bg-black/55 px-3 py-2.5 text-center text-sm text-white outline-none transition focus:border-cyan-300/40 disabled:opacity-40 sm:rounded-xl sm:px-5 sm:py-4 sm:text-base"
+      />
 
-                <button
-                  onClick={handlePredictionSubmit}
-                  disabled={predictionStatus !== "open"}
-                  className="mt-2 w-full rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-cyan-100 transition hover:bg-cyan-400/20 disabled:opacity-40 sm:mt-3 sm:rounded-xl sm:px-5 sm:py-4 sm:text-sm sm:tracking-[0.18em]"
-                >
-                  Save Prediction
-                </button>
+      <button
+        onClick={handlePredictionSubmit}
+        disabled={predictionStatus !== "open"}
+        className="mt-2 w-full rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-cyan-100 transition hover:bg-cyan-400/20 disabled:opacity-40 sm:mt-3 sm:rounded-xl sm:px-5 sm:py-4 sm:text-sm sm:tracking-[0.18em]"
+      >
+        Save Prediction
+      </button>
 
-                {predictionMessage && (
-                  <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-2.5 text-center text-xs text-white/70 sm:mt-3 sm:rounded-xl sm:p-3 sm:text-sm">
-                    {predictionMessage}
-                  </div>
-                )}
+      {predictionMessage && (
+        <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-2.5 text-center text-xs text-white/70 sm:mt-3 sm:rounded-xl sm:p-3 sm:text-sm">
+          {predictionMessage}
+        </div>
+      )}
+    </div>
+  )}
+</div>
+</div>
+</div>
 
-                <div className="mt-3 rounded-xl border border-white/10 bg-black/35 p-2.5 sm:mt-6 sm:rounded-2xl sm:p-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="text-[9px] font-black uppercase tracking-[0.16em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
-                      Live Guesses
-                    </div>
+<div className="border-t border-white/10 p-2.5 sm:p-6">
+  <div className="mb-3 flex items-center justify-between">
+    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45 sm:text-xs">
+      Live Guesses
+    </div>
 
-                    <div className="text-[10px] font-black text-cyan-200 sm:text-xs">
-                      {currentPredictionCount} Entries
-                    </div>
-                  </div>
+    <div className="text-xs font-black text-cyan-200">
+      {currentPredictionCount} Entries
+    </div>
+  </div>
 
-                  <div className="max-h-[180px] overflow-y-auto rounded-lg border border-white/10 bg-black/30 sm:max-h-[260px] sm:rounded-xl">
-                    {sortedPredictionsForTab.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-white/40 sm:p-6 sm:text-sm">
-                        No guesses yet.
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-white/5">
-                        {sortedPredictionsForTab.map((entry, index) => (
-                          <div
-                            key={entry.id}
-                            className="flex items-center justify-between gap-3 px-3 py-2 sm:px-4 sm:py-3"
-                          >
-                            <div className="min-w-0">
-                              <div className="truncate text-xs font-black text-white sm:text-base">
-                                #{index + 1} {entry.username}
-                              </div>
-                              <div className="text-[9px] text-white/35 sm:text-xs">
-                                {formatTimeAgo(entry.createdAt)}
-                              </div>
-                            </div>
+  <div className="max-h-[520px] overflow-y-auto rounded-2xl border border-white/10 bg-black/50">
+    {sortedPredictionsForTab.length === 0 ? (
+      <div className="p-6 text-center text-sm text-white/40">
+        No guesses yet.
+      </div>
+    ) : (
+      <div className="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
+        {[...sortedPredictionsForTab]
+          .sort((a, b) => Number(b.guess || 0) - Number(a.guess || 0))
+          .map((entry, index) => (
+            <div
+              key={entry.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/70 px-3 py-3"
+            >
+              <div className="min-w-0">
+                <div className="truncate text-sm font-black text-white">
+                  #{index + 1} {entry.username}
+                </div>
 
-                            <div className="text-xs font-black text-cyan-200 sm:text-base">
-                              {formatMoney(entry.guess)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                <div className="text-[10px] text-white/35">
+                  {formatTimeAgo(entry.createdAt)}
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-      </div>
 
-      {/* BONUS LIST */}
+              <div className="text-base font-black text-cyan-200">
+                {formatMoney(entry.guess)}
+              </div>
+            </div>
+          ))}
+      </div>
+    )}
+  </div>
+</div>
+
+{/* BONUS LIST */}
       <div className="border-t border-white/10 p-2.5 sm:p-6">
         <div className="mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-white/45 sm:mb-4 sm:text-xs sm:tracking-[0.25em]">
           Slots in this hunt
@@ -4688,7 +4744,7 @@ const rankBox =
               ) : (
                 <div className="max-h-[520px] overflow-y-auto divide-y divide-white/5 sm:max-h-[650px]">
                   {filteredAdminRewards.map((reward) => {
-                    const isComplete = reward.status === "complete";
+                    const isComplete = reward.status === "paid";
 
                     return (
                       <div
@@ -4723,7 +4779,7 @@ const rankBox =
                                 : "border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
                             }`}
                           >
-                            {isComplete ? "Completed" : "Pending"}
+                            {isComplete ? "Paid" : "Pending"}
                           </div>
                         </div>
 
@@ -4736,7 +4792,7 @@ const rankBox =
                                 : "border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
                             }`}
                           >
-                            {isComplete ? "Completed" : "Pending"}
+                            {isComplete ? "Paid" : "Pending"}
                           </div>
                         </div>
 
@@ -4812,104 +4868,6 @@ const rankBox =
                   })}
                 </div>
               )}
-            </div>
-          </div>
-        </details>
-
-        <details
-          open={adminDropdowns.predictions}
-          onToggle={(e) => setAdminDropdown("predictions", e.currentTarget.open)}
-          className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
-        >
-          <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
-            Predictions / Hunt
-          </summary>
-
-          <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
-            <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
-<ActionButton
-  onClick={handleStartHunt}
-  disabled={!isAdmin}
-  variant="dark"
-  className="min-h-[46px] px-1 py-2 text-[9px] tracking-[0.08em] sm:min-h-[54px] sm:px-5 sm:text-sm"
->
-  Start
-</ActionButton>
-
-<ActionButton
-  onClick={handleOpenPredictions}
-  disabled={!isAdmin}
-  variant="green"
-  className="min-h-[46px] px-1 py-2 text-[9px] tracking-[0.08em] sm:min-h-[54px] sm:px-5 sm:text-sm"
->
-  Open
-</ActionButton>
-
-<ActionButton
-  onClick={handleLockPredictions}
-  disabled={!isAdmin}
-  variant="purple"
-  className="min-h-[46px] px-1 py-2 text-[9px] tracking-[0.08em] sm:min-h-[54px] sm:px-5 sm:text-sm"
->
-  Close
-</ActionButton>
-
-<ActionButton
-  onClick={handleCompleteHunt}
-  disabled={!isAdmin}
-  variant="gold"
-  className="min-h-[46px] px-1 py-2 text-[9px] tracking-[0.08em] sm:min-h-[54px] sm:px-5 sm:text-sm"
->
-  Done
-</ActionButton>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-4">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
-                Final Hunt Result
-              </div>
-              <input
-                value={finalResult}
-                onChange={(e) => setFinalResult(e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="Enter final balance"
-                disabled={!isAdmin}
-                className="mt-2 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
-              />
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-white/75 sm:rounded-2xl sm:p-4 sm:text-sm">
-              {adminMessage ||
-                `Current hunt: ${adminSelectedHunt?.title || "none yet"}${
-                  adminSelectedHunt?.casino ? ` • ${adminSelectedHunt.casino}` : ""
-                }`}
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-[1.5rem] sm:p-5">
-              <div className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300 sm:text-sm sm:tracking-[0.24em]">
-                Top 2 Winners
-              </div>
-
-              <div className="mt-3 space-y-2 sm:mt-4 sm:space-y-3">
-                {rankedWinners.length === 0 && (
-                  <div className="text-xs text-white/50 sm:text-sm">
-                    Set a final result to rank winners.
-                  </div>
-                )}
-
-                {rankedWinners.map((winner, index) => (
-                  <div
-                    key={winner.id}
-                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 sm:rounded-xl sm:px-4 sm:py-3"
-                  >
-                    <div className="text-sm font-semibold text-white sm:text-base">
-                      #{index + 1} {winner.username}
-                    </div>
-                    <div className="mt-1 text-xs text-white/55 sm:text-sm">
-                      Guess: {formatMoney(winner.guess)} • Off by {formatMoney(winner.distance)}
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </details>
