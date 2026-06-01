@@ -2839,17 +2839,17 @@ const handleGenerateBracket = () => {
       </div>
     </section>
 
-<div className="mx-auto mt-6 max-w-7xl px-4">
-  <div className="grid gap-6 lg:grid-cols-2">
+<div className="mx-auto mt-4 max-w-6xl px-4">
+  <div className="grid gap-4 lg:grid-cols-2">
 
-    <div className="rounded-[1.5rem] border border-cyan-300/20 bg-black/80 p-4 shadow-[0_0_30px_rgba(0,245,255,0.08)]">
-      <div className="text-center text-4xl">👑</div>
+    <div className="rounded-[1.25rem] border border-cyan-300/20 bg-black/80 p-3 sm:p-5 shadow-[0_0_20px_rgba(0,245,255,0.06)]">
+      <div className="text-center text-3xl sm:text-4xl">👑</div>
 
-      <h3 className="mt-4 text-center text-3xl font-black text-cyan-100">
+      <h3 className="mt-2 text-center text-xl font-black text-cyan-100 sm:mt-4 sm:text-3xl">
         VIP REWARDS
       </h3>
 
-      <div className="mt-6 space-y-4 text-center text-lg text-white/80">
+      <div className="mt-3 space-y-2 text-center text-sm text-white/80 sm:mt-6 sm:space-y-4 sm:text-lg">
         <div>⭐ 10k+ wagered</div>
         <div>⭐ Exclusive VIP giveaways</div>
         <div>⭐ Exclusive VIP tournaments</div>
@@ -2857,32 +2857,32 @@ const handleGenerateBracket = () => {
       </div>
     </div>
 
-    <div className="rounded-[1.5rem] border border-cyan-300/20 bg-black/80 p-4 shadow-[0_0_30px_rgba(0,245,255,0.08)]">
-      <div className="text-center text-4xl">🎁</div>
+    <div className="rounded-[1.25rem] border border-cyan-300/20 bg-black/80 p-3 sm:p-5 shadow-[0_0_20px_rgba(0,245,255,0.06)]">
+      <div className="text-center text-3xl sm:text-4xl">🎁</div>
 
-      <h3 className="mt-4 text-center text-3xl font-black text-cyan-100">
+      <h3 className="mt-2 text-center text-xl font-black text-cyan-100 sm:mt-4 sm:text-3xl">
         DAILY STREAM GIVEAWAYS
       </h3>
 
-      <div className="mt-6 space-y-4 text-center text-lg text-white/80">
+      <div className="mt-3 space-y-3 text-center text-sm text-white/80 sm:mt-6 sm:space-y-4 sm:text-lg">
 
         <div>
           ⭐ VIP ($10,000+ total wagered under code)
-          <div className="font-black text-cyan-300">
+          <div className="font-normal text-cyan-300">
             $80 - $100 bonus buys
           </div>
         </div>
 
         <div>
           ⭐ Affiliate ($50+ total wagered under code)
-          <div className="font-black text-cyan-300">
+          <div className="font-normal text-cyan-300">
             $40 - $50 bonus buys
           </div>
         </div>
 
         <div>
           ⭐ Not under code
-          <div className="font-black text-cyan-300">
+          <div className="font-normal text-cyan-300">
             $20 - $30 bonus buys
           </div>
         </div>
@@ -3305,44 +3305,45 @@ const rankBox =
             </div>
           </div>
 
-          <div className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-400/5 p-2.5 sm:mt-6 sm:rounded-2xl sm:p-5">
-          {isAdmin && (
-  <div className="mt-4 rounded-xl border border-cyan-300/15 bg-black/40 p-3">
-    <div className="grid grid-cols-4 gap-2">
-      <ActionButton
-        onClick={handleStartHunt}
-        variant="dark"
-      >
-        Start
-      </ActionButton>
+<div className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-400/5 p-2.5 sm:mt-6 sm:rounded-2xl sm:p-5">
+  {isAdmin && (
+    <div className="mt-2 rounded-xl border border-cyan-300/15 bg-black/40 p-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <ActionButton
+          onClick={handleStartHunt}
+          variant="dark"
+        >
+          Start
+        </ActionButton>
 
-      <ActionButton
-        onClick={handleOpenPredictions}
-        variant="green"
-      >
-        Open
-      </ActionButton>
+        <ActionButton
+          onClick={handleOpenPredictions}
+          variant="green"
+        >
+          Open
+        </ActionButton>
 
-      <ActionButton
-        onClick={handleLockPredictions}
-        variant="purple"
-      >
-        Close
-      </ActionButton>
+        <ActionButton
+          onClick={handleLockPredictions}
+          variant="purple"
+        >
+          Close
+        </ActionButton>
 
-      <ActionButton
-        onClick={handleCompleteHunt}
-        variant="gold"
-      >
-        Done
-      </ActionButton>
+        <ActionButton
+          onClick={handleCompleteHunt}
+          variant="gold"
+        >
+          Done
+        </ActionButton>
+      </div>
+
+      <div className="mt-3 text-center text-xs text-white/60">
+        {adminMessage}
+      </div>
     </div>
-
-    <div className="mt-3 text-xs text-white/60">
-      {adminMessage}
-    </div>
-  </div>
-)}
+  )}
+  
             <div className="grid gap-2 sm:gap-3 md:grid-cols-3">
               {rankedWinners.length === 0 ? (
                 <div className="col-span-full py-4 text-center text-xs text-white/45 sm:py-8 sm:text-sm">
