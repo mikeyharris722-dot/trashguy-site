@@ -4525,20 +4525,16 @@ const rankBox =
             : "Enable admin mode to use the tools below."}
         </div>
         <div className="mt-2 rounded-xl border border-cyan-300/15 bg-cyan-400/5 px-3 py-2 text-[11px] font-semibold leading-5 text-cyan-100/75 sm:mt-4 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
-  {isAdmin
-    ? `${adminName} control center is active.`
-    : "Enable admin mode to use the tools below."}
 </div>
-
 {isAdmin && (
   <div className="mt-3 rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-4">
     <div className="text-xs font-black uppercase tracking-[0.18em] text-yellow-200">
       Monthly VIPs
     </div>
 
-    <div className="mt-2 text-sm text-white/55">
-      Saves everyone with $5,000+ wagered from the previous leaderboard as VIP for the next leaderboard.
-    </div>
+<div className="mt-2 text-sm text-white/55">
+  {adminMessage || "Saves everyone with $5,000+ wagered from the previous leaderboard as VIP for the next leaderboard."}
+</div>
 
     <ActionButton
       onClick={handleGenerateVipSnapshot}
