@@ -1,7 +1,7 @@
 const tmi = require("tmi.js");
 
 const CHANNEL = "trashguy__";
-const API_URL = "http://localhost:3000/api/chat-giveaway/enter";
+const API_URL = "https://trashguy.me/api/chat-giveaway/enter";
 
 let enteredUsers = new Set();
 const cooldownUsers = new Set();
@@ -18,7 +18,7 @@ client.connect();
 
 setInterval(async () => {
   try {
-    const res = await fetch("http://localhost:3000/api/chat-giveaway");
+    const res = await fetch("https://trashguy.me/api/chat-giveaway");
     const data = await res.json();
 
     if (data?.giveaway?.status !== "live") {
