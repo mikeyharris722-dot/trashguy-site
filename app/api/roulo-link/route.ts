@@ -22,10 +22,51 @@ function getDateRange() {
   };
 }
 
-function getRoleAndWeight(wagered: number) {
-  if (wagered >= 5000) return { role: "vip", weight: 1.2 };
-  if (wagered >= 100) return { role: "affiliate", weight: 1.1 };
-  return { role: "viewer", weight: 1 };
+async function getRoleAndWeight({
+  rouloUsername,
+  existingLink,
+}: {
+  rouloUsername: string;
+  existingLink?: any;
+}) {
+  const { data: latestSnapshot } = await supabase
+    .from("vip_snapshots")
+    .select("period_start, period_end")
+    .order("period_end", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let vipSnapshot = null;
+
+  if (latestSnapshot) {
+    const { data } = await supabase
+      .from("vip_snapshots")
+      .select("id")
+      .eq("roulo_username", rouloUsername)
+      .eq("period_start", latestSnapshot.period_start)
+      .eq("period_end", latestSnapshot.period_end)
+      .limit(1)
+      .maybeSingle();
+
+    vipSnapshot = data;
+  }
+
+  const isOnCode = !!rouloUsername;
+  const isInDiscord = !!existingLink?.is_in_discord;
+  const isVipSnapshot = !!vipSnapshot;
+
+  const weight =
+    1 +
+    (isOnCode ? 0.1 : 0) +
+    (isInDiscord ? 0.1 : 0) +
+    (isVipSnapshot ? 0.2 : 0);
+
+  const role = isVipSnapshot ? "vip" : isOnCode ? "affiliate" : "viewer";
+
+  return {
+    role,
+    weight: Number(weight.toFixed(2)),
+  };
 }
 
 async function getRouloAffiliate(rouloUsername: string) {
@@ -112,7 +153,10 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const { role, weight } = getRoleAndWeight(affiliate.wagered);
+    const { role, weight } = await getRoleAndWeight({
+  rouloUsername: affiliate.rouloUsername,
+  existingLink,
+});
 
     const { data: updatedLink, error: updateError } = await supabase
       .from("roulo_links")
@@ -167,7 +211,10 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { role, weight } = getRoleAndWeight(affiliate.wagered);
+  const { role, weight } = await getRoleAndWeight({
+  rouloUsername: affiliate.rouloUsername,
+  existingLink: null,
+});
 
   const { data, error } = await supabase
     .from("roulo_links")
