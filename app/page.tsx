@@ -2868,7 +2868,7 @@ const handleGenerateBracket = () => {
       </h3>
 
       <div className="mt-3 space-y-2 text-center text-sm text-white/80 sm:mt-6 sm:space-y-4 sm:text-lg">
-        <div>⭐ 5k+ wagered on leaderboard to stay vip</div>
+        <div>⭐ $5k+ wagered on previous or current leaderboard</div>
         <div>⭐ Exclusive VIP giveaways</div>
         <div>⭐ Exclusive VIP tournaments</div>
         <div>⭐ Exclusive equity into community hunts</div>
@@ -2885,7 +2885,7 @@ const handleGenerateBracket = () => {
       <div className="mt-3 space-y-3 text-center text-sm text-white/80 sm:mt-6 sm:space-y-4 sm:text-lg">
 
         <div>
-          ⭐ VIP ($5+ wagered on previous or current leaderboard)
+          ⭐ VIP ($5k+ wagered on previous or current leaderboard)
           <div className="font-normal text-cyan-300">
             $80 - $100 bonus buys
           </div>
