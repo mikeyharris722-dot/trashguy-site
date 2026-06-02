@@ -13,23 +13,9 @@ function normalize(value: string) {
   return String(value || "").replace("@", "").trim().toLowerCase();
 }
 
-function getRoleAndWeight(wagered: number) {
-  if (wagered >= 5000) {
-    return { role: "vip", weight: 1.2, isRouloAffiliate: true };
-  }
-
-  if (wagered >= 100) {
-    return { role: "affiliate", weight: 1.1, isRouloAffiliate: true };
-  }
-
-  return { role: "viewer", weight: 1, isRouloAffiliate: false };
-}
-
 async function getSavedRouloBoost(twitchUsername: string) {
   const cleanTwitch = normalize(twitchUsername);
 
-  // Refresh all linked Roulo accounts before reading this entry.
-  // This makes giveaway entries update automatically.
   try {
     await syncRouloLinks();
   } catch (error) {
@@ -38,7 +24,7 @@ async function getSavedRouloBoost(twitchUsername: string) {
 
   const { data: link, error } = await supabase
     .from("roulo_links")
-    .select("roulo_username, wagered, role, weight")
+    .select("roulo_username, wagered, role, weight, is_in_discord, discord_username")
     .eq("twitch_username", cleanTwitch)
     .maybeSingle();
 
@@ -56,14 +42,11 @@ async function getSavedRouloBoost(twitchUsername: string) {
     };
   }
 
-  const wagered = Number(link.wagered || 0);
-  const resolved = getRoleAndWeight(wagered);
-
   return {
-    weight: resolved.weight,
-    role: resolved.role,
-    isRouloAffiliate: resolved.isRouloAffiliate,
-    rouloWagered: wagered,
+    weight: Number(link.weight || 1),
+    role: link.role || "viewer",
+    isRouloAffiliate: !!link.roulo_username,
+    rouloWagered: Number(link.wagered || 0),
     rouloUsername: link.roulo_username || null,
   };
 }

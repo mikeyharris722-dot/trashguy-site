@@ -4524,8 +4524,6 @@ const rankBox =
             ? `${adminName} control center is active.`
             : "Enable admin mode to use the tools below."}
         </div>
-        <div className="mt-2 rounded-xl border border-cyan-300/15 bg-cyan-400/5 px-3 py-2 text-[11px] font-semibold leading-5 text-cyan-100/75 sm:mt-4 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
-</div>
 {isAdmin && (
   <div className="mt-3 rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-4">
     <div className="text-xs font-black uppercase tracking-[0.18em] text-yellow-200">
@@ -4598,22 +4596,34 @@ const rankBox =
   );
 
   const weight = Number(winnerEntry?.weight || 1);
+  const role = String(winnerEntry?.role || "viewer").toLowerCase();
+  const isVip = role === "vip";
+  const isOnCode = !!winnerEntry?.roulo_username || !!winnerEntry?.is_roulo_affiliate;
+  const isDiscord = !!winnerEntry?.is_in_discord || !!winnerEntry?.discord_username;
 
   return (
-    <div
-      className={`rounded-full border px-3 py-1 text-[10px] font-black sm:text-xs ${
-        weight >= 1.2
-          ? "border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
-          : weight >= 1.1
-          ? "border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
-          : "border-white/10 bg-white/5 text-white/70"
-      }`}
-    >
-      {weight >= 1.2
-        ? "💎 VIP"
-        : weight >= 1.1
-        ? "⭐ Affiliate"
-        : "👤 Viewer"}
+    <div className="flex flex-wrap gap-1.5">
+      <div
+        className={`rounded-full border px-3 py-1 text-[10px] font-black sm:text-xs ${
+          isVip
+            ? "border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
+            : isOnCode
+            ? "border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
+            : "border-white/10 bg-white/5 text-white/70"
+        }`}
+      >
+        {isVip ? "👑 VIP" : isOnCode ? "💎 Code" : "👤 Viewer"}
+      </div>
+
+      {isDiscord && (
+        <div className="rounded-full border border-indigo-300/20 bg-indigo-400/10 px-3 py-1 text-[10px] font-black text-indigo-200 sm:text-xs">
+          💬 Discord
+        </div>
+      )}
+
+      <div className="rounded-full border border-green-300/20 bg-green-400/10 px-3 py-1 text-[10px] font-black text-green-200 sm:text-xs">
+        {weight.toFixed(1)}x Odds
+      </div>
     </div>
   );
 })()}
