@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { syncRouloLinks } from "@/lib/roulo-sync";
 
 export const runtime = "nodejs";
 
@@ -15,12 +14,6 @@ function normalize(value: string) {
 
 async function getSavedRouloBoost(twitchUsername: string) {
   const cleanTwitch = normalize(twitchUsername);
-
-  try {
-    await syncRouloLinks();
-  } catch (error) {
-    console.error("Roulo sync failed before giveaway entry:", error);
-  }
 
   const { data: link, error } = await supabase
     .from("roulo_links")
