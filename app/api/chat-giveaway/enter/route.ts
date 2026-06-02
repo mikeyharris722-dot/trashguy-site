@@ -24,7 +24,7 @@ async function getSavedRouloBoost(twitchUsername: string) {
 
   const { data: link, error } = await supabase
     .from("roulo_links")
-    .select("roulo_username, wagered, role, weight, is_in_discord, discord_username")
+    .select("roulo_username, wagered, role, weight")
     .eq("twitch_username", cleanTwitch)
     .maybeSingle();
 
@@ -53,7 +53,6 @@ async function getSavedRouloBoost(twitchUsername: string) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-
   const username = normalize(body.username || "");
 
   if (!username) {
@@ -95,6 +94,7 @@ export async function POST(req: NextRequest) {
         is_roulo_affiliate: boost.isRouloAffiliate,
         roulo_wagered: boost.rouloWagered,
         roulo_username: boost.rouloUsername,
+        updated_at: new Date().toISOString(),
       },
       { onConflict: "giveaway_id,username" }
     )
