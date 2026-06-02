@@ -3587,84 +3587,115 @@ const rankBox =
       viewerName.toLowerCase() !== "trashguy" && (
         <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] sm:rounded-[1.5rem] sm:p-6">
           <div className="text-center">
-            <SectionLabel>Prize Portal</SectionLabel>
+<SectionLabel>Prize Portal</SectionLabel>
 
-            <h2 className="mt-2 text-2xl font-black leading-[1] tracking-tight text-white sm:mt-4 sm:text-[clamp(2rem,5vw,3.5rem)]">
-              MY REWARDS
-            </h2>
+<h2 className="mt-2 text-2xl font-black leading-[1] tracking-tight text-white sm:mt-4 sm:text-[clamp(2rem,5vw,3.5rem)]">
+  MY REWARDS
+</h2>
+</div>
+
+{isTwitchConnected && (
+  <div className="mt-4 rounded-xl border border-cyan-300/20 bg-black/70 p-3 text-left sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
+    <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
+      Account Links
+    </div>
+
+    <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto] sm:mt-3 sm:gap-3">
+      <input
+        value={rouloUsernameInput}
+        onChange={(e) => setRouloUsernameInput(e.target.value)}
+        placeholder="Enter your Roulo username"
+        className="w-full rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-sm text-white outline-none sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
+      />
+
+      <button
+        onClick={handleLinkRoulo}
+        className="rounded-lg border border-cyan-300/25 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 hover:bg-cyan-400/20 sm:rounded-xl sm:px-5 sm:py-3 sm:text-base"
+      >
+        Link Roulo
+      </button>
+    </div>
+
+    {rouloLink && (
+      <>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:grid-cols-5 sm:gap-3">
+          <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+            <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
+              Twitch
+            </div>
+            <div className="mt-1 text-sm font-black text-green-300 sm:text-xl">
+              ✅ Linked
+            </div>
           </div>
 
-          {isTwitchConnected && (
-            <div className="mt-4 rounded-xl border border-cyan-300/20 bg-black/70 p-3 text-left sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
-                Roulo Account
-              </div>
-
-              <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto] sm:mt-3 sm:gap-3">
-                <input
-                  value={rouloUsernameInput}
-                  onChange={(e) => setRouloUsernameInput(e.target.value)}
-                  placeholder="Enter your Roulo username"
-                  className="w-full rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-sm text-white outline-none sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
-                />
-
-                <button
-                  onClick={handleLinkRoulo}
-                  className="rounded-lg border border-cyan-300/25 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 hover:bg-cyan-400/20 sm:rounded-xl sm:px-5 sm:py-3 sm:text-base"
-                >
-                  Link Roulo
-                </button>
-              </div>
-
-              {rouloLink && (
-                <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-3">
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
-                      Wagered
-                    </div>
-                    <div className="mt-1 truncate text-sm font-black text-white sm:text-xl">
-                      ${Number(rouloLink.wagered || 0).toLocaleString()}
-                    </div>
-                  </div>
-
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
-                      Role
-                    </div>
-                    <div className="mt-1 truncate text-sm font-black uppercase text-cyan-200 sm:text-xl">
-                      {rouloLink.role}
-                    </div>
-                  </div>
-
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs sm:tracking-[0.2em]">
-                      Chance
-                    </div>
-                    <div className="mt-1 text-sm font-black text-[#f5c451] sm:text-xl">
-                      x{rouloLink.weight || 1}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {rouloLinkMessage && (
-                <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-2 text-xs text-white/70 sm:mt-4 sm:rounded-xl sm:p-3 sm:text-sm">
-                  {rouloLinkMessage}
-                </div>
-              )}
+          <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+            <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
+              Roulo
             </div>
-          )}
-
-          {!isTwitchConnected ? (
-            <div className="mt-4 text-center sm:mt-6">
-              <button
-                onClick={handleTwitchLogin}
-                className="rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-[#9146FF]/30 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base"
-              >
-                Connect Twitch to View Rewards
-              </button>
+            <div className="mt-1 text-sm font-black text-green-300 sm:text-xl">
+              ✅ Linked
             </div>
-          ) : (
+          </div>
+
+          <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+            <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
+              Discord
+            </div>
+            <div className="mt-1 text-sm font-black text-indigo-300 sm:text-xl">
+              {(rouloLink as any)?.is_in_discord ? "✅ Linked" : "❌ Not Linked"}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+            <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
+              Role
+            </div>
+            <div className="mt-1 truncate text-sm font-black uppercase text-cyan-200 sm:text-xl">
+              {rouloLink.role}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+            <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
+              Odds
+            </div>
+            <div className="mt-1 text-sm font-black text-[#f5c451] sm:text-xl">
+              {Number(rouloLink.weight || 1).toFixed(1)}x
+            </div>
+          </div>
+        </div>
+
+        {!(rouloLink as any)?.is_in_discord && (
+          <button
+            onClick={() =>
+              (window.location.href = `/api/discord/login?viewer=${viewerName}`)
+            }
+            className="mt-3 w-full rounded-xl border border-indigo-300/20 bg-indigo-400/10 px-4 py-3 text-sm font-black text-indigo-200 hover:bg-indigo-400/20"
+          >
+            💬 Link Discord (+0.1 Odds)
+          </button>
+        )}
+      </>
+    )}
+
+    {rouloLinkMessage && (
+      <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-2 text-xs text-white/70 sm:mt-4 sm:rounded-xl sm:p-3 sm:text-sm">
+        {rouloLinkMessage}
+      </div>
+    )}
+  </div>
+)}
+
+{!isTwitchConnected ? (
+  <div className="mt-4 text-center sm:mt-6">
+    <button
+      onClick={handleTwitchLogin}
+      className="rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-[#9146FF]/30 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base"
+    >
+      Connect Twitch to View Rewards
+    </button>
+  </div>
+) : (
             <>
               <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-4">
                 <div className="rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-3 sm:rounded-2xl sm:p-5">
