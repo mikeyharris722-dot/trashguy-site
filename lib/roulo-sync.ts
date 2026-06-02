@@ -18,10 +18,27 @@ function getDateRange() {
   };
 }
 
-function getRoleAndWeight(wagered: number) {
-  if (wagered >= 5000) return { role: "vip", weight: 1.2 };
-  if (wagered >= 100) return { role: "affiliate", weight: 1.1 };
-  return { role: "viewer", weight: 1 };
+function getRoleAndWeight({
+  isOnCode,
+  isVipSnapshot,
+  isInDiscord,
+}: {
+  isOnCode: boolean;
+  isVipSnapshot: boolean;
+  isInDiscord: boolean;
+}) {
+  const weight =
+    1 +
+    (isInDiscord ? 0.1 : 0) +
+    (isOnCode ? 0.1 : 0) +
+    (isVipSnapshot ? 0.1 : 0);
+
+  const role = isVipSnapshot ? "vip" : isOnCode ? "affiliate" : "viewer";
+
+  return {
+    role,
+    weight: Number(weight.toFixed(2)),
+  };
 }
 
 function getPlayerName(player: any) {
@@ -121,8 +138,24 @@ export async function syncRouloLinks() {
 
     matched++;
 
-    const wagered = getPlayerWagered(match);
-    const { role, weight } = getRoleAndWeight(wagered);
+const wagered = getPlayerWagered(match);
+
+const { data: vipSnapshot } = await supabase
+  .from("vip_snapshots")
+  .select("id")
+  .eq("roulo_username", rouloUsername)
+  .limit(1)
+  .maybeSingle();
+
+const isOnCode = !!rouloUsername;
+const isInDiscord = !!link.is_in_discord;
+const isVipSnapshot = !!vipSnapshot;
+
+const { role, weight } = getRoleAndWeight({
+  isOnCode,
+  isVipSnapshot,
+  isInDiscord,
+});
 
     console.log("Roulo matched:", {
       twitch: link.twitch_username,
