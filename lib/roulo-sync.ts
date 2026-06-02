@@ -31,7 +31,7 @@ function getRoleAndWeight({
     1 +
     (isInDiscord ? 0.1 : 0) +
     (isOnCode ? 0.1 : 0) +
-    (isVipSnapshot ? 0.1 : 0);
+    (isVipSnapshot ? 0.2 : 0);
 
   const role = isVipSnapshot ? "vip" : isOnCode ? "affiliate" : "viewer";
 
