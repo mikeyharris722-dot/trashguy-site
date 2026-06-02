@@ -140,12 +140,27 @@ export async function syncRouloLinks() {
 
 const wagered = getPlayerWagered(match);
 
-const { data: vipSnapshot } = await supabase
+const { data: latestSnapshot } = await supabase
   .from("vip_snapshots")
-  .select("id")
-  .eq("roulo_username", rouloUsername)
+  .select("period_start, period_end")
+  .order("period_end", { ascending: false })
   .limit(1)
   .maybeSingle();
+
+let vipSnapshot = null;
+
+if (latestSnapshot) {
+  const { data } = await supabase
+    .from("vip_snapshots")
+    .select("id")
+    .eq("roulo_username", rouloUsername)
+    .eq("period_start", latestSnapshot.period_start)
+    .eq("period_end", latestSnapshot.period_end)
+    .limit(1)
+    .maybeSingle();
+
+  vipSnapshot = data;
+}
 
 const isOnCode = !!rouloUsername;
 const isInDiscord = !!link.is_in_discord;
