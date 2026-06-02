@@ -17,7 +17,7 @@ async function getSavedRouloBoost(twitchUsername: string) {
 
   const { data: link, error } = await supabase
     .from("roulo_links")
-    .select("roulo_username, wagered, role, weight")
+    .select("roulo_username, wagered, role, weight, is_in_discord, discord_username")
     .eq("twitch_username", cleanTwitch)
     .maybeSingle();
 
@@ -35,13 +35,15 @@ async function getSavedRouloBoost(twitchUsername: string) {
     };
   }
 
-  return {
-    weight: Number(link.weight || 1),
-    role: link.role || "viewer",
-    isRouloAffiliate: !!link.roulo_username,
-    rouloWagered: Number(link.wagered || 0),
-    rouloUsername: link.roulo_username || null,
-  };
+return {
+  weight: Number(link.weight || 1),
+  role: link.role || "viewer",
+  isRouloAffiliate: !!link.roulo_username,
+  rouloWagered: Number(link.wagered || 0),
+  rouloUsername: link.roulo_username || null,
+  isInDiscord: !!link.is_in_discord,
+  discordUsername: link.discord_username || null,
+};
 }
 
 export async function POST(req: NextRequest) {
@@ -87,6 +89,8 @@ export async function POST(req: NextRequest) {
         is_roulo_affiliate: boost.isRouloAffiliate,
         roulo_wagered: boost.rouloWagered,
         roulo_username: boost.rouloUsername,
+        is_in_discord: boost.isInDiscord,
+        discord_username: boost.discordUsername,
       },
       { onConflict: "giveaway_id,username" }
     )
