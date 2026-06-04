@@ -733,7 +733,7 @@ const loadGiveawayEntries = async () => {
   }
 };
 
-const handleDeleteWinner = async (id: string) => {
+const Winner = async (id: string) => {
   if (!confirm("Delete this winner?")) return;
 
   await fetch(`/api/chat-giveaway/delete?id=${id}`, {
@@ -2538,7 +2538,7 @@ const handleMarkRewardPending = async (id: string) => {
   loadViewerRewards();
 };
 
-const handleDeleteReward = async (id: string) => {
+const Reward = async (id: string) => {
   if (!confirm("Delete this reward?")) return;
 
   await fetch(`/api/rewards?id=${id}`, {

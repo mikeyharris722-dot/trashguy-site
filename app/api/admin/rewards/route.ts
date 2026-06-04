@@ -36,29 +36,19 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Missing reward id" });
   }
 
-  if (body.action === "delete") {
-    const { data: reward, error: findError } = await supabase
-      .from("rewards")
-      .select("*")
-      .eq("id", id)
-      .single();
+if (body.action === "delete") {
+  const { data, error } = await supabase
+    .from("rewards")
+    .delete()
+    .eq("id", id)
+    .select("*");
 
-    if (findError || !reward) {
-      return NextResponse.json({ ok: false, error: "Reward not found." });
-    }
-
-    const query = reward.giveaway_id
-      ? supabase.from("rewards").delete().eq("giveaway_id", reward.giveaway_id)
-      : supabase.from("rewards").delete().eq("id", id);
-
-    const { data, error } = await query.select("*");
-
-    if (error) {
-      return NextResponse.json({ ok: false, error: error.message });
-    }
-
-    return NextResponse.json({ ok: true, deleted: data || [] });
+  if (error) {
+    return NextResponse.json({ ok: false, error: error.message });
   }
+
+  return NextResponse.json({ ok: true, deleted: data || [] });
+}
 
   const updateData: any = {};
 
