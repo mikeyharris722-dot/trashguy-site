@@ -48,14 +48,14 @@ const fallbackLeaderboard = [
   { rank: 10, username: "ClipFarmer", wagered: 4520 },
 ];
 
-const leaderboardTotal = 700;
+const leaderboardTotal = 1000;
 
 const leaderboardPrizes: Record<number, number> = {
-  1: 300,
-  2: 175,
-  3: 100,
-  4: 75,
-  5: 50,
+  1: 400,
+  2: 250,
+  3: 175,
+  4: 100,
+  5: 75,
 };
 
 const fallbackHunts: HuntItem[] = [];
