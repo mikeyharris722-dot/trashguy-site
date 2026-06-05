@@ -2566,25 +2566,67 @@ const loadAdminRewards = async () => {
 };
 
 const handleAdminMarkRewardPaid = async (id: string) => {
-  await fetch(`/api/admin/rewards?id=${id}`, {
+  if (!id) return;
+
+  const res = await fetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status: "complete" }),
   });
 
-  loadAdminRewards();
-  loadViewerRewards();
+  const data = await res.json();
+
+  if (!res.ok || !data.ok) {
+    alert(data.error || "Failed to mark reward paid.");
+    return;
+  }
+
+  setAdminRewards((current) =>
+    current.map((reward) =>
+      reward.id === id ? { ...reward, status: "complete" } : reward
+    )
+  );
+
+  setViewerRewards((current) =>
+    current.map((reward) =>
+      reward.id === id ? { ...reward, status: "complete" } : reward
+    )
+  );
+
+  await loadAdminRewards();
+  await loadViewerRewards();
 };
 
 const handleAdminMarkRewardPending = async (id: string) => {
-  await fetch(`/api/admin/rewards?id=${id}`, {
+  if (!id) return;
+
+  const res = await fetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status: "pending" }),
   });
 
-  loadAdminRewards();
-  loadViewerRewards();
+  const data = await res.json();
+
+  if (!res.ok || !data.ok) {
+    alert(data.error || "Failed to mark reward pending.");
+    return;
+  }
+
+  setAdminRewards((current) =>
+    current.map((reward) =>
+      reward.id === id ? { ...reward, status: "pending" } : reward
+    )
+  );
+
+  setViewerRewards((current) =>
+    current.map((reward) =>
+      reward.id === id ? { ...reward, status: "pending" } : reward
+    )
+  );
+
+  await loadAdminRewards();
+  await loadViewerRewards();
 };
 
 const handleAdminDeleteReward = async (id: string) => {
@@ -4888,23 +4930,23 @@ const rankBox =
                         </div>
 
                         <div className="col-span-2 grid grid-cols-3 gap-2 xl:col-span-1">
-                          {isComplete ? (
-                            <ActionButton
-                              onClick={() => handleAdminMarkRewardPending(reward.id)}
-                              variant="gold"
-                              className="min-h-[34px] px-2 py-1 text-[9px] sm:min-h-[46px] sm:text-[10px]"
-                            >
-                              Pending
-                            </ActionButton>
-                          ) : (
-                            <ActionButton
-                              onClick={() => handleAdminMarkRewardPaid(reward.id)}
-                              variant="green"
-                              className="min-h-[34px] px-2 py-1 text-[9px] sm:min-h-[46px] sm:text-[10px]"
-                            >
-                              Paid
-                            </ActionButton>
-                          )}
+{isComplete ? (
+  <ActionButton
+    onClick={() => handleAdminMarkRewardPending(reward.id)}
+    variant="green"
+    className="min-h-[34px] px-2 py-1 text-[9px] sm:min-h-[46px] sm:text-[10px]"
+  >
+    Paid ✅
+  </ActionButton>
+) : (
+  <ActionButton
+    onClick={() => handleAdminMarkRewardPaid(reward.id)}
+    variant="dark"
+    className="min-h-[34px] px-2 py-1 text-[9px] sm:min-h-[46px] sm:text-[10px]"
+  >
+    Mark Paid
+  </ActionButton>
+)}
 
                           <ActionButton
                             variant="dark"
