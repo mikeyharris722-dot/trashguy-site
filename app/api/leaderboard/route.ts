@@ -15,8 +15,8 @@ export async function GET() {
     }
 
     const url = new URL("https://api.roulobets.com/v1/external/affiliates");
-    url.searchParams.set("start_at", "2026-05-05");
-    url.searchParams.set("end_at", "2026-06-05");
+    url.searchParams.set("start_at", "2026-06-05");
+    url.searchParams.set("end_at", "2026-07-05");
     url.searchParams.set("key", apiKey);
 
     const res = await fetch(url.toString(), { cache: "no-store" });

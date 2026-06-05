@@ -45,8 +45,8 @@ export async function POST() {
     return NextResponse.json({ ok: false, error: "Missing ROULO_API_KEY" }, { status: 500 });
   }
 
-  const periodStart = "2026-05-05";
-  const periodEnd = "2026-06-05";
+  const periodStart = "2026-06-05";
+  const periodEnd = "2026-07-05";
 
   const url = new URL("https://api.roulobets.com/v1/external/affiliates");
   url.searchParams.set("start_at", periodStart);
