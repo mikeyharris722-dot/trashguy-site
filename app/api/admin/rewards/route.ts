@@ -54,8 +54,8 @@ if (body.action === "delete") {
 
   if (body.status !== undefined) {
     updateData.status = body.status;
-    updateData.paid_at =
-      body.status === "complete" ? new Date().toISOString() : null;
+updateData.paid_at =
+  body.status === "paid" ? new Date().toISOString() : null;
   }
 
   if (body.amount !== undefined) {

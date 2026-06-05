@@ -2571,7 +2571,7 @@ const handleAdminMarkRewardPaid = async (id: string) => {
   const res = await fetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status: "complete" }),
+    body: JSON.stringify({ status: "paid" }),
   });
 
   const data = await res.json();
@@ -2580,18 +2580,6 @@ const handleAdminMarkRewardPaid = async (id: string) => {
     alert(data.error || "Failed to mark reward paid.");
     return;
   }
-
-  setAdminRewards((current) =>
-    current.map((reward) =>
-      reward.id === id ? { ...reward, status: "complete" } : reward
-    )
-  );
-
-  setViewerRewards((current) =>
-    current.map((reward) =>
-      reward.id === id ? { ...reward, status: "complete" } : reward
-    )
-  );
 
   await loadAdminRewards();
   await loadViewerRewards();
@@ -2612,18 +2600,6 @@ const handleAdminMarkRewardPending = async (id: string) => {
     alert(data.error || "Failed to mark reward pending.");
     return;
   }
-
-  setAdminRewards((current) =>
-    current.map((reward) =>
-      reward.id === id ? { ...reward, status: "pending" } : reward
-    )
-  );
-
-  setViewerRewards((current) =>
-    current.map((reward) =>
-      reward.id === id ? { ...reward, status: "pending" } : reward
-    )
-  );
 
   await loadAdminRewards();
   await loadViewerRewards();
