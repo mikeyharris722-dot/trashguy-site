@@ -18,6 +18,13 @@ function getDateRange() {
   };
 }
 
+function getCurrentLeaderboardRange() {
+  return {
+    start_at: "2026-06-05",
+    end_at: "2026-07-05",
+  };
+}
+
 function getRoleAndWeight({
   isOnCode,
   isVipSnapshot,
@@ -113,6 +120,16 @@ export async function syncRouloLinks() {
   const json = await res.json();
   const affiliates = getAffiliatesFromResponse(json);
 
+  const currentRange = getCurrentLeaderboardRange();
+
+const currentRes = await fetch(
+  `https://api.roulobets.com/v1/external/affiliates?start_at=${currentRange.start_at}&end_at=${currentRange.end_at}&key=${key}`,
+  { cache: "no-store" }
+);
+
+const currentJson = await currentRes.json();
+const currentAffiliates = getAffiliatesFromResponse(currentJson);
+
   console.log("Roulo sync response:", {
     affiliateCount: affiliates.length,
     firstAffiliate: affiliates[0] || null,
@@ -140,6 +157,17 @@ export async function syncRouloLinks() {
 
 const wagered = getPlayerWagered(match);
 
+const currentMatch = currentAffiliates.find((player: any) => {
+  const apiRouloName = getPlayerName(player);
+  return apiRouloName === rouloUsername;
+});
+
+const currentLeaderboardWagered = currentMatch
+  ? getPlayerWagered(currentMatch)
+  : 0;
+
+const isCurrentVip = currentLeaderboardWagered >= 5000;
+
 const { data: latestSnapshot } = await supabase
   .from("vip_snapshots")
   .select("period_start, period_end")
@@ -164,7 +192,7 @@ if (latestSnapshot) {
 
 const isOnCode = !!rouloUsername;
 const isInDiscord = !!link.is_in_discord;
-const isVipSnapshot = !!vipSnapshot;
+const isVipSnapshot = !!vipSnapshot || isCurrentVip;
 
 const { role, weight } = getRoleAndWeight({
   isOnCode,
