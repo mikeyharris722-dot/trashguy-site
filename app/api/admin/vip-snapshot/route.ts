@@ -56,13 +56,23 @@ export async function POST() {
   const res = await fetch(url.toString(), { cache: "no-store" });
   const json = await res.json();
 
-  const affiliates = Array.isArray(json?.affiliates)
-    ? json.affiliates
-    : Array.isArray(json?.data)
-    ? json.data
-    : Array.isArray(json)
-    ? json
-    : [];
+const affiliates = Array.isArray(json)
+  ? json
+  : Array.isArray(json?.affiliates)
+  ? json.affiliates
+  : Array.isArray(json?.data)
+  ? json.data
+  : Array.isArray(json?.results)
+  ? json.results
+  : Array.isArray(json?.players)
+  ? json.players
+  : Array.isArray(json?.users)
+  ? json.users
+  : Array.isArray(json?.data?.affiliates)
+  ? json.data.affiliates
+  : Array.isArray(json?.data?.results)
+  ? json.data.results
+  : [];
 
   const vipRows = affiliates
     .map((player: any) => ({
