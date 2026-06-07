@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
-import { FaDiscord, FaXTwitter, FaYoutube, FaInstagram } from "react-icons/fa6";
+import { FaTwitch, FaDiscord, FaInstagram } from "react-icons/fa";
 import { slotData, providerLogos, type SlotItem } from "./slotData";
 import { Russo_One } from "next/font/google";
 
@@ -14,25 +14,20 @@ const russo = Russo_One({
 
 const socials = [
   {
+    name: "Twitch",
+    href: "https://twitch.tv/trashguy__",
+    icon: FaTwitch,
+  },
+  {
     name: "Discord",
-    href: "https://discord.gg/EqjwXzkDMK",
+    href: "YOUR_DISCORD_LINK",
     icon: FaDiscord,
   },
   {
-    name: "Twitter / X",
-    href: "https://x.com/trashguy__",
-    icon: FaXTwitter,
+    name: "Instagram",
+    href: "https://instagram.com/trashguy__",
+    icon: FaInstagram,
   },
-  {
-    name: "YouTube",
-    href: "https://www.youtube.com/@Trashguyy",
-    icon: FaYoutube,
-  },
-  {
-  name: "Instagram",
-  href: "https://instagram.com/trashguy__",
-  icon: FaInstagram,
-},
 ];
 
 const fallbackLeaderboard = [
@@ -1004,8 +999,8 @@ const currentPredictionAvgX =
 }, [countdownTick]);
 
 const leaderboardProgress = useMemo(() => {
-  const start = new Date("2026-05-05T00:00:00-04:00").getTime();
-  const end = new Date("2026-06-05T00:00:00-04:00").getTime();
+  const start = new Date("2026-06-04T19:00:00-04:00").getTime();
+  const end = new Date("2026-07-04T19:00:00-04:00").getTime();
   const total = end - start;
   const elapsed = countdownTick - start;
 
@@ -2522,7 +2517,7 @@ const handleMarkRewardPaid = async (id: string) => {
   await fetch(`/api/rewards?id=${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status: "complete" }),
+    body: JSON.stringify({ status: "paid" }),
   });
 
   loadViewerRewards();
@@ -2943,19 +2938,17 @@ const handleGenerateBracket = () => {
               aria-label={social.name}
               className="group flex min-h-[72px] flex-col items-center justify-center rounded-xl border border-white/10 bg-black/50 p-2 backdrop-blur-md transition hover:-translate-y-0.5 hover:border-cyan-300/35 hover:bg-cyan-400/10 sm:min-h-[110px] sm:rounded-2xl sm:p-4"
             >
-              <Icon
-                className={`text-2xl transition group-hover:scale-110 sm:text-4xl ${
-                  social.name === "Discord"
-                    ? "text-[#5865F2]"
-                    : social.name === "YouTube"
-                    ? "text-[#FF0000]"
-                    : social.name === "Instagram"
-                    ? "text-[#E1306C]"
-                    : social.name === "Twitter / X"
-                    ? "text-white"
-                    : "text-cyan-200"
-                }`}
-              />
+<Icon
+  className={`text-2xl transition group-hover:scale-110 sm:text-4xl ${
+    social.name === "Twitch"
+      ? "text-[#9146FF]"
+      : social.name === "Discord"
+      ? "text-[#5865F2]"
+      : social.name === "Instagram"
+      ? "text-[#E1306C]"
+      : "text-cyan-200"
+  }`}
+/>
 
               <div className="mt-1 text-[9px] font-black uppercase tracking-[0.14em] text-white/55 sm:mt-2 sm:text-xs">
                 {social.name}
@@ -5631,43 +5624,34 @@ const rankBox =
 
   <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center gap-6 px-6 py-10 text-center">
     
-    <div className="flex items-center gap-5">
-      <a
-        href="https://discord.gg/EqjwXzkDMK"
-        target="_blank"
-        rel="noreferrer"
-        className="transition hover:scale-110"
-      >
-        <FaDiscord className="text-2xl sm:text-3xl text-[#5865F2]" />
-      </a>
+<div className="flex items-center gap-5">
+  <a
+    href="https://twitch.tv/trashguy__"
+    target="_blank"
+    rel="noreferrer"
+    className="transition hover:scale-110"
+  >
+    <FaTwitch className="text-2xl sm:text-3xl md:text-4xl text-[#9146FF]" />
+  </a>
 
-      <a
-        href="https://youtube.com/@Trashguyy"
-        target="_blank"
-        rel="noreferrer"
-        className="transition hover:scale-110"
-      >
-        <FaYoutube className="text-2xl sm:text-3xl md:text-4xl text-[#FF0000]" />
-      </a>
+  <a
+    href="https://discord.gg/EqjwXzkDMK"
+    target="_blank"
+    rel="noreferrer"
+    className="transition hover:scale-110"
+  >
+    <FaDiscord className="text-2xl sm:text-3xl md:text-4xl text-[#5865F2]" />
+  </a>
 
-      <a
-        href="https://x.com/trashguy__"
-        target="_blank"
-        rel="noreferrer"
-        className="transition hover:scale-110"
-      >
-        <FaXTwitter className="text-2xl sm:text-3xl md:text-4xl text-white" />
-      </a>
-
-      <a
-        href="https://instagram.com/trashguy__"
-        target="_blank"
-        rel="noreferrer"
-        className="transition hover:scale-110"
-      >
-        <FaInstagram className="text-2xl sm:text-3xl md:text-4xl text-[#E1306C]" />
-      </a>
-    </div>
+  <a
+    href="https://instagram.com/trashguy__"
+    target="_blank"
+    rel="noreferrer"
+    className="transition hover:scale-110"
+  >
+    <FaInstagram className="text-2xl sm:text-3xl md:text-4xl text-[#E1306C]" />
+  </a>
+</div>
 
     <div className="max-w-2xl text-sm leading-7 text-white/45">
       Gamble responsibly. 18+ only.
