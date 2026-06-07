@@ -2925,7 +2925,7 @@ const handleGenerateBracket = () => {
 </div>
 
     <section className="relative py-1 sm:py-3">
-      <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2 sm:max-w-5xl sm:grid-cols-4 sm:gap-4">
+      <div className="mx-auto grid max-w-3xl grid-cols-3 gap-2 sm:max-w-4xl sm:grid-cols-3 sm:gap-4">
         {socials.map((social) => {
           const Icon = social.icon;
 
