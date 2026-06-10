@@ -129,7 +129,7 @@ async function resolveProfile(
     .from("profiles")
     .insert(insertPayload)
     .select("id")
-    .single();
+    .maybeSingle()
 
   if (!insertError && inserted?.id) {
     return { ok: true, error: null, profileId: inserted.id };
@@ -265,6 +265,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const guessAmount = Number(body?.guessAmount || 0);
+    const requestedHuntId = String(body?.huntId || "");
 
     if (!guessAmount || Number.isNaN(guessAmount)) {
       return NextResponse.json(
@@ -340,7 +341,7 @@ export async function POST(req: NextRequest) {
         })
         .eq("id", existing.id)
         .select()
-        .single();
+        .maybeSingle()
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -363,7 +364,7 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .select()
-      .single();
+      .maybeSingle()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

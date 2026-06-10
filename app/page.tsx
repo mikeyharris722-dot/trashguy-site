@@ -1854,9 +1854,10 @@ const handleTwitchLogin = async () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        guessAmount: guess,
-      }),
+body: JSON.stringify({
+  guessAmount: guess,
+  huntId: currentPredictionHunt.id,
+}),
     });
 
       const data = await res.json();
