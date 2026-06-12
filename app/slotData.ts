@@ -180,8 +180,14 @@ export const slotData: SlotItem[] = [
 { name: "Papaya Pop", provider: "AvatarUX" },
 { name: "Zombie aPOPalypse", provider: "AvatarUX" },
 { name: "Kitty POPpins", provider: "AvatarUX" },
+{ name: "Piggy Pop Grand Affair 2", provider: "AvatarUX" },
+{ name: "Pots of Power: Zeus", provider: "AvatarUX" },
 
 // BGaming
+{ name: "Gemhalla Xtreme", provider: "BGaming" },
+{ name: "Shark & Spark Hold & Win", provider: "BGaming" },
+{ name: "Lucky Pack: 2026 Cup", provider: "BGaming" },
+{ name: "Ultras", provider: "BGaming" },
 { name: "Snoop Dogg Dollars", provider: "BGaming" },
 { name: "Aviamasters", provider: "BGaming" },
 { name: "Bonanza Billion", provider: "BGaming" },
@@ -371,8 +377,17 @@ export const slotData: SlotItem[] = [
 { name: "Lord Venom", provider: "Backseat Gaming" },
 { name: "Diamond Mole", provider: "Backseat Gaming" },
 { name: "Ghostly Hallows", provider: "Backseat Gaming" },
+{ name: "Zombears", provider: "Backseat Gaming" },
+{ name: "The 3 Dudes", provider: "Backseat Gaming" },
+{ name: "Beaver Bonk", provider: "Backseat Gaming" },
+{ name: "Wrath of Anubis", provider: "Backseat Gaming" },
+{ name: "Tomb Lords", provider: "Backseat Gaming" },
 
 // Bullshark (FINAL - VERIFIED)
+{ name: "Junkyard Kings 2", provider: "Bullshark" },
+{ name: "Gearlab Genius", provider: "Bullshark" },
+{ name: "Buzz Patrol", provider: "Bullshark" },
+{ name: "Gobstopper Grind", provider: "Bullshark" },
 { name: "Age of Seth", provider: "Bullshark" },
 { name: "Astro Rumble", provider: "Bullshark" },
 { name: "Belle the Blade Hunter", provider: "Bullshark" },
@@ -401,6 +416,7 @@ export const slotData: SlotItem[] = [
 { name: "Crowned Corners", provider: "Bullshark" },
 
 // Clawbuster
+{ name: "3 Pots Bonanza", provider: "Clawbuster" },
 { name: "3 Claws of Aztec Fire: Hold & Win", provider: "Clawbuster" },
 { name: "Asgard Bonanza: Gods Claw", provider: "Clawbuster" },
 { name: "Clawbass Bonanza 2000", provider: "Clawbuster" },
@@ -444,6 +460,18 @@ export const slotData: SlotItem[] = [
 { name: "4 Easter Egg Pots", provider: "Clawbuster" },
 
 // Hacksaw (slots only – no scratch / table games)
+{ name: "Le Football Fan", provider: "Hacksaw Gaming" },
+{ name: "Rise of Fortuna", provider: "Hacksaw Gaming" },
+{ name: "Le Hooligan", provider: "Hacksaw Gaming" },
+{ name: "Dynasty of Death", provider: "Hacksaw Gaming" },
+{ name: "Le Digger", provider: "Hacksaw Gaming" },
+{ name: "Dusk Princess", provider: "Hacksaw Gaming" },
+{ name: "Munchy Milo", provider: "Hacksaw Gaming" },
+{ name: "Demon Queen", provider: "Hacksaw Gaming" },
+{ name: "Marlin Masters: Atlantis", provider: "Hacksaw Gaming" },
+{ name: "Red Rascal", provider: "Hacksaw Gaming" },
+{ name: "Sand and Ashes", provider: "Hacksaw Gaming" },
+{ name: "3 Cursed Chests: Hold & Win", provider: "Hacksaw Gaming" },
 { name: "Wanted Dead or a Wild", provider: "Hacksaw" },
 { name: "Le Fisherman", provider: "Hacksaw" },
 { name: "Miami Mayhem", provider: "Hacksaw" },
@@ -618,6 +646,9 @@ export const slotData: SlotItem[] = [
 { name: "Power of Ten", provider: "Hacksaw" },
 
 // NoLimit City
+{ name: "True Grit Redemption 2", provider: "NoLimit City" },
+{ name: "Tombstone Begins", provider: "NoLimit City" },
+{ name: "Punk Rocker 3", provider: "NoLimit City" },
 { name: "Punk Rocker", provider: "NoLimit City" },
 { name: "Duck Hunters", provider: "NoLimit City" },
 { name: "Flight Mode", provider: "NoLimit City" },
@@ -802,8 +833,10 @@ export const slotData: SlotItem[] = [
 { name: "DCirque", provider: "Peter & Sons" },
 { name: "Monster Blox", provider: "Peter & Sons" },
 { name: "Barbarossa Dragon Empire", provider: "Peter & Sons" },
+{ name: "The Soapranos", provider: "Peter & Sons" },
 
 // PopiPlay
+{ name: "Wild Zombies", provider: "Popiplay" },
 { name: "Area 69", provider: "PopiPlay" },
 { name: "Baba Jam", provider: "PopiPlay" },
 { name: "Angry Fruits Xpress", provider: "PopiPlay" },
@@ -871,6 +904,17 @@ export const slotData: SlotItem[] = [
 { name: "Jellyens X", provider: "PopiPlay" },
 
 // Pragmatic Play
+{ name: "Caishen's Cash Pots", provider: "Pragmatic Play" },
+{ name: "Joker's Revenge", provider: "Pragmatic Play" },
+{ name: "Candy Rush", provider: "Pragmatic Play" },
+{ name: "The Big Dog House", provider: "Pragmatic Play" },
+{ name: "Dragon's Gate Bonus Choice", provider: "Pragmatic Play" },
+{ name: "Big Bass Football Bonanza", provider: "Pragmatic Play" },
+{ name: "Heartbreakers", provider: "Pragmatic Play" },
+{ name: "Launch To Riches", provider: "Pragmatic Play" },
+{ name: "Mr. Null's Wicked Wares", provider: "Pragmatic Play" },
+{ name: "Sweet Bonanza 2500", provider: "Pragmatic Play" },
+{ name: "Dragon's Pot Megaways", provider: "Pragmatic Play" },
 { name: "Idol Pop Fever", provider: "Pragmatic Play" },
 { name: "Inca Queen", provider: "Pragmatic Play" },
 { name: "Big Bass Trophy Catch", provider: "Pragmatic Play" },
