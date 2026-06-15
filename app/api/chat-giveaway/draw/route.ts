@@ -83,15 +83,72 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const winner = pickWeightedWinner(eligibleEntries);
+  const entriesWithLuck = await Promise.all(
+  eligibleEntries.map(async (entry) => {
+    const username = normalizeUsername(entry.username);
+
+    const { data: luckRow } = await supabase
+      .from("giveaway_luck")
+      .select("luck")
+      .eq("twitch_username", username)
+      .maybeSingle();
+
+    const baseWeight = Math.max(1, Number(entry.weight || 1));
+    const luckOdds = Number(luckRow?.luck || 0);
+    const totalWeight = Number((baseWeight + luckOdds).toFixed(2));
+
+    return {
+      ...entry,
+      base_weight: baseWeight,
+      luck_odds: luckOdds,
+      weight: totalWeight,
+      total_weight: totalWeight,
+    };
+  })
+);
+
+const winner = pickWeightedWinner(entriesWithLuck);
+
+  const loserUsernames = eligibleEntries
+  .filter(
+    (entry) =>
+      normalizeUsername(entry.username) !==
+      normalizeUsername(winner.username)
+  )
+  .map((entry) => normalizeUsername(entry.username));
 
   const winnerUsername = normalizeUsername(winner.username);
   const winnerDisplayName = winner.display_name || winnerUsername;
+  await supabase
+  .from("giveaway_luck")
+  .upsert({
+    twitch_username: winnerUsername,
+    luck: 0,
+    win_count: 1,
+    updated_at: new Date().toISOString(),
+  });
 
-  const totalWeight = eligibleEntries.reduce(
-    (sum, entry) => sum + Math.max(1, Number(entry.weight || 1)),
-    0
-  );
+for (const username of loserUsernames) {
+  const { data: existing } = await supabase
+    .from("giveaway_luck")
+    .select("*")
+    .eq("twitch_username", username)
+    .maybeSingle();
+
+  await supabase
+    .from("giveaway_luck")
+    .upsert({
+      twitch_username: username,
+      luck: Number(existing?.luck || 0) + 0.1,
+      loss_count: Number(existing?.loss_count || 0) + 1,
+      updated_at: new Date().toISOString(),
+    });
+}
+
+const totalWeight = entriesWithLuck.reduce(
+  (sum, entry) => sum + Math.max(1, Number(entry.weight || 1)),
+  0
+);
 
   await supabase
     .from("chat_giveaways")
@@ -125,9 +182,11 @@ export async function POST(req: NextRequest) {
     reward,
     amount,
     total_entries: entries.length,
-    eligible_entries: eligibleEntries.length,
+    eligible_entries: entriesWithLuck.length,
     total_weight: totalWeight,
     winner_weight: Number(winner.weight || 1),
+winner_base_weight: Number(winner.base_weight || winner.weight || 1),
+winner_luck_odds: Number(winner.luck_odds || 0),
     winner_role: winner.role || "viewer",
     winner_roulo_username: winner.roulo_username || null,
   });

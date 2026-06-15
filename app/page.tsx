@@ -748,6 +748,14 @@ const [giveawayLoading, setGiveawayLoading] = useState(true);
 const [viewerRewards, setViewerRewards] = useState<any[]>([]);
 const [viewerRewardsPending, setViewerRewardsPending] = useState(0);
 const [viewerRewardsPaid, setViewerRewardsPaid] = useState(0);
+const [viewerOdds, setViewerOdds] = useState({
+  baseOdds: 1,
+  luckOdds: 0,
+  totalOdds: 1,
+  nextOdds: 1.1,
+  lossCount: 0,
+  winCount: 0,
+});
 const [viewerRewardsMessage, setViewerRewardsMessage] = useState("");
 
 const [rouloUsernameInput, setRouloUsernameInput] = useState("");
@@ -1288,6 +1296,14 @@ const loadViewerRewards = useCallback(async () => {
     setViewerRewards(data.rewards || []);
     setViewerRewardsPending(Number(data.totalPending || 0));
     setViewerRewardsPaid(Number(data.totalPaid || 0));
+    setViewerOdds({
+  baseOdds: Number(data.baseOdds || 1),
+  luckOdds: Number(data.luckOdds || 0),
+  totalOdds: Number(data.totalOdds || 1),
+  nextOdds: Number(data.nextOdds || 1.1),
+  lossCount: Number(data.lossCount || 0),
+  winCount: Number(data.winCount || 0),
+});
     setViewerRewardsMessage("");
   } catch {
     setViewerRewardsMessage("Could not load rewards.");
@@ -3595,8 +3611,8 @@ const rankBox =
       </div>
     )}
 
-    {viewerName.toLowerCase() !== "trashguy__" &&
-      viewerName.toLowerCase() !== "trashguy" && (
+{viewerName.toLowerCase() !== "trashguy__" &&
+  viewerName.toLowerCase() !== "trashguy" && (
         <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] sm:rounded-[1.5rem] sm:p-6">
           <div className="text-center">
 <SectionLabel>Prize Portal</SectionLabel>
@@ -3630,7 +3646,7 @@ const rankBox =
 
     {rouloLink && (
       <>
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:grid-cols-5 sm:gap-3">
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">
           <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
             <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
               Twitch
@@ -3667,14 +3683,41 @@ const rankBox =
             </div>
           </div>
 
-          <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-            <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
-              Odds
-            </div>
-            <div className="mt-1 text-sm font-black text-[#f5c451] sm:text-xl">
-              {Number(rouloLink.weight || 1).toFixed(1)}x
-            </div>
-          </div>
+<div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+  <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
+    Base Odds
+  </div>
+  <div className="mt-1 text-sm font-black text-cyan-200 sm:text-xl">
+    {viewerOdds.baseOdds.toFixed(1)}x
+  </div>
+</div>
+
+<div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+  <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
+    Luck Odds
+  </div>
+  <div className="mt-1 text-sm font-black text-green-300 sm:text-xl">
+    +{viewerOdds.luckOdds.toFixed(1)}x
+  </div>
+</div>
+
+<div className="rounded-lg border border-yellow-300/25 bg-yellow-400/10 p-2 sm:rounded-xl sm:p-4">
+  <div className="text-[9px] uppercase tracking-[0.14em] text-yellow-200/70 sm:text-xs">
+    Total Odds
+  </div>
+  <div className="mt-1 text-sm font-black text-[#f5c451] sm:text-xl">
+    {viewerOdds.totalOdds.toFixed(1)}x
+  </div>
+</div>
+
+<div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
+  <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
+    Next Loss
+  </div>
+  <div className="mt-1 text-sm font-black text-white sm:text-xl">
+    {viewerOdds.nextOdds.toFixed(1)}x
+  </div>
+</div>
         </div>
 
         {!(rouloLink as any)?.is_in_discord && (
@@ -4787,9 +4830,19 @@ const rankBox =
       </div>
     )}
 
-    <div className="rounded-full border border-green-300/25 bg-green-400/10 px-2 py-0.5 text-[9px] font-black text-green-200 sm:text-xs">
-      🎯 {Number(entry.weight || 1).toFixed(1)}x
-    </div>
+<div className="mt-1 grid w-full grid-cols-3 gap-1">
+  <div className="rounded-md border border-slate-300/20 bg-slate-400/10 px-1.5 py-1 text-[8px] font-black text-slate-200 sm:text-[10px]">
+    Base {Number(entry.base_odds || entry.weight || 1).toFixed(1)}x
+  </div>
+
+  <div className="rounded-md border border-green-300/20 bg-green-400/10 px-1.5 py-1 text-[8px] font-black text-green-200 sm:text-[10px]">
+    Luck +{Number(entry.luck_odds || 0).toFixed(1)}x
+  </div>
+
+  <div className="rounded-md border border-red-400/50 bg-red-500/25 px-1.5 py-1 text-[8px] font-black text-white shadow-[0_0_15px_rgba(239,68,68,0.45)] text-[8px] sm:text-[10px]">
+    Total {Number(entry.total_odds || entry.weight || 1).toFixed(1)}x
+  </div>
+</div>
 
   </div>
 </div>

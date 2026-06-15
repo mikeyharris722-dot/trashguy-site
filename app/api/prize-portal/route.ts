@@ -47,6 +47,8 @@ export async function GET(req: NextRequest) {
     .from("rewards")
     .select("*")
     .in("twitch_username", viewerOptions)
+    .neq("twitch_username", "trashguy__")
+    .neq("twitch_username", "trashguy")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -60,6 +62,24 @@ export async function GET(req: NextRequest) {
   }
 
   const rewards = data || [];
+  const { data: luckRow } = await supabase
+  .from("giveaway_luck")
+  .select("*")
+  .in("twitch_username", viewerOptions)
+  .limit(1)
+  .maybeSingle();
+
+const { data: rouloLink } = await supabase
+  .from("roulo_links")
+  .select("*")
+  .in("twitch_username", viewerOptions)
+  .limit(1)
+  .maybeSingle();
+
+const baseOdds = Number(rouloLink?.weight || 1);
+const luckOdds = Number(luckRow?.luck || 0);
+const totalOdds = Number((baseOdds + luckOdds).toFixed(2));
+const nextOdds = Number((totalOdds + 0.1).toFixed(2));
 
   const totalPending = rewards
     .filter((reward: any) => reward.status === "pending")
@@ -69,12 +89,20 @@ export async function GET(req: NextRequest) {
     .filter((reward: any) => reward.status === "paid")
     .reduce((sum: number, reward: any) => sum + Number(reward.amount || 0), 0);
 
-  return NextResponse.json({
-    ok: true,
-    viewer: rawViewer,
-    viewerOptions,
-    rewards,
-    totalPending,
-    totalPaid,
-  });
+return NextResponse.json({
+  ok: true,
+  viewer: rawViewer,
+  viewerOptions,
+  rewards,
+  totalPending,
+  totalPaid,
+
+  baseOdds,
+  luckOdds,
+  totalOdds,
+  nextOdds,
+
+  lossCount: Number(luckRow?.loss_count || 0),
+  winCount: Number(luckRow?.win_count || 0),
+});
 }

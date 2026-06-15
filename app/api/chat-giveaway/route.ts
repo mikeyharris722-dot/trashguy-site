@@ -23,15 +23,57 @@ export async function GET() {
 
   let entries: any[] = [];
 
-  if (giveaway?.id) {
-    const { data: entryData } = await supabase
-      .from("chat_giveaway_entries")
-      .select("*")
-      .eq("giveaway_id", giveaway.id)
-      .order("created_at", { ascending: true });
+if (giveaway?.id) {
+  const { data: entryData } = await supabase
+    .from("chat_giveaway_entries")
+    .select("*")
+    .eq("giveaway_id", giveaway.id)
+    .order("created_at", { ascending: true });
 
-    entries = entryData || [];
-  }
+  const rawEntries = entryData || [];
+
+  const { data: luckRows } = await supabase
+    .from("giveaway_luck")
+    .select("twitch_username, luck, loss_count, win_count")
+    .in(
+      "twitch_username",
+      rawEntries.map((entry: any) =>
+        String(entry.username || "")
+          .replace("@", "")
+          .trim()
+          .toLowerCase()
+      )
+    );
+
+  const luckMap = new Map(
+    (luckRows || []).map((row: any) => [
+      row.twitch_username,
+      row,
+    ])
+  );
+
+  entries = rawEntries.map((entry: any) => {
+    const username = String(entry.username || "")
+      .replace("@", "")
+      .trim()
+      .toLowerCase();
+
+    const luckRow = luckMap.get(username);
+
+    const baseOdds = Number(entry.weight || 1);
+    const luckOdds = Number(luckRow?.luck || 0);
+    const totalOdds = Number((baseOdds + luckOdds).toFixed(2));
+
+    return {
+      ...entry,
+      base_odds: baseOdds,
+      luck_odds: luckOdds,
+      total_odds: totalOdds,
+      loss_count: Number(luckRow?.loss_count || 0),
+      win_count: Number(luckRow?.win_count || 0),
+    };
+  });
+}
 
   const { data: winnerRows } = await supabase
     .from("chat_giveaways")
