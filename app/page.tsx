@@ -407,6 +407,20 @@ function SectionLabel({
   );
 }
 
+function GlowTabTitle({
+  label,
+}: {
+  label: string;
+}) {
+  return (
+    <div className="mb-3 text-center">
+<h2 className="text-lg font-black uppercase tracking-[0.2em] text-cyan-300 drop-shadow-[0_0_8px_rgba(0,245,255,0.7)] sm:text-5xl">
+  {label}
+</h2>
+    </div>
+  );
+}
+
 function ActionButton({
   children,
   onClick,
@@ -441,8 +455,8 @@ const variants = {
       }}
       disabled={disabled}
       className={[
-        "group relative min-h-[54px] overflow-hidden rounded-2xl border px-5 py-3",
-        "text-sm font-black uppercase tracking-[0.12em]",
+"group relative min-h-[40px] overflow-hidden rounded-xl border px-3 py-2",
+"text-[11px] font-black uppercase tracking-[0.08em]",
         "transition-all duration-200 active:scale-[0.98]",
         "disabled:cursor-not-allowed disabled:opacity-40",
         variants[variant],
@@ -2849,88 +2863,147 @@ const handleGenerateBracket = () => {
 <main className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-10">
 {activeSection === "home" && (
   <section className="space-y-1 sm:space-y-3">
-    <section className="relative -mx-3 overflow-hidden px-3 py-2 text-center sm:-mx-6 sm:px-6 sm:py-8">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,245,255,0.14),transparent_58%)]" />
+<section className="relative -mx-3 overflow-hidden px-3 py-0 text-center sm:-mx-6 sm:px-6">
+  <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,245,255,0.14),transparent_58%)]" />
 
-      <div className="relative z-10 mx-auto max-w-5xl">
-        <img
-          src="/hero-logos.png"
-          alt="Trashguy x RouloBets"
-          className="mx-auto h-[125px] w-auto object-contain drop-shadow-[0_0_42px_rgba(0,245,255,0.38)] sm:h-[420px] sm:drop-shadow-[0_0_65px_rgba(0,245,255,0.45)]"
-        />
+  <div className="relative z-10 mx-auto max-w-5xl">
+    <img
+      src="/hero-logos.png"
+      alt="Trashguy x RouloBets"
+      className="mx-auto -mt-10 -mb-12 h-[125px] w-auto object-contain drop-shadow-[0_0_42px_rgba(0,245,255,0.38)] sm:-mt-20 sm:-mb-28 sm:h-[420px] sm:drop-shadow-[0_0_65px_rgba(0,245,255,0.45)]"
+    />
 
-        <h1
-          className={`${russo.className} mx-auto mt-1 max-w-5xl text-center text-[clamp(0.95rem,4.8vw,4rem)] leading-[1.02] tracking-[-0.03em] text-white`}
-          style={{
-            textShadow:
-              "0 0 14px rgba(0,245,255,0.16), 0 0 34px rgba(0,245,255,0.08)",
-          }}
-        >
-          ONE MAN’S TRASH IS ANOTHER MAN’S MAX WIN
-        </h1>
+    <h1
+      className={`${russo.className} mx-auto -mt-8 max-w-5xl text-center text-[clamp(0.95rem,4.8vw,4rem)] leading-[1.02] tracking-[-0.03em] bg-gradient-to-b from-white via-cyan-100 to-cyan-300 bg-clip-text text-transparent`}
+style={{
+  textShadow:
+    "0 0 8px rgba(0,245,255,0.25), 0 0 25px rgba(0,245,255,0.35), 0 0 60px rgba(0,245,255,0.18)",
+}}
+    >
+      ONE MAN’S TRASH IS ANOTHER MAN’S MAX WIN
+    </h1>
 
-        <p className="mx-auto mt-2 max-w-2xl text-xs font-semibold leading-5 text-white/70 sm:mt-4 sm:text-lg sm:leading-8">
-          Sign up on RouloBets under code{" "}
-          <span className="font-black text-[#8fffd0]">trashguy</span>{" "}
-          to earn monthly prizes, VIP rewards, and daily stream giveaways.
-        </p>
+    <p className="mx-auto mt-1 max-w-2xl text-xs font-semibold leading-5 text-white/70 sm:mt-2 sm:text-lg sm:leading-8">
+      Sign up on RouloBets under code{" "}
+      <span className="font-black text-[#8fffd0]">trashguy</span>{" "}
+      to earn monthly prizes, VIP rewards, and daily stream giveaways.
+    </p>
 
-        <a
-          href="https://roulobets.com/?r=trashguy"
-          target="_blank"
-          rel="noreferrer"
-          className="group relative mt-3 inline-flex min-h-[44px] min-w-[220px] items-center justify-center overflow-hidden rounded-xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.34),rgba(0,120,255,0.24))] px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_30px_rgba(0,255,255,0.28)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)] sm:mt-6 sm:min-h-[66px] sm:min-w-[280px] sm:rounded-2xl sm:px-8 sm:py-4 sm:text-sm sm:tracking-[0.22em]"
-        >
-          <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
-          <span className="relative z-10">Claim Rewards On Roulo</span>
-        </a>
+    <a
+      href="https://roulobets.com/?r=trashguy"
+      target="_blank"
+      rel="noreferrer"
+      className="group relative mt-3 inline-flex min-h-[44px] min-w-[220px] items-center justify-center overflow-hidden rounded-xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.34),rgba(0,120,255,0.24))] px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_30px_rgba(0,255,255,0.28)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)] sm:mt-4 sm:min-h-[66px] sm:min-w-[280px] sm:rounded-2xl sm:px-8 sm:py-4 sm:text-sm sm:tracking-[0.22em]"
+    >
+      <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
+      <span className="relative z-10">Claim Rewards On Roulo</span>
+    </a>
+  </div>
+</section>
+
+<div className="mx-auto mt-3 max-w-4xl px-3">
+
+  <div className="mb-3 text-center">
+<div className="text-base font-black uppercase tracking-[0.18em] text-cyan-200 sm:text-xl">
+  Total Given Away
+</div>
+
+    <div className="mt-1 text-4xl font-black text-emerald-300 drop-shadow-[0_0_18px_rgba(52,211,153,0.45)] sm:text-6xl">
+      ${giveawayTotal.toLocaleString()}
+    </div>
+  </div>
+
+  <div className="rounded-2xl border border-cyan-300/15 bg-black/80 p-3 shadow-[0_0_20px_rgba(0,245,255,0.06)]">
+    <div className="mb-2 flex items-center justify-between">
+      <div className="text-[13px] font-black uppercase tracking-[0.22em] text-cyan-200">
+        🏆 Past Winners
       </div>
-    </section>
 
-<div className="mx-auto mt-4 max-w-6xl px-4">
-  <div className="grid gap-4 lg:grid-cols-2">
-
-    <div className="rounded-[1.25rem] border border-cyan-300/20 bg-black/80 p-3 sm:p-5 shadow-[0_0_20px_rgba(0,245,255,0.06)]">
-      <div className="text-center text-3xl sm:text-4xl">👑</div>
-
-      <h3 className="mt-2 text-center text-xl font-black text-cyan-100 sm:mt-4 sm:text-3xl">
-        VIP REWARDS
-      </h3>
-
-      <div className="mt-3 space-y-2 text-center text-sm text-white/80 sm:mt-6 sm:space-y-4 sm:text-lg">
-        <div>⭐ $5k+ wagered on previous or current leaderboard</div>
-        <div>⭐ Exclusive VIP giveaways</div>
-        <div>⭐ Exclusive VIP tournaments</div>
-        <div>⭐ Exclusive equity into community hunts</div>
+      <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[13px] font-black text-cyan-100">
+        {giveaways.length} Logged
       </div>
     </div>
 
-    <div className="rounded-[1.25rem] border border-cyan-300/20 bg-black/80 p-3 sm:p-5 shadow-[0_0_20px_rgba(0,245,255,0.06)]">
-      <div className="text-center text-3xl sm:text-4xl">🎁</div>
+    {giveawayLoading ? (
+      <div className="flex h-[180px] items-center justify-center text-sm text-white/45">
+        Loading winners...
+      </div>
+    ) : giveaways.length === 0 ? (
+      <div className="flex h-[180px] items-center justify-center text-sm text-white/45">
+        No winners yet.
+      </div>
+    ) : (
+      <div className="max-h-[240px] overflow-y-auto rounded-xl border border-white/10 bg-black/55">
+        <div className="divide-y divide-white/5">
+          {giveaways.map((giveaway, index) => (
+            <div
+              key={giveaway.id}
+              className="grid grid-cols-[40px_1fr_auto] items-center gap-3 px-4 py-3"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-300/20 bg-cyan-400/10 text-xs font-black text-cyan-200">
+                {index + 1}
+              </div>
 
-      <h3 className="mt-2 text-center text-xl font-black text-cyan-100 sm:mt-4 sm:text-3xl">
+              <div className="truncate font-black text-white">
+                {giveaway.winner_name}
+              </div>
+
+              <div className="font-black text-emerald-300">
+                ${Number(giveaway.amount || 0).toLocaleString()}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+
+</div>
+
+<div className="mx-auto mt-3 max-w-5xl px-3">
+  <div className="grid gap-3 lg:grid-cols-2">
+
+    <div className="rounded-2xl border border-cyan-300/20 bg-black/80 p-3 shadow-[0_0_16px_rgba(0,245,255,0.05)]">
+      <div className="text-center text-2xl">👑</div>
+
+      <h3 className="mt-1 text-center text-lg font-black text-cyan-100 sm:text-xl">
+        VIP REWARDS
+      </h3>
+
+      <div className="mt-3 space-y-2 text-center text-xs text-white/80 sm:text-sm">
+        <div>⭐ $5k+ wagered on leaderboard</div>
+        <div>⭐ Exclusive VIP giveaways</div>
+        <div>⭐ Exclusive VIP tournaments</div>
+        <div>⭐ Community hunt equity</div>
+      </div>
+    </div>
+
+    <div className="rounded-2xl border border-cyan-300/20 bg-black/80 p-3 shadow-[0_0_16px_rgba(0,245,255,0.05)]">
+      <div className="text-center text-2xl">🎁</div>
+
+      <h3 className="mt-1 text-center text-lg font-black text-cyan-100 sm:text-xl">
         DAILY STREAM GIVEAWAYS
       </h3>
 
-      <div className="mt-3 space-y-3 text-center text-sm text-white/80 sm:mt-6 sm:space-y-4 sm:text-lg">
+      <div className="mt-3 space-y-2 text-center text-xs text-white/80 sm:text-sm">
 
         <div>
-          ⭐ VIP ($5k+ wagered on previous or current leaderboard)
-          <div className="font-normal text-cyan-300">
+          ⭐ VIP
+          <div className="text-cyan-300">
             $80 - $100 bonus buys
           </div>
         </div>
 
         <div>
-          ⭐ Affiliate (signed up under code trashguy)
-          <div className="font-normal text-cyan-300">
+          ⭐ Affiliate
+          <div className="text-cyan-300">
             $40 - $50 bonus buys
           </div>
         </div>
 
         <div>
-          ⭐ Not under code
-          <div className="font-normal text-cyan-300">
+          ⭐ Not Under Code
+          <div className="text-cyan-300">
             $20 - $30 bonus buys
           </div>
         </div>
@@ -3022,26 +3095,19 @@ const handleGenerateBracket = () => {
 
 {activeSection === "leaderboard" && (
   <section className="space-y-4 sm:space-y-6">
-    <div className="mx-auto max-w-5xl text-center">
-      <SectionLabel>Leaderboard</SectionLabel>
+<div className="mx-auto max-w-5xl">
+  <GlowTabTitle label="LEADERBOARD" />
 
-      <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-white drop-shadow-[0_0_22px_rgba(0,245,255,0.18)] sm:mt-3 sm:text-[clamp(2.5rem,6vw,4rem)]">
-        ${leaderboardTotal} LEADERBOARD
-      </h2>
-
-      <div className="mt-4 text-2xl font-black text-cyan-200 sm:text-4xl">
-        Ends in: {leaderboardCountdown}
-      </div>
-
-      <div className="mx-auto mt-4 h-2 w-full max-w-5xl overflow-hidden rounded-full bg-white/10 sm:h-3">
-        <div
-          className="h-full rounded-full bg-[linear-gradient(90deg,#00f5ff,#19d3ff)] shadow-[0_0_20px_rgba(0,245,255,0.35)]"
-          style={{ width: `${leaderboardProgress}%` }}
-        />
-      </div>
+  <div className="mt-3 flex justify-center">
+    <div className="rounded-full border border-purple-400/30 bg-purple-500/10 px-5 py-2">
+      <span className="text-sm font-black text-purple-200 sm:text-lg">
+        ⏳ Ends in {leaderboardCountdown}
+      </span>
     </div>
+  </div>
+</div>
 
-    <div className="mx-auto max-w-5xl space-y-1.5 sm:space-y-2">
+<div className="mx-auto max-w-5xl space-y-1.5 sm:space-y-2">
       <div className="grid grid-cols-[52px_1fr_100px] rounded-xl bg-black/55 px-3 py-2 text-[9px] font-black uppercase tracking-[0.16em] text-white/55 sm:grid-cols-[80px_1fr_180px_140px] sm:px-5 sm:text-[11px]">
         <div>Rank</div>
         <div>Player</div>
@@ -3127,15 +3193,7 @@ const rankBox =
 
 {activeSection === "hunts" && (
   <section className="space-y-2 sm:space-y-8">
-    <div className="text-center">
-      <div className="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-300 sm:text-xs sm:tracking-[0.35em]">
-        Bonus Hunts
-      </div>
-
-      <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-white drop-shadow-[0_0_22px_rgba(0,245,255,0.18)] sm:mt-3 sm:text-[clamp(2.5rem,6vw,4rem)]">
-        PREDICTIONS
-      </h2>
-    </div>
+<GlowTabTitle label="BONUS HUNTS" />
 
     <div className="flex gap-2 overflow-x-auto pb-2 sm:gap-4 sm:pb-4">
       {huntsData.map((hunt) => (
@@ -3184,9 +3242,6 @@ const rankBox =
                   {currentPredictionHunt?.title || "Latest Hunt"}
                 </span>
               </div>
-              <div className="mt-0.5 text-[11px] text-white/45 sm:text-sm">
-                {currentPredictionHunt?.casino || "RouloBets"}
-              </div>
             </div>
 
             <div
@@ -3200,158 +3255,157 @@ const rankBox =
             </div>
           </div>
 
-          <div className="mt-3 space-y-2 sm:mt-8 sm:space-y-4">
-            <div className="grid grid-cols-2 gap-2 sm:gap-4">
-              <div className="rounded-xl border border-white/10 bg-black/30 p-2.5 sm:rounded-[1.7rem] sm:p-6">
-                <div className="text-[8px] font-black uppercase tracking-[0.14em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
-                  Start
-                </div>
+<div className="mt-2 space-y-2 sm:mt-3 sm:space-y-2">
 
-                <div className="mt-1 text-xl font-black tracking-tight text-white sm:mt-3 sm:text-5xl">
-                  {formatMoney(currentPredictionHunt?.startCost || 0)}
-                </div>
-              </div>
+  <div className="grid grid-cols-2 gap-2">
+    <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+      <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/35">
+        Start
+      </div>
 
-              <div className="rounded-xl border border-cyan-400/20 bg-[rgba(0,245,255,0.06)] p-2.5 sm:rounded-[1.7rem] sm:p-6">
-                <div className="text-[8px] font-black uppercase tracking-[0.14em] text-cyan-100/45 sm:text-[11px] sm:tracking-[0.22em]">
-                  Won
-                </div>
+      <div className="mt-1 text-2xl font-black tracking-tight text-white">
+        {formatMoney(currentPredictionHunt?.startCost || 0)}
+      </div>
+    </div>
 
-                <div className="mt-1 text-xl font-black tracking-tight text-cyan-200 sm:mt-3 sm:text-5xl">
-                  {formatMoney(
-                    currentPredictionHunt?.stats?.totalWinnings ||
-                      currentPredictionHunt?.totalWinnings ||
-                      0
-                  )}
-                </div>
-              </div>
-            </div>
+    <div className="rounded-xl border border-cyan-400/20 bg-[rgba(0,245,255,0.06)] p-3">
+      <div className="text-[9px] font-black uppercase tracking-[0.14em] text-cyan-100/45">
+        Won
+      </div>
 
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-4">
-              <div className="rounded-lg border border-white/10 bg-black/30 p-2 sm:rounded-[1.5rem] sm:p-5">
-                <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
-                  Bonuses
-                </div>
+      <div className="mt-1 text-2xl font-black tracking-tight text-cyan-200">
+        {formatMoney(
+          currentPredictionHunt?.stats?.totalWinnings ||
+            currentPredictionHunt?.totalWinnings ||
+            0
+        )}
+      </div>
+    </div>
+  </div>
 
-                <div className="mt-1 text-lg font-black text-white sm:mt-3 sm:text-3xl">
-                  {currentPredictionHunt?.bonuses?.length || 0}
-                </div>
-              </div>
+  <div className="grid grid-cols-3 gap-2">
+    <div className="rounded-xl border border-white/10 bg-black/30 p-2.5">
+      <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35">
+        Bonuses
+      </div>
 
-              <div className="rounded-lg border border-white/10 bg-black/30 p-2 sm:rounded-[1.5rem] sm:p-5">
-                <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
-                  Avg X
-                </div>
+      <div className="mt-1 text-lg font-black text-white">
+        {currentPredictionHunt?.bonuses?.length || 0}
+      </div>
+    </div>
 
-                <div className="mt-1 text-base font-black text-white sm:mt-3 sm:text-3xl">
-                  {currentPredictionHunt?.stats?.currentAverageMultiplier
-                    ? `${Number(
-                        currentPredictionHunt.stats.currentAverageMultiplier
-                      ).toFixed(2)}x`
-                    : `${currentPredictionAvgX}x`}
-                </div>
-              </div>
+    <div className="rounded-xl border border-white/10 bg-black/30 p-2.5">
+      <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35">
+        Avg X
+      </div>
 
-              <div className="rounded-lg border border-white/10 bg-black/30 p-2 sm:rounded-[1.5rem] sm:p-5">
-                <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[11px] sm:tracking-[0.22em]">
-                  Req X
-                </div>
+      <div className="mt-1 text-lg font-black text-white">
+        {currentPredictionHunt?.stats?.currentAverageMultiplier
+          ? `${Number(
+              currentPredictionHunt.stats.currentAverageMultiplier
+            ).toFixed(2)}x`
+          : `${currentPredictionAvgX}x`}
+      </div>
+    </div>
 
-                <div className="mt-1 text-base font-black text-white sm:mt-3 sm:text-3xl">
-                  {currentPredictionHunt?.stats?.averagePayoutRequired &&
-                  currentPredictionHunt?.stats?.averageBetSize
-                    ? `${(
-                        Number(currentPredictionHunt.stats.averagePayoutRequired) /
-                        Number(currentPredictionHunt.stats.averageBetSize)
-                      ).toFixed(2)}x`
-                    : "---"}
-                </div>
-              </div>
-            </div>
+    <div className="rounded-xl border border-white/10 bg-black/30 p-2.5">
+      <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35">
+        Req X
+      </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:gap-4">
-              <div className="rounded-xl border border-white/10 bg-black/30 p-2.5 sm:rounded-[1.8rem] sm:p-6">
-                <div className="text-[8px] font-black uppercase tracking-[0.14em] text-white/35 sm:text-[11px] sm:tracking-[0.24em]">
-                  Highest Win
-                </div>
+      <div className="mt-1 text-lg font-black text-white">
+        {currentPredictionHunt?.stats?.averagePayoutRequired &&
+        currentPredictionHunt?.stats?.averageBetSize
+          ? `${(
+              Number(currentPredictionHunt.stats.averagePayoutRequired) /
+              Number(currentPredictionHunt.stats.averageBetSize)
+            ).toFixed(2)}x`
+          : "---"}
+      </div>
+    </div>
+  </div>
 
-                <div className="mt-2 sm:mt-4">
-                  <div className="truncate text-sm font-black leading-tight text-white sm:text-2xl">
-                    {currentPredictionHunt?.bonuses?.length
-                      ? [...currentPredictionHunt.bonuses].sort(
-                          (a: any, b: any) =>
-                            Number(b.payout || 0) - Number(a.payout || 0)
-                        )[0]?.slotName || "---"
-                      : "---"}
-                  </div>
+  <div className="grid grid-cols-2 gap-2">
+    <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+      <div className="text-[8px] font-black uppercase tracking-[0.14em] text-white/35">
+        Highest Win
+      </div>
 
-                  <div className="mt-1 text-lg font-black text-cyan-300 sm:mt-3 sm:text-3xl">
-                    {formatMoney(
-                      currentPredictionHunt?.bonuses?.length
-                        ? [...currentPredictionHunt.bonuses].sort(
-                            (a: any, b: any) =>
-                              Number(b.payout || 0) - Number(a.payout || 0)
-                          )[0]?.payout || 0
-                        : 0
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-black/30 p-2.5 sm:rounded-[1.8rem] sm:p-6">
-                <div className="text-[8px] font-black uppercase tracking-[0.14em] text-white/35 sm:text-[11px] sm:tracking-[0.24em]">
-                  Highest X
-                </div>
-
-                <div className="mt-2 sm:mt-4">
-                  <div className="truncate text-sm font-black leading-tight text-white sm:text-2xl">
-                    {currentPredictionHunt?.bonuses?.length
-                      ? [...currentPredictionHunt.bonuses].sort(
-                          (a: any, b: any) =>
-                            Number(b.multiplier || 0) -
-                            Number(a.multiplier || 0)
-                        )[0]?.slotName || "---"
-                      : "---"}
-                  </div>
-
-                  <div className="mt-1 text-lg font-black text-cyan-300 sm:mt-3 sm:text-3xl">
-                    {currentPredictionHunt?.bonuses?.length
-                      ? `${Number(
-                          [...currentPredictionHunt.bonuses].sort(
-                            (a: any, b: any) =>
-                              Number(b.multiplier || 0) -
-                              Number(a.multiplier || 0)
-                          )[0]?.multiplier || 0
-                        ).toFixed(2)}x`
-                      : "---"}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="mt-2">
+        <div className="truncate text-sm font-black text-white">
+          {currentPredictionHunt?.bonuses?.length
+            ? [...currentPredictionHunt.bonuses].sort(
+                (a: any, b: any) =>
+                  Number(b.payout || 0) - Number(a.payout || 0)
+              )[0]?.slotName || "---"
+            : "---"}
         </div>
 
+        <div className="mt-1 text-lg font-black text-cyan-300">
+          {formatMoney(
+            currentPredictionHunt?.bonuses?.length
+              ? [...currentPredictionHunt.bonuses].sort(
+                  (a: any, b: any) =>
+                    Number(b.payout || 0) - Number(a.payout || 0)
+                )[0]?.payout || 0
+              : 0
+          )}
+        </div>
+      </div>
+    </div>
+
+    <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+      <div className="text-[8px] font-black uppercase tracking-[0.14em] text-white/35">
+        Highest X
+      </div>
+
+      <div className="mt-2">
+        <div className="truncate text-sm font-black text-white">
+          {currentPredictionHunt?.bonuses?.length
+            ? [...currentPredictionHunt.bonuses].sort(
+                (a: any, b: any) =>
+                  Number(b.multiplier || 0) - Number(a.multiplier || 0)
+              )[0]?.slotName || "---"
+            : "---"}
+        </div>
+
+        <div className="mt-1 text-lg font-black text-cyan-300">
+          {currentPredictionHunt?.bonuses?.length
+            ? `${Number(
+                [...currentPredictionHunt.bonuses].sort(
+                  (a: any, b: any) =>
+                    Number(b.multiplier || 0) - Number(a.multiplier || 0)
+                )[0]?.multiplier || 0
+              ).toFixed(2)}x`
+            : "---"}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
         {/* RIGHT SIDE */}
-        <div className="p-2.5 sm:p-6">
+        <div className="p-2.5 sm:p-4">
           <div className="text-center">
-            <div className="text-sm font-black text-white sm:text-lg">
-              Guess the end balance
-            </div>
+<div className="text-xs font-black uppercase tracking-[0.14em] text-white sm:text-sm">
+  Guess the end balance
+</div>
             <div className="mt-0.5 text-[10px] text-white/45 sm:mt-2 sm:text-xs">
               Closest predictions win. One entry per person.
             </div>
 
             <div className="mt-2 flex flex-wrap justify-center gap-1.5 sm:mt-4 sm:gap-2">
-              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black text-cyan-100 sm:px-4 sm:py-2 sm:text-xs">
+              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black text-cyan-100 sm:px-3 sm:py-1 sm:text-[13px]">
                 1st Closest $20
               </div>
-              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black text-cyan-100 sm:px-4 sm:py-2 sm:text-xs">
-                2nd $0
+              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black text-cyan-100 sm:px-3 sm:py-1 sm:text-[13px]">
+                2nd $10
               </div>
             </div>
           </div>
 
-<div className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-400/5 p-2.5 sm:mt-6 sm:rounded-2xl sm:p-5">
+<div className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-400/5 p-2.5 sm:mt-4 sm:rounded-2xl sm:p-2">
   {isAdmin && (
     <div className="mt-2 rounded-xl border border-cyan-300/15 bg-black/40 p-3">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -3384,7 +3438,7 @@ const rankBox =
         </ActionButton>
       </div>
 
-      <div className="mt-3 text-center text-xs text-white/60">
+      <div className="mt-2 text-center text-[10px] text-white/55">
         {adminMessage}
       </div>
     </div>
@@ -3392,7 +3446,7 @@ const rankBox =
   
             <div className="grid gap-2 sm:gap-3 md:grid-cols-3">
               {rankedWinners.length === 0 ? (
-                <div className="col-span-full py-4 text-center text-xs text-white/45 sm:py-8 sm:text-sm">
+                <div className="col-span-full py-3 text-center text-[11px] text-white/45 sm:py-4 sm:text-xs">
                   Winners will appear when the hunt is completed.
                 </div>
               ) : (
@@ -3419,7 +3473,7 @@ const rankBox =
             </div>
           </div>
 
-<div className="mt-3 sm:mt-6">
+<div className="mt-2 sm:mt-3">
   {!isTwitchConnected ? (
     <button
       onClick={handleTwitchLogin}
@@ -3436,13 +3490,13 @@ const rankBox =
         }
         placeholder="Enter your end balance prediction"
         disabled={predictionStatus !== "open"}
-        className="w-full rounded-lg border border-white/10 bg-black/55 px-3 py-2.5 text-center text-sm text-white outline-none transition focus:border-cyan-300/40 disabled:opacity-40 sm:rounded-xl sm:px-5 sm:py-4 sm:text-base"
+        className="w-full rounded-lg border border-white/10 bg-black/55 px-3 py-2 text-center text-xs text-white outline-none transition focus:border-cyan-300/40 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm"
       />
 
       <button
         onClick={handlePredictionSubmit}
         disabled={predictionStatus !== "open"}
-        className="mt-2 w-full rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-cyan-100 transition hover:bg-cyan-400/20 disabled:opacity-40 sm:mt-3 sm:rounded-xl sm:px-5 sm:py-4 sm:text-sm sm:tracking-[0.18em]"
+        className="mt-2 w-full rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-cyan-100 transition hover:bg-cyan-400/20 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-xs"
       >
         Save Prediction
       </button>
@@ -3458,42 +3512,45 @@ const rankBox =
 </div>
 </div>
 
-<div className="border-t border-white/10 p-2.5 sm:p-6">
-  <div className="mb-3 flex items-center justify-between">
-    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45 sm:text-xs">
+<div className="border-t border-white/10 p-2.5 sm:p-4">
+  <div className="mb-2 flex items-center justify-between">
+    <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-200 sm:text-xs">
       Live Guesses
     </div>
 
-    <div className="text-xs font-black text-cyan-200">
+    <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[9px] font-black text-cyan-100 sm:text-xs">
       {currentPredictionCount} Entries
     </div>
   </div>
 
-  <div className="max-h-[520px] overflow-y-auto rounded-2xl border border-white/10 bg-black/50">
+  <div className="max-h-[360px] overflow-y-auto rounded-xl border border-white/10 bg-black/65 sm:max-h-[480px]">
     {sortedPredictionsForTab.length === 0 ? (
-      <div className="p-6 text-center text-sm text-white/40">
+      <div className="p-5 text-center text-xs text-white/40">
         No guesses yet.
       </div>
     ) : (
-      <div className="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="divide-y divide-white/5">
         {[...sortedPredictionsForTab]
           .sort((a, b) => Number(b.guess || 0) - Number(a.guess || 0))
           .map((entry, index) => (
             <div
               key={entry.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/70 px-3 py-3"
+              className="grid grid-cols-[56px_1fr_auto] items-center gap-3 px-4 py-3 text-sm sm:grid-cols-[70px_1fr_auto] sm:px-5 sm:py-3.5"
             >
-              <div className="min-w-0">
-                <div className="truncate text-sm font-black text-white">
-                  #{index + 1} {entry.username}
-                </div>
+              <div className="text-[10px] font-black text-cyan-300 sm:text-xs">
+                #{index + 1}
+              </div>
 
-                <div className="text-[10px] text-white/35">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-black text-white sm:text-base">
+                  {entry.username}
+                </div>
+                <div className="text-[9px] text-white/35 sm:text-[10px]">
                   {formatTimeAgo(entry.createdAt)}
                 </div>
               </div>
 
-              <div className="text-base font-black text-cyan-200">
+              <div className="rounded-lg border border-cyan-300/20 bg-cyan-400/10 px-3 py-1.5 text-right text-sm font-black text-cyan-100 sm:text-base">
                 {formatMoney(entry.guess)}
               </div>
             </div>
@@ -3504,422 +3561,349 @@ const rankBox =
 </div>
 
 {/* BONUS LIST */}
-      <div className="border-t border-white/10 p-2.5 sm:p-6">
-        <div className="mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-white/45 sm:mb-4 sm:text-xs sm:tracking-[0.25em]">
-          Slots in this hunt
+<div className="border-t border-white/10 p-2.5 sm:p-4">
+  <div className="mb-2 flex items-center justify-between">
+    <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-200 sm:text-xs">
+      Slots in this Hunt
+    </div>
+
+    <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[9px] font-black text-cyan-100 sm:text-xs">
+      {currentPredictionHunt?.bonuses?.length || 0} Slots
+    </div>
+  </div>
+
+  <div className="max-h-[360px] overflow-y-auto rounded-xl border border-white/10 bg-black/45 sm:max-h-[480px]">
+    {!currentPredictionHunt?.bonuses?.length ? (
+      <div className="flex h-[90px] items-center justify-center text-xs text-white/40">
+        No bonuses in this hunt yet.
+      </div>
+    ) : (
+<div className="divide-y divide-white/5">
+  {currentPredictionHunt.bonuses.map((bonus: any, index: number) => (
+    <div
+      key={bonus.id || index}
+      className="grid grid-cols-[44px_1fr_70px_70px_80px] items-center gap-2 px-3 py-2 text-xs"
+    >
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-300/25 bg-cyan-400/10 text-xs font-black text-cyan-200">
+        {index + 1}
+      </div>
+
+      <div className="min-w-0">
+        <div className="truncate text-sm font-black text-white">
+          {bonus.slotName}
         </div>
-
-        <div className="max-h-[360px] overflow-y-auto rounded-xl border border-white/10 bg-black/35 sm:max-h-[520px] sm:rounded-2xl">
-          {!currentPredictionHunt?.bonuses?.length ? (
-            <div className="flex h-[90px] items-center justify-center text-xs text-white/40 sm:h-[160px] sm:text-sm">
-              No bonuses in this hunt yet.
-            </div>
-          ) : (
-            <div className="divide-y divide-white/5">
-              {currentPredictionHunt.bonuses.map((bonus: any, index: number) => (
-                <div
-                  key={bonus.id || index}
-                  className="grid grid-cols-[1fr_auto] gap-2 px-2.5 py-2 text-xs sm:grid-cols-[90px_1fr_90px_110px_110px] sm:items-center sm:gap-4 sm:px-5 sm:py-4 sm:text-sm"
-                >
-                  <div className="min-w-0">
-                    <div className="text-[10px] font-black text-cyan-200 sm:text-white/70">
-                      Bonus #{index + 1}
-                    </div>
-
-                    <div className="mt-0.5 break-words text-xs font-black text-white sm:hidden">
-                      {bonus.slotName}
-                    </div>
-                  </div>
-
-                  <div className="hidden min-w-0 truncate font-black text-white sm:block">
-                    {bonus.slotName}
-                  </div>
-
-                  <div className="text-right">
-                    <div className="text-[8px] uppercase tracking-[0.12em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">
-                      Bet
-                    </div>
-                    <div className="text-xs font-black text-white sm:text-base">
-                      {formatMoney(Number(bonus.betSize || 0))}
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="text-[8px] uppercase tracking-[0.12em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">
-                      X
-                    </div>
-                    <div className="text-xs font-black text-white sm:text-base">
-                      {Number(bonus.multiplier || 0).toFixed(2)}x
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="text-[8px] uppercase tracking-[0.12em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">
-                      Payout
-                    </div>
-                    <div className="text-xs font-black text-cyan-300 sm:text-base">
-                      {formatMoney(Number(bonus.payout || 0))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="text-[9px] uppercase tracking-[0.12em] text-white/35">
+          Bonus #{index + 1}
         </div>
       </div>
+
+      <div className="text-right">
+        <div className="text-[8px] uppercase text-white/35">Bet</div>
+        <div className="font-black text-white">
+          {formatMoney(Number(bonus.betSize || 0))}
+        </div>
+      </div>
+
+      <div className="text-right">
+        <div className="text-[8px] uppercase text-white/35">X</div>
+        <div className="font-black text-white">
+          {Number(bonus.multiplier || 0).toFixed(2)}x
+        </div>
+      </div>
+
+      <div className="text-right">
+        <div className="text-[8px] uppercase text-white/35">Payout</div>
+        <div className="font-black text-cyan-300">
+          {formatMoney(Number(bonus.payout || 0))}
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+    )}
+  </div>
+</div>
     </div>
   </section>
 )}
 
-{activeSection === "giveaways" && (
+{activeSection === "prizeportal" && (
   <section className="space-y-4 sm:space-y-6">
     <div className="mx-auto max-w-5xl text-center">
-      <SectionLabel>Giveaways</SectionLabel>
-
-      <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-white drop-shadow-[0_0_22px_rgba(0,245,255,0.18)] sm:mt-3 sm:text-[clamp(2.5rem,6vw,4rem)]">
-        TOTAL GIVEN AWAY
-      </h2>
-
-      <div className="mt-2 text-[clamp(1.5rem,4vw,3rem)] font-black text-cyan-200">
-        ${giveawayTotal.toLocaleString()}
-      </div>
+      <GlowTabTitle label="PRIZE PORTAL" />
     </div>
 
-    {biggestGiveaway && (
-      <div className="mx-auto max-w-3xl rounded-2xl border border-yellow-400/35 bg-[linear-gradient(90deg,rgba(90,60,0,0.96),rgba(0,0,0,0.97))] p-4 shadow-[0_0_22px_rgba(250,204,21,0.08)] sm:rounded-[1.5rem] sm:p-5">
-        <div className="text-[9px] uppercase tracking-[0.22em] text-yellow-300/75 sm:text-xs sm:tracking-[0.3em]">
-          Biggest Giveaway
-        </div>
-
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="truncate text-base font-black text-white sm:text-2xl">
-              🏆 {biggestGiveaway.winner_name}
-            </div>
-
-            {biggestGiveaway.note && (
-              <div className="mt-1 truncate text-[10px] text-white/45 sm:text-sm">
-                {biggestGiveaway.note}
-              </div>
-            )}
-          </div>
-
-          <div className="shrink-0 text-lg font-black text-[#f5c451] sm:text-2xl">
-            ${Number(biggestGiveaway.amount || 0).toLocaleString()}
-          </div>
-        </div>
-      </div>
-    )}
-
-{viewerName.toLowerCase() !== "trashguy__" &&
-  viewerName.toLowerCase() !== "trashguy" && (
-        <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] sm:rounded-[1.5rem] sm:p-6">
+{false ? (
+  <div className="mx-auto max-w-4xl rounded-2xl border border-white/10 bg-black/70 p-5 text-center text-sm text-white/60">
+    Owner accounts do not use the Prize Portal.
+  </div>
+) : (
+      <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/80 p-3 shadow-[0_0_24px_rgba(0,245,255,0.08)] sm:p-5">
+        {!isTwitchConnected ? (
           <div className="text-center">
-<SectionLabel>Prize Portal</SectionLabel>
-
-<h2 className="mt-2 text-2xl font-black leading-[1] tracking-tight text-white sm:mt-4 sm:text-[clamp(2rem,5vw,3.5rem)]">
-  MY REWARDS
-</h2>
-</div>
-
-{isTwitchConnected && (
-  <div className="mt-4 rounded-xl border border-cyan-300/20 bg-black/70 p-3 text-left sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
-    <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
-      Account Links
-    </div>
-
-    <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto] sm:mt-3 sm:gap-3">
-      <input
-        value={rouloUsernameInput}
-        onChange={(e) => setRouloUsernameInput(e.target.value)}
-        placeholder="Enter your Roulo username"
-        className="w-full rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-sm text-white outline-none sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
-      />
-
-      <button
-        onClick={handleLinkRoulo}
-        className="rounded-lg border border-cyan-300/25 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 hover:bg-cyan-400/20 sm:rounded-xl sm:px-5 sm:py-3 sm:text-base"
-      >
-        Link Roulo
-      </button>
-    </div>
-
-    {rouloLink && (
-      <>
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">
-          <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-            <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
-              Twitch
+            <div className="text-sm font-black uppercase tracking-[0.18em] text-white/55">
+              Connect Your Account
             </div>
-            <div className="mt-1 text-sm font-black text-green-300 sm:text-xl">
-              ✅ Linked
-            </div>
+
+            <button
+              onClick={handleTwitchLogin}
+              className="mt-4 rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-[#9146FF]/30"
+            >
+              Connect Twitch to View Portal
+            </button>
           </div>
+        ) : (
+          <>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-purple-300/30 bg-purple-500/20 text-lg font-black text-white">
+                  {viewerDisplayName?.charAt(0)?.toUpperCase() || "T"}
+                </div>
 
-          <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-            <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
-              Roulo
+                <div className="min-w-0">
+                  <div className="truncate text-lg font-black text-white">
+                    {viewerDisplayName || viewerName}
+                  </div>
+                  <div className="truncate text-sm font-bold text-purple-300">
+                    @{viewerName} · Twitch
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="mt-1 text-sm font-black text-green-300 sm:text-xl">
-              ✅ Linked
-            </div>
+
+<div className="mt-3 rounded-2xl border border-cyan-300/15 bg-black/60 p-3 sm:p-4">
+  <div className="space-y-4">
+
+    {/* DISCORD ACCOUNT */}
+    <div>
+      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300/80">
+        Discord Account
+      </div>
+
+      <div className="mt-3">
+        {(rouloLink as any)?.is_in_discord ? (
+          <div className="rounded-xl border border-green-300/20 bg-green-500/10 px-4 py-3 text-sm font-black text-green-300">
+            ✅ Discord Linked
           </div>
-
-          <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-            <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
-              Discord
-            </div>
-            <div className="mt-1 text-sm font-black text-indigo-300 sm:text-xl">
-              {(rouloLink as any)?.is_in_discord ? "✅ Linked" : "❌ Not Linked"}
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-            <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
-              Role
-            </div>
-            <div className="mt-1 truncate text-sm font-black uppercase text-cyan-200 sm:text-xl">
-              {rouloLink.role}
-            </div>
-          </div>
-
-<div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-  <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
-    Base Odds
-  </div>
-  <div className="mt-1 text-sm font-black text-cyan-200 sm:text-xl">
-    {viewerOdds.baseOdds.toFixed(1)}x
-  </div>
-</div>
-
-<div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-  <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
-    Luck Odds
-  </div>
-  <div className="mt-1 text-sm font-black text-green-300 sm:text-xl">
-    +{viewerOdds.luckOdds.toFixed(1)}x
-  </div>
-</div>
-
-<div className="rounded-lg border border-yellow-300/25 bg-yellow-400/10 p-2 sm:rounded-xl sm:p-4">
-  <div className="text-[9px] uppercase tracking-[0.14em] text-yellow-200/70 sm:text-xs">
-    Total Odds
-  </div>
-  <div className="mt-1 text-sm font-black text-[#f5c451] sm:text-xl">
-    {viewerOdds.totalOdds.toFixed(1)}x
-  </div>
-</div>
-
-<div className="rounded-lg border border-white/10 bg-white/5 p-2 sm:rounded-xl sm:p-4">
-  <div className="text-[9px] uppercase tracking-[0.14em] text-white/35 sm:text-xs">
-    Next Loss
-  </div>
-  <div className="mt-1 text-sm font-black text-white sm:text-xl">
-    {viewerOdds.nextOdds.toFixed(1)}x
-  </div>
-</div>
-        </div>
-
-        {!(rouloLink as any)?.is_in_discord && (
+        ) : (
           <button
             onClick={() =>
               (window.location.href = `/api/discord/login?viewer=${viewerName}`)
             }
-            className="mt-3 w-full rounded-xl border border-indigo-300/20 bg-indigo-400/10 px-4 py-3 text-sm font-black text-indigo-200 hover:bg-indigo-400/20"
+            className="w-full rounded-xl border border-indigo-300/20 bg-indigo-400/10 px-4 py-3 text-sm font-black text-indigo-200 hover:bg-indigo-400/20"
           >
-            💬 Link Discord (+0.1 Odds)
+            💬 Link Discord
           </button>
         )}
-      </>
-    )}
-
-    {rouloLinkMessage && (
-      <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-2 text-xs text-white/70 sm:mt-4 sm:rounded-xl sm:p-3 sm:text-sm">
-        {rouloLinkMessage}
       </div>
-    )}
-  </div>
-)}
+    </div>
 
-{!isTwitchConnected ? (
-  <div className="mt-4 text-center sm:mt-6">
-    <button
-      onClick={handleTwitchLogin}
-      className="rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-[#9146FF]/30 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base"
-    >
-      Connect Twitch to View Rewards
-    </button>
+    {/* ROULO ACCOUNT */}
+    <div>
+      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300/80">
+        Roulo Account
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+        <input
+          value={rouloUsernameInput}
+          onChange={(e) => setRouloUsernameInput(e.target.value)}
+          placeholder="Enter your Roulo username"
+          className="w-full rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-sm text-white outline-none"
+        />
+
+        <button
+          onClick={handleLinkRoulo}
+          className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 hover:bg-cyan-400/20"
+        >
+          Link Roulo
+        </button>
+      </div>
+
+      {rouloLinkMessage && (
+        <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-2 text-xs text-white/70">
+          {rouloLinkMessage}
+        </div>
+      )}
+    </div>
+
   </div>
-) : (
-            <>
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-4">
-                <div className="rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-3 sm:rounded-2xl sm:p-5">
-                  <div className="text-[9px] uppercase tracking-[0.16em] text-yellow-200/70 sm:text-xs sm:tracking-[0.22em]">
-                    Pending
+</div>
+
+            {rouloLink && (
+              <>
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35">
+                      Twitch
+                    </div>
+                    <div className="mt-1 text-sm font-black text-green-300">
+                      ✅ Linked
+                    </div>
                   </div>
-                  <div className="mt-1 text-xl font-black text-yellow-200 sm:mt-2 sm:text-3xl">
-                    ${viewerRewardsPending.toLocaleString()}
+
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35">
+                      Roulo
+                    </div>
+                    <div className="mt-1 text-sm font-black text-green-300">
+                      ✅ Linked
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35">
+                      Discord
+                    </div>
+                    <div className="mt-1 text-sm font-black text-indigo-300">
+                      {(rouloLink as any)?.is_in_discord ? "✅ Linked" : "❌ Not Linked"}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/35">
+                      Role
+                    </div>
+                    <div className="mt-1 truncate text-sm font-black uppercase text-cyan-200">
+                      {rouloLink.role}
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3 sm:rounded-2xl sm:p-5">
-                  <div className="text-[9px] uppercase tracking-[0.16em] text-cyan-200/70 sm:text-xs sm:tracking-[0.22em]">
-                    Paid
+                {!(rouloLink as any)?.is_in_discord && (
+                  <button
+                    onClick={() =>
+                      (window.location.href = `/api/discord/login?viewer=${viewerName}`)
+                    }
+                    className="mt-3 w-full rounded-xl border border-indigo-300/20 bg-indigo-400/10 px-4 py-3 text-sm font-black text-indigo-200 hover:bg-indigo-400/20"
+                  >
+                    💬 Link Discord (+0.1 Odds)
+                  </button>
+                )}
+
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="rounded-xl border border-slate-300/20 bg-slate-400/10 p-3">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/40">
+                      Base Odds
+                    </div>
+                    <div className="mt-1 text-lg font-black text-slate-100">
+                      {viewerOdds.baseOdds.toFixed(1)}x
+                    </div>
                   </div>
-                  <div className="mt-1 text-xl font-black text-cyan-200 sm:mt-2 sm:text-3xl">
-                    ${viewerRewardsPaid.toLocaleString()}
+
+                  <div className="rounded-xl border border-green-300/20 bg-green-400/10 p-3">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/40">
+                      Luck Odds
+                    </div>
+                    <div className="mt-1 text-lg font-black text-green-300">
+                      +{viewerOdds.luckOdds.toFixed(1)}x
+                    </div>
                   </div>
+
+                  <div className="rounded-xl border border-red-400/40 bg-red-500/15 p-3 shadow-[0_0_12px_rgba(239,68,68,0.22)]">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-red-100/70">
+                      Total Odds
+                    </div>
+                    <div className="mt-1 text-lg font-black text-white">
+                      {viewerOdds.totalOdds.toFixed(1)}x
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-white/40">
+                      Next Loss
+                    </div>
+                    <div className="mt-1 text-lg font-black text-cyan-200">
+                      {viewerOdds.nextOdds.toFixed(1)}x
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-3">
+                <div className="text-[9px] uppercase tracking-[0.16em] text-yellow-200/70">
+                  Pending
+                </div>
+                <div className="mt-1 text-xl font-black text-yellow-200">
+                  ${viewerRewardsPending.toLocaleString()}
                 </div>
               </div>
 
-              <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-black/60 sm:mt-6 sm:rounded-[1.5rem]">
-                {viewerRewards.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-sm text-white/45 sm:px-6 sm:py-10">
-                    {viewerRewardsMessage || "No rewards yet."}
-                  </div>
-                ) : (
-                  <div className="divide-y divide-white/5">
-                    {viewerRewards.map((reward) => (
-                      <div
-                        key={reward.id}
-                        className="flex items-center justify-between gap-3 px-3 py-2.5 sm:gap-4 sm:px-5 sm:py-4"
-                      >
-                        <div className="min-w-0 text-left">
-                          <div className="truncate text-sm font-black text-white sm:text-base">
-                            {reward.title || "Chat Giveaway"}
-                          </div>
-                          <div className="mt-0.5 text-[10px] text-white/35 sm:mt-1 sm:text-xs">
-                            {reward.created_at
-                              ? new Date(reward.created_at).toLocaleString()
-                              : "Recently"}
-                          </div>
-                        </div>
+              <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3">
+                <div className="text-[9px] uppercase tracking-[0.16em] text-cyan-200/70">
+                  Paid
+                </div>
+                <div className="mt-1 text-xl font-black text-cyan-200">
+                  ${viewerRewardsPaid.toLocaleString()}
+                </div>
+              </div>
+            </div>
 
-                        <div className="shrink-0 text-right">
-                          <div className="text-base font-black text-cyan-200 sm:text-xl">
-                            ${Number(reward.amount || 0).toLocaleString()}
-                          </div>
-                          <div
-                            className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[9px] font-black sm:px-3 sm:py-1 sm:text-xs ${
-                              reward.status === "complete"
-                                ? "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
-                                : "border border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
-                            }`}
-                          >
-                            {reward.status === "complete" ? "Done" : "Pending"}
-                          </div>
+            <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-black/60">
+              {viewerRewards.length === 0 ? (
+                <div className="px-4 py-6 text-center text-sm text-white/45">
+                  {viewerRewardsMessage || "No rewards yet."}
+                </div>
+              ) : (
+                <div className="max-h-[300px] divide-y divide-white/5 overflow-y-auto">
+                  {viewerRewards.map((reward) => (
+                    <div
+                      key={reward.id}
+                      className="flex items-center justify-between gap-3 px-3 py-3"
+                    >
+                      <div className="min-w-0 text-left">
+                        <div className="truncate text-sm font-black text-white">
+                          {reward.title || "Chat Giveaway"}
+                        </div>
+                        <div className="mt-0.5 text-[10px] text-white/35">
+                          {reward.created_at
+                            ? new Date(reward.created_at).toLocaleString()
+                            : "Recently"}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      )}
 
-    <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] sm:rounded-[1.5rem] sm:p-6">
-      {giveawayLoading ? (
-        <div className="px-4 py-6 text-sm text-white/60 sm:px-6 sm:py-10">
-          Loading giveaways...
-        </div>
-      ) : giveaways.length === 0 ? (
-        <div className="px-4 py-6 text-center text-sm text-white/45 sm:px-6 sm:py-10">
-          No giveaways logged yet.
-        </div>
-      ) : (
-        <div className="overflow-hidden rounded-xl border border-white/10 bg-black/60 sm:rounded-[1.5rem]">
-          <div
-            className={`grid ${
-              isAdmin
-                ? "grid-cols-[30px_minmax(0,1fr)_56px_50px]"
-                : "grid-cols-[30px_minmax(0,1fr)_56px]"
-            } border-b border-white/5 px-2.5 py-2 text-[8px] font-bold uppercase tracking-[0.12em] text-white/35 sm:grid-cols-[52px_minmax(0,1fr)_90px_74px] sm:px-5 sm:py-4 sm:text-xs sm:tracking-[0.22em]`}
-          >
-            <div>#</div>
-            <div>Winner</div>
-            <div className="text-center">Amount</div>
-            <div className="text-right">{isAdmin ? "Edit" : ""}</div>
-          </div>
-
-          <div className="max-h-[420px] overflow-y-auto sm:max-h-[520px]">
-            {giveaways.map((giveaway, index) => (
-              <div
-                key={giveaway.id}
-                className={`grid ${
-                  isAdmin
-                    ? "grid-cols-[30px_minmax(0,1fr)_56px_50px]"
-                    : "grid-cols-[30px_minmax(0,1fr)_56px]"
-                } items-center border-b border-white/5 px-2.5 py-2.5 last:border-b-0 sm:grid-cols-[52px_minmax(0,1fr)_90px_74px] sm:px-5 sm:py-4`}
-              >
-                <div className="flex h-6 w-6 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-400/10 text-[9px] font-black text-cyan-200 sm:h-9 sm:w-9 sm:text-xs">
-                  {index + 1}
-                </div>
-
-                <div className="min-w-0 overflow-hidden">
-                  <div className="truncate text-xs font-semibold text-white sm:text-base">
-                    {giveaway.winner_name}
-                  </div>
-
-                  {giveaway.note && (
-                    <div className="mt-0.5 truncate text-[9px] text-white/35 sm:mt-1 sm:text-xs">
-                      {giveaway.note}
+                      <div className="shrink-0 text-right">
+                        <div className="text-base font-black text-cyan-200">
+                          ${Number(reward.amount || 0).toLocaleString()}
+                        </div>
+                        <div
+                          className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[9px] font-black ${
+                            reward.status === "complete"
+                              ? "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
+                              : "border border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
+                          }`}
+                        >
+                          {reward.status === "complete" ? "Done" : "Pending"}
+                        </div>
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    )}
+  </section>
+)}
 
-                <div className="text-center text-xs font-black text-cyan-200 sm:text-lg">
-                  ${Number(giveaway.amount || 0).toLocaleString()}
-                </div>
+{activeSection === "wagerRewards" && (
+  <section className="space-y-4 sm:space-y-6">
+    <div className="mx-auto max-w-5xl text-center">
+      <GlowTabTitle label="WAGER REWARDS" />
+    </div>
 
-                {isAdmin ? (
-                  <div className="flex justify-end gap-1 sm:gap-2">
-                    <button
-                      onClick={async () => {
-                        const newName = prompt("Edit name:", giveaway.winner_name);
-                        const newAmount = prompt("Edit winnings:", String(giveaway.amount));
-                        const newNote = prompt("Edit note:", giveaway.note || "");
+    <div className="mx-auto max-w-4xl rounded-2xl border border-cyan-300/15 bg-black/80 p-6 text-center">
+      <div className="text-2xl font-black text-cyan-200">
+        🚧 Coming Soon
+      </div>
 
-                        if (!newName || !newAmount) return;
-
-                        await fetch(`/api/giveaways?id=${giveaway.id}&key=trashguy92`, {
-                          method: "PATCH",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            winner_name: newName,
-                            amount: Number(newAmount),
-                            note: newNote,
-                          }),
-                        });
-
-                        window.location.reload();
-                      }}
-                      className="flex h-6 w-6 items-center justify-center rounded-md border border-yellow-400/30 bg-yellow-400/10 text-[10px] text-yellow-300 transition hover:bg-yellow-400/20 sm:h-8 sm:w-8 sm:rounded-lg sm:text-xs"
-                    >
-                      ✎
-                    </button>
-
-                    <button
-                      onClick={async () => {
-                        await fetch(`/api/giveaways?id=${giveaway.id}&key=trashguy92`, {
-                          method: "DELETE",
-                        });
-                        window.location.reload();
-                      }}
-                      className="flex h-6 w-6 items-center justify-center rounded-md border border-red-400/30 bg-red-400/10 text-[10px] text-red-300 transition hover:bg-red-400/20 sm:h-8 sm:w-8 sm:rounded-lg sm:text-xs"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ) : (
-                  <div />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="mt-3 text-white/60">
+        Wager milestones to anyone under code TRASHGUY
+      </div>
     </div>
   </section>
 )}
@@ -4076,14 +4060,14 @@ const rankBox =
 
 {activeSection === "tournaments" && (
   <section className="space-y-4 sm:space-y-5">
-    <div className="mx-auto max-w-7xl text-center">
-      <SectionLabel>Tournaments</SectionLabel>
+<div className="mx-auto max-w-7xl text-center">
+  <GlowTabTitle label="VIP TOURNAMENTS" />
 
-      <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-white drop-shadow-[0_0_22px_rgba(0,245,255,0.18)] sm:mt-3 sm:text-[clamp(2.5rem,6vw,4rem)]">
-        {tournamentView === "bracket"
-          ? bracket.title || "Tournament Bracket"
-          : "Snake Draft"}
-      </h2>
+  <div className="mt-2 text-sm font-black uppercase tracking-[0.18em] text-cyan-200/80 sm:text-base">
+    {tournamentView === "bracket"
+      ? bracket.title || "Tournament Bracket"
+      : "Snake Draft"}
+  </div>
 
       <div className="mt-3 inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-1.5 text-xs font-black text-cyan-100">
         {tournamentView === "bracket" ? "Live Bracket" : "Team Slot Draft"}
@@ -4254,15 +4238,6 @@ const rankBox =
     {tournamentView === "snake" && (
       <div className="mx-auto max-w-7xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6">
         <div className="text-center">
-          <SectionLabel>Snake Draft</SectionLabel>
-
-          <h2 className="mt-2 text-2xl font-black uppercase tracking-tight text-white sm:text-4xl">
-            TEAM SLOT DRAFT
-          </h2>
-
-          <div className="mt-2 text-sm text-white/45">
-            View-only board
-          </div>
         </div>
 
         {snakeCaptains.length === 0 ? (
@@ -4384,17 +4359,9 @@ const rankBox =
 
 {activeSection === "slotpicker" && (
   <section className="space-y-4 sm:space-y-6">
-    <div className="mx-auto max-w-5xl text-center">
-      <SectionLabel>Slot Picker</SectionLabel>
-
-      <h2 className="mt-2 text-[clamp(1.5rem,7vw,4rem)] font-black leading-[1] tracking-tight text-white">
-        RANDOM SLOT PICKER
-      </h2>
-
-      <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-white/55 sm:text-base">
-        Select providers, spin the picker, and let fate decide the next slot.
-      </p>
-    </div>
+<div className="mx-auto max-w-5xl text-center">
+  <GlowTabTitle label="SLOT PICKER" />
+</div>
 
     <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6">
       <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/40 sm:text-xs sm:tracking-[0.24em]">
@@ -4546,15 +4513,7 @@ const rankBox =
   <section className="mx-auto grid max-w-6xl gap-2 sm:gap-3">
     <div>
 <div className="text-center">
-  <SectionLabel>Admin</SectionLabel>
-
-  <h2 className="mt-2 text-[clamp(1.8rem,7vw,4rem)] font-black leading-[1] tracking-tight text-white">
-    CONTROL CENTER
-  </h2>
-
-  <p className="mx-auto mt-3 max-w-2xl text-sm text-white/55 sm:text-base">
-    Admin panel is only shown for approved Twitch accounts.
-  </p>
+  <GlowTabTitle label="ADMIN CONTROL CENTER" />
 </div>
 
       <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
