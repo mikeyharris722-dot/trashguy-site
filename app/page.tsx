@@ -3711,8 +3711,8 @@ const rankBox =
 
       <div className="mt-3">
 {discordLink?.is_in_discord ? (
-  <div className="rounded-xl border border-green-300/20 bg-green-500/10 px-4 py-3 text-center">
-    <div className="text-sm font-black text-green-300">
+  <div className="rounded-xl border border-indigo-300/20 bg-indigo-500/10 px-4 py-3 text-center">
+    <div className="text-sm font-black text-indigo-300">
       ✅ Discord Linked
     </div>
 
@@ -3867,11 +3867,11 @@ const rankBox =
                 </div>
               </div>
 
-<div className="rounded-xl border border-green-300/20 bg-green-500/10 p-3 sm:rounded-2xl sm:p-5">
-  <div className="text-[9px] uppercase tracking-[0.16em] text-green-200/70 sm:text-xs sm:tracking-[0.22em]">
+              <div className="rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-3">
+                <div className="text-[9px] uppercase tracking-[0.16em] text-yellow-200/70">
     Paid
   </div>
-  <div className="mt-1 text-xl font-black text-green-300 sm:mt-2 sm:text-3xl">
+  <div className="mt-1 text-xl font-black text-yellow-200">
     ${viewerRewardsPaid.toLocaleString()}
   </div>
 </div>
