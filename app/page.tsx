@@ -3773,7 +3773,7 @@ const rankBox =
                     <div className="text-[9px] uppercase tracking-[0.14em] text-white/35">
                       Twitch
                     </div>
-                    <div className="mt-1 text-sm font-black text-green-300">
+                    <div className="mt-1 text-sm font-black text-indigo-300">
                       ✅ Linked
                     </div>
                   </div>
@@ -3782,7 +3782,7 @@ const rankBox =
                     <div className="text-[9px] uppercase tracking-[0.14em] text-white/35">
                       Roulo
                     </div>
-                    <div className="mt-1 text-sm font-black text-green-300">
+                    <div className="mt-1 text-sm font-black text-indigo-300">
                       ✅ Linked
                     </div>
                   </div>
@@ -3800,7 +3800,7 @@ const rankBox =
                     <div className="text-[9px] uppercase tracking-[0.14em] text-white/35">
                       Role
                     </div>
-                    <div className="mt-1 truncate text-sm font-black uppercase text-cyan-200">
+                    <div className="mt-1 truncate text-sm font-black uppercase text-indigo-200">
                       {rouloLink.role}
                     </div>
                   </div>
@@ -3822,7 +3822,7 @@ const rankBox =
                     <div className="text-[9px] uppercase tracking-[0.14em] text-white/40">
                       Base Odds
                     </div>
-                    <div className="mt-1 text-lg font-black text-slate-100">
+                    <div className="mt-1 text-lg font-black text-white">
                       {viewerOdds.baseOdds.toFixed(1)}x
                     </div>
                   </div>
@@ -3831,7 +3831,7 @@ const rankBox =
                     <div className="text-[9px] uppercase tracking-[0.14em] text-white/40">
                       Luck Odds
                     </div>
-                    <div className="mt-1 text-lg font-black text-green-300">
+                    <div className="mt-1 text-lg font-black text-white">
                       +{viewerOdds.luckOdds.toFixed(1)}x
                     </div>
                   </div>
@@ -3849,7 +3849,7 @@ const rankBox =
                     <div className="text-[9px] uppercase tracking-[0.14em] text-white/40">
                       Next Loss
                     </div>
-                    <div className="mt-1 text-lg font-black text-cyan-200">
+                    <div className="mt-1 text-lg font-black text-white">
                       {viewerOdds.nextOdds.toFixed(1)}x
                     </div>
                   </div>
