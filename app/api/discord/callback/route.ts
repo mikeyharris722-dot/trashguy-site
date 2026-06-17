@@ -113,10 +113,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  return NextResponse.redirect(
-    new URL(
-      `/?discord=${isInDiscord ? "linked" : "not-in-server"}&section=giveaways`,
-      req.nextUrl.origin
-    )
-  );
+return NextResponse.redirect(
+  new URL(
+    `/?discord=${isInDiscord ? "linked" : "not-in-server"}&section=prizeportal`,
+    req.nextUrl.origin
+  )
+);
 }

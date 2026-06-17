@@ -211,9 +211,15 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { role, weight } = await getRoleAndWeight({
+const { data: existingLink } = await supabase
+  .from("roulo_links")
+  .select("*")
+  .eq("twitch_username", twitchUsername)
+  .maybeSingle();
+
+const { role, weight } = await getRoleAndWeight({
   rouloUsername: affiliate.rouloUsername,
-  existingLink: null,
+  existingLink,
 });
 
   const { data, error } = await supabase
@@ -226,6 +232,11 @@ export async function POST(req: NextRequest) {
         wagered: affiliate.wagered,
         role,
         weight,
+
+        discord_id: existingLink?.discord_id || null,
+        discord_username: existingLink?.discord_username || null,
+        is_in_discord: !!existingLink?.is_in_discord,
+
         updated_at: new Date().toISOString(),
       },
       { onConflict: "twitch_username" }
