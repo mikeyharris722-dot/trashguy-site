@@ -2899,7 +2899,7 @@ const handleGenerateBracket = () => {
     <img
       src="/hero-logos.png"
       alt="Trashguy x RouloBets"
-      className="mx-auto -mt-10 -mb-12 h-[125px] w-auto object-contain drop-shadow-[0_0_42px_rgba(0,245,255,0.38)] sm:-mt-20 sm:-mb-28 sm:h-[420px] sm:drop-shadow-[0_0_65px_rgba(0,245,255,0.45)]"
+      className="mx-auto -mt-10 -mb-8 h-[125px] w-auto object-contain drop-shadow-[0_0_42px_rgba(0,245,255,0.38)] sm:-mt-20 sm:-mb-20 sm:h-[420px] sm:drop-shadow-[0_0_65px_rgba(0,245,255,0.45)]"
     />
 
     <h1
@@ -3618,7 +3618,7 @@ const rankBox =
       </div>
 
       <div className="min-w-0">
-        <div className="truncate text-sm font-black text-white">
+        <div className="break-words leading-tight text-sm font-black text-white">
           {bonus.slotName}
         </div>
         <div className="text-[9px] uppercase tracking-[0.12em] text-white/35">
@@ -3699,6 +3699,22 @@ const rankBox =
                 </div>
               </div>
             </div>
+
+            {/* Profile Card */}
+
+<div className="mt-3 grid grid-cols-1 gap-2">
+  <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3 text-center">
+    <div className="text-[12px] font-black uppercase tracking-[0.16em] text-cyan-200/70">
+      Leaderboard Wagered
+    </div>
+
+    <div className="mt-1 text-lg font-black text-white sm:text-2xl">
+      ${Number(rouloLink?.wagered || 0).toLocaleString()}
+    </div>
+  </div>
+</div>
+
+{/* Discord Account */}
 
 <div className="mt-3 rounded-2xl border border-cyan-300/15 bg-black/60 p-3 sm:p-4">
   <div className="space-y-4">
@@ -3938,157 +3954,7 @@ const rankBox =
       </div>
 
       <div className="mt-3 text-white/60">
-        Wager milestones to anyone under code TRASHGUY
-      </div>
-    </div>
-  </section>
-)}
-
-{activeSection === "monthlyRewards" && (
-  <section className="space-y-4 sm:space-y-6">
-    <div className="mx-auto max-w-7xl text-center">
-      <SectionLabel>Monthly Rewards</SectionLabel>
-
-      <h2 className="mt-2 text-[clamp(1.5rem,8vw,4rem)] font-black text-white">
-        REWARD CALENDAR
-      </h2>
-
-      <p className="mx-auto mt-3 max-w-2xl text-xs text-white/55 sm:text-base">
-        See what rewards, giveaways, and prize events are happening each day.
-      </p>
-    </div>
-
-    <div className="mx-auto max-w-7xl">
-      <div className="flex items-center justify-between gap-3">
-        <button
-          onClick={() =>
-            setCalendarDate(
-              new Date(
-                calendarDate.getFullYear(),
-                calendarDate.getMonth() - 1,
-                1
-              )
-            )
-          }
-          className="rounded-xl border border-white/10 bg-black/85 px-3 py-2 text-xs font-black text-white transition hover:border-cyan-300/35 hover:text-cyan-200 sm:px-5 sm:text-sm"
-        >
-          ← Prev
-        </button>
-
-        <div className="text-center text-lg font-black text-white sm:text-3xl">
-          {calendarDate.toLocaleString("default", {
-            month: "long",
-            year: "numeric",
-          })}
-        </div>
-
-        <button
-          onClick={() =>
-            setCalendarDate(
-              new Date(
-                calendarDate.getFullYear(),
-                calendarDate.getMonth() + 1,
-                1
-              )
-            )
-          }
-          className="rounded-xl border border-white/10 bg-black/85 px-3 py-2 text-xs font-black text-white transition hover:border-cyan-300/35 hover:text-cyan-200 sm:px-5 sm:text-sm"
-        >
-          Next →
-        </button>
-      </div>
-
-      <div className="mt-5 grid grid-cols-7 gap-1 text-center sm:mt-8 sm:gap-2">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <div
-            key={day}
-            className="rounded-lg border border-cyan-300/15 bg-black/85 py-2 text-[8px] font-black uppercase tracking-[0.12em] text-cyan-200 sm:text-xs"
-          >
-            {day}
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2 lg:grid-cols-7 lg:gap-3">
-        {monthlyRewardDays.map((rawItem: any) => {
-          const item = rawItem as any;
-
-          if (item.blank) {
-            return (
-              <div
-                key={item.key}
-                className="hidden min-h-[120px] rounded-xl border border-white/5 bg-black/40 sm:block sm:min-h-[180px]"
-              />
-            );
-          }
-
-          return (
-            <div
-              key={item.dateKey}
-              className="flex min-h-[185px] flex-col rounded-xl border border-cyan-300/15 bg-black/85 p-2 text-left shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:min-h-[210px] sm:p-3"
-            >
-              <div className="mb-2 flex justify-center">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-300/35 bg-cyan-400/15 text-[11px] font-black text-cyan-100 shadow-[0_0_14px_rgba(0,245,255,0.16)] sm:h-9 sm:w-9 sm:text-sm">
-                  {item.day}
-                </div>
-              </div>
-
-              {isAdmin && adminAllowed ? (
-                <div className="flex flex-1 flex-col gap-1.5">
-                  <textarea
-                    value={item.reward?.title || ""}
-                    onChange={(e) =>
-                      updateMonthlyReward(item.dateKey, "title", e.target.value)
-                    }
-                    placeholder="Event title"
-                    rows={2}
-                    className="min-h-[42px] w-full resize-none rounded-md border border-white/10 bg-black/80 px-2 py-1.5 text-[9px] font-semibold leading-4 text-white outline-none focus:border-cyan-300/35 sm:min-h-[54px] sm:text-xs"
-                  />
-
-                  <textarea
-                    value={item.reward?.note || ""}
-                    onChange={(e) =>
-                      updateMonthlyReward(item.dateKey, "note", e.target.value)
-                    }
-                    placeholder=""
-                    rows={4}
-                    className="min-h-[58px] w-full flex-1 resize-none rounded-md border border-white/10 bg-black/80 px-2 py-1.5 text-[8px] leading-4 text-white outline-none focus:border-cyan-300/35 sm:min-h-[80px] sm:text-xs"
-                  />
-
-                  <div className="mt-auto rounded-md border border-yellow-300/20 bg-yellow-400/10 px-2 py-1.5 text-center text-[7px] font-black uppercase leading-3 tracking-[0.08em] text-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.08)] sm:text-[8px]">
-                    Daily Giveaways For All Twitch Viewers
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-1 flex-col">
-                  <div className="flex flex-1 flex-col justify-center">
-                    {item.reward?.title || item.reward?.note ? (
-                      <div>
-                        <div className="break-words text-[10px] font-black leading-4 text-white sm:text-sm">
-                          {item.reward?.title || "Reward Day"}
-                        </div>
-
-                        {item.reward?.note && (
-                          <div className="mt-2 whitespace-pre-line break-words text-[8px] leading-4 text-white/70 sm:text-xs">
-                            {item.reward.note}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-center text-[8px] text-white/25 sm:text-[10px]">
-                        No event
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-3 rounded-md border border-yellow-300/20 bg-yellow-400/10 px-2 py-1.5 text-center text-[7px] font-black uppercase leading-3 tracking-[0.08em] text-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.08)] sm:text-[8px]">
-                    Daily Giveaways For All Twitch Viewers
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        Wager milestones for anyone under code TRASHGUY
       </div>
     </div>
   </section>
@@ -4141,7 +4007,7 @@ const rankBox =
             Loading bracket...
           </div>
         ) : (
-          <div className="mx-auto max-w-7xl rounded-2xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:rounded-[1.5rem] sm:p-4">
+          <div className="mx-auto max-w-7xl">
             <div
               className="cursor-grab overflow-x-auto active:cursor-grabbing"
               onMouseDown={(e) => {
@@ -4178,7 +4044,7 @@ const rankBox =
                   return (
                     <div
                       key={round.id}
-                      className={`w-[220px] shrink-0 sm:w-[300px] ${topPadding}`}
+                      className={`w-[190px] shrink-0 sm:w-[260px] ${topPadding}`}
                     >
                       <div className="mb-3 text-center">
                         <div className="inline-flex max-w-full rounded-full border border-cyan-300/15 bg-black/85 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200 sm:text-[10px]">
@@ -4187,7 +4053,7 @@ const rankBox =
                       </div>
 
                       <div
-                        className={`space-y-3 ${
+                        className={`space-y-2 ${
                           roundIndex === 0
                             ? ""
                             : roundIndex === 1
@@ -4206,7 +4072,7 @@ const rankBox =
                           return (
                             <div
                               key={match.id}
-                              className="rounded-2xl border border-white/10 bg-black/90 p-3 shadow-[0_0_20px_rgba(0,0,0,0.35)] sm:p-4"
+                              className="rounded-xl border border-white/10 bg-black/90 p-2.5 shadow-[0_0_12px_rgba(0,0,0,0.25)] sm:p-3"
                             >
                               <div
                                 className={`rounded-xl border px-3 py-3 text-sm font-black sm:text-base ${
@@ -4261,10 +4127,6 @@ const rankBox =
                   );
                 })}
               </div>
-            </div>
-
-            <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
-              Drag left or right to move bracket
             </div>
           </div>
         )}
