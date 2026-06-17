@@ -97,21 +97,39 @@ export async function GET(req: NextRequest) {
     discordUser.username ||
     discordUser.id;
 
-  const { error } = await supabase
-    .from("roulo_links")
-    .update({
+    console.log("DISCORD VIEWER:", viewer);
+const { data: existingLink } = await supabase
+  .from("roulo_links")
+  .select("*")
+  .eq("twitch_username", viewer)
+  .maybeSingle();
+
+const { error } = await supabase
+  .from("roulo_links")
+  .upsert(
+    {
+      twitch_username: viewer,
+      twitch_display_name: existingLink?.twitch_display_name || viewer,
+
+      roulo_username: existingLink?.roulo_username || null,
+      wagered: Number(existingLink?.wagered || 0),
+      role: existingLink?.role || "viewer",
+      weight: Number(existingLink?.weight || 1),
+
       discord_id: discordUser.id,
       discord_username: discordUsername,
       is_in_discord: isInDiscord,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("twitch_username", viewer);
 
-  if (error) {
-    return NextResponse.redirect(
-      new URL("/?discord=save-failed", req.nextUrl.origin)
-    );
-  }
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "twitch_username" }
+  );
+
+if (error) {
+  return NextResponse.redirect(
+    new URL("/?discord=save-failed&section=prizeportal", req.nextUrl.origin)
+  );
+}
 
 return NextResponse.redirect(
   new URL(
