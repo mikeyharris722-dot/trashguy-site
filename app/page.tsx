@@ -776,6 +776,9 @@ const [rouloUsernameInput, setRouloUsernameInput] = useState("");
 const [rouloLink, setRouloLink] = useState<any>(null);
 const [rouloLinkMessage, setRouloLinkMessage] = useState("");
 
+const [discordLink, setDiscordLink] = useState<any>(null);
+const [discordLinkMessage, setDiscordLinkMessage] = useState("");
+
 const [adminRewards, setAdminRewards] = useState<any[]>([]);
 const [adminRewardsSearch, setAdminRewardsSearch] = useState("");
 const [adminRewardsMessage, setAdminRewardsMessage] = useState("");
@@ -1345,6 +1348,25 @@ const loadRouloLink = useCallback(async () => {
   }
 }, [viewerName]);
 
+const loadDiscordLink = useCallback(async () => {
+  if (!viewerName || viewerName === "viewer") return;
+
+  try {
+    const res = await fetch(
+      `/api/discord-link?viewer=${encodeURIComponent(viewerName)}`,
+      { cache: "no-store" }
+    );
+
+    const data = await res.json();
+
+    if (data?.ok) {
+      setDiscordLink(data.link || null);
+    }
+  } catch {
+    setDiscordLinkMessage("Could not load Discord link.");
+  }
+}, [viewerName]);
+
 const handleLinkRoulo = async () => {
   setRouloLinkMessage("Checking Roulo account...");
 
@@ -1641,15 +1663,22 @@ useEffect(() => {
 }, [currentHuntState, huntsLoading, huntsData]);
 
 useEffect(() => {
-  if (activeSection === "giveaways") {
+  if (activeSection === "prizeportal") {
     loadViewerRewards();
     loadRouloLink();
+    loadDiscordLink();
   }
 
   if (activeSection === "admin" && adminAllowed) {
     loadAdminRewards();
   }
-}, [activeSection, adminAllowed, loadViewerRewards, loadRouloLink]);
+}, [
+  activeSection,
+  adminAllowed,
+  loadViewerRewards,
+  loadRouloLink,
+  loadDiscordLink,
+]);
 
 // REALTIME UPDATES (FIXED)
 useEffect(() => {
@@ -3681,20 +3710,27 @@ const rankBox =
       </div>
 
       <div className="mt-3">
-        {(rouloLink as any)?.is_in_discord ? (
-          <div className="rounded-xl border border-green-300/20 bg-green-500/10 px-4 py-3 text-sm font-black text-green-300">
-            ✅ Discord Linked
-          </div>
-        ) : (
-          <button
-            onClick={() =>
-              (window.location.href = `/api/discord/login?viewer=${viewerName}`)
-            }
-            className="w-full rounded-xl border border-indigo-300/20 bg-indigo-400/10 px-4 py-3 text-sm font-black text-indigo-200 hover:bg-indigo-400/20"
-          >
-            💬 Link Discord
-          </button>
-        )}
+{discordLink?.is_in_discord ? (
+  <div className="rounded-xl border border-green-300/20 bg-green-500/10 px-4 py-3 text-center">
+    <div className="text-sm font-black text-green-300">
+      ✅ Discord Linked
+    </div>
+
+    <div className="mt-1 text-xs text-white/60">
+      {discordLink?.discord_username}
+    </div>
+  </div>
+) : (
+  <button
+    type="button"
+    onClick={() =>
+      (window.location.href = `/api/discord/login?viewer=${viewerName}`)
+    }
+    className="w-full rounded-xl border border-indigo-300/20 bg-indigo-400/10 px-4 py-3 text-sm font-black text-indigo-200 hover:bg-indigo-400/20"
+  >
+    💬 Link Discord
+  </button>
+)}
       </div>
     </div>
 
