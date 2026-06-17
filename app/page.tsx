@@ -3867,14 +3867,14 @@ const rankBox =
                 </div>
               </div>
 
-              <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3">
-                <div className="text-[9px] uppercase tracking-[0.16em] text-cyan-200/70">
-                  Paid
-                </div>
-                <div className="mt-1 text-xl font-black text-cyan-200">
-                  ${viewerRewardsPaid.toLocaleString()}
-                </div>
-              </div>
+<div className="rounded-xl border border-green-300/20 bg-green-500/10 p-3 sm:rounded-2xl sm:p-5">
+  <div className="text-[9px] uppercase tracking-[0.16em] text-green-200/70 sm:text-xs sm:tracking-[0.22em]">
+    Paid
+  </div>
+  <div className="mt-1 text-xl font-black text-green-300 sm:mt-2 sm:text-3xl">
+    ${viewerRewardsPaid.toLocaleString()}
+  </div>
+</div>
             </div>
 
             <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-black/60">
