@@ -20,7 +20,7 @@ const socials = [
   },
   {
     name: "Discord",
-    href: "YOUR_DISCORD_LINK",
+    href: "https://discord.gg/FYW4sRZ62e",
     icon: FaDiscord,
   },
   {
@@ -971,37 +971,28 @@ const currentPredictionEntry = useMemo(() => {
 const currentPredictionHunt = useMemo(() => {
   if (!huntsData.length) return null;
 
-  const openHunts = huntsData
-    .filter(
-      (hunt) =>
-        hunt.prediction_status === "open" ||
-        hunt.status === "open" ||
-        hunt.isOpening
-    )
-    .sort((a, b) => {
-      const aTime = a.updatedAt || a.createdAt ? new Date(a.updatedAt || a.createdAt || "").getTime() : 0;
-      const bTime = b.updatedAt || b.createdAt ? new Date(b.updatedAt || b.createdAt || "").getTime() : 0;
-      return bTime - aTime;
-    });
-
-  if (openHunts.length) return openHunts[0];
+  if (adminHuntId) {
+    const selected = huntsData.find((hunt) => hunt.id === adminHuntId);
+    if (selected) return selected;
+  }
 
   const sorted = [...huntsData].sort((a, b) => {
-    const aTime = a.updatedAt || a.createdAt ? new Date(a.updatedAt || a.createdAt || "").getTime() : 0;
-    const bTime = b.updatedAt || b.createdAt ? new Date(b.updatedAt || b.createdAt || "").getTime() : 0;
+    const aTime = a.updatedAt || a.createdAt
+      ? new Date(a.updatedAt || a.createdAt || "").getTime()
+      : 0;
+
+    const bTime = b.updatedAt || b.createdAt
+      ? new Date(b.updatedAt || b.createdAt || "").getTime()
+      : 0;
+
     return bTime - aTime;
   });
 
   return sorted[0] || null;
-}, [huntsData]);
+}, [huntsData, adminHuntId]);
 
-const adminSelectedHunt = useMemo(() => {
-  return (
-    huntsData.find((hunt) => hunt.id === adminHuntId) ||
-    currentPredictionHunt ||
-    null
-  );
-}, [huntsData, adminHuntId, currentPredictionHunt]);
+const adminSelectedHunt = currentPredictionHunt;
+
 const currentPredictionCount = predictions.length;
 
 const currentPredictionAvgX =
@@ -1405,9 +1396,13 @@ const handleLinkRoulo = async () => {
   }
 }, []);
 
-  const loadPredictions = useCallback(async () => {
+const loadPredictions = useCallback(async (huntId?: string) => {
   try {
-    const res = await fetch("/api/predictions", { cache: "no-store" });
+    const url = huntId
+      ? `/api/predictions?huntId=${encodeURIComponent(huntId)}`
+      : "/api/predictions";
+
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return;
 
     const data = await res.json();
@@ -1682,25 +1677,32 @@ useEffect(() => {
 
 // REALTIME UPDATES (FIXED)
 useEffect(() => {
+  const getSelectedHuntId = () =>
+    adminHuntId ||
+    currentPredictionHunt?.id ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem(STORAGE_KEYS.activeHuntId) || ""
+      : "");
+
   const channel = supabaseBrowser
     .channel("trashguy-live-updates")
-
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "predictions" },
       () => {
-        loadPredictions();
+        const huntId = getSelectedHuntId();
+        if (huntId) loadPredictions(huntId);
       }
     )
-  .on(
-  "postgres_changes",
-  { event: "*", schema: "public", table: "hunts" },
-  () => {
-    loadHunts();
-    loadPredictions();
-  }
-)
-
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "hunts" },
+      () => {
+        const huntId = getSelectedHuntId();
+        loadHunts();
+        if (huntId) loadPredictions(huntId);
+      }
+    )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "tournaments" },
@@ -1708,13 +1710,18 @@ useEffect(() => {
         loadBracket();
       }
     )
-
     .subscribe();
 
   return () => {
     supabaseBrowser.removeChannel(channel);
   };
-}, [loadBracket, loadPredictions, loadHunts]);
+}, [
+  adminHuntId,
+  currentPredictionHunt?.id,
+  loadBracket,
+  loadPredictions,
+  loadHunts,
+]);
 
 useEffect(() => {
   if (!currentGiveawayWinner) return;
@@ -1966,7 +1973,7 @@ body: JSON.stringify({
 
       setPredictionInput("");
       setPredictionMessage("Prediction saved.");
-      loadPredictions();
+      loadPredictions(currentPredictionHunt.id);
     } catch {
       setPredictionMessage("Failed to save prediction.");
     }
@@ -2102,9 +2109,9 @@ await loadPredictions();
       localStorage.setItem(STORAGE_KEYS.activeHuntId, activeHuntId);
     }
 
-    setAdminMessage("Predictions locked.");
+setAdminMessage("Predictions locked.");
 await loadHunts();
-await loadPredictions();
+await loadPredictions(activeHuntId);
   } catch {
     setAdminMessage("Failed to lock predictions.");
   }
@@ -2152,9 +2159,9 @@ await loadPredictions();
       localStorage.setItem(STORAGE_KEYS.activeHuntId, activeHuntId);
     }
 
-    setAdminMessage("Predictions opened.");
+setAdminMessage("Predictions opened.");
 await loadHunts();
-await loadPredictions();
+await loadPredictions(activeHuntId);
   } catch {
     setAdminMessage("Failed to open predictions.");
   }
@@ -2166,13 +2173,11 @@ const handleCompleteHunt = async () => {
     return;
   }
 
-  const amount = Number(
-    currentPredictionHunt?.stats?.totalWinnings ||
-      currentPredictionHunt?.totalWinnings ||
-      adminSelectedHunt?.stats?.totalWinnings ||
-      adminSelectedHunt?.totalWinnings ||
-      0
-  );
+const amount = Number(
+  adminSelectedHunt?.stats?.totalWinnings ||
+  adminSelectedHunt?.totalWinnings ||
+  0
+);
 
   if (!amount) {
     setAdminMessage("No final hunt balance found yet.");
@@ -2211,8 +2216,8 @@ const handleCompleteHunt = async () => {
       localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
     }
 
-    await loadHunts();
-    await loadPredictions();
+await loadHunts();
+await loadPredictions(adminHuntId);
   } catch {
     setAdminMessage("Failed to complete hunt.");
   }
@@ -3125,7 +3130,7 @@ style={{
 {activeSection === "leaderboard" && (
   <section className="space-y-4 sm:space-y-6">
 <div className="mx-auto max-w-5xl">
-  <GlowTabTitle label="LEADERBOARD" />
+  <GlowTabTitle label="$1,000 LEADERBOARD" />
 
   <div className="mt-3 flex justify-center">
     <div className="rounded-full border border-purple-400/30 bg-purple-500/10 px-5 py-2">
@@ -3437,34 +3442,28 @@ const rankBox =
 <div className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-400/5 p-2.5 sm:mt-4 sm:rounded-2xl sm:p-2">
   {isAdmin && (
     <div className="mt-2 rounded-xl border border-cyan-300/15 bg-black/40 p-3">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <ActionButton
-          onClick={handleStartHunt}
-          variant="dark"
-        >
-          Start
-        </ActionButton>
+<div className="grid grid-cols-3 gap-2">
 
-        <ActionButton
-          onClick={handleOpenPredictions}
-          variant="green"
-        >
-          Open
-        </ActionButton>
+<ActionButton
+  onClick={handleOpenPredictions}
+  variant="green"
+>
+  Open Predictions
+</ActionButton>
 
-        <ActionButton
-          onClick={handleLockPredictions}
-          variant="purple"
-        >
-          Close
-        </ActionButton>
+<ActionButton
+  onClick={handleLockPredictions}
+  variant="purple"
+>
+  Close Predictions
+</ActionButton>
 
-        <ActionButton
-          onClick={handleCompleteHunt}
-          variant="gold"
-        >
-          Done
-        </ActionButton>
+<ActionButton
+  onClick={handleCompleteHunt}
+  variant="gold"
+>
+  Complete Hunt
+</ActionButton>
       </div>
 
       <div className="mt-2 text-center text-[10px] text-white/55">

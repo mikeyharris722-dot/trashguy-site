@@ -182,19 +182,11 @@ async function getOpenHunt() {
   return { hunt: data, error: null };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const openHuntResult = await getOpenHunt();
+    const requestedHuntId = req.nextUrl.searchParams.get("huntId") || "";
 
-    if (openHuntResult.error) {
-      return NextResponse.json({
-        success: true,
-        predictions: [],
-        note: openHuntResult.error,
-      });
-    }
-
-    if (!openHuntResult.hunt?.id) {
+    if (!requestedHuntId) {
       return NextResponse.json({
         success: true,
         predictions: [],
@@ -204,7 +196,7 @@ export async function GET() {
     const { data, error } = await supabaseAdmin
       .from("predictions")
       .select("id, profile_id, guess_amount, created_at, updated_at")
-      .eq("hunt_id", openHuntResult.hunt.id)
+      .eq("hunt_id", requestedHuntId)
       .order("updated_at", { ascending: false });
 
     if (error) {
@@ -297,29 +289,35 @@ export async function POST(req: NextRequest) {
     const profileId = profileResult.profileId;
 
     const openHuntResult = await getOpenHunt();
+if (!requestedHuntId) {
+  return NextResponse.json(
+    { error: "Missing hunt id." },
+    { status: 400 }
+  );
+}
 
-    if (openHuntResult.error) {
-      return NextResponse.json(
-        { error: openHuntResult.error },
-        { status: 500 }
-      );
-    }
+const { data: hunt, error: huntError } = await supabaseAdmin
+  .from("hunts")
+  .select("id, status, prediction_status")
+  .eq("id", requestedHuntId)
+  .maybeSingle();
 
-    if (!openHuntResult.hunt?.id) {
-      return NextResponse.json(
-        { error: "No open hunt found." },
-        { status: 400 }
-      );
-    }
+if (huntError) {
+  return NextResponse.json({ error: huntError.message }, { status: 500 });
+}
 
-    if (openHuntResult.hunt.prediction_status !== "open") {
+if (!hunt?.id) {
+  return NextResponse.json({ error: "Hunt not found." }, { status: 400 });
+}
+
+if (hunt.prediction_status !== "open") {
   return NextResponse.json(
     { error: "Predictions are locked." },
     { status: 400 }
   );
 }
 
-    const huntId = openHuntResult.hunt.id;
+const huntId = hunt.id;
 
     const { data: existing, error: existingError } = await supabaseAdmin
       .from("predictions")
