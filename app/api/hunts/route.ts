@@ -47,35 +47,52 @@ export async function GET() {
       ? data
       : [];
 
-const { data: localHunts, error: localError } = await supabase
-  .from("hunts")
-  .select("id, external_hunt_id, status, prediction_status, created_at, updated_at")
-  .order("created_at", { ascending: false });
+    const { data: localHunts, error: localError } = await supabase
+      .from("hunts")
+      .select("id, external_hunt_id, status, prediction_status, created_at, updated_at")
+      .order("created_at", { ascending: false });
 
-if (localError) {
-  return NextResponse.json({
-    success: true,
-    hunts: [],
-    currentHuntState: null,
-    note: localError.message,
-  });
-}
+    if (localError) {
+      return NextResponse.json({
+        success: true,
+        hunts: [],
+        currentHuntState: null,
+        note: localError.message,
+      });
+    }
 
-const localMap = new Map(
-  (localHunts || []).map((hunt: any) => [hunt.external_hunt_id, hunt])
-);
+    const localMap = new Map(
+      (localHunts || []).map((hunt: any) => [
+        String(hunt.external_hunt_id),
+        hunt,
+      ])
+    );
 
-const hunts = externalHunts.map((hunt: any) => {
-  const local = localMap.get(hunt.id);
-  
+    const hunts = externalHunts.map((hunt: any) => {
+      const externalId = String(hunt.id);
+      const local = localMap.get(externalId);
+
       return {
         ...hunt,
+
+        // IMPORTANT:
+        // id stays as external BonusHunt id for display/API matching
+        id: externalId,
+
+        // local_id is the real Supabase hunts.id
+        // frontend should use this for predictions/admin actions
+        local_id: local?.id || null,
+
+        external_hunt_id: externalId,
+
         status: local?.status || hunt.status || "",
         prediction_status: local?.prediction_status || "locked",
+
         isOpening:
           local?.status === "open" ||
           hunt?.status === "open" ||
           Boolean(hunt?.isOpening),
+
         createdAt: local?.created_at || hunt?.createdAt || hunt?.created_at || null,
         updatedAt: local?.updated_at || hunt?.updatedAt || hunt?.updated_at || null,
       };

@@ -70,6 +70,16 @@ await supabase
       );
     }
 
+    const realStartAmount = Number(
+  latestExternalHunt.start_amount ??
+    latestExternalHunt.startAmount ??
+    latestExternalHunt.start_balance ??
+    latestExternalHunt.startBalance ??
+    latestExternalHunt.balance_start ??
+    latestExternalHunt.bet_amount ??
+    startAmount ??
+    0
+);
     const externalHuntId = String(latestExternalHunt.id);
 
     // 2) Check if this external hunt already exists locally
@@ -118,7 +128,7 @@ await supabase
     .update({
       title,
       casino,
-      start_amount: Number(startAmount),
+      start_amount: realStartAmount,
       final_amount: null,
       status: "open",
       prediction_status: "open",
@@ -129,7 +139,7 @@ await supabase
     })
     .eq("id", existingHunt.id)
     .select()
-    .single();
+    .maybeSingle()
 
   if (reopenError) {
     return NextResponse.json(
@@ -154,7 +164,7 @@ await supabase
         external_hunt_id: externalHuntId,
         title,
         casino,
-        start_amount: Number(startAmount),
+        start_amount: realStartAmount,
         status: "open",
         prediction_status: "open",
         created_at: new Date().toISOString(),
@@ -162,7 +172,7 @@ await supabase
         opened_at: new Date().toISOString(),
       })
       .select()
-      .single();
+      .maybeSingle()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

@@ -972,9 +972,21 @@ const currentPredictionHunt = useMemo(() => {
   if (!huntsData.length) return null;
 
   if (adminHuntId) {
-    const selected = huntsData.find((hunt) => hunt.id === adminHuntId);
+    const selected = huntsData.find(
+      (hunt: any) => hunt.id === adminHuntId || hunt.localId === adminHuntId
+    );
+
     if (selected) return selected;
   }
+
+  const openHunt = huntsData.find(
+    (hunt) =>
+      hunt.prediction_status === "open" ||
+      hunt.status === "open" ||
+      hunt.isOpening
+  );
+
+  if (openHunt) return openHunt;
 
   const sorted = [...huntsData].sort((a, b) => {
     const aTime = a.updatedAt || a.createdAt
@@ -1196,7 +1208,9 @@ useEffect(() => {
     setCurrentHuntState(data?.currentHuntState || null);
 
     const normalized: HuntItem[] = rawHunts.map((hunt: any, index: number) => ({
-      id: hunt.id || `hunt-${index}`,
+      id: hunt.external_hunt_id || hunt.id || `hunt-${index}`,
+localId: hunt.local_id || hunt.db_id || hunt.uuid || hunt.hunt_id || hunt.id,
+externalHuntId: hunt.external_hunt_id || hunt.id,
       title: hunt.title || `Hunt #${index + 1}`,
       casino: hunt.casino || "Unknown",
       startCost: Number(hunt.startCost || hunt.start_amount || 0),
@@ -1438,6 +1452,18 @@ const loadPredictions = useCallback(async (huntId?: string) => {
   }
 }, []);
 
+useEffect(() => {
+  const huntId =
+    (currentPredictionHunt as any)?.localId || currentPredictionHunt?.id || "";
+
+  if (!huntId) {
+    setPredictions([]);
+    return;
+  }
+
+  loadPredictions(huntId);
+}, [currentPredictionHunt?.id, (currentPredictionHunt as any)?.localId, loadPredictions]);
+
   const loadLiveStatus = useCallback(async () => {
     try {
       const res = await fetch("/api/twitch/live", { cache: "no-store" });
@@ -1484,31 +1510,35 @@ const loadPredictions = useCallback(async (huntId?: string) => {
     }
   }, []);
 
- // INITIAL LOAD + POLLING
+// INITIAL LOAD + POLLING
 useEffect(() => {
   loadLeaderboard();
   loadGiveaways();
   loadHunts();
-  loadPredictions();
   loadLiveStatus();
   loadBracket();
   loadGiveawayEntries();
   loadMonthlyRewards();
 
   const liveTimer = setInterval(loadLiveStatus, 60000);
-  const predictionTimer = setInterval(loadPredictions, 5000);
   const huntTimer = setInterval(loadHunts, 30000);
   const giveawayTimer = setInterval(loadGiveaways, 5000);
   const giveawayEntriesTimer = setInterval(loadGiveawayEntries, 2000);
 
-return () => {
-  clearInterval(liveTimer);
-  clearInterval(predictionTimer);
-  clearInterval(huntTimer);
-  clearInterval(giveawayTimer);
-  clearInterval(giveawayEntriesTimer);
-};
-}, [loadBracket, loadGiveaways, loadHunts, loadLeaderboard, loadLiveStatus, loadMonthlyRewards, loadPredictions, loadViewerRewards]);
+  return () => {
+    clearInterval(liveTimer);
+    clearInterval(huntTimer);
+    clearInterval(giveawayTimer);
+    clearInterval(giveawayEntriesTimer);
+  };
+}, [
+  loadBracket,
+  loadGiveaways,
+  loadHunts,
+  loadLeaderboard,
+  loadLiveStatus,
+  loadMonthlyRewards,
+]);
 
 // LOAD USER SESSION
 useEffect(() => {
@@ -1650,11 +1680,13 @@ useEffect(() => {
       ? "open"
       : "locked";
 
-  setAdminHuntId(resolvedHunt.id);
-  setPredictionStatus(nextStatus);
+const resolvedActiveId = (resolvedHunt as any)?.localId || resolvedHunt.id;
 
-  localStorage.setItem(STORAGE_KEYS.activeHuntId, resolvedHunt.id);
-  localStorage.setItem(STORAGE_KEYS.predictionStatus, nextStatus);
+setAdminHuntId(resolvedActiveId);
+setPredictionStatus(nextStatus);
+
+localStorage.setItem(STORAGE_KEYS.activeHuntId, resolvedActiveId);
+localStorage.setItem(STORAGE_KEYS.predictionStatus, nextStatus);
 }, [currentHuntState, huntsLoading, huntsData]);
 
 useEffect(() => {
@@ -1922,7 +1954,7 @@ const handleTwitchLogin = async () => {
       },
 body: JSON.stringify({
   guessAmount: guess,
-  huntId: currentPredictionHunt.id,
+  huntId: (currentPredictionHunt as any)?.localId || currentPredictionHunt.id,
 }),
     });
 
@@ -1971,13 +2003,13 @@ body: JSON.stringify({
         ];
       });
 
-      setPredictionInput("");
-      setPredictionMessage("Prediction saved.");
-      loadPredictions(currentPredictionHunt.id);
-    } catch {
-      setPredictionMessage("Failed to save prediction.");
-    }
-  };
+setPredictionInput("");
+setPredictionMessage("Prediction saved.");
+await loadPredictions((currentPredictionHunt as any)?.localId || currentPredictionHunt.id);
+} catch {
+  setPredictionMessage("Failed to save prediction.");
+}
+};
 
   const handleStartHunt = async () => {
 const existingOpenHunt = huntsData.find(
@@ -2061,7 +2093,6 @@ if (typeof window !== "undefined" && newHuntId) {
     setPredictions([]);
     setAdminMessage("New hunt started.");
 await loadHunts();
-await loadPredictions();
   } catch {
     setAdminMessage("Failed to start hunt.");
   }
@@ -2103,6 +2134,8 @@ await loadPredictions();
 
     setPredictionStatus("locked");
     setAdminHuntId(activeHuntId);
+    setLatestWinners([]);
+setFinalResult("");
 
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
@@ -2111,7 +2144,7 @@ await loadPredictions();
 
 setAdminMessage("Predictions locked.");
 await loadHunts();
-await loadPredictions(activeHuntId);
+await loadPredictions((currentPredictionHunt as any)?.localId || activeHuntId);
   } catch {
     setAdminMessage("Failed to lock predictions.");
   }
@@ -2153,6 +2186,9 @@ await loadPredictions(activeHuntId);
 
     setPredictionStatus("open");
     setAdminHuntId(activeHuntId);
+    setLatestWinners([]);
+setFinalResult("");
+setPredictions([]);
 
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
@@ -2161,23 +2197,32 @@ await loadPredictions(activeHuntId);
 
 setAdminMessage("Predictions opened.");
 await loadHunts();
-await loadPredictions(activeHuntId);
+await loadPredictions((currentPredictionHunt as any)?.localId || activeHuntId);
   } catch {
     setAdminMessage("Failed to open predictions.");
   }
 };
 
 const handleCompleteHunt = async () => {
-  if (!adminHuntId) {
-    setAdminMessage("Start a new hunt first.");
+  const activeHuntId =
+    (adminSelectedHunt as any)?.localId ||
+    (currentPredictionHunt as any)?.localId ||
+    adminHuntId ||
+    currentPredictionHunt?.id ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem(STORAGE_KEYS.activeHuntId) || ""
+      : "");
+
+  if (!activeHuntId) {
+    setAdminMessage("Select a hunt first.");
     return;
   }
 
-const amount = Number(
-  adminSelectedHunt?.stats?.totalWinnings ||
-  adminSelectedHunt?.totalWinnings ||
-  0
-);
+  const amount = Number(
+    adminSelectedHunt?.stats?.totalWinnings ||
+      adminSelectedHunt?.totalWinnings ||
+      0
+  );
 
   if (!amount) {
     setAdminMessage("No final hunt balance found yet.");
@@ -2187,7 +2232,7 @@ const amount = Number(
   try {
     const token = await getAccessToken();
 
-    const res = await fetch(`/api/admin/hunts/${adminHuntId}`, {
+const res = await fetch(`/api/admin/hunts/${activeHuntId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -2216,8 +2261,8 @@ const amount = Number(
       localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
     }
 
-await loadHunts();
-await loadPredictions(adminHuntId);
+    await loadHunts();
+    await loadPredictions((adminSelectedHunt as any)?.localId || activeHuntId);
   } catch {
     setAdminMessage("Failed to complete hunt.");
   }
@@ -2861,27 +2906,14 @@ const handleGenerateBracket = () => {
     setBracketMessage("Bracket reset locally. Click Save Bracket to keep it.");
   };
 
-  const rankedWinners = useMemo(() => {
-    if (latestWinners.length > 0) {
-      return latestWinners.map((winner: any) => ({
-        id: `${winner.profile_id}-${winner.placement}`,
-        username: winner.username || winner.profile_id,
-        guess: winner.guess_amount,
-        distance: winner.distance,
-      }));
-    }
-
-    const result = Number(finalResult || 0);
-    if (!result) return [];
-
-    return [...predictions]
-      .map((entry) => ({
-        ...entry,
-        distance: Math.abs(result - Number(entry.guess)),
-      }))
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 2);
-  }, [predictions, finalResult, latestWinners]);
+const rankedWinners = useMemo(() => {
+  return latestWinners.map((winner: any) => ({
+    id: `${winner.profile_id}-${winner.placement}`,
+    username: winner.username || winner.profile_id,
+    guess: winner.guess_amount,
+    distance: winner.distance,
+  }));
+}, [latestWinners]);
 
   return (
 <div className="min-h-screen bg-[#020809] text-white">
@@ -3012,7 +3044,7 @@ style={{
       </h3>
 
       <div className="mt-3 space-y-2 text-center text-xs text-white/80 sm:text-sm">
-        <div>⭐ $5k+ wagered on leaderboard</div>
+        <div>⭐ $5k+ wagered on previous or current leaderboard</div>
         <div>⭐ Exclusive VIP giveaways</div>
         <div>⭐ Exclusive VIP tournaments</div>
         <div>⭐ Community hunt equity</div>
@@ -3236,41 +3268,61 @@ const rankBox =
   <section className="space-y-2 sm:space-y-8">
 <GlowTabTitle label="BONUS HUNTS" />
 
-    <div className="flex gap-2 overflow-x-auto pb-2 sm:gap-4 sm:pb-4">
-      {huntsData.map((hunt) => (
-        <button
-          key={hunt.id}
-          onClick={() => {
-            setAdminHuntId(hunt.id);
-            setPredictionStatus(
+<div className="flex gap-2 overflow-x-auto pb-2 sm:gap-4 sm:pb-4">
+  {huntsData.map((hunt) => {
+    const huntLocalId = (hunt as any)?.localId || hunt.id;
+
+    return (
+      <button
+        key={hunt.id}
+        onClick={async () => {
+          setAdminHuntId(huntLocalId);
+          setPredictionStatus(
+            hunt.prediction_status === "open" ? "open" : "locked"
+          );
+
+          setLatestWinners([]);
+          setFinalResult("");
+          setPredictions([]);
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem(STORAGE_KEYS.activeHuntId, huntLocalId);
+            localStorage.setItem(
+              STORAGE_KEYS.predictionStatus,
               hunt.prediction_status === "open" ? "open" : "locked"
             );
-          }}
-          className={`flex min-w-[118px] flex-col items-center justify-center rounded-lg border bg-black/70 p-2 text-center backdrop-blur-md transition hover:-translate-y-1 sm:min-w-[190px] sm:rounded-2xl sm:p-4 ${
-            currentPredictionHunt?.id === hunt.id || adminHuntId === hunt.id
-              ? "border-cyan-300/45 shadow-[0_0_20px_rgba(0,245,255,0.12)]"
-              : "border-white/10 hover:border-cyan-300/25"
-          }`}
-        >
-          <div className="max-w-full truncate text-[11px] font-black text-white sm:text-sm">
-            {hunt.title || "Bonus Hunt"}
-          </div>
+          }
 
-          <div className="mt-1 grid gap-0.5 text-[9px] font-semibold text-white/60 sm:mt-3 sm:text-xs">
-            <div>Start: {formatMoney(hunt.startCost)}</div>
-            <div>Won: {formatMoney(hunt.totalWinnings)}</div>
-            <div
-              className={
-                hunt.profitLoss >= 0 ? "text-cyan-300" : "text-red-300"
-              }
-            >
-              P/L: {hunt.profitLoss >= 0 ? "+" : ""}
-              {formatMoney(hunt.profitLoss)}
-            </div>
+          await loadPredictions(huntLocalId);
+        }}
+        className={`flex min-w-[118px] flex-col items-center justify-center rounded-lg border bg-black/70 p-2 text-center backdrop-blur-md transition hover:-translate-y-1 sm:min-w-[190px] sm:rounded-2xl sm:p-4 ${
+          currentPredictionHunt?.id === hunt.id ||
+          adminHuntId === hunt.id ||
+          adminHuntId === huntLocalId
+            ? "border-cyan-300/45 shadow-[0_0_20px_rgba(0,245,255,0.12)]"
+            : "border-white/10 hover:border-cyan-300/25"
+        }`}
+      >
+        <div className="max-w-full truncate text-[11px] font-black text-white sm:text-sm">
+          {hunt.title || "Bonus Hunt"}
+        </div>
+
+        <div className="mt-1 grid gap-0.5 text-[9px] font-semibold text-white/60 sm:mt-3 sm:text-xs">
+          <div>Start: {formatMoney(hunt.startCost)}</div>
+          <div>Won: {formatMoney(hunt.totalWinnings)}</div>
+          <div
+            className={
+              hunt.profitLoss >= 0 ? "text-cyan-300" : "text-red-300"
+            }
+          >
+            P/L: {hunt.profitLoss >= 0 ? "+" : ""}
+            {formatMoney(hunt.profitLoss)}
           </div>
-        </button>
-      ))}
-    </div>
+        </div>
+      </button>
+    );
+  })}
+</div>
 
     <div className="overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 backdrop-blur-sm shadow-[0_0_24px_rgba(0,245,255,0.08)] sm:rounded-[2rem]">
       <div className="grid lg:grid-cols-[1fr_1.05fr]">
