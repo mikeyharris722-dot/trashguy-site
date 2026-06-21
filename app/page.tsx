@@ -5403,7 +5403,7 @@ const rankBox =
     style={
       isSlotWheelSpinning
         ? { transform: `translateY(-${slotWheelRotation}px)` }
-: slotCalls.length > 1
+: slotCalls.length >= 5
   ? ({
       "--slot-loop-distance": `${slotCalls.length * 60}px`,
       animation: "slotWheelIdleScroll 8s linear infinite",
@@ -5411,7 +5411,11 @@ const rankBox =
   : { transform: "translateY(100px)" }
     }
   >
-    {slotWheelLoop.map((call, index) => (
+    {(
+  isSlotWheelSpinning || slotCalls.length >= 5
+    ? slotWheelLoop
+    : slotCalls
+).map((call, index) => (
       <div
         key={`${call.username}-${call.slotName}-${index}`}
         className="grid h-[60px] grid-cols-[42px_1fr_1fr] items-center gap-4 border-b border-white/5 px-6 leading-none"
