@@ -2577,6 +2577,8 @@ const handleRemovePickedSlot = () => {
 const slotWheelLoop = useMemo(() => {
   if (slotCalls.length === 0) return [];
 
+  if (slotCalls.length === 1) return slotCalls;
+
   return Array.from({
     length: Math.max(12, Math.ceil(40 / slotCalls.length)),
   }).flatMap(() => slotCalls);
@@ -5401,10 +5403,12 @@ const rankBox =
     style={
       isSlotWheelSpinning
         ? { transform: `translateY(-${slotWheelRotation}px)` }
-        : ({
-            "--slot-loop-distance": `${slotCalls.length * 60}px`,
-            animation: "slotWheelIdleScroll 8s linear infinite",
-          } as React.CSSProperties)
+: slotCalls.length > 1
+  ? ({
+      "--slot-loop-distance": `${slotCalls.length * 60}px`,
+      animation: "slotWheelIdleScroll 8s linear infinite",
+    } as React.CSSProperties)
+  : { transform: "translateY(100px)" }
     }
   >
     {slotWheelLoop.map((call, index) => (
