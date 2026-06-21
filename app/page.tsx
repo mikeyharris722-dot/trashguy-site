@@ -5409,7 +5409,7 @@ const rankBox =
       "--slot-loop-distance": `${slotCalls.length * 60}px`,
       animation: "slotWheelIdleScroll 8s linear infinite",
     } as React.CSSProperties)
-  : { transform: `translateY(${130 - (slotCalls.length * 60) / 2}px)` }
+  : { transform: `translateY(${(260 - slotCalls.length * 60) / 2}px)` }
     }
   >
     {(
