@@ -15,7 +15,6 @@ export async function PATCH(
   try {
     const params = await context.params;
 const id = params.id;
-const externalHuntId = String(id).trim();
     const body = await req.json();
     const { action, finalAmount } = body;
 
@@ -32,9 +31,9 @@ const externalHuntId = String(id).trim();
           prediction_status: "open",
           opened_at: new Date().toISOString(),
         })
-        .eq("external_hunt_id", externalHuntId)
+        .eq("id", id)
         .select()
-        .single();
+        .maybeSingle()
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -52,9 +51,9 @@ const externalHuntId = String(id).trim();
           prediction_status: "locked",
           locked_at: new Date().toISOString(),
         })
-        .eq("external_hunt_id", externalHuntId)
+        .eq("id", id)
         .select()
-        .single();
+        .maybeSingle()
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -80,9 +79,9 @@ const externalHuntId = String(id).trim();
       final_amount: finalAmount,
       completed_at: new Date().toISOString(),
     })
-    .eq("external_hunt_id", externalHuntId)
+    .eq("id", id)
     .select()
-    .single();
+    .maybeSingle()
 
   if (huntError || !hunt) {
     return NextResponse.json(
