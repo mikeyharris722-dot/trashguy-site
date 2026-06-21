@@ -2515,16 +2515,17 @@ const handleSpinSlotWheel = () => {
   if (isSlotWheelSpinning || slotCalls.length === 0) return;
 
   const baseCalls = [...slotCalls];
-  const rowHeight = 60;
-  const centerRowOffset = 2;
+const rowHeight = 60;
+const wheelHeight = 260;
+const centerOffsetPx = wheelHeight / 2 - rowHeight / 2;
   const loops = Math.max(10, Math.ceil(30 / baseCalls.length));
 
   const winnerIndex = Math.floor(Math.random() * baseCalls.length);
   const visualWinnerIndex = (loops - 2) * baseCalls.length + winnerIndex;
-  const finalOffset = Math.max(
-    0,
-    (visualWinnerIndex - centerRowOffset) * rowHeight
-  );
+const finalOffset = Math.max(
+  0,
+  visualWinnerIndex * rowHeight - centerOffsetPx
+);
 
   setIsSlotWheelSpinning(true);
   setPickedSlotCall(null);
@@ -5375,7 +5376,7 @@ const rankBox =
         <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 bg-gradient-to-b from-black via-black/80 to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24 bg-gradient-to-t from-black via-black/80 to-transparent" />
 
-        <div className="pointer-events-none absolute left-0 right-0 top-1/2 z-30 h-[68px] -translate-y-1/2 border-y border-cyan-300/45 bg-cyan-400/10 shadow-[0_0_28px_rgba(0,245,255,0.18)]" />
+        <div className="pointer-events-none absolute left-0 right-0 top-1/2 z-30 h-[60px] -translate-y-1/2 border-y border-cyan-300/45 bg-cyan-400/10 shadow-[0_0_28px_rgba(0,245,255,0.18)]" />
 
         {slotCalls.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm font-semibold text-white/40">
@@ -5408,13 +5409,13 @@ const rankBox =
       "--slot-loop-distance": `${slotCalls.length * 60}px`,
       animation: "slotWheelIdleScroll 8s linear infinite",
     } as React.CSSProperties)
-  : { transform: "translateY(100px)" }
+  : { transform: `translateY(${130 - (slotCalls.length * 60) / 2}px)` }
     }
   >
     {(
-  isSlotWheelSpinning || slotCalls.length >= 5
-    ? slotWheelLoop
-    : slotCalls
+isSlotWheelSpinning || pickedSlotCall || slotCalls.length >= 5
+  ? slotWheelLoop
+  : slotCalls
 ).map((call, index) => (
       <div
         key={`${call.username}-${call.slotName}-${index}`}
