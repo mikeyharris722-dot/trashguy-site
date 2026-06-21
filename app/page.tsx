@@ -2514,35 +2514,30 @@ function getSnakeTeamStyle(captain: string) {
 const handleSpinSlotWheel = () => {
   if (isSlotWheelSpinning || slotCalls.length === 0) return;
 
+  const baseCalls = [...slotCalls];
+  const rowHeight = 60;
+  const centerRowOffset = 2;
+  const loops = Math.max(10, Math.ceil(30 / baseCalls.length));
+
+  const winnerIndex = Math.floor(Math.random() * baseCalls.length);
+  const visualWinnerIndex = (loops - 2) * baseCalls.length + winnerIndex;
+  const finalOffset = Math.max(
+    0,
+    (visualWinnerIndex - centerRowOffset) * rowHeight
+  );
+
   setIsSlotWheelSpinning(true);
   setPickedSlotCall(null);
-
-  const winnerIndex = Math.floor(Math.random() * slotCalls.length);
-
-  if (slotCalls.length < 5) {
-    setSlotWheelRotation(0);
-
-    setTimeout(() => {
-      setPickedSlotCall(slotCalls[winnerIndex]);
-      setIsSlotWheelSpinning(false);
-    }, 700);
-
-    return;
-  }
-
-  const rowHeight = 58;
-  const centerRowOffset = 2;
-  const loops = 8;
-
-  const targetIndex = loops * slotCalls.length + winnerIndex;
-  const finalOffset = Math.max(0, (targetIndex - centerRowOffset) * rowHeight);
-
-  setSlotWheelRotation(finalOffset);
+  setSlotWheelRotation(0);
 
   setTimeout(() => {
-    setPickedSlotCall(slotCalls[winnerIndex]);
+    setSlotWheelRotation(finalOffset);
+  }, 50);
+
+  setTimeout(() => {
+    setPickedSlotCall(baseCalls[winnerIndex]);
     setIsSlotWheelSpinning(false);
-  }, 4200);
+  }, 4300);
 };
 
 const handleShuffleSlotWheel = () => {
@@ -2576,7 +2571,16 @@ const handleRemovePickedSlot = () => {
   );
 
   setPickedSlotCall(null);
+  setSlotWheelRotation(0);
 };
+
+const slotWheelLoop = useMemo(() => {
+  if (slotCalls.length === 0) return [];
+
+  return Array.from({
+    length: Math.max(12, Math.ceil(40 / slotCalls.length)),
+  }).flatMap(() => slotCalls);
+}, [slotCalls]);
 
 const handleMarkRewardPaid = async (id: string) => {
   await fetch(`/api/rewards?id=${id}`, {
@@ -5376,38 +5380,53 @@ const rankBox =
             Waiting for slot calls...
           </div>
         ) : (
-          <div
-            className="transition-transform duration-[4200ms] ease-out"
-            style={{
-              transform:
-                slotCalls.length < 5
-                  ? "translateY(118px)"
-                  : `translateY(-${slotWheelRotation}px)`,
-            }}
-          >
-            {(
-              slotCalls.length < 5
-                ? slotCalls
-                : Array.from({ length: 8 }).flatMap(() => slotCalls)
-            ).map((call, index) => (
-              <div
-                key={`${call.username}-${call.slotName}-${index}`}
-                className="grid h-[60px] grid-cols-[42px_1fr_1fr] items-center gap-4 border-b border-white/5 px-6 leading-none"
-              >
-                <div className="text-xs font-black text-cyan-300/70">
-                  {index + 1}
-                </div>
+<>
+  <style>{`
+    @keyframes slotWheelIdleScroll {
+      from {
+        transform: translateY(0);
+      }
+      to {
+        transform: translateY(calc(var(--slot-loop-distance) * -1));
+      }
+    }
+  `}</style>
 
-                <div className="truncate text-left text-lg font-black leading-none text-white sm:text-2xl">
-                  {call.username}
-                </div>
+  <div
+    className={
+      isSlotWheelSpinning
+        ? "transition-transform duration-[4200ms] ease-out"
+        : ""
+    }
+    style={
+      isSlotWheelSpinning
+        ? { transform: `translateY(-${slotWheelRotation}px)` }
+        : ({
+            "--slot-loop-distance": `${slotCalls.length * 60}px`,
+            animation: "slotWheelIdleScroll 8s linear infinite",
+          } as React.CSSProperties)
+    }
+  >
+    {slotWheelLoop.map((call, index) => (
+      <div
+        key={`${call.username}-${call.slotName}-${index}`}
+        className="grid h-[60px] grid-cols-[42px_1fr_1fr] items-center gap-4 border-b border-white/5 px-6 leading-none"
+      >
+        <div className="text-xs font-black text-cyan-300/70">
+          {index + 1}
+        </div>
 
-                <div className="truncate text-right text-lg font-black leading-none text-cyan-100 sm:text-2xl">
-                  {call.slotName}
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="truncate text-left text-lg font-black leading-none text-white sm:text-2xl">
+          {call.username}
+        </div>
+
+        <div className="truncate text-right text-lg font-black leading-none text-cyan-100 sm:text-2xl">
+          {call.slotName}
+        </div>
+      </div>
+    ))}
+  </div>
+</>
         )}
       </div>
 
