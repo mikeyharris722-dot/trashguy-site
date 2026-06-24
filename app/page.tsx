@@ -21,7 +21,7 @@ const socials = [
   },
   {
     name: "Kick",
-    href: "https://kick.com/trashguy__",
+    href: "https://kick.com/trashguy",
     icon: SiKick,
   },
   {
@@ -5633,7 +5633,7 @@ isSlotWheelSpinning || pickedSlotCall || slotCalls.length >= 5
   </a>
 
   <a
-    href="https://kick.com/trashguy__"
+    href="https://kick.com/trashguy"
     target="_blank"
     rel="noreferrer"
     className="transition hover:scale-110"
