@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
 import { FaTwitch, FaDiscord, FaInstagram } from "react-icons/fa";
+import { SiKick } from "react-icons/si";
 import { slotData, providerLogos, type SlotItem } from "./slotData";
 import { Russo_One } from "next/font/google";
 
@@ -17,6 +18,11 @@ const socials = [
     name: "Twitch",
     href: "https://twitch.tv/trashguy__",
     icon: FaTwitch,
+  },
+  {
+    name: "Kick",
+    href: "https://kick.com/trashguy__",
+    icon: SiKick,
   },
   {
     name: "Discord",
@@ -3088,7 +3094,7 @@ style={{
 </div>
 
     <section className="relative py-1 sm:py-3">
-      <div className="mx-auto grid max-w-3xl grid-cols-3 gap-2 sm:max-w-4xl sm:grid-cols-3 sm:gap-4">
+      <div className="mx-auto grid max-w-5xl grid-cols-4 gap-2 sm:grid-cols-4 sm:gap-4">
         {socials.map((social) => {
           const Icon = social.icon;
 
@@ -3105,6 +3111,8 @@ style={{
   className={`text-2xl transition group-hover:scale-110 sm:text-4xl ${
     social.name === "Twitch"
       ? "text-[#9146FF]"
+      : social.name === "Kick"
+      ? "text-[#53FC18]"
       : social.name === "Discord"
       ? "text-[#5865F2]"
       : social.name === "Instagram"
@@ -5622,6 +5630,15 @@ isSlotWheelSpinning || pickedSlotCall || slotCalls.length >= 5
     className="transition hover:scale-110"
   >
     <FaTwitch className="text-2xl sm:text-3xl md:text-4xl text-[#9146FF]" />
+  </a>
+
+  <a
+    href="https://kick.com/trashguy__"
+    target="_blank"
+    rel="noreferrer"
+    className="transition hover:scale-110"
+  >
+    <SiKick className="text-2xl sm:text-3xl md:text-4xl text-[#53FC18]" />
   </a>
 
   <a
