@@ -3063,14 +3063,14 @@ style={{
         <div>
           ⭐ VIP
           <div className="text-cyan-300">
-            $80 - $100 bonus buys
+            $40 - $60 bonus buys ($20 guaranteed)
           </div>
         </div>
 
         <div>
           ⭐ Affiliate
           <div className="text-cyan-300">
-            $40 - $50 bonus buys
+            $40 - $60 bonus buys (no guarantee)
           </div>
         </div>
 
