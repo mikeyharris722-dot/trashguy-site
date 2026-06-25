@@ -10,11 +10,11 @@ $running = Get-CimInstance Win32_Process |
   }
 
 if (-not $running) {
-  Add-Content $log "$(Get-Date) - Bot not running. Starting..."
+  Add-Content $log "$(Get-Date) - Twitch + Kick bot not running. Starting..."
   Start-Process $node `
     -ArgumentList $botFile `
     -WorkingDirectory $project `
     -WindowStyle Hidden
 } else {
-  Add-Content $log "$(Get-Date) - Bot already running."
+  Add-Content $log "$(Get-Date) - Twitch + Kick bot already running."
 }
