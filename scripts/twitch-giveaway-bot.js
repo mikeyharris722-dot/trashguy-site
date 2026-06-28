@@ -51,8 +51,10 @@ async function enterGiveaway({ platform, username, displayName, twitchId = "" })
 
   const key = entryKey(platform, username);
 
-  if (enteredUsers.has(key)) return;
-  if (cooldownUsers.has(key)) return;
+if (cooldownUsers.has(key)) {
+  console.log(`${displayName} is on cooldown from ${platform}`);
+  return;
+}
 
   cooldownUsers.add(key);
   setTimeout(() => cooldownUsers.delete(key), 10000);
@@ -73,8 +75,7 @@ async function enterGiveaway({ platform, username, displayName, twitchId = "" })
     const data = await res.json();
 
     if (data.ok) {
-      enteredUsers.add(key);
-      console.log(`${displayName} entered giveaway from ${platform} x${data.entry.weight}`);
+console.log(`${displayName} entered giveaway from ${platform} x${data.entry.weight}`);
     } else {
       console.log(`${displayName} failed from ${platform}: ${data.error}`);
     }

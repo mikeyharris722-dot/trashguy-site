@@ -85,7 +85,10 @@ const { data: rouloLink } = await supabase
   .maybeSingle();
 
 const hasRoulo = !!rouloLink?.roulo_username;
-const hasDiscord = !!rouloLink?.is_in_discord;
+const hasDiscord =
+  !!rouloLink?.is_in_discord ||
+  !!rouloLink?.discord_id ||
+  !!rouloLink?.discord_username;
 const isVip = String(rouloLink?.role || "").toLowerCase() === "vip";
 
 const baseOdds = Number(
