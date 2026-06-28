@@ -1317,10 +1317,10 @@ const loadViewerRewards = useCallback(async () => {
       return;
     }
 
-    const res = await fetch(
-      `/api/prize-portal?viewer=${encodeURIComponent(viewer)}`,
-      { cache: "no-store" }
-    );
+const res = await fetch(
+  `/api/prize-portal?viewer=${viewerName}&platform=${viewerPlatform}`,
+  { cache: "no-store" }
+);
 
     const data = await res.json();
 

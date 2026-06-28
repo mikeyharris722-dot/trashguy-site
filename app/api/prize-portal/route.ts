@@ -26,6 +26,14 @@ export async function GET(req: NextRequest) {
       ""
   );
 
+  const platform =
+  req.nextUrl.searchParams.get("platform") === "kick"
+    ? "kick"
+    : "twitch";
+
+const usernameColumn =
+  platform === "kick" ? "kick_username" : "twitch_username";
+
   if (!rawViewer) {
     return NextResponse.json({
       ok: false,
@@ -72,7 +80,7 @@ export async function GET(req: NextRequest) {
 const { data: rouloLink } = await supabase
   .from("roulo_links")
   .select("*")
-  .in("twitch_username", viewerOptions)
+  .in(usernameColumn, viewerOptions)
   .limit(1)
   .maybeSingle();
 
