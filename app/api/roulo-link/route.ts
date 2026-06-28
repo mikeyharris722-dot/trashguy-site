@@ -190,12 +190,24 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
+  const platform = String(body.platform || "twitch").toLowerCase();
+
   const twitchUsername = normalize(body.twitch_username || "");
   const twitchDisplayName = body.twitch_display_name || twitchUsername;
+
+  const kickUsername = normalize(body.kick_username || "");
+  const kickDisplayName = body.kick_display_name || kickUsername;
+
+  const viewerUsername = platform === "kick" ? kickUsername : twitchUsername;
+  const displayName = platform === "kick" ? kickDisplayName : twitchDisplayName;
+
   const rouloUsername = normalize(body.roulo_username || "");
 
-  if (!twitchUsername) {
-    return NextResponse.json({ ok: false, error: "Missing Twitch username" });
+  if (!viewerUsername) {
+    return NextResponse.json({
+      ok: false,
+      error: `Missing ${platform === "kick" ? "Kick" : "Twitch"} username`,
+    });
   }
 
   if (!rouloUsername) {
@@ -211,38 +223,51 @@ export async function POST(req: NextRequest) {
     });
   }
 
-const { data: existingLink } = await supabase
-  .from("roulo_links")
-  .select("*")
-  .eq("twitch_username", twitchUsername)
-  .maybeSingle();
+  const usernameColumn =
+    platform === "kick" ? "kick_username" : "twitch_username";
 
-const { role, weight } = await getRoleAndWeight({
-  rouloUsername: affiliate.rouloUsername,
-  existingLink,
-});
+  const displayNameColumn =
+    platform === "kick" ? "kick_display_name" : "twitch_display_name";
 
-  const { data, error } = await supabase
+  const { data: existingLink } = await supabase
     .from("roulo_links")
-    .upsert(
-      {
-        twitch_username: twitchUsername,
-        twitch_display_name: twitchDisplayName,
-        roulo_username: affiliate.rouloUsername,
-        wagered: affiliate.wagered,
-        role,
-        weight,
-
-        discord_id: existingLink?.discord_id || null,
-        discord_username: existingLink?.discord_username || null,
-        is_in_discord: !!existingLink?.is_in_discord,
-
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "twitch_username" }
-    )
     .select("*")
-    .single();
+    .eq(usernameColumn, viewerUsername)
+    .maybeSingle();
+
+  const { role, weight } = await getRoleAndWeight({
+    rouloUsername: affiliate.rouloUsername,
+    existingLink,
+  });
+
+  const payload: any = {
+    [usernameColumn]: viewerUsername,
+    [displayNameColumn]: displayName,
+
+    roulo_username: affiliate.rouloUsername,
+    wagered: affiliate.wagered,
+    role,
+    weight,
+
+    discord_id: existingLink?.discord_id || null,
+    discord_username: existingLink?.discord_username || null,
+    is_in_discord: !!existingLink?.is_in_discord,
+
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = existingLink?.id
+    ? await supabase
+        .from("roulo_links")
+        .update(payload)
+        .eq("id", existingLink.id)
+        .select("*")
+        .single()
+    : await supabase
+        .from("roulo_links")
+        .insert(payload)
+        .select("*")
+        .single();
 
   if (error) {
     return NextResponse.json({ ok: false, error: error.message });
