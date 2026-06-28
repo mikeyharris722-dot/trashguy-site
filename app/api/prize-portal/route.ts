@@ -84,7 +84,18 @@ const { data: rouloLink } = await supabase
   .limit(1)
   .maybeSingle();
 
-const baseOdds = Number(rouloLink?.weight || 1);
+const hasRoulo = !!rouloLink?.roulo_username;
+const hasDiscord = !!rouloLink?.is_in_discord;
+const isVip = String(rouloLink?.role || "").toLowerCase() === "vip";
+
+const baseOdds = Number(
+  (
+    1 +
+    (hasRoulo ? 0.1 : 0) +
+    (hasDiscord ? 0.1 : 0) +
+    (isVip ? 0.3 : 0)
+  ).toFixed(2)
+);
 const luckOdds = Number(luckRow?.luck || 0);
 const totalOdds = Number((baseOdds + luckOdds).toFixed(2));
 const nextOdds = Number((totalOdds + 0.1).toFixed(2));

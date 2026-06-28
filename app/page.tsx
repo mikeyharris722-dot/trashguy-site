@@ -1589,6 +1589,18 @@ if (platform === "kick" && kickUsername) {
 
   const loadUser = async () => {
   try {
+    const savedPlatform = localStorage.getItem("viewerPlatform");
+const savedKickUsername = localStorage.getItem("kickUsername");
+
+if (savedPlatform === "kick" && savedKickUsername) {
+  setViewerPlatform("kick");
+  setIsTwitchConnected(true);
+  setViewerName(savedKickUsername.toLowerCase());
+  setViewerDisplayName(savedKickUsername);
+  setViewerAvatar("");
+  setAuthLoaded(true);
+  return;
+}
     const { data: sessionData, error: sessionError } =
       await supabaseBrowser.auth.getSession();
 
