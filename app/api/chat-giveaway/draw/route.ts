@@ -123,29 +123,31 @@ const winner = pickWeightedWinner(entriesWithLuck);
   const winnerDisplayName = winner.display_name || winnerUsername;
   await supabase
   .from("giveaway_luck")
-  .upsert({
-    twitch_username: winnerUsername,
-    luck: 0,
-    win_count: 1,
-    updated_at: new Date().toISOString(),
-  });
+.upsert({
+  twitch_username: winnerUsername,
+  platform: winner.platform || "twitch",
+  luck: 0,
+  win_count: 1,
+  updated_at: new Date().toISOString(),
+});
 
 for (const username of loserUsernames) {
   const { data: existing } = await supabase
     .from("giveaway_luck")
     .select("*")
     .eq("twitch_username", username)
-.eq("platform", entry.platform || "twitch")
+.eq("platform", winner.platform || "twitch")
     .maybeSingle();
 
   await supabase
     .from("giveaway_luck")
-    .upsert({
-      twitch_username: username,
-      luck: Number(existing?.luck || 0) + 0.1,
-      loss_count: Number(existing?.loss_count || 0) + 1,
-      updated_at: new Date().toISOString(),
-    });
+.upsert({
+  twitch_username: username,
+  platform: winner.platform || "twitch",
+  luck: Number(existing?.luck || 0) + 0.1,
+  loss_count: Number(existing?.loss_count || 0) + 1,
+  updated_at: new Date().toISOString(),
+});
 }
 
 const totalWeight = entriesWithLuck.reduce(
