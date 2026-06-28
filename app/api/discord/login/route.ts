@@ -6,6 +6,8 @@ function normalize(value: string) {
 
 export async function GET(req: NextRequest) {
   const viewer = normalize(req.nextUrl.searchParams.get("viewer") || "");
+const platform =
+  req.nextUrl.searchParams.get("platform") === "kick" ? "kick" : "twitch";
 
   if (!viewer) {
     return NextResponse.json(
@@ -24,12 +26,13 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const state = Buffer.from(
-    JSON.stringify({
-      viewer,
-      createdAt: Date.now(),
-    })
-  ).toString("base64url");
+const state = Buffer.from(
+  JSON.stringify({
+    viewer,
+    platform,
+    createdAt: Date.now(),
+  })
+).toString("base64url");
 
   const url = new URL("https://discord.com/oauth2/authorize");
   url.searchParams.set("client_id", clientId);
