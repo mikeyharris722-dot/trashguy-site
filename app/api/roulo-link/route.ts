@@ -226,8 +226,7 @@ export async function POST(req: NextRequest) {
   const usernameColumn =
     platform === "kick" ? "kick_username" : "twitch_username";
 
-  const displayNameColumn =
-    platform === "kick" ? "kick_display_name" : "twitch_display_name";
+ const displayNameColumn = "twitch_display_name";
 
   const { data: existingLink } = await supabase
     .from("roulo_links")
@@ -242,7 +241,7 @@ export async function POST(req: NextRequest) {
 
   const payload: any = {
     [usernameColumn]: viewerUsername,
-    [displayNameColumn]: displayName,
+    twitch_display_name: displayName,
 
     roulo_username: affiliate.rouloUsername,
     wagered: affiliate.wagered,
