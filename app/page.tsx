@@ -3921,7 +3921,7 @@ onClick={() =>
                   </div>
                 </div>
 
-                {!(rouloLink as any)?.is_in_discord && (
+                {!((rouloLink as any)?.is_in_discord || discordLink?.is_in_discord) && (
                   <button
 onClick={() =>
   (window.location.href = `/api/discord/login?viewer=${viewerName}&platform=${viewerPlatform}`)
