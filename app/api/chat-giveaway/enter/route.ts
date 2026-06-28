@@ -12,13 +12,14 @@ function normalize(value: string) {
   return String(value || "").replace("@", "").trim().toLowerCase();
 }
 
-async function getSavedRouloBoost(twitchUsername: string) {
-  const cleanTwitch = normalize(twitchUsername);
+async function getSavedRouloBoost(username: string, platform: string) {
+  const cleanUsername = normalize(username);
+  const usernameColumn = platform === "kick" ? "kick_username" : "twitch_username";
 
   const { data: link, error } = await supabase
     .from("roulo_links")
     .select("roulo_username, wagered, role, weight, is_in_discord, discord_username")
-    .eq("twitch_username", cleanTwitch)
+    .eq(usernameColumn, cleanUsername)
     .maybeSingle();
 
   if (error) {
@@ -32,23 +33,27 @@ async function getSavedRouloBoost(twitchUsername: string) {
       isRouloAffiliate: false,
       rouloWagered: 0,
       rouloUsername: null,
+      isInDiscord: false,
+      discordUsername: null,
     };
   }
 
-return {
-  weight: Number(link.weight || 1),
-  role: link.role || "viewer",
-  isRouloAffiliate: !!link.roulo_username,
-  rouloWagered: Number(link.wagered || 0),
-  rouloUsername: link.roulo_username || null,
-  isInDiscord: !!link.is_in_discord,
-  discordUsername: link.discord_username || null,
-};
+  return {
+    weight: Number(link.weight || 1),
+    role: link.role || "viewer",
+    isRouloAffiliate: !!link.roulo_username,
+    rouloWagered: Number(link.wagered || 0),
+    rouloUsername: link.roulo_username || null,
+    isInDiscord: !!link.is_in_discord,
+    discordUsername: link.discord_username || null,
+  };
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
+
   const username = normalize(body.username || "");
+  const platform = normalize(body.platform || "twitch") === "kick" ? "kick" : "twitch";
 
   if (!username) {
     return NextResponse.json(
@@ -72,7 +77,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const boost = await getSavedRouloBoost(username);
+  const boost = await getSavedRouloBoost(username, platform);
 
   const { data, error } = await supabase
     .from("chat_giveaway_entries")
@@ -83,6 +88,7 @@ export async function POST(req: NextRequest) {
         display_name: body.display_name || username,
         twitch_id: body.twitch_id || null,
         avatar_url: body.avatar_url || null,
+        platform,
 
         weight: boost.weight,
         role: boost.role,

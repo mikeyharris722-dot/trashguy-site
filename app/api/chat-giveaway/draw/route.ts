@@ -65,15 +65,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: rewardsError.message });
   }
 
-  const previousWinners = new Set(
-    (existingRewards || []).map((reward) =>
-      normalizeUsername(reward.twitch_username)
-    )
-  );
+const previousWinners = new Set(
+  (existingRewards || []).map((reward: any) =>
+    `${reward.platform || "twitch"}:${normalizeUsername(reward.twitch_username)}`
+  )
+);
 
   const eligibleEntries = entries.filter((entry) => {
     const username = normalizeUsername(entry.username);
-    return username && !previousWinners.has(username);
+    const platform = entry.platform || "twitch";
+return username && !previousWinners.has(`${platform}:${username}`);
   });
 
   if (eligibleEntries.length === 0) {
@@ -91,6 +92,7 @@ export async function POST(req: NextRequest) {
       .from("giveaway_luck")
       .select("luck")
       .eq("twitch_username", username)
+.eq("platform", entry.platform || "twitch")
       .maybeSingle();
 
     const baseWeight = Math.max(1, Number(entry.weight || 1));
@@ -133,6 +135,7 @@ for (const username of loserUsernames) {
     .from("giveaway_luck")
     .select("*")
     .eq("twitch_username", username)
+.eq("platform", entry.platform || "twitch")
     .maybeSingle();
 
   await supabase
@@ -158,17 +161,20 @@ const totalWeight = entriesWithLuck.reduce(
     })
     .eq("id", giveaway.id);
 
-  const { data: reward, error: rewardError } = await supabase
-    .from("rewards")
-    .insert({
-      twitch_username: winnerUsername,
-      twitch_id: winner.twitch_id || null,
-      display_name: winnerDisplayName,
-      amount: amount > 0 ? amount : 0,
-      title: "Chat Giveaway",
-      status: "pending",
-      giveaway_id: giveaway.id,
-    })
+const { data: reward, error: rewardError } = await supabase
+  .from("rewards")
+  .insert({
+    twitch_username: winnerUsername,
+    twitch_id: winner.twitch_id || null,
+    display_name: winnerDisplayName,
+
+    platform: winner.platform || "twitch",
+
+    amount: amount > 0 ? amount : 0,
+    title: "Chat Giveaway",
+    status: "pending",
+    giveaway_id: giveaway.id,
+  })
     .select()
     .single();
 
