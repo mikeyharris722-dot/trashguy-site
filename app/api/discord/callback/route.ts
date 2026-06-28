@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
 
   const decoded = decodeState(state);
   const viewer = normalize(decoded?.viewer || "");
+const platform = decoded?.platform === "kick" ? "kick" : "twitch";
 
   if (!code || !viewer) {
     return NextResponse.redirect(
@@ -97,38 +98,47 @@ export async function GET(req: NextRequest) {
     discordUser.username ||
     discordUser.id;
 
-    console.log("DISCORD VIEWER:", viewer);
+console.log("DISCORD VIEWER:", viewer, "PLATFORM:", platform);
+
+const usernameColumn =
+  platform === "kick" ? "kick_username" : "twitch_username";
+
+const displayNameColumn =
+  platform === "kick" ? "kick_display_name" : "twitch_display_name";
+
 const { data: existingLink } = await supabase
   .from("roulo_links")
   .select("*")
-  .eq("twitch_username", viewer)
+  .eq(usernameColumn, viewer)
   .maybeSingle();
 
-const { error } = await supabase
-  .from("roulo_links")
-  .upsert(
-    {
-      twitch_username: viewer,
-      twitch_display_name: existingLink?.twitch_display_name || viewer,
+const payload: any = {
+  [usernameColumn]: viewer,
+  [displayNameColumn]: existingLink?.[displayNameColumn] || viewer,
 
-      roulo_username: existingLink?.roulo_username || null,
-      wagered: Number(existingLink?.wagered || 0),
-      role: existingLink?.role || "viewer",
-      weight: Number(existingLink?.weight || 1),
+  roulo_username: existingLink?.roulo_username || null,
+  wagered: Number(existingLink?.wagered || 0),
+  role: existingLink?.role || "viewer",
+  weight: Number(existingLink?.weight || 1),
 
-      discord_id: discordUser.id,
-      discord_username: discordUsername,
-      is_in_discord: isInDiscord,
+  discord_id: discordUser.id,
+  discord_username: discordUsername,
+  is_in_discord: isInDiscord,
 
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "twitch_username" }
-  );
+  updated_at: new Date().toISOString(),
+};
+
+const { error } = existingLink?.id
+  ? await supabase.from("roulo_links").update(payload).eq("id", existingLink.id)
+  : await supabase.from("roulo_links").insert(payload);
 
 if (error) {
-  return NextResponse.redirect(
-    new URL("/?discord=save-failed&section=prizeportal", req.nextUrl.origin)
-  );
+  console.error("DISCORD SAVE ERROR:", error);
+
+  return NextResponse.json({
+    ok: false,
+    error,
+  });
 }
 
 return NextResponse.redirect(

@@ -712,17 +712,11 @@ async function loadSnakeDraft() {
 const [tournamentView, setTournamentView] = useState<"bracket" | "snake">("bracket");
 
 const [slotCalls, setSlotCalls] = useState<
-  {
-    id: string;
-    username: string;
-    slotName: string;
-    createdAt: number;
-  }[]
+  { username: string; slotName: string; createdAt: number }[]
 >([]);
 const [slotCallMessage, setSlotCallMessage] = useState("");
 const [isSlotWheelSpinning, setIsSlotWheelSpinning] = useState(false);
 const [pickedSlotCall, setPickedSlotCall] = useState<{
-  id: string;
   username: string;
   slotName: string;
   createdAt: number;
@@ -783,8 +777,6 @@ const [viewerOdds, setViewerOdds] = useState({
   winCount: 0,
 });
 const [viewerRewardsMessage, setViewerRewardsMessage] = useState("");
-
-const [viewerPlatform, setViewerPlatform] = useState("twitch");
 
 const [rouloUsernameInput, setRouloUsernameInput] = useState("");
 const [rouloLink, setRouloLink] = useState<any>(null);
@@ -1151,6 +1143,31 @@ const pickRandomSlot = () => {
   spinLoop();
 };
 
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  const params = new URLSearchParams(window.location.search);
+
+  const kickUsername = params.get("kick_username");
+  const kickId = params.get("kick_id");
+  const platform = params.get("platform");
+
+  if (platform !== "kick" || !kickUsername) return;
+
+  const cleanName = kickUsername.replace("@", "").trim();
+
+  setViewerName(cleanName.toLowerCase());
+  setViewerDisplayName(cleanName);
+  setViewerAvatar("");
+  setIsTwitchConnected(true);
+
+  localStorage.setItem("viewerPlatform", "kick");
+  localStorage.setItem("kickUsername", cleanName);
+  localStorage.setItem("kickId", kickId || "");
+
+  window.history.replaceState({}, "", window.location.pathname);
+}, []);
+
   useEffect(() => {
   if (!authLoaded) return;
   if (!isTwitchConnected) return;
@@ -1393,11 +1410,8 @@ const handleLinkRoulo = async () => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      platform: viewerPlatform,
-      twitch_username: viewerPlatform === "twitch" ? viewerName : "",
-      twitch_display_name: viewerPlatform === "twitch" ? viewerDisplayName : "",
-      kick_username: viewerPlatform === "kick" ? viewerName : "",
-      kick_display_name: viewerPlatform === "kick" ? viewerDisplayName : "",
+      twitch_username: viewerName,
+      twitch_display_name: viewerDisplayName,
       roulo_username: rouloUsernameInput,
     }),
   });
@@ -1603,14 +1617,14 @@ if (!user) {
   const savedPlatform = localStorage.getItem("viewerPlatform");
   const savedKickUsername = localStorage.getItem("kickUsername");
 
-if (savedPlatform === "kick" && savedKickUsername) {
-  setViewerPlatform("kick");
-  setIsTwitchConnected(true);
-  setViewerName(savedKickUsername.toLowerCase());
-  setViewerDisplayName(savedKickUsername);
-  setViewerAvatar("");
-  return;
-}
+  if (savedPlatform === "kick" && savedKickUsername) {
+    setIsTwitchConnected(true);
+    setViewerName(savedKickUsername.toLowerCase());
+    setViewerDisplayName(savedKickUsername);
+    setViewerAvatar("");
+    setAuthLoaded(true);
+    return;
+  }
 
   setIsTwitchConnected(false);
   setViewerName("viewer");
@@ -1620,16 +1634,12 @@ if (savedPlatform === "kick" && savedKickUsername) {
   return;
 }
 
-const twitchIdentity = extractTwitchIdentity(user);
+    const twitchIdentity = extractTwitchIdentity(user);
 
-setViewerPlatform("twitch");
-localStorage.setItem("viewerPlatform", "twitch");
-localStorage.removeItem("kickUsername");
-localStorage.removeItem("kickId");
-setIsTwitchConnected(true);
-setViewerName(twitchIdentity.login);
-setViewerDisplayName(twitchIdentity.displayName);
-setViewerAvatar(twitchIdentity.avatarUrl);
+    setIsTwitchConnected(true);
+    setViewerName(twitchIdentity.login);
+    setViewerDisplayName(twitchIdentity.displayName);
+    setViewerAvatar(twitchIdentity.avatarUrl);
     setAuthLoaded(true);
   } catch (error) {
     console.error("loadUser failed", error);
@@ -1648,14 +1658,13 @@ if (!user) {
   const savedPlatform = localStorage.getItem("viewerPlatform");
   const savedKickUsername = localStorage.getItem("kickUsername");
 
-if (savedPlatform === "kick" && savedKickUsername) {
-  setViewerPlatform("kick");
-  setIsTwitchConnected(true);
-  setViewerName(savedKickUsername.toLowerCase());
-  setViewerDisplayName(savedKickUsername);
-  setViewerAvatar("");
-  return;
-}
+  if (savedPlatform === "kick" && savedKickUsername) {
+    setIsTwitchConnected(true);
+    setViewerName(savedKickUsername.toLowerCase());
+    setViewerDisplayName(savedKickUsername);
+    setViewerAvatar("");
+    return;
+  }
 
   setIsTwitchConnected(false);
   setViewerName("viewer");
@@ -1664,16 +1673,12 @@ if (savedPlatform === "kick" && savedKickUsername) {
   return;
 }
 
-const twitchIdentity = extractTwitchIdentity(user);
+    const twitchIdentity = extractTwitchIdentity(user);
 
-setViewerPlatform("twitch");
-localStorage.setItem("viewerPlatform", "twitch");
-localStorage.removeItem("kickUsername");
-localStorage.removeItem("kickId");
-setIsTwitchConnected(true);
-setViewerName(twitchIdentity.login);
-setViewerDisplayName(twitchIdentity.displayName);
-setViewerAvatar(twitchIdentity.avatarUrl);
+    setIsTwitchConnected(true);
+    setViewerName(twitchIdentity.login);
+    setViewerDisplayName(twitchIdentity.displayName);
+    setViewerAvatar(twitchIdentity.avatarUrl);
   });
 
   return () => {
@@ -1871,42 +1876,110 @@ useEffect(() => {
   loadSnakeDraft();
 }, []);
 
-const loadSlotCalls = async () => {
-  try {
-    const res = await fetch("/api/slot-calls", { cache: "no-store" });
-    const data = await res.json();
-
-    if (Array.isArray(data.calls)) {
-setSlotCalls(
-  data.calls.map((call: any) => ({
-    id: call.id,
-    username: call.username,
-    slotName: call.slot_name,
-    createdAt: new Date(call.created_at).getTime(),
-  }))
-);
-    }
-  } catch (err) {
-    console.error("Failed to load slot calls", err);
-  }
-};
-
 useEffect(() => {
-  loadSlotCalls();
+  let twitchClient: any;
+  let kickClient: any;
 
-  const timer = setInterval(loadSlotCalls, 3000);
+  const addSlotCall = (username: string, slotName: string) => {
+    if (!slotName) return;
 
-  return () => clearInterval(timer);
+    setSlotCalls((current) => {
+      const normalizedUser = username.trim().toLowerCase();
+      const normalizedSlot = slotName.trim().toLowerCase();
+
+      const userAlreadyCalled = current.some(
+        (call) => call.username.trim().toLowerCase() === normalizedUser
+      );
+
+      if (userAlreadyCalled) {
+        setSlotCallMessage(`${username} already has a slot on the wheel.`);
+        return current;
+      }
+
+      const slotAlreadyCalled = current.some(
+        (call) => call.slotName.trim().toLowerCase() === normalizedSlot
+      );
+
+      if (slotAlreadyCalled) {
+        setSlotCallMessage(`${slotName} is already on the wheel.`);
+        return current;
+      }
+
+      setSlotCallMessage(`${username} added: ${slotName}`);
+
+      return [
+        ...current,
+        {
+          username,
+          slotName,
+          createdAt: Date.now(),
+        },
+      ];
+    });
+  };
+
+  const connectSlotChat = async () => {
+    // Twitch
+    const tmiModule: any = await import("tmi.js");
+    const tmi = tmiModule.default || tmiModule;
+
+    twitchClient = new tmi.Client({
+      channels: ["trashguy__"],
+    });
+
+    await twitchClient.connect().catch(() => {});
+
+    twitchClient.on(
+      "message",
+      (_channel: string, tags: any, message: string, self: boolean) => {
+        if (self) return;
+
+        const text = String(message || "").trim();
+        if (!text.toLowerCase().startsWith("!slot ")) return;
+
+        const slotName = text.replace(/^!slot\s+/i, "").trim();
+        const username = String(tags["display-name"] || tags.username || "viewer");
+
+        addSlotCall(username, slotName);
+      }
+    );
+
+    // Kick
+    const kickModule: any = await import("@retconned/kick-js");
+    const createClient = kickModule.createClient;
+
+    kickClient = createClient("trashguy", {
+      logger: false,
+      readOnly: true,
+    });
+
+    kickClient.on("ChatMessage", (message: any) => {
+      const text = String(message.content || "").trim();
+      if (!text.toLowerCase().startsWith("!slot ")) return;
+
+      const slotName = text.replace(/^!slot\s+/i, "").trim();
+      const username = String(message.sender?.username || "viewer");
+
+      addSlotCall(username, slotName);
+    });
+
+    await kickClient.login().catch(() => {});
+  };
+
+  connectSlotChat();
+
+  return () => {
+    if (twitchClient) {
+      twitchClient.disconnect().catch(() => {});
+    }
+
+    if (kickClient) {
+      kickClient.disconnect?.().catch?.(() => {});
+    }
+  };
 }, []);
 
 const handleTwitchLogin = async () => {
-localStorage.setItem("viewerPlatform", "twitch");
-localStorage.removeItem("kickUsername");
-localStorage.removeItem("kickId");
-setViewerPlatform("twitch");
-localStorage.setItem("viewerPlatform", "twitch");
-localStorage.removeItem("kickUsername");
-localStorage.removeItem("kickId");
   try {
     setPredictionMessage("");
 
@@ -2595,15 +2668,31 @@ function getSnakeTeamStyle(captain: string) {
 const handleSpinSlotWheel = () => {
   if (isSlotWheelSpinning || slotCalls.length === 0) return;
 
-  const winner = slotCalls[Math.floor(Math.random() * slotCalls.length)];
+  const baseCalls = [...slotCalls];
+const rowHeight = 60;
+const wheelHeight = 260;
+const centerOffsetPx = wheelHeight / 2 - rowHeight / 2;
+  const loops = Math.max(10, Math.ceil(30 / baseCalls.length));
+
+  const winnerIndex = Math.floor(Math.random() * baseCalls.length);
+  const visualWinnerIndex = (loops - 2) * baseCalls.length + winnerIndex;
+const finalOffset = Math.max(
+  0,
+  visualWinnerIndex * rowHeight - centerOffsetPx
+);
 
   setIsSlotWheelSpinning(true);
   setPickedSlotCall(null);
+  setSlotWheelRotation(0);
 
   setTimeout(() => {
-    setPickedSlotCall(winner);
+    setSlotWheelRotation(finalOffset);
+  }, 50);
+
+  setTimeout(() => {
+    setPickedSlotCall(baseCalls[winnerIndex]);
     setIsSlotWheelSpinning(false);
-  }, 1200);
+  }, 4300);
 };
 
 const handleShuffleSlotWheel = () => {
@@ -2623,22 +2712,32 @@ const handleShuffleSlotWheel = () => {
   });
 };
 
-const handleRemovePickedSlot = async () => {
+const handleRemovePickedSlot = () => {
   if (!pickedSlotCall) return;
 
-  if (pickedSlotCall.id) {
-    await fetch(`/api/slot-calls?id=${pickedSlotCall.id}`, {
-      method: "DELETE",
-    });
-  }
+  setSlotCalls((current) =>
+    current.filter(
+      (call) =>
+        !(
+          call.slotName === pickedSlotCall.slotName &&
+          call.username === pickedSlotCall.username
+        )
+    )
+  );
 
   setPickedSlotCall(null);
-  await loadSlotCalls();
+  setSlotWheelRotation(0);
 };
 
 const slotWheelLoop = useMemo(() => {
-  return pickedSlotCall ? [pickedSlotCall] : slotCalls;
-}, [slotCalls, pickedSlotCall]);
+  if (slotCalls.length === 0) return [];
+
+  if (slotCalls.length === 1) return slotCalls;
+
+  return Array.from({
+    length: Math.max(12, Math.ceil(40 / slotCalls.length)),
+  }).flatMap(() => slotCalls);
+}, [slotCalls]);
 
 const handleMarkRewardPaid = async (id: string) => {
   await fetch(`/api/rewards?id=${id}`, {
@@ -3766,13 +3865,7 @@ const rankBox =
           <>
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
               <div className="flex items-center gap-3">
-<div
-  className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-black text-white ${
-    viewerPlatform === "kick"
-      ? "border border-[#53FC18]/30 bg-[#53FC18]/20"
-      : "border border-purple-300/30 bg-purple-500/20"
-  }`}
->
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-purple-300/30 bg-purple-500/20 text-lg font-black text-white">
                   {viewerDisplayName?.charAt(0)?.toUpperCase() || "T"}
                 </div>
 
@@ -3780,21 +3873,9 @@ const rankBox =
                   <div className="truncate text-lg font-black text-white">
                     {viewerDisplayName || viewerName}
                   </div>
-<div className="mt-1 flex items-center gap-2">
-  <div className="truncate text-sm font-bold text-white/80">
-    @{viewerName}
-  </div>
-
-<div
-  className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.18em] ${
-    viewerPlatform === "kick"
-      ? "border border-[#53FC18]/30 bg-[#53FC18]/15 text-[#53FC18]"
-      : "border border-purple-300/30 bg-purple-500/15 text-purple-300"
-  }`}
->
-  {viewerPlatform === "kick" ? "kick" : "twitch"}
-</div>
-</div>
+                  <div className="truncate text-sm font-bold text-purple-300">
+                    @{viewerName} · Twitch
+                  </div>
                 </div>
               </div>
             </div>
@@ -3838,9 +3919,9 @@ const rankBox =
 ) : (
   <button
     type="button"
-onClick={() =>
-  (window.location.href = `/api/discord/login?viewer=${viewerName}&platform=${viewerPlatform}`)
-}
+    onClick={() =>
+      (window.location.href = `/api/discord/login?viewer=${viewerName}`)
+    }
     className="w-full rounded-xl border border-indigo-300/20 bg-indigo-400/10 px-4 py-3 text-sm font-black text-indigo-200 hover:bg-indigo-400/20"
   >
     💬 Link Discord
@@ -3923,9 +4004,9 @@ onClick={() =>
 
                 {!(rouloLink as any)?.is_in_discord && (
                   <button
-onClick={() =>
-  (window.location.href = `/api/discord/login?viewer=${viewerName}&platform=${viewerPlatform}`)
-}
+                    onClick={() =>
+                      (window.location.href = `/api/discord/login?viewer=${viewerName}`)
+                    }
                     className="mt-3 w-full rounded-xl border border-indigo-300/20 bg-indigo-400/10 px-4 py-3 text-sm font-black text-indigo-200 hover:bg-indigo-400/20"
                   >
                     💬 Link Discord (+0.1 Odds)
@@ -5494,35 +5575,35 @@ onClick={() =>
         ? "transition-transform duration-[4200ms] ease-out"
         : ""
     }
-style={
-  isSlotWheelSpinning
-    ? { transform: `translateY(-${slotWheelRotation}px)` }
-    : pickedSlotCall
-      ? { transform: "translateY(116px)" }
-      : slotCalls.length >= 5
-        ? ({
-            "--slot-loop-distance": `${slotCalls.length * 60}px`,
-            animation: "slotWheelIdleScroll 8s linear infinite",
-          } as React.CSSProperties)
-        : {
-            transform: `translateY(${(260 - slotCalls.length * 60) / 2}px)`,
-          }
-}
+    style={
+      isSlotWheelSpinning
+        ? { transform: `translateY(-${slotWheelRotation}px)` }
+: slotCalls.length >= 5
+  ? ({
+      "--slot-loop-distance": `${slotCalls.length * 60}px`,
+      animation: "slotWheelIdleScroll 8s linear infinite",
+    } as React.CSSProperties)
+  : { transform: `translateY(${(260 - slotCalls.length * 60) / 2}px)` }
+    }
   >
-{slotWheelLoop.map((call, index) => (
+    {(
+isSlotWheelSpinning || pickedSlotCall || slotCalls.length >= 5
+  ? slotWheelLoop
+  : slotCalls
+).map((call, index) => (
       <div
         key={`${call.username}-${call.slotName}-${index}`}
-        className="grid h-[60px] grid-cols-[42px_1fr_1fr] items-center gap-4 border-b border-white/5 px-6"
+        className="grid h-[60px] grid-cols-[42px_1fr_1fr] items-center gap-4 border-b border-white/5 px-6 leading-none"
       >
         <div className="text-xs font-black text-cyan-300/70">
           {index + 1}
         </div>
 
-        <div className="truncate text-left text-lg font-black leading-tight text-white sm:text-2xl">
+        <div className="truncate text-left text-lg font-black leading-none text-white sm:text-2xl">
           {call.username}
         </div>
 
-        <div className="truncate text-right text-lg font-black leading-tight text-cyan-100 sm:text-2xl">
+        <div className="truncate text-right text-lg font-black leading-none text-cyan-100 sm:text-2xl">
           {call.slotName}
         </div>
       </div>
@@ -5625,25 +5706,17 @@ style={
                   by {call.username}
                 </div>
 
-<ActionButton
-  onClick={async () => {
-    if (call.id) {
-      await fetch(`/api/slot-calls?id=${call.id}`, {
-        method: "DELETE",
-      });
-    }
-
-    setSlotCalls((current) =>
-      current.filter((item) => item.id !== call.id)
-    );
-
-    await loadSlotCalls();
-  }}
-  variant="red"
-  className="mt-3 min-h-[32px] w-full px-2 py-1 text-[9px]"
->
-  Remove
-</ActionButton>
+                <ActionButton
+                  onClick={() =>
+                    setSlotCalls((current) =>
+                      current.filter((_, itemIndex) => itemIndex !== index)
+                    )
+                  }
+                  variant="red"
+                  className="mt-3 min-h-[32px] w-full px-2 py-1 text-[9px]"
+                >
+                  Remove
+                </ActionButton>
               </div>
             ))}
           </div>
