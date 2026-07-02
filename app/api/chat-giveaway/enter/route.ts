@@ -18,7 +18,7 @@ async function getSavedRouloBoost(username: string, platform: string) {
 
   const { data: link, error } = await supabase
     .from("roulo_links")
-    .select("roulo_username, wagered, role, weight, is_in_discord, discord_username")
+    .select("roulo_username, wagered, role, weight, is_in_discord, discord_id, discord_username")
     .eq(usernameColumn, cleanUsername)
     .maybeSingle();
 
@@ -38,15 +38,33 @@ async function getSavedRouloBoost(username: string, platform: string) {
     };
   }
 
-  return {
-    weight: Number(link.weight || 1),
-    role: link.role || "viewer",
-    isRouloAffiliate: !!link.roulo_username,
-    rouloWagered: Number(link.wagered || 0),
-    rouloUsername: link.roulo_username || null,
-    isInDiscord: !!link.is_in_discord,
-    discordUsername: link.discord_username || null,
-  };
+const hasRoulo = !!link.roulo_username;
+const hasDiscord =
+  !!link.is_in_discord ||
+  !!link.discord_id ||
+  !!link.discord_username;
+
+const savedRole = String(link.role || "").toLowerCase();
+const role = savedRole === "vip" ? "vip" : hasRoulo ? "affiliate" : "viewer";
+
+const weight = Number(
+  (
+    1 +
+    (hasRoulo ? 0.1 : 0) +
+    (hasDiscord ? 0.1 : 0) +
+    (role === "vip" ? 0.3 : 0)
+  ).toFixed(2)
+);
+
+return {
+  weight,
+  role,
+  isRouloAffiliate: hasRoulo,
+  rouloWagered: Number(link.wagered || 0),
+  rouloUsername: link.roulo_username || null,
+  isInDiscord: hasDiscord,
+  discordUsername: link.discord_username || null,
+};
 }
 
 export async function POST(req: NextRequest) {

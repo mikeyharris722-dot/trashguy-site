@@ -89,7 +89,8 @@ const hasDiscord =
   !!rouloLink?.is_in_discord ||
   !!rouloLink?.discord_id ||
   !!rouloLink?.discord_username;
-const isVip = String(rouloLink?.role || "").toLowerCase() === "vip";
+const savedRole = String(rouloLink?.role || "").toLowerCase();
+const isVip = savedRole === "vip";
 
 const baseOdds = Number(
   (
@@ -101,7 +102,7 @@ const baseOdds = Number(
 );
 const luckOdds = Number(luckRow?.luck || 0);
 const totalOdds = Number((baseOdds + luckOdds).toFixed(2));
-const nextOdds = Number((totalOdds + 0.1).toFixed(2));
+const nextOdds = Number((totalOdds + 0.2).toFixed(2));
 
   const totalPending = rewards
     .filter((reward: any) => reward.status === "pending")

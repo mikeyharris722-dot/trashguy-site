@@ -3928,7 +3928,11 @@ onClick={() =>
                       Role
                     </div>
                     <div className="mt-1 truncate text-sm font-black uppercase text-indigo-200">
-                      {rouloLink.role}
+                      {String(rouloLink?.role || "").toLowerCase() === "vip"
+  ? "VIP"
+  : rouloLink?.roulo_username
+    ? "AFFILIATE"
+    : "VIEWER"}
                     </div>
                   </div>
                 </div>
