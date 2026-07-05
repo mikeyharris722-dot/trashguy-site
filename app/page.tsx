@@ -3193,7 +3193,7 @@ style={{
 {activeSection === "leaderboard" && (
   <section className="space-y-4 sm:space-y-6">
 <div className="mx-auto max-w-5xl">
-  <GlowTabTitle label="$1,000 LEADERBOARD" />
+  <GlowTabTitle label="$1,500 LEADERBOARD" />
 
   <div className="mt-3 flex justify-center">
     <div className="rounded-full border border-purple-400/30 bg-purple-500/10 px-5 py-2">
