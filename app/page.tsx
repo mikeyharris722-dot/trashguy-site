@@ -3236,10 +3236,8 @@ const rowBg =
     ? "border-zinc-200/30 bg-[linear-gradient(90deg,rgba(85,85,95,0.96),rgba(18,18,18,0.98))]"
     : player.rank === 3
     ? "border-amber-500/35 bg-[linear-gradient(90deg,rgba(95,45,10,0.96),rgba(20,10,0,0.98))]"
-    : player.rank === 4
+    : player.rank >= 4 && player.rank <= 8
     ? "border-cyan-300/25 bg-[linear-gradient(90deg,rgba(0,140,255,0.22),rgba(0,0,0,0.97))]"
-    : player.rank === 5
-    ? "border-cyan-300/22 bg-[linear-gradient(90deg,rgba(0,180,255,0.18),rgba(0,0,0,0.97))]"
     : "border-white/8 bg-black/95";
 
 const rankBox =
@@ -3249,7 +3247,7 @@ const rankBox =
     ? "text-zinc-200"
     : player.rank === 3
     ? "text-amber-400"
-    : player.rank === 4 || player.rank === 5
+    : player.rank >= 4 && player.rank <= 8
     ? "text-cyan-200"
     : "text-white/80";
 
