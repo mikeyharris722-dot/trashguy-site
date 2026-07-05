@@ -49,7 +49,7 @@ const fallbackLeaderboard = [
   { rank: 10, username: "ClipFarmer", wagered: 4520 },
 ];
 
-const leaderboardTotal = 1000;
+const leaderboardTotal = 1500;
 
 const leaderboardPrizes: Record<number, number> = {
   1: 400,
@@ -1027,7 +1027,7 @@ const currentPredictionAvgX =
     : "0.00";
 
     const leaderboardCountdown = useMemo(() => {
-  const end = new Date("2026-07-04T19:00:00-04:00").getTime();
+  const end = new Date("2026-08-04T19:00:00-04:00").getTime();
   const diff = end - countdownTick;
 
   if (diff <= 0) return "Ended";
@@ -1041,8 +1041,8 @@ const currentPredictionAvgX =
 }, [countdownTick]);
 
 const leaderboardProgress = useMemo(() => {
-  const start = new Date("2026-06-04T19:00:00-04:00").getTime();
-  const end = new Date("2026-07-04T19:00:00-04:00").getTime();
+  const start = new Date("2026-07-04T19:00:00-04:00").getTime();
+  const end = new Date("2026-08-04T19:00:00-04:00").getTime();
   const total = end - start;
   const elapsed = countdownTick - start;
 
