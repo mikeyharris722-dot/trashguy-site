@@ -53,10 +53,13 @@ const leaderboardTotal = 1500;
 
 const leaderboardPrizes: Record<number, number> = {
   1: 400,
-  2: 250,
-  3: 175,
-  4: 100,
-  5: 75,
+  2: 300,
+  3: 250,
+  4: 200,
+  5: 125,
+  6: 100,
+  7: 75,
+  8: 50,
 };
 
 const fallbackHunts: HuntItem[] = [];
