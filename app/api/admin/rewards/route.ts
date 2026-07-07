@@ -36,26 +36,34 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Missing reward id" });
   }
 
-if (body.action === "delete") {
-  const { data, error } = await supabase
-    .from("rewards")
-    .delete()
-    .eq("id", id)
-    .select("*");
+  if (body.action === "delete") {
+    const { data, error } = await supabase
+      .from("rewards")
+      .delete()
+      .eq("id", id)
+      .select("*");
 
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message });
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message });
+    }
+
+    return NextResponse.json({ ok: true, deleted: data || [] });
   }
-
-  return NextResponse.json({ ok: true, deleted: data || [] });
-}
 
   const updateData: any = {};
 
-  if (body.status !== undefined) {
-    updateData.status = body.status;
-updateData.paid_at =
-  body.status === "paid" ? new Date().toISOString() : null;
+  if (body.action === "paid" || body.status === "paid") {
+    updateData.claimed = true;
+    updateData.paid = true;
+    updateData.status = "paid";
+    updateData.paid_at = new Date().toISOString();
+  }
+
+  if (body.action === "unpaid" || body.status === "claimed") {
+    updateData.claimed = true;
+    updateData.paid = false;
+    updateData.status = "claimed";
+    updateData.paid_at = null;
   }
 
   if (body.amount !== undefined) {
@@ -66,12 +74,17 @@ updateData.paid_at =
     .from("rewards")
     .update(updateData)
     .eq("id", id)
-    .select()
-    .single();
+    .select("*");
 
   if (error) {
     return NextResponse.json({ ok: false, error: error.message });
   }
 
-  return NextResponse.json({ ok: true, reward: data });
+  const reward = Array.isArray(data) ? data[0] : data;
+
+  if (!reward) {
+    return NextResponse.json({ ok: false, error: "Reward not found." });
+  }
+
+  return NextResponse.json({ ok: true, reward });
 }

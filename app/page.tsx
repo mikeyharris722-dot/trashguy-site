@@ -2704,6 +2704,35 @@ const slotWheelLoop = useMemo(() => {
   return pickedSlotCall ? [pickedSlotCall] : slotCalls;
 }, [slotCalls, pickedSlotCall]);
 
+const handleClaimReward = async (rewardId: string) => {
+  const res = await fetch("/api/prize-portal/claim", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: rewardId,
+      viewer: viewerName,
+      platform: "twitch",
+    }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.ok) {
+    setViewerRewardsMessage(data.error || "Claim failed.");
+    return;
+  }
+
+  setViewerRewards((current) =>
+    current.map((reward) =>
+      reward.id === rewardId
+        ? { ...reward, claimed: true, paid: false, status: "claimed" }
+        : reward
+    )
+  );
+
+  setViewerRewardsMessage("Prize claimed. Waiting for payout.");
+};
+
 const handleMarkRewardPaid = async (id: string) => {
   await fetch(`/api/rewards?id=${id}`, {
     method: "PATCH",
@@ -2757,7 +2786,7 @@ const handleAdminMarkRewardPaid = async (id: string) => {
   const res = await fetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status: "paid" }),
+    body: JSON.stringify({ action: "paid" }),
   });
 
   const data = await res.json();
@@ -2777,13 +2806,13 @@ const handleAdminMarkRewardPending = async (id: string) => {
   const res = await fetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status: "pending" }),
+    body: JSON.stringify({ action: "unpaid" }),
   });
 
   const data = await res.json();
 
   if (!res.ok || !data.ok) {
-    alert(data.error || "Failed to mark reward pending.");
+    alert(data.error || "Failed to mark reward unpaid.");
     return;
   }
 
@@ -4046,48 +4075,99 @@ onClick={() =>
 </div>
             </div>
 
-            <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-black/60">
-              {viewerRewards.length === 0 ? (
-                <div className="px-4 py-6 text-center text-sm text-white/45">
-                  {viewerRewardsMessage || "No rewards yet."}
-                </div>
-              ) : (
-                <div className="max-h-[300px] divide-y divide-white/5 overflow-y-auto">
-                  {viewerRewards.map((reward) => (
-                    <div
-                      key={reward.id}
-                      className="flex items-center justify-between gap-3 px-3 py-3"
-                    >
-                      <div className="min-w-0 text-left">
-                        <div className="truncate text-sm font-black text-white">
-                          {reward.title || "Chat Giveaway"}
-                        </div>
-                        <div className="mt-0.5 text-[10px] text-white/35">
-                          {reward.created_at
-                            ? new Date(reward.created_at).toLocaleString()
-                            : "Recently"}
-                        </div>
-                      </div>
-
-                      <div className="shrink-0 text-right">
-                        <div className="text-base font-black text-cyan-200">
-                          ${Number(reward.amount || 0).toLocaleString()}
-                        </div>
-                        <div
-                          className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[9px] font-black ${
-                            reward.status === "complete"
-                              ? "border border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
-                              : "border border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
-                          }`}
-                        >
-                          {reward.status === "complete" ? "Done" : "Pending"}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+<div className="mt-3 space-y-3">
+  {viewerRewards.length === 0 ? (
+    <div className="rounded-xl border border-white/10 bg-black/60 px-4 py-6 text-center text-sm text-white/45">
+      {viewerRewardsMessage || "No rewards yet."}
+    </div>
+  ) : (
+    <>
+      {[
+        {
+          title: "Ready to Claim",
+          items: viewerRewards.filter((r) => !r.claimed && !r.paid),
+          empty: "No prizes to claim.",
+          color: "yellow",
+        },
+        {
+          title: "Waiting for Payment",
+          items: viewerRewards.filter((r) => r.claimed && !r.paid),
+          empty: "No claimed prizes waiting.",
+          color: "orange",
+        },
+        {
+          title: "Paid",
+          items: viewerRewards.filter((r) => r.paid),
+          empty: "No paid prizes yet.",
+          color: "cyan",
+        },
+      ].map((section) => (
+        <div
+          key={section.title}
+          className="overflow-hidden rounded-xl border border-white/10 bg-black/60"
+        >
+          <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
+            <div className="text-[11px] font-black uppercase tracking-[0.16em] text-white">
+              {section.title}
             </div>
+            <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-black text-cyan-200">
+              {section.items.length}
+            </div>
+          </div>
+
+          {section.items.length === 0 ? (
+            <div className="px-3 py-4 text-center text-xs text-white/35">
+              {section.empty}
+            </div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {section.items.map((reward: any) => (
+                <div
+                  key={reward.id}
+                  className="flex items-center justify-between gap-3 px-3 py-3"
+                >
+                  <div className="min-w-0 text-left">
+                    <div className="truncate text-sm font-black text-white">
+                      {reward.title || "Chat Giveaway"}
+                    </div>
+                    <div className="mt-0.5 text-[10px] text-white/35">
+                      {reward.created_at
+                        ? new Date(reward.created_at).toLocaleString()
+                        : "Recently"}
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 text-right">
+                    <div className="text-base font-black text-cyan-200">
+                      ${Number(reward.amount || 0).toLocaleString()}
+                    </div>
+
+                    {!reward.claimed && !reward.paid ? (
+                      <button
+                        onClick={() => handleClaimReward(reward.id)}
+                        className="mt-1 rounded-lg border border-yellow-300/30 bg-yellow-400/10 px-3 py-1 text-[10px] font-black text-yellow-200"
+                      >
+                        Claim
+                      </button>
+                    ) : reward.paid ? (
+                      <div className="mt-1 text-[10px] font-black text-cyan-200">
+                        Paid ✅
+                      </div>
+                    ) : (
+                      <div className="mt-1 text-[10px] font-black text-orange-200">
+                        Waiting
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </>
+  )}
+</div>
           </>
         )}
       </div>
@@ -4863,180 +4943,172 @@ onClick={() =>
 </div>
         </details>
 
-        <details
-          open={adminDropdowns.prizePortal}
-          onToggle={(e) => setAdminDropdown("prizePortal", e.currentTarget.open)}
-          className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
-        >
-          <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
-            Prize Portal Manager
-          </summary>
+<details
+  open={adminDropdowns.prizePortal}
+  onToggle={(e) => setAdminDropdown("prizePortal", e.currentTarget.open)}
+  className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
+>
+  <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
+    Prize Portal Manager
+  </summary>
 
-          <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <SectionLabel>Prize Portal Manager</SectionLabel>
-                <h2 className="mt-2 text-xl font-black tracking-wide sm:text-3xl">
-                  ALL REWARDS
-                </h2>
-                <div className="mt-1 text-xs text-white/45 sm:text-sm">
-                  Manage viewer rewards and payout status.
-                </div>
-              </div>
+  <div className="mt-4 grid gap-4">
+    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div>
+        <SectionLabel>Prize Claims</SectionLabel>
+        <h2 className="mt-2 text-xl font-black tracking-wide sm:text-3xl">
+          CLAIMED PRIZES
+        </h2>
+        <div className="mt-1 text-xs text-white/45 sm:text-sm">
+          Pay claimed prizes and view paid history.
+        </div>
+      </div>
 
-              <ActionButton onClick={loadAdminRewards} variant="dark" className="w-full md:w-auto">
-                Refresh
-              </ActionButton>
+      <ActionButton onClick={loadAdminRewards} variant="dark" className="w-full md:w-auto">
+        Refresh
+      </ActionButton>
+    </div>
+
+    <input
+      value={adminRewardsSearch}
+      onChange={(e) => setAdminRewardsSearch(e.target.value)}
+      placeholder="Search username, platform, title..."
+      className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none"
+    />
+
+    {adminRewardsMessage && (
+      <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-white/70">
+        {adminRewardsMessage}
+      </div>
+    )}
+
+    {/* CLAIMED / UNPAID */}
+    <div className="overflow-hidden rounded-xl border border-orange-300/20 bg-black/45">
+      <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
+        <div className="text-xs font-black uppercase tracking-[0.16em] text-orange-200">
+          Claimed / Unpaid
+        </div>
+        <div className="rounded-full border border-orange-300/20 bg-orange-400/10 px-2 py-0.5 text-[10px] font-black text-orange-200">
+          {filteredAdminRewards.filter((r) => r.claimed && !r.paid).length}
+        </div>
+      </div>
+
+      {filteredAdminRewards.filter((r) => r.claimed && !r.paid).length === 0 ? (
+        <div className="p-4 text-center text-xs text-white/40">
+          No claimed prizes waiting for payment.
+        </div>
+      ) : (
+<div className="divide-y divide-white/5">
+  {filteredAdminRewards
+    .filter((reward) => reward.claimed && !reward.paid)
+    .map((reward) => (
+      <div
+        key={reward.id}
+        className="flex items-start justify-between gap-4 p-3"
+      >
+        {/* LEFT SIDE */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <div className="truncate text-sm font-black text-white">
+              {reward.display_name ||
+                reward.twitch_username ||
+                reward.kick_username}
             </div>
 
-            <input
-              value={adminRewardsSearch}
-              onChange={(e) => setAdminRewardsSearch(e.target.value)}
-              placeholder="Search username, status, title..."
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none sm:px-4 sm:py-3 sm:text-base"
-            />
-
-            {adminRewardsMessage && (
-              <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-white/70 sm:p-4 sm:text-sm">
-                {adminRewardsMessage}
-              </div>
-            )}
-
-            <div className="overflow-hidden rounded-xl border border-white/10 bg-black/30 sm:rounded-2xl">
-              {filteredAdminRewards.length === 0 ? (
-                <div className="p-4 text-center text-sm text-white/45 sm:p-6">
-                  No rewards found. Click Refresh Rewards.
-                </div>
-              ) : (
-                <div className="max-h-[520px] overflow-y-auto divide-y divide-white/5 sm:max-h-[650px]">
-                  {filteredAdminRewards.map((reward) => {
-                    const isComplete = reward.status === "paid";
-
-                    return (
-                      <div
-                        key={reward.id}
-                        className="grid grid-cols-[1fr_auto] gap-3 p-3 sm:p-4 xl:grid-cols-[1fr_120px_140px_360px]"
-                      >
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-black text-white sm:text-base">
-                            {reward.display_name || reward.twitch_username}
-                          </div>
-                          <div className="mt-1 truncate text-[11px] text-white/40 sm:text-xs">
-                            @{reward.twitch_username}
-                          </div>
-                          <div className="mt-1 line-clamp-2 text-xs text-white/55 sm:mt-2 sm:text-sm">
-                            {reward.title || "Chat Giveaway"} •{" "}
-                            {reward.created_at
-                              ? new Date(reward.created_at).toLocaleString()
-                              : "Recently"}
-                          </div>
-                        </div>
-
-                        <div className="text-right xl:text-left">
-                          <div className="text-[10px] text-white/35 sm:text-xs">Amount</div>
-                          <div className="mt-1 text-lg font-black text-cyan-200 sm:text-xl">
-                            ${Number(reward.amount || 0).toLocaleString()}
-                          </div>
-
-                          <div
-                            className={`mt-2 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-black sm:px-3 sm:py-1 sm:text-xs xl:hidden ${
-                              isComplete
-                                ? "border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
-                                : "border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
-                            }`}
-                          >
-                            {isComplete ? "Paid" : "Pending"}
-                          </div>
-                        </div>
-
-                        <div className="hidden xl:block">
-                          <div className="text-xs text-white/35">Status</div>
-                          <div
-                            className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-black ${
-                              isComplete
-                                ? "border-cyan-300/20 bg-cyan-400/10 text-cyan-200"
-                                : "border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
-                            }`}
-                          >
-                            {isComplete ? "Paid" : "Pending"}
-                          </div>
-                        </div>
-
-                        <div className="col-span-2 grid grid-cols-3 gap-2 xl:col-span-1">
-{isComplete ? (
-  <ActionButton
-    onClick={() => handleAdminMarkRewardPending(reward.id)}
-    variant="green"
-    className="min-h-[34px] px-2 py-1 text-[9px] sm:min-h-[46px] sm:text-[10px]"
-  >
-    Paid ✅
-  </ActionButton>
-) : (
-  <ActionButton
-    onClick={() => handleAdminMarkRewardPaid(reward.id)}
-    variant="dark"
-    className="min-h-[34px] px-2 py-1 text-[9px] sm:min-h-[46px] sm:text-[10px]"
-  >
-    Mark Paid
-  </ActionButton>
-)}
-
-                          <ActionButton
-                            variant="dark"
-                            className="min-h-[34px] px-2 py-1 text-[9px] sm:min-h-[46px] sm:text-[10px]"
-                            onClick={async () => {
-                              const newAmount = prompt("Edit giveaway winnings:", String(reward.amount || 0));
-                              if (newAmount === null) return;
-                              const amount = Number(newAmount);
-                              if (Number.isNaN(amount) || amount < 0) {
-                                alert("Enter a valid amount.");
-                                return;
-                              }
-
-                              const res = await fetch(`/api/admin/rewards?id=${reward.id}`, {
-                                method: "PATCH",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ amount }),
-                              });
-
-                              const data = await res.json();
-
-                              if (!res.ok || !data.ok) {
-                                alert(data.error || "Amount update failed.");
-                                return;
-                              }
-
-                              setAdminRewards((current) =>
-                                current.map((item) => (item.id === reward.id ? { ...item, amount } : item))
-                              );
-
-                              setViewerRewards((current) =>
-                                current.map((item) => (item.id === reward.id ? { ...item, amount } : item))
-                              );
-
-                              loadAdminRewards();
-                              loadViewerRewards();
-                            }}
-                          >
-                            Edit
-                          </ActionButton>
-
-                          <ActionButton
-                            onClick={() => handleAdminDeleteReward(reward.id)}
-                            variant="red"
-                            className="min-h-[34px] px-2 py-1 text-[9px] sm:min-h-[42px] sm:text-[11px]"
-                          >
-                            Delete
-                          </ActionButton>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+            <div
+              className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${
+                reward.platform === "kick"
+                  ? "border-green-300/25 bg-green-400/10 text-green-200"
+                  : "border-purple-300/25 bg-purple-400/10 text-purple-200"
+              }`}
+            >
+              {reward.platform === "kick" ? "Kick" : "Twitch"}
             </div>
           </div>
-        </details>
+
+          <div className="mt-1 text-[11px] text-white/45">
+            @{reward.kick_username || reward.twitch_username}
+          </div>
+
+          <div className="mt-1 text-[10px] text-white/35">
+            {reward.title || "Chat Giveaway"} •{" "}
+            {reward.claimed_at
+              ? new Date(reward.claimed_at).toLocaleString()
+              : "Just claimed"}
+          </div>
+        </div>
+
+        {/* RIGHT SIDE */}
+        <div className="flex flex-col items-end justify-between">
+          <div className="text-base font-black text-cyan-200">
+            ${Number(reward.amount || 0).toLocaleString()}
+          </div>
+
+          <ActionButton
+            onClick={() => handleAdminMarkRewardPaid(reward.id)}
+            variant="green"
+            className="mt-2 h-7 px-3 text-[9px]"
+          >
+            Mark Paid
+          </ActionButton>
+        </div>
+      </div>
+    ))}
+</div>
+      )}
+    </div>
+
+    {/* PAID HISTORY */}
+    <div className="overflow-hidden rounded-xl border border-cyan-300/15 bg-black/35">
+      <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
+        <div className="text-xs font-black uppercase tracking-[0.16em] text-cyan-200">
+          Paid History
+        </div>
+        <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-black text-cyan-200">
+          {filteredAdminRewards.filter((r) => r.paid).length}
+        </div>
+      </div>
+
+      {filteredAdminRewards.filter((r) => r.paid).length === 0 ? (
+        <div className="p-4 text-center text-xs text-white/40">
+          No paid prizes yet.
+        </div>
+      ) : (
+        <div className="max-h-[420px] divide-y divide-white/5 overflow-y-auto">
+          {filteredAdminRewards
+            .filter((reward) => reward.paid)
+            .map((reward) => (
+              <div key={reward.id} className="flex items-center justify-between gap-3 p-3">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-black text-white">
+                    {reward.display_name || reward.twitch_username || reward.kick_username}
+                  </div>
+                  <div className="mt-1 text-[11px] text-white/40">
+                    {reward.title || "Chat Giveaway"} •{" "}
+                    {reward.paid_at
+                      ? new Date(reward.paid_at).toLocaleString()
+                      : "Paid"}
+                  </div>
+                </div>
+
+                <div className="shrink-0 text-right">
+                  <div className="text-sm font-black text-cyan-200">
+                    ${Number(reward.amount || 0).toLocaleString()}
+                  </div>
+                  <button
+                    onClick={() => handleAdminMarkRewardPending(reward.id)}
+                    className="mt-1 text-[10px] font-black text-white/40 hover:text-white"
+                  >
+                    Undo
+                  </button>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  </div>
+</details>
 
         <details
           open={adminDropdowns.tournament}

@@ -165,18 +165,19 @@ const totalWeight = entriesWithLuck.reduce(
 
 const { data: reward, error: rewardError } = await supabase
   .from("rewards")
-  .insert({
-    twitch_username: winnerUsername,
-    twitch_id: winner.twitch_id || null,
-    display_name: winnerDisplayName,
+.insert({
+twitch_username: winnerUsername,
+kick_username: winner.platform === "kick" ? winnerUsername : null,
+  twitch_id: winner.twitch_id || null,
+  display_name: winnerDisplayName,
 
-    platform: winner.platform || "twitch",
+  platform: winner.platform || "twitch",
 
-    amount: amount > 0 ? amount : 0,
-    title: "Chat Giveaway",
-    status: "pending",
-    giveaway_id: giveaway.id,
-  })
+  amount: amount > 0 ? amount : 0,
+  title: "Chat Giveaway",
+  status: "unclaimed",
+  giveaway_id: giveaway.id,
+})
     .select()
     .single();
 
