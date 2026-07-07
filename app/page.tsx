@@ -2861,6 +2861,7 @@ const filteredAdminRewards = adminRewards.filter((reward) => {
   return (
     String(reward.twitch_username || "").toLowerCase().includes(search) ||
     String(reward.display_name || "").toLowerCase().includes(search) ||
+    String(reward.roulo_username || "").toLowerCase().includes(search) ||
     String(reward.title || "").toLowerCase().includes(search) ||
     String(reward.status || "").toLowerCase().includes(search)
   );
@@ -5027,7 +5028,7 @@ onClick={() =>
           </div>
 
           <div className="mt-1 text-[11px] text-white/45">
-            @{reward.kick_username || reward.twitch_username}
+            Roulo: {reward.roulo_username || "Not linked"}
           </div>
 
           <div className="mt-1 text-[10px] text-white/35">

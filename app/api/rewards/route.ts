@@ -9,16 +9,68 @@ const supabase = createClient(
 );
 
 export async function GET() {
-  const { data, error } = await supabase
+  const { data: rewards, error } = await supabase
     .from("rewards")
     .select("*")
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: error.message },
+      { status: 500 }
+    );
   }
 
-  return NextResponse.json({ ok: true, rewards: data || [] });
+  const usernames = Array.from(
+    new Set(
+      (rewards || [])
+        .flatMap((reward: any) => [
+          reward.twitch_username,
+          reward.kick_username,
+        ])
+        .filter(Boolean)
+        .map((name: string) => name.toLowerCase())
+    )
+  );
+
+  let rouloMap = new Map<string, string>();
+
+  if (usernames.length) {
+    const { data: links } = await supabase
+      .from("roulo_links")
+      .select("twitch_username, kick_username, roulo_username");
+
+    (links || []).forEach((link: any) => {
+      if (link.twitch_username) {
+        rouloMap.set(
+          String(link.twitch_username).toLowerCase(),
+          link.roulo_username
+        );
+      }
+
+      if (link.kick_username) {
+        rouloMap.set(
+          String(link.kick_username).toLowerCase(),
+          link.roulo_username
+        );
+      }
+    });
+  }
+
+  const enrichedRewards = (rewards || []).map((reward: any) => ({
+    ...reward,
+    roulo_username:
+      rouloMap.get(
+        String(
+          reward.kick_username || reward.twitch_username || ""
+        ).toLowerCase()
+      ) || null,
+  }));
+
+  return NextResponse.json({
+    ok: true,
+    rewards: enrichedRewards,
+  });
 }
 
 export async function PATCH(req: NextRequest) {
