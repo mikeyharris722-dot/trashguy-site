@@ -599,6 +599,7 @@ export default function Home() {
   const [predictionStatus, setPredictionStatus] = useState<"open" | "locked">("locked");
   const [predictions, setPredictions] = useState<PredictionItem[]>([]);
   const [predictionMessage, setPredictionMessage] = useState("");
+  const [predictionScrollIndex, setPredictionScrollIndex] = useState(0);
 
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
   if (typeof window === "undefined") return false;

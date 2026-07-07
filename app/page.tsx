@@ -602,6 +602,7 @@ export default function Home() {
   const [predictionStatus, setPredictionStatus] = useState<"open" | "locked">("locked");
   const [predictions, setPredictions] = useState<PredictionItem[]>([]);
   const [predictionMessage, setPredictionMessage] = useState("");
+  const [predictionScrollIndex, setPredictionScrollIndex] = useState(0);
 
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
   if (typeof window === "undefined") return false;
@@ -976,6 +977,34 @@ const updateMonthlyReward = async (
     return bTime - aTime;
   });
 }, [predictions, predictionSortMode]);
+
+useEffect(() => {
+  if (sortedPredictionsForTab.length <= 5) return;
+
+  const timer = setInterval(() => {
+    setPredictionScrollIndex((current) =>
+      current + 1 >= sortedPredictionsForTab.length ? 0 : current + 1
+    );
+  }, 2000);
+
+  return () => clearInterval(timer);
+}, [sortedPredictionsForTab.length]);
+
+const visibleScrollingPredictions = useMemo(() => {
+  if (!sortedPredictionsForTab.length) return [];
+
+  const items = [];
+
+  for (let i = 0; i < Math.min(5, sortedPredictionsForTab.length); i++) {
+    items.push(
+      sortedPredictionsForTab[
+        (predictionScrollIndex + i) % sortedPredictionsForTab.length
+      ]
+    );
+  }
+
+  return items;
+}, [sortedPredictionsForTab, predictionScrollIndex]);
 
 const currentPredictionEntry = useMemo(() => {
   return predictions.find(
@@ -1507,6 +1536,26 @@ useEffect(() => {
       setLiveLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+  const huntId =
+    (currentPredictionHunt as any)?.localId || currentPredictionHunt?.id || "";
+
+  if (!huntId || predictionStatus !== "open") return;
+
+  loadPredictions(huntId);
+
+  const timer = setInterval(() => {
+    loadPredictions(huntId);
+  }, 3000);
+
+  return () => clearInterval(timer);
+}, [
+  predictionStatus,
+  currentPredictionHunt?.id,
+  (currentPredictionHunt as any)?.localId,
+  loadPredictions,
+]);
 
   const loadBracket = useCallback(async () => {
     try {
@@ -3526,27 +3575,18 @@ const rankBox =
 <div className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-400/5 p-2.5 sm:mt-4 sm:rounded-2xl sm:p-2">
   {isAdmin && (
     <div className="mt-2 rounded-xl border border-cyan-300/15 bg-black/40 p-3">
-<div className="grid grid-cols-3 gap-2">
+<div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
 
-<ActionButton
-  onClick={handleOpenPredictions}
-  variant="green"
->
-  Open Predictions
+<ActionButton onClick={handleOpenPredictions} variant="green">
+  Open
 </ActionButton>
 
-<ActionButton
-  onClick={handleLockPredictions}
-  variant="purple"
->
-  Close Predictions
+<ActionButton onClick={handleLockPredictions} variant="purple">
+  Close
 </ActionButton>
 
-<ActionButton
-  onClick={handleCompleteHunt}
-  variant="gold"
->
-  Complete Hunt
+<ActionButton onClick={handleCompleteHunt} variant="gold">
+  Complete
 </ActionButton>
       </div>
 
@@ -3635,41 +3675,43 @@ const rankBox =
     </div>
   </div>
 
-  <div className="max-h-[360px] overflow-y-auto rounded-xl border border-white/10 bg-black/65 sm:max-h-[480px]">
-    {sortedPredictionsForTab.length === 0 ? (
-      <div className="p-5 text-center text-xs text-white/40">
-        No guesses yet.
-      </div>
-    ) : (
-      <div className="divide-y divide-white/5">
-        {[...sortedPredictionsForTab]
-          .sort((a, b) => Number(b.guess || 0) - Number(a.guess || 0))
-          .map((entry, index) => (
-            <div
-              key={entry.id}
-              className="grid grid-cols-[56px_1fr_auto] items-center gap-3 px-4 py-3 text-sm sm:grid-cols-[70px_1fr_auto] sm:px-5 sm:py-3.5"
-            >
-              <div className="text-[10px] font-black text-cyan-300 sm:text-xs">
-                #{index + 1}
+<div className="h-[230px] overflow-hidden rounded-xl border border-white/10 bg-black/65 p-2">
+  {sortedPredictionsForTab.length === 0 ? (
+    <div className="flex h-full items-center justify-center text-xs text-white/40">
+      No guesses yet.
+    </div>
+  ) : (
+    <div className="animate-prediction-marquee">
+      {[...sortedPredictionsForTab, ...sortedPredictionsForTab].map(
+        (entry, index) => (
+          <div
+            key={`${entry.id}-${index}`}
+            className="flex items-center justify-between rounded-lg border border-white/10 bg-black/40 px-3 py-2"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="w-7 text-[10px] font-black text-cyan-300">
+                #{(index % sortedPredictionsForTab.length) + 1}
               </div>
 
               <div className="min-w-0">
-                <div className="truncate text-sm font-black text-white sm:text-base">
+                <div className="truncate text-[13px] font-black text-white">
                   {entry.username}
                 </div>
-                <div className="text-[9px] text-white/35 sm:text-[10px]">
+                <div className="text-[9px] text-white/35">
                   {formatTimeAgo(entry.createdAt)}
                 </div>
               </div>
-
-              <div className="rounded-lg border border-cyan-300/20 bg-cyan-400/10 px-3 py-1.5 text-right text-sm font-black text-cyan-100 sm:text-base">
-                {formatMoney(entry.guess)}
-              </div>
             </div>
-          ))}
-      </div>
-    )}
-  </div>
+
+            <div className="rounded-lg border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[13px] font-black text-cyan-200">
+              {formatMoney(entry.guess)}
+            </div>
+          </div>
+        )
+      )}
+    </div>
+  )}
+</div>
 </div>
 
 {/* BONUS LIST */}
@@ -3690,43 +3732,38 @@ const rankBox =
         No bonuses in this hunt yet.
       </div>
     ) : (
-<div className="divide-y divide-white/5">
+<div className="space-y-2">
   {currentPredictionHunt.bonuses.map((bonus: any, index: number) => (
     <div
       key={bonus.id || index}
-      className="grid grid-cols-[44px_1fr_70px_70px_80px] items-center gap-2 px-3 py-2 text-xs"
+      className="rounded-xl border border-white/10 bg-black/35 px-3 py-2"
     >
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-300/25 bg-cyan-400/10 text-xs font-black text-cyan-200">
-        {index + 1}
-      </div>
-
-      <div className="min-w-0">
-        <div className="break-words leading-tight text-sm font-black text-white">
-          {bonus.slotName}
+      <div className="flex items-center gap-2">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-cyan-300/25 bg-cyan-400/10 text-[11px] font-black text-cyan-200">
+          {index + 1}
         </div>
-        <div className="text-[9px] uppercase tracking-[0.12em] text-white/35">
-          Bonus #{index + 1}
-        </div>
-      </div>
 
-      <div className="text-right">
-        <div className="text-[8px] uppercase text-white/35">Bet</div>
-        <div className="font-black text-white">
-          {formatMoney(Number(bonus.betSize || 0))}
-        </div>
-      </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[13px] font-black text-white sm:text-sm">
+            {bonus.slotName}
+          </div>
 
-      <div className="text-right">
-        <div className="text-[8px] uppercase text-white/35">X</div>
-        <div className="font-black text-white">
-          {Number(bonus.multiplier || 0).toFixed(2)}x
-        </div>
-      </div>
+          <div className="mt-1 flex items-center justify-between gap-2 text-[11px] font-bold sm:text-xs">
+            <span className="text-white/60">
+              Bet{" "}
+              <span className="text-white">
+                {formatMoney(Number(bonus.betSize || 0))}
+              </span>
+            </span>
 
-      <div className="text-right">
-        <div className="text-[8px] uppercase text-white/35">Payout</div>
-        <div className="font-black text-cyan-300">
-          {formatMoney(Number(bonus.payout || 0))}
+            <span className="text-white/80">
+              {Number(bonus.multiplier || 0).toFixed(2)}x
+            </span>
+
+            <span className="text-cyan-300">
+              {formatMoney(Number(bonus.payout || 0))}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -5518,32 +5555,34 @@ style={
       ? { transform: "translateY(116px)" }
       : slotCalls.length >= 5
         ? ({
-            "--slot-loop-distance": `${slotCalls.length * 60}px`,
+            "--slot-loop-distance": `${slotCalls.length * 46}px`,
             animation: "slotWheelIdleScroll 8s linear infinite",
           } as React.CSSProperties)
         : {
-            transform: `translateY(${(260 - slotCalls.length * 60) / 2}px)`,
+            transform: `translateY(${(260 - slotCalls.length * 46) / 2}px)`,
           }
 }
   >
 {slotWheelLoop.map((call, index) => (
-      <div
-        key={`${call.username}-${call.slotName}-${index}`}
-        className="grid h-[60px] grid-cols-[42px_1fr_1fr] items-center gap-4 border-b border-white/5 px-6"
-      >
-        <div className="text-xs font-black text-cyan-300/70">
-          {index + 1}
-        </div>
-
-        <div className="truncate text-left text-lg font-black leading-tight text-white sm:text-2xl">
-          {call.username}
-        </div>
-
-        <div className="truncate text-right text-lg font-black leading-tight text-cyan-100 sm:text-2xl">
-          {call.slotName}
-        </div>
+  <div
+    key={`${call.username}-${call.slotName}-${index}`}
+    className="flex h-[46px] items-center justify-between gap-3 border-b border-white/5 px-3 sm:px-4"
+  >
+    <div className="flex min-w-0 items-center gap-2">
+      <div className="w-7 text-[10px] font-black text-cyan-300/70">
+        #{(index % slotCalls.length) + 1}
       </div>
-    ))}
+
+      <div className="truncate text-[12px] font-black text-white sm:text-sm">
+        {call.username}
+      </div>
+    </div>
+
+    <div className="truncate text-right text-[12px] font-black text-cyan-100 sm:text-sm">
+      {call.slotName}
+    </div>
+  </div>
+))}
   </div>
 </>
         )}
