@@ -800,6 +800,10 @@ const [discordLinkMessage, setDiscordLinkMessage] = useState("");
 const [adminRewards, setAdminRewards] = useState<any[]>([]);
 const [adminRewardsSearch, setAdminRewardsSearch] = useState("");
 const [adminRewardsMessage, setAdminRewardsMessage] = useState("");
+const [manualRewardPlatform, setManualRewardPlatform] = useState<"twitch" | "kick">("twitch");
+const [manualRewardUsername, setManualRewardUsername] = useState("");
+const [manualRewardAmount, setManualRewardAmount] = useState("");
+const [manualRewardTitle, setManualRewardTitle] = useState("Discord Giveaway");
 
 const [adminDropdowns, setAdminDropdowns] = useState(() => {
   if (typeof window === "undefined") {
@@ -2703,6 +2707,44 @@ const handleRemovePickedSlot = async () => {
 const slotWheelLoop = useMemo(() => {
   return pickedSlotCall ? [pickedSlotCall] : slotCalls;
 }, [slotCalls, pickedSlotCall]);
+
+const handleCreateManualReward = async () => {
+  const username = manualRewardUsername.trim().replace("@", "");
+  const amount = Number(manualRewardAmount || 0);
+  const title = manualRewardTitle.trim() || "Discord Giveaway";
+
+  if (!username || !amount || amount <= 0) {
+    setAdminRewardsMessage("Enter a username and valid amount.");
+    return;
+  }
+
+  const res = await fetch("/api/admin/rewards", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      platform: manualRewardPlatform,
+      username,
+      displayName: username,
+      amount,
+      title,
+    }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.ok) {
+    setAdminRewardsMessage(data.error || "Manual reward failed.");
+    return;
+  }
+
+  setManualRewardUsername("");
+  setManualRewardAmount("");
+  setManualRewardTitle("Discord Giveaway");
+  setAdminRewardsMessage("Manual prize added to viewer Prize Portal.");
+
+  await loadAdminRewards();
+  await loadViewerRewards();
+};
 
 const handleClaimReward = async (rewardId: string) => {
   const res = await fetch("/api/prize-portal/claim", {
@@ -4959,6 +5001,63 @@ onClick={() =>
         {adminRewardsMessage}
       </div>
     )}
+
+    {/* MANUAL DISCORD GIVEAWAY */}
+<div className="rounded-xl border border-cyan-300/15 bg-black/45 p-3">
+  <div className="mb-3 flex items-center justify-between">
+    <div>
+      <div className="text-xs font-black uppercase tracking-[0.16em] text-cyan-200">
+        Discord Giveaway
+      </div>
+      <div className="mt-1 text-xs text-white/40">
+        Manually add a prize to someone’s Prize Portal.
+      </div>
+    </div>
+  </div>
+
+  <div className="grid gap-2 sm:grid-cols-[120px_1fr_120px_1fr_auto]">
+    <select
+      value={manualRewardPlatform}
+      onChange={(e) =>
+        setManualRewardPlatform(e.target.value as "twitch" | "kick")
+      }
+      className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-black text-white outline-none"
+    >
+      <option value="twitch">Twitch</option>
+      <option value="kick">Kick</option>
+    </select>
+
+    <input
+      value={manualRewardUsername}
+      onChange={(e) => setManualRewardUsername(e.target.value)}
+      placeholder="username"
+      className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs text-white outline-none"
+    />
+
+    <input
+      value={manualRewardAmount}
+      onChange={(e) => setManualRewardAmount(e.target.value)}
+      placeholder="$ amount"
+      type="number"
+      className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs text-white outline-none"
+    />
+
+    <input
+      value={manualRewardTitle}
+      onChange={(e) => setManualRewardTitle(e.target.value)}
+      placeholder="Discord Giveaway"
+      className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs text-white outline-none"
+    />
+
+    <ActionButton
+      onClick={handleCreateManualReward}
+      variant="green"
+      className="min-h-[36px] px-4 text-[10px]"
+    >
+      Add Prize
+    </ActionButton>
+  </div>
+</div>
 
     {/* CLAIMED / UNPAID */}
     <div className="overflow-hidden rounded-xl border border-orange-300/20 bg-black/45">

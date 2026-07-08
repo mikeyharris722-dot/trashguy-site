@@ -73,6 +73,51 @@ export async function GET() {
   });
 }
 
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+
+  const username = String(body.username || "")
+    .replace("@", "")
+    .trim()
+    .toLowerCase();
+
+  const displayName = String(body.displayName || username).trim();
+  const platform = body.platform === "kick" ? "kick" : "twitch";
+  const amount = Number(body.amount || 0);
+  const title = String(body.title || "Discord Giveaway").trim();
+
+  if (!username || !amount || amount <= 0) {
+    return NextResponse.json({
+      ok: false,
+      error: "Username and amount are required.",
+    });
+  }
+
+  const { data, error } = await supabase
+    .from("rewards")
+    .insert({
+      twitch_username: username,
+      kick_username: platform === "kick" ? username : null,
+      display_name: displayName,
+      platform,
+      amount,
+      title,
+      status: "unclaimed",
+      claimed: false,
+      paid: false,
+    })
+    .select("*");
+
+  if (error) {
+    return NextResponse.json({ ok: false, error: error.message });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    reward: Array.isArray(data) ? data[0] : data,
+  });
+}
+
 export async function PATCH(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
   const body = await req.json();
