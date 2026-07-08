@@ -3968,101 +3968,77 @@ onClick={() =>
 </div>
 
 {rouloLink && (
-  <div className="mt-3 rounded-xl border border-white/10 bg-black/40 p-4">
-    <div className="grid gap-2 text-sm sm:grid-cols-2">
+<div className="mt-3 rounded-xl border border-white/10 bg-black/40 p-4">
+  <div className="space-y-3 text-sm">
 
-      {/* Left */}
+    <div className="flex items-center justify-between">
+      <span className="font-semibold text-white">
+        ✅ Twitch
+      </span>
 
-      <div className="flex items-center justify-between">
-        <span className="font-semibold text-white">
-          ✅ Twitch
-        </span>
-        <span />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <span className="text-white/70">
-          🎲 <span className="font-semibold">Base Odds</span>
-        </span>
-        <span className="font-black text-white">
-          {viewerOdds.baseOdds.toFixed(1)}x
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <span className="font-semibold text-white">
-          ✅ Roulo
-        </span>
-        <span />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <span className="text-white/70">
-          🍀 <span className="font-semibold">Luck Odds</span>
-        </span>
-        <span className="font-black text-green-300">
-          +{viewerOdds.luckOdds.toFixed(1)}x
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <span className="font-semibold text-white">
-          {(rouloLink as any)?.is_in_discord ? "✅" : "❌"} Discord
-        </span>
-        <span />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <span className="text-white/70">
-          ❤️ <span className="font-semibold">Total Odds</span>
-        </span>
-        <span className="font-black text-red-300">
-          {viewerOdds.totalOdds.toFixed(1)}x
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <span className="font-semibold text-white">
-          👑{" "}
-          {String(rouloLink?.role || "").toLowerCase() === "vip"
-            ? "VIP"
-            : rouloLink?.roulo_username
-            ? "Affiliate"
-            : "Viewer"}
-        </span>
-        <span />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <span className="text-white/70">
-          📈 <span className="font-semibold">Next Loss</span>
-        </span>
-        <span className="font-black text-cyan-300">
-          {viewerOdds.nextOdds.toFixed(1)}x
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between border-t border-white/10 pt-3">
-        <span className="text-yellow-200">
-          💰 <span className="font-semibold">Pending</span>
-        </span>
-
-        <span className="font-black text-yellow-200">
-          ${viewerRewardsPending.toLocaleString()}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between border-t border-white/10 pt-3">
-        <span className="text-green-300">
-          ✅ <span className="font-semibold">Paid</span>
-        </span>
-
-        <span className="font-black text-green-300">
-          ${viewerRewardsPaid.toLocaleString()}
-        </span>
-      </div>
-
+      <span className="font-black text-white">
+        🎲 Base Odds: {viewerOdds.baseOdds.toFixed(1)}x
+      </span>
     </div>
+
+    <div className="flex items-center justify-between">
+      <span className="font-semibold text-white">
+        ✅ Roulo
+      </span>
+
+      <span className="font-black text-green-300">
+        🍀 Luck Odds: +{viewerOdds.luckOdds.toFixed(1)}x
+      </span>
+    </div>
+
+    <div className="flex items-center justify-between">
+      <span className="font-semibold text-white">
+        {(rouloLink as any)?.is_in_discord ? "✅" : "❌"} Discord
+      </span>
+
+      <span className="font-black text-red-300">
+        ❤️ Total Odds: {viewerOdds.totalOdds.toFixed(1)}x
+      </span>
+    </div>
+
+    <div className="flex items-center justify-between">
+      <span className="font-semibold text-white">
+        👑{" "}
+        {String(rouloLink?.role || "").toLowerCase() === "vip"
+          ? "VIP"
+          : rouloLink?.roulo_username
+          ? "Affiliate"
+          : "Viewer"}
+      </span>
+
+      <span className="font-black text-cyan-300">
+        📈 Next Loss: {viewerOdds.nextOdds.toFixed(1)}x
+      </span>
+    </div>
+
+    <div className="border-t border-white/10 pt-3" />
+
+    <div className="flex items-center justify-between">
+      <span className="font-black text-yellow-200">
+        💰 Pending
+      </span>
+
+      <span className="font-black text-yellow-200">
+        ${viewerRewardsPending.toLocaleString()}
+      </span>
+    </div>
+
+    <div className="flex items-center justify-between">
+      <span className="font-black text-green-300">
+        ✅ Paid
+      </span>
+
+      <span className="font-black text-green-300">
+        ${viewerRewardsPaid.toLocaleString()}
+      </span>
+    </div>
+
+  </div>
 
     {!((rouloLink as any)?.is_in_discord || discordLink?.is_in_discord) && (
       <button
