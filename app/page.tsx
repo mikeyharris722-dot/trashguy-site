@@ -5016,7 +5016,7 @@ onClick={() =>
   <div className="mb-3 flex items-center justify-between">
     <div>
       <div className="text-xs font-black uppercase tracking-[0.16em] text-cyan-200">
-        Discord Giveaway
+        GIVEAWAYS
       </div>
       <div className="mt-1 text-xs text-white/40">
         Manually add a prize to someone’s Prize Portal.
