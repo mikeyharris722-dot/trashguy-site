@@ -800,10 +800,12 @@ const [discordLinkMessage, setDiscordLinkMessage] = useState("");
 const [adminRewards, setAdminRewards] = useState<any[]>([]);
 const [adminRewardsSearch, setAdminRewardsSearch] = useState("");
 const [adminRewardsMessage, setAdminRewardsMessage] = useState("");
-const [manualRewardPlatform, setManualRewardPlatform] = useState<"twitch" | "kick">("twitch");
+const [manualRewardPlatform, setManualRewardPlatform] =
+  useState<"twitch" | "kick">("twitch");
+
 const [manualRewardUsername, setManualRewardUsername] = useState("");
 const [manualRewardAmount, setManualRewardAmount] = useState("");
-const [manualRewardTitle, setManualRewardTitle] = useState("Discord Giveaway");
+const [manualRewardType, setManualRewardType] = useState("discord_giveaway");
 
 const [adminDropdowns, setAdminDropdowns] = useState(() => {
   if (typeof window === "undefined") {
@@ -2711,7 +2713,15 @@ const slotWheelLoop = useMemo(() => {
 const handleCreateManualReward = async () => {
   const username = manualRewardUsername.trim().replace("@", "");
   const amount = Number(manualRewardAmount || 0);
-  const title = manualRewardTitle.trim() || "Discord Giveaway";
+  const rewardTitles: Record<string, string> = {
+  discord_giveaway: "🎁 Discord Giveaway",
+  slot_call: "🎰 Slot Call of the Day",
+  prediction: "🎯 Predictions Winner",
+  vip_tournament: "👑 VIP Tournament",
+};
+
+const title =
+  rewardTitles[manualRewardType] || "🎁 Discord Giveaway";
 
   if (!username || !amount || amount <= 0) {
     setAdminRewardsMessage("Enter a username and valid amount.");
@@ -2739,7 +2749,6 @@ const handleCreateManualReward = async () => {
 
   setManualRewardUsername("");
   setManualRewardAmount("");
-  setManualRewardTitle("Discord Giveaway");
   setAdminRewardsMessage("Manual prize added to viewer Prize Portal.");
 
   await loadAdminRewards();
@@ -5042,12 +5051,27 @@ onClick={() =>
       className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs text-white outline-none"
     />
 
-    <input
-      value={manualRewardTitle}
-      onChange={(e) => setManualRewardTitle(e.target.value)}
-      placeholder="Discord Giveaway"
-      className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs text-white outline-none"
-    />
+<select
+  value={manualRewardType}
+  onChange={(e) => setManualRewardType(e.target.value)}
+  className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-black text-white outline-none"
+>
+  <option value="discord_giveaway">
+    🎁 Discord Giveaway
+  </option>
+
+  <option value="slot_call">
+    🎰 Slot Call of the Day
+  </option>
+
+  <option value="prediction">
+    🎯 Predictions Winner
+  </option>
+
+  <option value="vip_tournament">
+    👑 VIP Tournament
+  </option>
+</select>
 
     <ActionButton
       onClick={handleCreateManualReward}

@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
   const displayName = String(body.displayName || username).trim();
   const platform = body.platform === "kick" ? "kick" : "twitch";
   const amount = Number(body.amount || 0);
+  const type = String(body.type || "discord_giveaway");
   const title = String(body.title || "Discord Giveaway").trim();
 
   if (!username || !amount || amount <= 0) {
@@ -95,17 +96,18 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from("rewards")
-    .insert({
-      twitch_username: username,
-      kick_username: platform === "kick" ? username : null,
-      display_name: displayName,
-      platform,
-      amount,
-      title,
-      status: "unclaimed",
-      claimed: false,
-      paid: false,
-    })
+.insert({
+  twitch_username: username,
+  kick_username: platform === "kick" ? username : null,
+  display_name: displayName,
+  platform,
+  amount,
+  type,
+  title,
+  status: "unclaimed",
+  claimed: false,
+  paid: false,
+})
     .select("*");
 
   if (error) {
