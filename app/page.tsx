@@ -4909,13 +4909,8 @@ onClick={() =>
     </div>
   </div>
 
- <div className="overflow-hidden rounded-xl border border-white/10 bg-black/35">
-  <div className="flex items-center justify-between border-b border-white/5 px-3 py-2.5">
-    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/55 sm:text-xs">
-      Live Entries
-    </div>
 
-<div className="overflow-hidden rounded-xl border border-white/10 bg-black/35">
+<div className="col-span-full w-full overflow-hidden rounded-xl border border-white/10 bg-black/35">
   <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
     <div className="text-[10px] font-black uppercase tracking-[0.16em] text-white/55">
       Live Entries
@@ -5005,8 +5000,6 @@ onClick={() =>
       })}
     </div>
   )}
-</div>
-</div>
 </div>
 </div>
         </details>
