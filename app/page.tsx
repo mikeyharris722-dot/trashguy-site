@@ -4970,11 +4970,11 @@ onClick={() =>
           >
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-2">
-                <div className="truncate text-[12px] font-black text-white sm:text-[13px]">
+                <div className="truncate text-[15px] sm:text-base font-black text-white sm:text-[13px]">
                   {entry.display_name || entry.username}
                 </div>
 
-                <div className="flex shrink-0 items-center gap-1 text-[9px]">
+                <div className="flex shrink-0 items-center gap-1 text-[11px]">
                   {isVip && <span>👑</span>}
                   {isOnCode && <span>💎</span>}
                   {isInDiscord && <span>💬</span>}
@@ -4982,17 +4982,17 @@ onClick={() =>
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2 text-[9px] font-black sm:text-[10px]">
+            <div className="flex shrink-0 items-center gap-2 text-xs font-black sm:text-[10px]">
               <span className="text-white/55">
-                B {baseOdds.toFixed(1)}x
+                Base {baseOdds.toFixed(1)}x
               </span>
 
               <span className="text-green-300">
-                L +{luckOdds.toFixed(1)}x
+                Luck +{luckOdds.toFixed(1)}x
               </span>
 
-              <span className="rounded-md border border-red-300/25 bg-red-400/10 px-2 py-0.5 text-red-200">
-                T {totalOdds.toFixed(1)}x
+              <span className="rounded-md border border-red-300/25 bg-red-400/10 px-3 py-1 text-xs font-black text-red-200">
+                Total {totalOdds.toFixed(1)}x
               </span>
             </div>
           </div>
