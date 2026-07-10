@@ -4909,66 +4909,105 @@ onClick={() =>
     </div>
   </div>
 
-  <div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:rounded-2xl sm:p-4">
-    <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-white/45 sm:mb-3 sm:text-xs sm:tracking-[0.22em]">
-      Live Entries ({giveawayEntries.length})
+ <div className="overflow-hidden rounded-xl border border-white/10 bg-black/35">
+  <div className="flex items-center justify-between border-b border-white/5 px-3 py-2.5">
+    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/55 sm:text-xs">
+      Live Entries
     </div>
 
-    <div className="grid max-h-[260px] grid-cols-2 gap-2 overflow-y-auto sm:max-h-[420px] sm:grid-cols-3 xl:grid-cols-4">
-      {giveawayEntries.length === 0 ? (
-        <div className="col-span-full text-center text-xs text-white/40 sm:text-sm">
-          No entries yet
-        </div>
-      ) : (
-        giveawayEntries.map((entry, index) => (
-<div
-  key={index}
-  className="flex min-w-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-white/5 px-2 py-3 text-center sm:rounded-xl sm:px-3 sm:py-4"
->
-  <div className="truncate text-xs font-semibold text-white sm:text-sm">
-    {entry.display_name || entry.username}
-  </div>
+<div className="overflow-hidden rounded-xl border border-white/10 bg-black/35">
+  <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
+    <div className="text-[10px] font-black uppercase tracking-[0.16em] text-white/55">
+      Live Entries
+    </div>
 
-  <div className="mt-2 flex flex-wrap items-center justify-center gap-1">
-
-    {String(entry.role || "").toLowerCase() === "vip" && (
-      <div className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2 py-0.5 text-[9px] font-black text-cyan-200 sm:text-xs">
-        👑 VIP
-      </div>
-    )}
-
-    {(entry.roulo_username || entry.is_roulo_affiliate) && (
-      <div className="rounded-full border border-yellow-300/25 bg-yellow-400/10 px-2 py-0.5 text-[9px] font-black text-yellow-200 sm:text-xs">
-        💎 Code
-      </div>
-    )}
-
-    {(entry.is_in_discord || entry.discord_username) && (
-      <div className="rounded-full border border-indigo-300/25 bg-indigo-400/10 px-2 py-0.5 text-[9px] font-black text-indigo-200 sm:text-xs">
-        💬 Discord
-      </div>
-    )}
-
-<div className="mt-1 grid w-full grid-cols-3 gap-1">
-  <div className="rounded-md border border-slate-300/20 bg-slate-400/10 px-1.5 py-1 text-[8px] font-black text-slate-200 sm:text-[10px]">
-    Base {Number(entry.base_odds || entry.weight || 1).toFixed(1)}x
-  </div>
-
-  <div className="rounded-md border border-green-300/20 bg-green-400/10 px-1.5 py-1 text-[8px] font-black text-green-200 sm:text-[10px]">
-    Luck +{Number(entry.luck_odds || 0).toFixed(1)}x
-  </div>
-
-  <div className="rounded-md border border-red-400/50 bg-red-500/25 px-1.5 py-1 text-[8px] font-black text-white shadow-[0_0_15px_rgba(239,68,68,0.45)] text-[8px] sm:text-[10px]">
-    Total {Number(entry.total_odds || entry.weight || 1).toFixed(1)}x
-  </div>
-</div>
-
-  </div>
-</div>
-        ))
-      )}
+    <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[9px] font-black text-cyan-200">
+      {giveawayEntries.length}
     </div>
   </div>
+
+  {giveawayEntries.length === 0 ? (
+    <div className="px-3 py-4 text-center text-xs text-white/40">
+      No entries yet.
+    </div>
+  ) : (
+    <div
+      className={`divide-y divide-white/5 ${
+        giveawayEntries.length > 10
+          ? "max-h-[320px] overflow-y-auto"
+          : ""
+      }`}
+    >
+      {giveawayEntries.map((entry, index) => {
+        const isVip =
+          String(entry.role || "").toLowerCase() === "vip";
+
+        const isOnCode =
+          Boolean(entry.roulo_username) ||
+          Boolean(entry.is_roulo_affiliate);
+
+        const isInDiscord =
+          Boolean(entry.is_in_discord) ||
+          Boolean(entry.discord_username);
+
+        const baseOdds = Number(
+          entry.base_odds ??
+            entry.base_weight ??
+            entry.weight ??
+            1
+        );
+
+        const luckOdds = Number(entry.luck_odds || 0);
+
+        const totalOdds = Number(
+          entry.total_odds ??
+            entry.weight ??
+            baseOdds + luckOdds
+        );
+
+        return (
+          <div
+            key={
+              entry.id ||
+              `${entry.platform || "viewer"}-${entry.username}-${index}`
+            }
+            className="flex items-center justify-between gap-3 px-3 py-2"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="truncate text-[12px] font-black text-white sm:text-[13px]">
+                  {entry.display_name || entry.username}
+                </div>
+
+                <div className="flex shrink-0 items-center gap-1 text-[9px]">
+                  {isVip && <span>👑</span>}
+                  {isOnCode && <span>💎</span>}
+                  {isInDiscord && <span>💬</span>}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2 text-[9px] font-black sm:text-[10px]">
+              <span className="text-white/55">
+                B {baseOdds.toFixed(1)}x
+              </span>
+
+              <span className="text-green-300">
+                L +{luckOdds.toFixed(1)}x
+              </span>
+
+              <span className="rounded-md border border-red-300/25 bg-red-400/10 px-2 py-0.5 text-red-200">
+                T {totalOdds.toFixed(1)}x
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  )}
+</div>
+</div>
+</div>
 </div>
         </details>
 
