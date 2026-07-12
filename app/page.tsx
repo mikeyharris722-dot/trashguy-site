@@ -1345,44 +1345,54 @@ setHuntsData(normalized);
 
 const loadViewerRewards = useCallback(async () => {
   try {
-    const viewer = viewerName || viewerDisplayName;
+    const viewer = String(viewerName || viewerDisplayName || "")
+      .replace("@", "")
+      .trim()
+      .toLowerCase();
 
     if (!viewer || viewer === "viewer") {
       setViewerRewards([]);
       setViewerRewardsPending(0);
       setViewerRewardsPaid(0);
-      setViewerRewardsMessage("Connect Twitch to view rewards.");
+      setViewerRewardsMessage("Connect Twitch or Kick to view rewards.");
       return;
     }
 
-const res = await fetch(
-  `/api/prize-portal?viewer=${viewerName}&platform=${viewerPlatform}`,
-  { cache: "no-store" }
-);
+    const platform = viewerPlatform === "kick" ? "kick" : "twitch";
+
+    const res = await fetch(
+      `/api/prize-portal?viewer=${encodeURIComponent(
+        viewer
+      )}&platform=${encodeURIComponent(platform)}`,
+      { cache: "no-store" }
+    );
 
     const data = await res.json();
 
-    if (!data.ok) {
+    if (!res.ok || !data.ok) {
+      setViewerRewards([]);
       setViewerRewardsMessage(data.error || "Could not load rewards.");
       return;
     }
 
-    setViewerRewards(data.rewards || []);
+    setViewerRewards(Array.isArray(data.rewards) ? data.rewards : []);
     setViewerRewardsPending(Number(data.totalPending || 0));
     setViewerRewardsPaid(Number(data.totalPaid || 0));
+
     setViewerOdds({
-  baseOdds: Number(data.baseOdds || 1),
-  luckOdds: Number(data.luckOdds || 0),
-  totalOdds: Number(data.totalOdds || 1),
-  nextOdds: Number(data.nextOdds || 1.1),
-  lossCount: Number(data.lossCount || 0),
-  winCount: Number(data.winCount || 0),
-});
+      baseOdds: Number(data.baseOdds || 1),
+      luckOdds: Number(data.luckOdds || 0),
+      totalOdds: Number(data.totalOdds || 1),
+      nextOdds: Number(data.nextOdds || 1.5),
+      lossCount: Number(data.lossCount || 0),
+      winCount: Number(data.winCount || 0),
+    });
+
     setViewerRewardsMessage("");
   } catch {
     setViewerRewardsMessage("Could not load rewards.");
   }
-}, [viewerName, viewerDisplayName]);
+}, [viewerName, viewerDisplayName, viewerPlatform]);
 
 const loadRouloLink = useCallback(async () => {
   if (!viewerName || viewerName === "viewer") return;
@@ -2713,46 +2723,89 @@ const slotWheelLoop = useMemo(() => {
 const handleCreateManualReward = async () => {
   const username = manualRewardUsername.trim().replace("@", "");
   const amount = Number(manualRewardAmount || 0);
+
   const rewardTitles: Record<string, string> = {
-  discord_giveaway: "🎁 Discord Giveaway",
-  slot_call: "🎰 Slot Call of the Day",
-  prediction: "🎯 Predictions Winner",
-  vip_tournament: "👑 VIP Tournament",
-};
+    discord_giveaway: "🎁 Discord Giveaway",
+    slot_call: "🎰 Slot Call of the Day",
+    prediction: "🎯 Predictions Winner",
+    vip_tournament: "👑 VIP Tournament",
+  };
 
-const title =
-  rewardTitles[manualRewardType] || "🎁 Discord Giveaway";
+  const title =
+    rewardTitles[manualRewardType] || "🎁 Discord Giveaway";
 
-  if (!username || !amount || amount <= 0) {
-    setAdminRewardsMessage("Enter a username and valid amount.");
+  if (!username) {
+    alert("Enter the viewer's username.");
     return;
   }
 
-  const res = await fetch("/api/admin/rewards", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      platform: manualRewardPlatform,
-      username,
-      displayName: username,
-      amount,
-      title,
-    }),
-  });
-
-  const data = await res.json();
-
-  if (!res.ok || !data.ok) {
-    setAdminRewardsMessage(data.error || "Manual reward failed.");
+  if (!amount || Number.isNaN(amount) || amount <= 0) {
+    alert("Enter a valid prize amount.");
     return;
   }
 
-  setManualRewardUsername("");
-  setManualRewardAmount("");
-  setAdminRewardsMessage("Manual prize added to viewer Prize Portal.");
+  try {
+    setAdminRewardsMessage("Adding prize...");
 
-  await loadAdminRewards();
-  await loadViewerRewards();
+    const res = await fetch("/api/rewards", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        platform: manualRewardPlatform,
+        username,
+        displayName: username,
+        amount,
+        type: manualRewardType,
+        title,
+      }),
+    });
+
+    const text = await res.text();
+
+    let data: any = null;
+
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      alert(`Server returned invalid data: ${text || "Empty response"}`);
+      setAdminRewardsMessage("Manual prize failed.");
+      return;
+    }
+
+    if (!res.ok || !data?.ok) {
+      const message =
+        data?.error || `Manual prize failed with status ${res.status}.`;
+
+      alert(message);
+      setAdminRewardsMessage(message);
+      return;
+    }
+
+    if (data.reward) {
+      setAdminRewards((current) => [data.reward, ...current]);
+    }
+
+    setManualRewardUsername("");
+    setManualRewardAmount("");
+    setManualRewardType("discord_giveaway");
+
+    setAdminRewardsMessage(
+      `${title} added for ${username}.`
+    );
+
+    alert(`Prize added for ${username}: $${amount}`);
+
+    await loadAdminRewards();
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Manual prize failed.";
+
+    console.error("Manual reward error:", error);
+    alert(message);
+    setAdminRewardsMessage(message);
+  }
 };
 
 const handleClaimReward = async (rewardId: string) => {
@@ -2816,7 +2869,7 @@ const Reward = async (id: string) => {
 
 const loadAdminRewards = async () => {
   try {
-    const res = await fetch("/api/admin/rewards", { cache: "no-store" });
+    const res = await fetch("/api/rewards", { cache: "no-store" });
     const data = await res.json();
 
     if (!data.ok) {
