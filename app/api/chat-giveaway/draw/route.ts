@@ -144,7 +144,7 @@ for (const username of loserUsernames) {
 .upsert({
   twitch_username: username,
   platform: winner.platform || "twitch",
-  luck: Number(existing?.luck || 0) + 0.2,
+  luck: Number(existing?.luck || 0) + 0.5,
   loss_count: Number(existing?.loss_count || 0) + 1,
   updated_at: new Date().toISOString(),
 });
