@@ -285,7 +285,7 @@ const { error: giveawayUpdateError } = await supabase
   .from("chat_giveaways")
   .update({
     winner_username: winnerUsername,
-    updated_at: new Date().toISOString(),
+    finished_at: new Date().toISOString(),
   })
   .eq("id", giveaway.id);
 
