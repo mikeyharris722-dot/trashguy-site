@@ -5168,6 +5168,87 @@ onClick={() =>
   </div>
 </div>
 
+{/* UNCLAIMED REWARDS */}
+<div className="overflow-hidden rounded-xl border border-yellow-300/20 bg-black/45">
+  <div className="flex items-center justify-between border-b border-yellow-300/10 px-3 py-2">
+    <div className="text-xs font-black uppercase tracking-[0.16em] text-yellow-200">
+      Unclaimed Rewards
+    </div>
+
+    <div className="rounded-full border border-yellow-300/20 bg-yellow-400/10 px-2 py-0.5 text-[10px] font-black text-yellow-200">
+      {
+        filteredAdminRewards.filter(
+          (reward) => !reward.claimed && !reward.paid
+        ).length
+      }
+    </div>
+  </div>
+
+  {filteredAdminRewards.filter(
+    (reward) => !reward.claimed && !reward.paid
+  ).length === 0 ? (
+    <div className="p-4 text-center text-xs text-white/40">
+      No unclaimed rewards.
+    </div>
+  ) : (
+    <div className="divide-y divide-white/5">
+      {filteredAdminRewards
+        .filter((reward) => !reward.claimed && !reward.paid)
+        .map((reward) => (
+          <div
+            key={reward.id}
+            className="flex items-start justify-between gap-4 px-3 py-2.5"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <div className="truncate text-sm font-black text-white">
+                  {reward.display_name ||
+                    reward.twitch_username ||
+                    reward.kick_username}
+                </div>
+
+                <div
+                  className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${
+                    reward.platform === "kick"
+                      ? "border-green-300/25 bg-green-400/10 text-green-200"
+                      : "border-purple-300/25 bg-purple-400/10 text-purple-200"
+                  }`}
+                >
+                  {reward.platform === "kick" ? "Kick" : "Twitch"}
+                </div>
+              </div>
+
+              <div className="mt-1 text-[10px] text-white/40">
+                Roulo: {reward.roulo_username || "Not linked"}
+              </div>
+
+              <div className="mt-1 text-[10px] text-white/35">
+                {reward.title || "Prize"} •{" "}
+                {reward.created_at
+                  ? new Date(reward.created_at).toLocaleString()
+                  : "Recently"}
+              </div>
+            </div>
+
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <div className="text-base font-black text-cyan-200">
+                ${Number(reward.amount || 0).toLocaleString()}
+              </div>
+
+              <ActionButton
+                onClick={() => handleAdminDeleteReward(reward.id)}
+                variant="red"
+                className="h-8 px-3 text-[9px]"
+              >
+                Delete
+              </ActionButton>
+            </div>
+          </div>
+        ))}
+    </div>
+  )}
+</div>
+
     {/* CLAIMED / UNPAID */}
     <div className="overflow-hidden rounded-xl border border-orange-300/20 bg-black/45">
       <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
