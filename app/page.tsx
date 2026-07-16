@@ -5311,13 +5311,23 @@ onClick={() =>
             ${Number(reward.amount || 0).toLocaleString()}
           </div>
 
-          <ActionButton
-            onClick={() => handleAdminMarkRewardPaid(reward.id)}
-            variant="green"
-            className="mt-2 h-7 px-3 text-[9px]"
-          >
-            Mark Paid
-          </ActionButton>
+<div className="mt-2 flex items-center gap-2">
+  <ActionButton
+    onClick={() => handleAdminMarkRewardPaid(reward.id)}
+    variant="green"
+    className="h-8 px-4 text-[9px]"
+  >
+    Mark Paid
+  </ActionButton>
+
+  <ActionButton
+    onClick={() => handleAdminDeleteReward(reward.id)}
+    variant="red"
+    className="h-8 px-3 text-[9px]"
+  >
+    Delete
+  </ActionButton>
+</div>
         </div>
       </div>
     ))}
