@@ -111,43 +111,72 @@ return username && !previousWinners.has(`${platform}:${username}`);
 
 const winner = pickWeightedWinner(entriesWithLuck);
 
-  const loserUsernames = eligibleEntries
-  .filter(
-    (entry) =>
-      normalizeUsername(entry.username) !==
-      normalizeUsername(winner.username)
-  )
-  .map((entry) => normalizeUsername(entry.username));
+const winnerUsername = normalizeUsername(winner.username);
+const winnerPlatform = winner.platform === "kick" ? "kick" : "twitch";
+const winnerDisplayName = winner.display_name || winnerUsername;
 
-  const winnerUsername = normalizeUsername(winner.username);
-  const winnerDisplayName = winner.display_name || winnerUsername;
-  await supabase
+/* GET WINNER'S CURRENT RECORD */
+const { data: existingWinner } = await supabase
   .from("giveaway_luck")
-.upsert({
-  twitch_username: winnerUsername,
-  platform: winner.platform || "twitch",
-  luck: 0,
-  win_count: 1,
-  updated_at: new Date().toISOString(),
-});
+  .select("*")
+  .eq("twitch_username", winnerUsername)
+  .eq("platform", winnerPlatform)
+  .maybeSingle();
 
-for (const username of loserUsernames) {
+/* RESET WINNER LUCK AND INCREMENT WINS */
+await supabase
+  .from("giveaway_luck")
+  .upsert(
+    {
+      twitch_username: winnerUsername,
+      platform: winnerPlatform,
+      luck: 0,
+      win_count: Number(existingWinner?.win_count || 0) + 1,
+      loss_count: Number(existingWinner?.loss_count || 0),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "twitch_username,platform",
+    }
+  );
+
+/* KEEP EACH LOSER'S USERNAME AND PLATFORM */
+const losers = eligibleEntries.filter(
+  (entry) =>
+    !(
+      normalizeUsername(entry.username) === winnerUsername &&
+      (entry.platform === "kick" ? "kick" : "twitch") === winnerPlatform
+    )
+);
+
+for (const loser of losers) {
+  const username = normalizeUsername(loser.username);
+  const platform = loser.platform === "kick" ? "kick" : "twitch";
+
   const { data: existing } = await supabase
     .from("giveaway_luck")
     .select("*")
     .eq("twitch_username", username)
-.eq("platform", winner.platform || "twitch")
+    .eq("platform", platform)
     .maybeSingle();
 
   await supabase
     .from("giveaway_luck")
-.upsert({
-  twitch_username: username,
-  platform: winner.platform || "twitch",
-  luck: Number(existing?.luck || 0) + 0.5,
-  loss_count: Number(existing?.loss_count || 0) + 1,
-  updated_at: new Date().toISOString(),
-});
+    .upsert(
+      {
+        twitch_username: username,
+        platform,
+        luck: Number(
+          (Number(existing?.luck || 0) + 0.5).toFixed(1)
+        ),
+        loss_count: Number(existing?.loss_count || 0) + 1,
+        win_count: Number(existing?.win_count || 0),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "twitch_username,platform",
+      }
+    );
 }
 
 const totalWeight = entriesWithLuck.reduce(
