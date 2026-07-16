@@ -116,67 +116,130 @@ const winnerPlatform = winner.platform === "kick" ? "kick" : "twitch";
 const winnerDisplayName = winner.display_name || winnerUsername;
 
 /* GET WINNER'S CURRENT RECORD */
-const { data: existingWinner } = await supabase
+const { data: existingWinner, error: winnerLookupError } = await supabase
   .from("giveaway_luck")
   .select("*")
   .eq("twitch_username", winnerUsername)
   .eq("platform", winnerPlatform)
   .maybeSingle();
 
+if (winnerLookupError) {
+  return NextResponse.json(
+    { ok: false, error: winnerLookupError.message },
+    { status: 500 }
+  );
+}
+
 /* RESET WINNER LUCK AND INCREMENT WINS */
-await supabase
-  .from("giveaway_luck")
-  .upsert(
-    {
+if (existingWinner) {
+  const { error: winnerUpdateError } = await supabase
+    .from("giveaway_luck")
+    .update({
+      luck: 0,
+      win_count: Number(existingWinner.win_count || 0) + 1,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("twitch_username", winnerUsername)
+    .eq("platform", winnerPlatform);
+
+  if (winnerUpdateError) {
+    return NextResponse.json(
+      { ok: false, error: winnerUpdateError.message },
+      { status: 500 }
+    );
+  }
+} else {
+  const { error: winnerInsertError } = await supabase
+    .from("giveaway_luck")
+    .insert({
       twitch_username: winnerUsername,
       platform: winnerPlatform,
       luck: 0,
-      win_count: Number(existingWinner?.win_count || 0) + 1,
-      loss_count: Number(existingWinner?.loss_count || 0),
+      loss_count: 0,
+      win_count: 1,
       updated_at: new Date().toISOString(),
-    },
-    {
-      onConflict: "twitch_username,platform",
-    }
-  );
+    });
+
+  if (winnerInsertError) {
+    return NextResponse.json(
+      { ok: false, error: winnerInsertError.message },
+      { status: 500 }
+    );
+  }
+}
 
 /* KEEP EACH LOSER'S USERNAME AND PLATFORM */
-const losers = eligibleEntries.filter(
-  (entry) =>
-    !(
-      normalizeUsername(entry.username) === winnerUsername &&
-      (entry.platform === "kick" ? "kick" : "twitch") === winnerPlatform
-    )
-);
+const losers = eligibleEntries.filter((entry) => {
+  const entryUsername = normalizeUsername(entry.username);
+  const entryPlatform =
+    entry.platform === "kick" ? "kick" : "twitch";
 
+  return !(
+    entryUsername === winnerUsername &&
+    entryPlatform === winnerPlatform
+  );
+});
+
+/* ADD +0.5 LUCK TO EVERY LOSER */
 for (const loser of losers) {
   const username = normalizeUsername(loser.username);
-  const platform = loser.platform === "kick" ? "kick" : "twitch";
+  const platform =
+    loser.platform === "kick" ? "kick" : "twitch";
 
-  const { data: existing } = await supabase
+  const { data: existing, error: loserLookupError } = await supabase
     .from("giveaway_luck")
     .select("*")
     .eq("twitch_username", username)
     .eq("platform", platform)
     .maybeSingle();
 
-  await supabase
-    .from("giveaway_luck")
-    .upsert(
-      {
+  if (loserLookupError) {
+    return NextResponse.json(
+      { ok: false, error: loserLookupError.message },
+      { status: 500 }
+    );
+  }
+
+  if (existing) {
+    const nextLuck = Number(
+      (Number(existing.luck || 0) + 0.5).toFixed(1)
+    );
+
+    const { error: loserUpdateError } = await supabase
+      .from("giveaway_luck")
+      .update({
+        luck: nextLuck,
+        loss_count: Number(existing.loss_count || 0) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("twitch_username", username)
+      .eq("platform", platform);
+
+    if (loserUpdateError) {
+      return NextResponse.json(
+        { ok: false, error: loserUpdateError.message },
+        { status: 500 }
+      );
+    }
+  } else {
+    const { error: loserInsertError } = await supabase
+      .from("giveaway_luck")
+      .insert({
         twitch_username: username,
         platform,
-        luck: Number(
-          (Number(existing?.luck || 0) + 0.5).toFixed(1)
-        ),
-        loss_count: Number(existing?.loss_count || 0) + 1,
-        win_count: Number(existing?.win_count || 0),
+        luck: 0.5,
+        loss_count: 1,
+        win_count: 0,
         updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "twitch_username,platform",
-      }
-    );
+      });
+
+    if (loserInsertError) {
+      return NextResponse.json(
+        { ok: false, error: loserInsertError.message },
+        { status: 500 }
+      );
+    }
+  }
 }
 
 const totalWeight = entriesWithLuck.reduce(
