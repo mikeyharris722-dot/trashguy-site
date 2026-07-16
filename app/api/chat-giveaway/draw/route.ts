@@ -88,12 +88,11 @@ return username && !previousWinners.has(`${platform}:${username}`);
   eligibleEntries.map(async (entry) => {
     const username = normalizeUsername(entry.username);
 
-    const { data: luckRow } = await supabase
-      .from("giveaway_luck")
-      .select("luck")
-      .eq("twitch_username", username)
-.eq("platform", entry.platform || "twitch")
-      .maybeSingle();
+const { data: luckRow } = await supabase
+  .from("giveaway_luck")
+  .select("luck")
+  .eq("twitch_username", username)
+  .maybeSingle();
 
     const baseWeight = Math.max(1, Number(entry.weight || 1));
     const luckOdds = Number(luckRow?.luck || 0);
@@ -115,12 +114,11 @@ const winnerUsername = normalizeUsername(winner.username);
 const winnerPlatform = winner.platform === "kick" ? "kick" : "twitch";
 const winnerDisplayName = winner.display_name || winnerUsername;
 
-/* GET WINNER'S CURRENT RECORD */
+/* GET WINNER'S CURRENT LUCK ROW */
 const { data: existingWinner, error: winnerLookupError } = await supabase
   .from("giveaway_luck")
   .select("*")
   .eq("twitch_username", winnerUsername)
-  .eq("platform", winnerPlatform)
   .maybeSingle();
 
 if (winnerLookupError) {
@@ -130,17 +128,17 @@ if (winnerLookupError) {
   );
 }
 
-/* RESET WINNER LUCK AND INCREMENT WINS */
+/* RESET WINNER'S LUCK */
 if (existingWinner) {
   const { error: winnerUpdateError } = await supabase
     .from("giveaway_luck")
     .update({
+      platform: winnerPlatform,
       luck: 0,
       win_count: Number(existingWinner.win_count || 0) + 1,
       updated_at: new Date().toISOString(),
     })
-    .eq("twitch_username", winnerUsername)
-    .eq("platform", winnerPlatform);
+    .eq("twitch_username", winnerUsername);
 
   if (winnerUpdateError) {
     return NextResponse.json(
@@ -168,19 +166,13 @@ if (existingWinner) {
   }
 }
 
-/* KEEP EACH LOSER'S USERNAME AND PLATFORM */
-const losers = eligibleEntries.filter((entry) => {
-  const entryUsername = normalizeUsername(entry.username);
-  const entryPlatform =
-    entry.platform === "kick" ? "kick" : "twitch";
+/* REMOVE WINNER FROM LOSERS */
+const losers = eligibleEntries.filter(
+  (entry) =>
+    normalizeUsername(entry.username) !== winnerUsername
+);
 
-  return !(
-    entryUsername === winnerUsername &&
-    entryPlatform === winnerPlatform
-  );
-});
-
-/* ADD +0.5 LUCK TO EVERY LOSER */
+/* ADD +0.5 TO EVERY LOSER */
 for (const loser of losers) {
   const username = normalizeUsername(loser.username);
   const platform =
@@ -190,7 +182,6 @@ for (const loser of losers) {
     .from("giveaway_luck")
     .select("*")
     .eq("twitch_username", username)
-    .eq("platform", platform)
     .maybeSingle();
 
   if (loserLookupError) {
@@ -208,12 +199,12 @@ for (const loser of losers) {
     const { error: loserUpdateError } = await supabase
       .from("giveaway_luck")
       .update({
+        platform,
         luck: nextLuck,
         loss_count: Number(existing.loss_count || 0) + 1,
         updated_at: new Date().toISOString(),
       })
-      .eq("twitch_username", username)
-      .eq("platform", platform);
+      .eq("twitch_username", username);
 
     if (loserUpdateError) {
       return NextResponse.json(
