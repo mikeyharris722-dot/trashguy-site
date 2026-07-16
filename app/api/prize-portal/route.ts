@@ -101,15 +101,15 @@ export async function GET(req: NextRequest) {
   const baseOdds = Number(
     (
       1 +
-      (hasRoulo ? 0.5 : 0) +
-      (hasDiscord ? 0.5 : 0) +
+      (hasRoulo ? 1 : 0) +
+      (hasDiscord ? 1 : 0) +
       (isVip ? 1 : 0)
     ).toFixed(2)
   );
 
   const luckOdds = Number(luckRow?.luck || 0);
   const totalOdds = Number((baseOdds + luckOdds).toFixed(2));
-  const nextOdds = Number((totalOdds + 0.5).toFixed(2));
+  const nextOdds = Number((totalOdds + 1).toFixed(2));
 
   return NextResponse.json({
     ok: true,

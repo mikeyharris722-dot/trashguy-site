@@ -50,8 +50,8 @@ const role = savedRole === "vip" ? "vip" : hasRoulo ? "affiliate" : "viewer";
 const weight = Number(
   (
     1 +
-    (hasRoulo ? 0.5 : 0) +
-    (hasDiscord ? 0.5 : 0) +
+    (hasRoulo ? 1 : 0) +
+    (hasDiscord ? 1 : 0) +
     (role === "vip" ? 1 : 0)
   ).toFixed(2)
 );

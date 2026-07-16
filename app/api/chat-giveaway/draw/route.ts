@@ -200,7 +200,7 @@ const uniqueLosers = Array.from(
 );
 
 /*
-  Add exactly +0.5 luck to each loser.
+  Add exactly +1.0 luck to each loser.
 */
 for (const loser of uniqueLosers) {
   const username = normalizeUsername(loser.username);
@@ -228,7 +228,7 @@ for (const loser of uniqueLosers) {
 
   if (existingLoser?.id) {
     const nextLuck = Number(
-      (Number(existingLoser.luck || 0) + 0.5).toFixed(1)
+      (Number(existingLoser.luck || 0) + 1).toFixed(1)
     );
 
     const { error: loserUpdateError } = await supabase
@@ -257,7 +257,7 @@ for (const loser of uniqueLosers) {
       .insert({
         twitch_username: username,
         platform,
-        luck: 0.5,
+        luck: 1,
         loss_count: 1,
         win_count: 0,
         updated_at: new Date().toISOString(),
