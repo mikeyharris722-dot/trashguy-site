@@ -138,7 +138,7 @@ if (winnerLookupError) {
   );
 }
 
-if (existingWinner?.id) {
+if (existingWinner) {
   const { error: winnerUpdateError } = await supabase
     .from("giveaway_luck")
     .update({
@@ -147,7 +147,7 @@ if (existingWinner?.id) {
       win_count: Number(existingWinner.win_count || 0) + 1,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", existingWinner.id);
+    .eq("twitch_username", winnerUsername);
 
   if (winnerUpdateError) {
     return NextResponse.json(
@@ -226,7 +226,7 @@ for (const loser of uniqueLosers) {
     );
   }
 
-  if (existingLoser?.id) {
+  if (existingLoser) {
     const nextLuck = Number(
       (Number(existingLoser.luck || 0) + 1).toFixed(1)
     );
@@ -240,7 +240,7 @@ for (const loser of uniqueLosers) {
           Number(existingLoser.loss_count || 0) + 1,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", existingLoser.id);
+      .eq("twitch_username", username);
 
     if (loserUpdateError) {
       return NextResponse.json(
