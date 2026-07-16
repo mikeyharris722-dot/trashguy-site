@@ -84,15 +84,15 @@ return username && !previousWinners.has(`${platform}:${username}`);
     });
   }
 
-  const entriesWithLuck = await Promise.all(
+const entriesWithLuck = await Promise.all(
   eligibleEntries.map(async (entry) => {
     const username = normalizeUsername(entry.username);
 
-const { data: luckRow } = await supabase
-  .from("giveaway_luck")
-  .select("luck")
-  .eq("twitch_username", username)
-  .maybeSingle();
+    const { data: luckRow } = await supabase
+      .from("giveaway_luck")
+      .select("luck")
+      .eq("twitch_username", username)
+      .maybeSingle();
 
     const baseWeight = Math.max(1, Number(entry.weight || 1));
     const luckOdds = Number(luckRow?.luck || 0);
@@ -111,25 +111,34 @@ const { data: luckRow } = await supabase
 const winner = pickWeightedWinner(entriesWithLuck);
 
 const winnerUsername = normalizeUsername(winner.username);
-const winnerPlatform = winner.platform === "kick" ? "kick" : "twitch";
-const winnerDisplayName = winner.display_name || winnerUsername;
+const winnerPlatform =
+  winner.platform === "kick" ? "kick" : "twitch";
+const winnerDisplayName =
+  winner.display_name || winnerUsername;
 
-/* GET WINNER'S CURRENT LUCK ROW */
+/*
+  WINNER:
+  Find their existing row by username and reset luck to zero.
+*/
 const { data: existingWinner, error: winnerLookupError } = await supabase
   .from("giveaway_luck")
   .select("*")
   .eq("twitch_username", winnerUsername)
+  .order("updated_at", { ascending: false })
+  .limit(1)
   .maybeSingle();
 
 if (winnerLookupError) {
   return NextResponse.json(
-    { ok: false, error: winnerLookupError.message },
+    {
+      ok: false,
+      error: winnerLookupError.message,
+    },
     { status: 500 }
   );
 }
 
-/* RESET WINNER'S LUCK */
-if (existingWinner) {
+if (existingWinner?.id) {
   const { error: winnerUpdateError } = await supabase
     .from("giveaway_luck")
     .update({
@@ -138,11 +147,14 @@ if (existingWinner) {
       win_count: Number(existingWinner.win_count || 0) + 1,
       updated_at: new Date().toISOString(),
     })
-    .eq("twitch_username", winnerUsername);
+    .eq("id", existingWinner.id);
 
   if (winnerUpdateError) {
     return NextResponse.json(
-      { ok: false, error: winnerUpdateError.message },
+      {
+        ok: false,
+        error: winnerUpdateError.message,
+      },
       { status: 500 }
     );
   }
@@ -160,40 +172,63 @@ if (existingWinner) {
 
   if (winnerInsertError) {
     return NextResponse.json(
-      { ok: false, error: winnerInsertError.message },
+      {
+        ok: false,
+        error: winnerInsertError.message,
+      },
       { status: 500 }
     );
   }
 }
 
-/* REMOVE WINNER FROM LOSERS */
-const losers = eligibleEntries.filter(
-  (entry) =>
-    normalizeUsername(entry.username) !== winnerUsername
+/*
+  LOSERS:
+  Remove the winner and make sure each username is only counted once.
+*/
+const uniqueLosers = Array.from(
+  new Map(
+    eligibleEntries
+      .filter(
+        (entry) =>
+          normalizeUsername(entry.username) !== winnerUsername
+      )
+      .map((entry) => [
+        normalizeUsername(entry.username),
+        entry,
+      ])
+  ).values()
 );
 
-/* ADD +0.5 TO EVERY LOSER */
-for (const loser of losers) {
+/*
+  Add exactly +0.5 luck to each loser.
+*/
+for (const loser of uniqueLosers) {
   const username = normalizeUsername(loser.username);
   const platform =
     loser.platform === "kick" ? "kick" : "twitch";
 
-  const { data: existing, error: loserLookupError } = await supabase
-    .from("giveaway_luck")
-    .select("*")
-    .eq("twitch_username", username)
-    .maybeSingle();
+  const { data: existingLoser, error: loserLookupError } =
+    await supabase
+      .from("giveaway_luck")
+      .select("*")
+      .eq("twitch_username", username)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
   if (loserLookupError) {
     return NextResponse.json(
-      { ok: false, error: loserLookupError.message },
+      {
+        ok: false,
+        error: loserLookupError.message,
+      },
       { status: 500 }
     );
   }
 
-  if (existing) {
+  if (existingLoser?.id) {
     const nextLuck = Number(
-      (Number(existing.luck || 0) + 0.5).toFixed(1)
+      (Number(existingLoser.luck || 0) + 0.5).toFixed(1)
     );
 
     const { error: loserUpdateError } = await supabase
@@ -201,14 +236,18 @@ for (const loser of losers) {
       .update({
         platform,
         luck: nextLuck,
-        loss_count: Number(existing.loss_count || 0) + 1,
+        loss_count:
+          Number(existingLoser.loss_count || 0) + 1,
         updated_at: new Date().toISOString(),
       })
-      .eq("twitch_username", username);
+      .eq("id", existingLoser.id);
 
     if (loserUpdateError) {
       return NextResponse.json(
-        { ok: false, error: loserUpdateError.message },
+        {
+          ok: false,
+          error: loserUpdateError.message,
+        },
         { status: 500 }
       );
     }
@@ -226,7 +265,10 @@ for (const loser of losers) {
 
     if (loserInsertError) {
       return NextResponse.json(
-        { ok: false, error: loserInsertError.message },
+        {
+          ok: false,
+          error: loserInsertError.message,
+        },
         { status: 500 }
       );
     }
@@ -234,52 +276,73 @@ for (const loser of losers) {
 }
 
 const totalWeight = entriesWithLuck.reduce(
-  (sum, entry) => sum + Math.max(1, Number(entry.weight || 1)),
+  (sum, entry) =>
+    sum + Math.max(1, Number(entry.weight || 1)),
   0
 );
 
-  await supabase
-    .from("chat_giveaways")
-    .update({
-      winner_username: winnerUsername,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", giveaway.id);
+const { error: giveawayUpdateError } = await supabase
+  .from("chat_giveaways")
+  .update({
+    winner_username: winnerUsername,
+    updated_at: new Date().toISOString(),
+  })
+  .eq("id", giveaway.id);
+
+if (giveawayUpdateError) {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: giveawayUpdateError.message,
+    },
+    { status: 500 }
+  );
+}
 
 const { data: reward, error: rewardError } = await supabase
   .from("rewards")
-.insert({
-twitch_username: winnerUsername,
-kick_username: winner.platform === "kick" ? winnerUsername : null,
-  twitch_id: winner.twitch_id || null,
-  display_name: winnerDisplayName,
+  .insert({
+    twitch_username: winnerUsername,
+    kick_username:
+      winnerPlatform === "kick" ? winnerUsername : null,
+    twitch_id: winner.twitch_id || null,
+    display_name: winnerDisplayName,
+    platform: winnerPlatform,
+    amount: amount > 0 ? amount : 0,
+    title: "Chat Giveaway",
+    status: "unclaimed",
+    claimed: false,
+    paid: false,
+    giveaway_id: giveaway.id,
+  })
+  .select("*")
+  .single();
 
-  platform: winner.platform || "twitch",
+if (rewardError) {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: rewardError.message,
+    },
+    { status: 500 }
+  );
+}
 
-  amount: amount > 0 ? amount : 0,
-  title: "Chat Giveaway",
-  status: "unclaimed",
-  giveaway_id: giveaway.id,
-})
-    .select()
-    .single();
-
-  if (rewardError) {
-    return NextResponse.json({ ok: false, error: rewardError.message });
-  }
-
-  return NextResponse.json({
-    ok: true,
-    winner,
-    reward,
-    amount,
-    total_entries: entries.length,
-    eligible_entries: entriesWithLuck.length,
-    total_weight: totalWeight,
-    winner_weight: Number(winner.weight || 1),
-winner_base_weight: Number(winner.base_weight || winner.weight || 1),
-winner_luck_odds: Number(winner.luck_odds || 0),
-    winner_role: winner.role || "viewer",
-    winner_roulo_username: winner.roulo_username || null,
-  });
+return NextResponse.json({
+  ok: true,
+  winner,
+  reward,
+  amount,
+  total_entries: entries.length,
+  eligible_entries: entriesWithLuck.length,
+  total_weight: totalWeight,
+  winner_weight: Number(winner.weight || 1),
+  winner_base_weight: Number(
+    winner.base_weight || winner.weight || 1
+  ),
+  winner_luck_odds: Number(winner.luck_odds || 0),
+  winner_role: winner.role || "viewer",
+  winner_roulo_username:
+    winner.roulo_username || null,
+});
 }
