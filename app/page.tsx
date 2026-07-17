@@ -125,6 +125,8 @@ type HuntBonusItem = {
 
 type HuntItem = {
   id: string;
+  localId: string;
+  externalHuntId: string;
   title: string;
   casino: string;
   startCost: number;
@@ -613,7 +615,7 @@ export default function Home() {
   const [finalResult, setFinalResult] = useState("");
   const [adminMessage, setAdminMessage] = useState("");
   const [latestWinners, setLatestWinners] = useState<WinnerItem[]>([]);
-  const [adminHuntId, setAdminHuntId] = useState("");
+  const [activePredictionHuntId, setActivePredictionHuntId] = useState("");
 const [giveawayMessage, setGiveawayMessage] = useState("");
 const [currentGiveawayWinner, setCurrentGiveawayWinner] = useState("");
 const [winnerChatMessages, setWinnerChatMessages] = useState<string[]>([]);
@@ -851,7 +853,6 @@ const setAdminDropdown = (
 
   const [huntsData, setHuntsData] = useState<HuntItem[]>([]);
   const [huntsLoading, setHuntsLoading] = useState(true);
-  const [currentHuntState, setCurrentHuntState] = useState<any>(null);
 
   const [liveStatus, setLiveStatus] = useState<LiveStatus>({
     isLive: false,
@@ -868,6 +869,7 @@ const setAdminDropdown = (
   const [bracketMessage, setBracketMessage] = useState("");
 
   const predictionClockRef = useRef<NodeJS.Timeout | null>(null);
+  const predictionRequestRef = useRef(0);
   const [countdownTick, setCountdownTick] = useState(Date.now());
 
   const [calendarDate, setCalendarDate] = useState(() => new Date());
@@ -1023,37 +1025,22 @@ const currentPredictionEntry = useMemo(() => {
 const currentPredictionHunt = useMemo(() => {
   if (!huntsData.length) return null;
 
-  if (adminHuntId) {
-    const selected = huntsData.find(
-      (hunt: any) => hunt.id === adminHuntId || hunt.localId === adminHuntId
-    );
+  const selected = activePredictionHuntId
+    ? huntsData.find((hunt) => hunt.localId === activePredictionHuntId) || null
+    : null;
 
-    if (selected) return selected;
-  }
+  if (selected) return selected;
 
-  const openHunt = huntsData.find(
-    (hunt) =>
-      hunt.prediction_status === "open" ||
-      hunt.status === "open" ||
-      hunt.isOpening
+  return (
+    [...huntsData]
+      .filter((hunt) => hunt.prediction_status === "open")
+      .sort((a, b) => {
+        const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
+        const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+        return bTime - aTime;
+      })[0] || null
   );
-
-  if (openHunt) return openHunt;
-
-  const sorted = [...huntsData].sort((a, b) => {
-    const aTime = a.updatedAt || a.createdAt
-      ? new Date(a.updatedAt || a.createdAt || "").getTime()
-      : 0;
-
-    const bTime = b.updatedAt || b.createdAt
-      ? new Date(b.updatedAt || b.createdAt || "").getTime()
-      : 0;
-
-    return bTime - aTime;
-  });
-
-  return sorted[0] || null;
-}, [huntsData, adminHuntId]);
+}, [huntsData, activePredictionHuntId]);
 
 const adminSelectedHunt = currentPredictionHunt;
 
@@ -1257,12 +1244,11 @@ useEffect(() => {
     const data = await res.json();
 
     const rawHunts = Array.isArray(data?.hunts) ? data.hunts : [];
-    setCurrentHuntState(data?.currentHuntState || null);
 
     const normalized: HuntItem[] = rawHunts.map((hunt: any, index: number) => ({
       id: hunt.external_hunt_id || hunt.id || `hunt-${index}`,
-localId: hunt.local_id || hunt.db_id || hunt.uuid || hunt.hunt_id || hunt.id,
-externalHuntId: hunt.external_hunt_id || hunt.id,
+      localId: hunt.local_id || hunt.db_id || hunt.uuid || hunt.hunt_id || hunt.id,
+      externalHuntId: hunt.external_hunt_id || hunt.id,
       title: hunt.title || `Hunt #${index + 1}`,
       casino: hunt.casino || "Unknown",
       startCost: Number(hunt.startCost || hunt.start_amount || 0),
@@ -1475,16 +1461,25 @@ const handleLinkRoulo = async () => {
   }
 }, []);
 
-const loadPredictions = useCallback(async (huntId?: string) => {
-  try {
-    const url = huntId
-      ? `/api/predictions?huntId=${encodeURIComponent(huntId)}`
-      : "/api/predictions";
+const loadPredictions = useCallback(async (huntId: string) => {
+  const requestId = ++predictionRequestRef.current;
 
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) return;
+  if (!huntId) {
+    setPredictions([]);
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `/api/predictions?huntId=${encodeURIComponent(huntId)}`,
+      { cache: "no-store" }
+    );
+
+    if (!res.ok || requestId !== predictionRequestRef.current) return;
 
     const data = await res.json();
+    if (requestId !== predictionRequestRef.current) return;
+
     const raw = Array.isArray(data?.predictions)
       ? data.predictions
       : Array.isArray(data)
@@ -1503,9 +1498,9 @@ const loadPredictions = useCallback(async (huntId?: string) => {
           entry.user_name ||
           `viewer-${index + 1}`,
         guess: Number(entry.guess ?? entry.guessAmount ?? entry.guess_amount ?? 0),
-        createdAt: entry.created_at || entry.updated_at || null,
+        createdAt: entry.updated_at || entry.created_at || null,
       }))
-      .sort((a: any, b: any) => {
+      .sort((a: PredictionItem, b: PredictionItem) => {
         const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return bTime - aTime;
@@ -1513,21 +1508,29 @@ const loadPredictions = useCallback(async (huntId?: string) => {
 
     setPredictions(normalized);
   } catch (error) {
-    console.error("Predictions failed to load", error);
+    if (requestId === predictionRequestRef.current) {
+      console.error("Predictions failed to load", error);
+    }
   }
 }, []);
 
 useEffect(() => {
-  const huntId =
-    (currentPredictionHunt as any)?.localId || currentPredictionHunt?.id || "";
+  const huntId = currentPredictionHunt?.localId || "";
 
-  if (!huntId) {
-    setPredictions([]);
-    return;
-  }
+  predictionRequestRef.current += 1;
+  setPredictions([]);
+  setPredictionScrollIndex(0);
+
+  if (!huntId) return;
 
   loadPredictions(huntId);
-}, [currentPredictionHunt?.id, (currentPredictionHunt as any)?.localId, loadPredictions]);
+
+  const timer = window.setInterval(() => {
+    loadPredictions(huntId);
+  }, 5000);
+
+  return () => window.clearInterval(timer);
+}, [currentPredictionHunt?.localId, loadPredictions]);
 
   const loadLiveStatus = useCallback(async () => {
     try {
@@ -1552,26 +1555,6 @@ useEffect(() => {
       setLiveLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-  const huntId =
-    (currentPredictionHunt as any)?.localId || currentPredictionHunt?.id || "";
-
-  if (!huntId || predictionStatus !== "open") return;
-
-  loadPredictions(huntId);
-
-  const timer = setInterval(() => {
-    loadPredictions(huntId);
-  }, 3000);
-
-  return () => clearInterval(timer);
-}, [
-  predictionStatus,
-  currentPredictionHunt?.id,
-  (currentPredictionHunt as any)?.localId,
-  loadPredictions,
-]);
 
   const loadBracket = useCallback(async () => {
     try {
@@ -1786,58 +1769,37 @@ useEffect(() => {
 }, [isAdmin, activeSection]);
 
 useEffect(() => {
-  if (typeof window === "undefined") return;
-  if (huntsLoading) return;
+  if (typeof window === "undefined" || huntsLoading) return;
 
-  const storedHuntId = localStorage.getItem(STORAGE_KEYS.activeHuntId);
-  const storedPredictionStatus = localStorage.getItem(STORAGE_KEYS.predictionStatus);
+  const openHunt = [...huntsData]
+    .filter((hunt) => hunt.prediction_status === "open")
+    .sort((a, b) => {
+      const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return bTime - aTime;
+    })[0];
 
-  let resolvedHunt: HuntItem | null = null;
-
-  if (currentHuntState?.id) {
-    resolvedHunt =
-      huntsData.find((hunt) => hunt.id === currentHuntState.id) || null;
-  }
-
-  if (!resolvedHunt && storedHuntId) {
-    resolvedHunt = huntsData.find((hunt) => hunt.id === storedHuntId) || null;
-  }
+  const storedId = localStorage.getItem(STORAGE_KEYS.activeHuntId) || "";
+  const storedHunt = huntsData.find((hunt) => hunt.localId === storedId);
+  const resolvedHunt = openHunt || storedHunt || huntsData[0] || null;
 
   if (!resolvedHunt) {
-    resolvedHunt =
-      huntsData.find(
-        (hunt) =>
-          hunt.prediction_status === "open" ||
-          hunt.status === "open" ||
-          hunt.isOpening
-      ) || null;
-  }
-
-  if (!resolvedHunt) {
-    if (
-      storedPredictionStatus &&
-      (storedPredictionStatus === "open" || storedPredictionStatus === "locked")
-    ) {
-      setPredictionStatus(storedPredictionStatus);
-    }
+    setActivePredictionHuntId("");
+    setPredictionStatus("locked");
     return;
   }
 
-  const nextStatus =
-    resolvedHunt.prediction_status === "open"
-      ? "open"
-      : storedPredictionStatus === "open"
-      ? "open"
-      : "locked";
+  setActivePredictionHuntId(resolvedHunt.localId);
+  setPredictionStatus(
+    resolvedHunt.prediction_status === "open" ? "open" : "locked"
+  );
 
-const resolvedActiveId = (resolvedHunt as any)?.localId || resolvedHunt.id;
-
-setAdminHuntId(resolvedActiveId);
-setPredictionStatus(nextStatus);
-
-localStorage.setItem(STORAGE_KEYS.activeHuntId, resolvedActiveId);
-localStorage.setItem(STORAGE_KEYS.predictionStatus, nextStatus);
-}, [currentHuntState, huntsLoading, huntsData]);
+  localStorage.setItem(STORAGE_KEYS.activeHuntId, resolvedHunt.localId);
+  localStorage.setItem(
+    STORAGE_KEYS.predictionStatus,
+    resolvedHunt.prediction_status === "open" ? "open" : "locked"
+  );
+}, [huntsLoading, huntsData]);
 
 useEffect(() => {
   if (activeSection === "prizeportal") {
@@ -1857,32 +1819,24 @@ useEffect(() => {
   loadDiscordLink,
 ]);
 
-// REALTIME UPDATES (FIXED)
+// REALTIME UPDATES
 useEffect(() => {
-  const getSelectedHuntId = () =>
-    adminHuntId ||
-    currentPredictionHunt?.id ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem(STORAGE_KEYS.activeHuntId) || ""
-      : "");
-
   const channel = supabaseBrowser
     .channel("trashguy-live-updates")
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "predictions" },
       () => {
-        const huntId = getSelectedHuntId();
-        if (huntId) loadPredictions(huntId);
+        if (activePredictionHuntId) {
+          loadPredictions(activePredictionHuntId);
+        }
       }
     )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "hunts" },
       () => {
-        const huntId = getSelectedHuntId();
         loadHunts();
-        if (huntId) loadPredictions(huntId);
       }
     )
     .on(
@@ -1897,13 +1851,7 @@ useEffect(() => {
   return () => {
     supabaseBrowser.removeChannel(channel);
   };
-}, [
-  adminHuntId,
-  currentPredictionHunt?.id,
-  loadBracket,
-  loadPredictions,
-  loadHunts,
-]);
+}, [activePredictionHuntId, loadBracket, loadHunts, loadPredictions]);
 
 useEffect(() => {
   if (!currentGiveawayWinner) return;
@@ -2070,7 +2018,7 @@ localStorage.removeItem("kickId");
       },
 body: JSON.stringify({
   guessAmount: guess,
-  huntId: (currentPredictionHunt as any)?.localId || currentPredictionHunt.id,
+  huntId: currentPredictionHunt.localId,
 }),
     });
 
@@ -2121,222 +2069,129 @@ body: JSON.stringify({
 
 setPredictionInput("");
 setPredictionMessage("Prediction saved.");
-await loadPredictions((currentPredictionHunt as any)?.localId || currentPredictionHunt.id);
+await loadPredictions(currentPredictionHunt.localId);
 } catch {
   setPredictionMessage("Failed to save prediction.");
 }
 };
 
-  const handleStartHunt = async () => {
-const existingOpenHunt = huntsData.find(
-  (hunt) =>
-    hunt.id !== adminHuntId &&
-    (hunt.prediction_status === "open" || hunt.status === "open" || hunt.isOpening)
-);
+  const patchPredictionHunt = useCallback(
+    async (huntId: string, action: "open" | "lock" | "complete", finalAmount?: number) => {
+      const token = await getAccessToken();
+      const res = await fetch(`/api/admin/hunts/${huntId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action, finalAmount }),
+      });
 
-if (existingOpenHunt && predictionStatus === "open") {
-  setAdminMessage("A hunt is already active.");
-  setAdminHuntId(existingOpenHunt.id);
+      const data = await res.json();
 
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEYS.activeHuntId, existingOpenHunt.id);
-    localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
-  }
+      if (!res.ok) {
+        throw new Error(data?.error || `Failed to ${action} hunt.`);
+      }
 
-  return;
-}
+      return data;
+    },
+    [getAccessToken]
+  );
 
-  try {
-    const token = await getAccessToken();
+  const handleSelectPredictionHunt = useCallback(
+    async (hunt: HuntItem) => {
+      if (!isAdmin) {
+        setActivePredictionHuntId(hunt.localId);
+        setPredictionStatus(
+          hunt.prediction_status === "open" ? "open" : "locked"
+        );
+        return;
+      }
 
-    const res = await fetch("/api/admin/hunts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        title: "Live Hunt",
-        casino: "Roulobets",
-        startAmount: 10000,
-      }),
-    });
+      if (hunt.localId === activePredictionHuntId && predictionStatus === "open") {
+        return;
+      }
 
-    const data = await res.json();
+      setAdminMessage(`Opening ${hunt.title}...`);
+      setPredictions([]);
+      setLatestWinners([]);
+      setFinalResult("");
 
-    if (!res.ok) {
-      setAdminMessage(data?.error || "Failed to start hunt.");
-      return;
-    }
-const newHuntId = data?.hunt?.id || "";
+      try {
+        const previousOpenHunts = huntsData.filter(
+          (item) =>
+            item.localId !== hunt.localId &&
+            item.prediction_status === "open"
+        );
 
-if (data?.hunt) {
-  const newHunt: HuntItem = {
-    id: data.hunt.id,
-    title: data.hunt.title || "Live Hunt",
-    casino: data.hunt.casino || "Roulobets",
-    startCost: Number(data.hunt.start_amount || data.hunt.startCost || 0),
-    totalWinnings: 0,
-    profitLoss: 0,
-    profitLossPercentage: 0,
-    status: "open",
-    prediction_status: "open",
-    isOpening: true,
-    createdAt: data.hunt.created_at || new Date().toISOString(),
-    updatedAt: data.hunt.updated_at || new Date().toISOString(),
-    bonuses: [],
-  };
+        for (const previousHunt of previousOpenHunts) {
+          await patchPredictionHunt(previousHunt.localId, "lock");
+        }
 
-  setHuntsData((current) => [
-    newHunt,
-    ...current.filter((hunt) => hunt.id !== newHunt.id),
-  ]);
-}
+        await patchPredictionHunt(hunt.localId, "open");
 
-setAdminHuntId(newHuntId);
-setPredictionStatus("open");
-setPredictions([]);
-setLatestWinners([]);
-setFinalResult("");
+        setActivePredictionHuntId(hunt.localId);
+        setPredictionStatus("open");
 
-if (typeof window !== "undefined" && newHuntId) {
-  localStorage.setItem(STORAGE_KEYS.activeHuntId, newHuntId);
-  localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
-}
+        if (typeof window !== "undefined") {
+          localStorage.setItem(STORAGE_KEYS.activeHuntId, hunt.localId);
+          localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
+        }
 
-    setLatestWinners([]);
-    setFinalResult("");
-    setPredictions([]);
-    setAdminMessage("New hunt started.");
-await loadHunts();
-  } catch {
-    setAdminMessage("Failed to start hunt.");
-  }
-};
+        setAdminMessage(`${hunt.title} is now open for predictions.`);
+        await loadHunts();
+        await loadPredictions(hunt.localId);
+      } catch (error) {
+        setAdminMessage(
+          error instanceof Error ? error.message : "Failed to open hunt."
+        );
+        await loadHunts();
+      }
+    },
+    [
+      activePredictionHuntId,
+      huntsData,
+      isAdmin,
+      loadHunts,
+      loadPredictions,
+      patchPredictionHunt,
+      predictionStatus,
+    ]
+  );
 
   const handleLockPredictions = async () => {
-  const activeHuntId =
-    adminHuntId ||
-    currentPredictionHunt?.id ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem(STORAGE_KEYS.activeHuntId) || ""
-      : "");
-
-  if (!activeHuntId) {
-    setAdminMessage("Start a new hunt first.");
-    return;
-  }
-
-  try {
-    const token = await getAccessToken();
-
-    const res = await fetch(`/api/admin/hunts/${activeHuntId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        action: "lock",
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setAdminMessage(data?.error || "Failed to lock predictions.");
+    if (!currentPredictionHunt?.localId) {
+      setAdminMessage("Select a hunt first.");
       return;
     }
 
-    setPredictionStatus("locked");
-    setAdminHuntId(activeHuntId);
-    setLatestWinners([]);
-setFinalResult("");
+    try {
+      await patchPredictionHunt(currentPredictionHunt.localId, "lock");
+      setPredictionStatus("locked");
 
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
-      localStorage.setItem(STORAGE_KEYS.activeHuntId, activeHuntId);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
+      }
+
+      setAdminMessage("Predictions closed.");
+      await loadHunts();
+      await loadPredictions(currentPredictionHunt.localId);
+    } catch (error) {
+      setAdminMessage(
+        error instanceof Error ? error.message : "Failed to close predictions."
+      );
     }
-
-setAdminMessage("Predictions locked.");
-await loadHunts();
-await loadPredictions((currentPredictionHunt as any)?.localId || activeHuntId);
-  } catch {
-    setAdminMessage("Failed to lock predictions.");
-  }
-};
-
-  const handleOpenPredictions = async () => {
-  const activeHuntId =
-    adminHuntId ||
-    currentPredictionHunt?.id ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem(STORAGE_KEYS.activeHuntId) || ""
-      : "");
-
-  if (!activeHuntId) {
-    setAdminMessage("Start a new hunt first.");
-    return;
-  }
-
-  try {
-    const token = await getAccessToken();
-
-    const res = await fetch(`/api/admin/hunts/${activeHuntId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        action: "open",
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setAdminMessage(data?.error || "Failed to open predictions.");
-      return;
-    }
-
-    setPredictionStatus("open");
-    setAdminHuntId(activeHuntId);
-    setLatestWinners([]);
-setFinalResult("");
-setPredictions([]);
-
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEYS.predictionStatus, "open");
-      localStorage.setItem(STORAGE_KEYS.activeHuntId, activeHuntId);
-    }
-
-setAdminMessage("Predictions opened.");
-await loadHunts();
-await loadPredictions((currentPredictionHunt as any)?.localId || activeHuntId);
-  } catch {
-    setAdminMessage("Failed to open predictions.");
-  }
-};
+  };
 
 const handleCompleteHunt = async () => {
-  const activeHuntId =
-    (adminSelectedHunt as any)?.localId ||
-    (currentPredictionHunt as any)?.localId ||
-    adminHuntId ||
-    currentPredictionHunt?.id ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem(STORAGE_KEYS.activeHuntId) || ""
-      : "");
-
-  if (!activeHuntId) {
+  if (!currentPredictionHunt?.localId) {
     setAdminMessage("Select a hunt first.");
     return;
   }
 
   const amount = Number(
-    adminSelectedHunt?.stats?.totalWinnings ||
-      adminSelectedHunt?.totalWinnings ||
+    currentPredictionHunt.stats?.totalWinnings ||
+      currentPredictionHunt.totalWinnings ||
       0
   );
 
@@ -2346,41 +2201,30 @@ const handleCompleteHunt = async () => {
   }
 
   try {
-    const token = await getAccessToken();
-
-const res = await fetch(`/api/admin/hunts/${activeHuntId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        action: "complete",
-        finalAmount: amount,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setAdminMessage(data?.error || "Failed to complete hunt.");
-      return;
-    }
+    const data = await patchPredictionHunt(
+      currentPredictionHunt.localId,
+      "complete",
+      amount
+    );
 
     setFinalResult(String(amount));
     setPredictionStatus("locked");
     setLatestWinners(Array.isArray(data?.winners) ? data.winners : []);
-    setAdminMessage(`Hunt completed at ${formatMoney(amount)}. Winners calculated.`);
+    setAdminMessage(
+      `Hunt completed at ${formatMoney(amount)}. Winners calculated.`
+    );
 
     if (typeof window !== "undefined") {
-      localStorage.removeItem(STORAGE_KEYS.activeHuntId);
+      localStorage.setItem(STORAGE_KEYS.activeHuntId, currentPredictionHunt.localId);
       localStorage.setItem(STORAGE_KEYS.predictionStatus, "locked");
     }
 
     await loadHunts();
-    await loadPredictions((adminSelectedHunt as any)?.localId || activeHuntId);
-  } catch {
-    setAdminMessage("Failed to complete hunt.");
+    await loadPredictions(currentPredictionHunt.localId);
+  } catch (error) {
+    setAdminMessage(
+      error instanceof Error ? error.message : "Failed to complete hunt."
+    );
   }
 };
 
@@ -3483,30 +3327,9 @@ const rankBox =
     return (
       <button
         key={hunt.id}
-        onClick={async () => {
-          setAdminHuntId(huntLocalId);
-          setPredictionStatus(
-            hunt.prediction_status === "open" ? "open" : "locked"
-          );
-
-          setLatestWinners([]);
-          setFinalResult("");
-          setPredictions([]);
-
-          if (typeof window !== "undefined") {
-            localStorage.setItem(STORAGE_KEYS.activeHuntId, huntLocalId);
-            localStorage.setItem(
-              STORAGE_KEYS.predictionStatus,
-              hunt.prediction_status === "open" ? "open" : "locked"
-            );
-          }
-
-          await loadPredictions(huntLocalId);
-        }}
+        onClick={() => handleSelectPredictionHunt(hunt)}
         className={`flex min-w-[118px] flex-col items-center justify-center rounded-lg border bg-black/70 p-2 text-center backdrop-blur-md transition hover:-translate-y-1 sm:min-w-[190px] sm:rounded-2xl sm:p-4 ${
-          currentPredictionHunt?.id === hunt.id ||
-          adminHuntId === hunt.id ||
-          adminHuntId === huntLocalId
+          currentPredictionHunt?.localId === huntLocalId
             ? "border-cyan-300/45 shadow-[0_0_20px_rgba(0,245,255,0.12)]"
             : "border-white/10 hover:border-cyan-300/25"
         }`}
@@ -3709,11 +3532,8 @@ const rankBox =
 <div className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-400/5 p-2.5 sm:mt-4 sm:rounded-2xl sm:p-2">
   {isAdmin && (
     <div className="mt-2 rounded-xl border border-cyan-300/15 bg-black/40 p-3">
-<div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 
-<ActionButton onClick={handleOpenPredictions} variant="green">
-  Open
-</ActionButton>
 
 <ActionButton onClick={handleLockPredictions} variant="purple">
   Close

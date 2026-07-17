@@ -19,16 +19,26 @@ type HuntBonusItem = {
 
 type HuntItem = {
   id: string;
+  localId?: string | null;
+  externalHuntId?: string | null;
+
   title: string;
   casino: string;
+
   startCost: number;
   totalWinnings: number;
   profitLoss: number;
   profitLossPercentage: number;
+
+  status?: string;
+  prediction_status?: "open" | "locked" | string;
+
   isOpening: boolean;
   currentOpeningSlot?: string | null;
+
   createdAt?: string | null;
   updatedAt?: string | null;
+
   stats?: {
     bonusCount: number;
     openedBonuses: number;
@@ -41,6 +51,7 @@ type HuntItem = {
     averageBetSize: number;
     currentAverageMultiplier: number;
   };
+
   bonuses?: HuntBonusItem[];
 };
 
@@ -180,10 +191,27 @@ export default function PredictionsLivePage() {
 
   const predictionClockRef = useRef<NodeJS.Timeout | null>(null);
 
-  const activeHunt = useMemo(() => {
-    const openHunt = huntsData.find((hunt) => hunt.isOpening);
-    return openHunt || huntsData[0] || null;
-  }, [huntsData]);
+const activeHunt = useMemo(() => {
+  if (!huntsData.length) return null;
+
+  const predictionHunt = huntsData.find(
+    (hunt) =>
+      hunt.prediction_status === "open" ||
+      hunt.prediction_status === "locked"
+  );
+
+  if (predictionHunt) return predictionHunt;
+
+  const openHunt = huntsData.find(
+    (hunt) =>
+      hunt.status === "open" ||
+      hunt.isOpening
+  );
+
+  if (openHunt) return openHunt;
+
+  return null;
+}, [huntsData]);
 
   const sortedPredictions = useMemo(() => {
     const next = [...predictions];
@@ -255,8 +283,17 @@ export default function PredictionsLivePage() {
       const rawHunts = Array.isArray(data?.hunts) ? data.hunts : [];
 
       const normalized: HuntItem[] = rawHunts.map((hunt: any, index: number) => ({
-        id: hunt.id || `hunt-${index}`,
-        title: hunt.title || `Hunt #${index + 1}`,
+id: hunt.external_hunt_id || hunt.id || `hunt-${index}`,
+localId:
+  hunt.local_id ||
+  hunt.db_id ||
+  hunt.uuid ||
+  hunt.hunt_id ||
+  hunt.id ||
+  null,
+externalHuntId: hunt.external_hunt_id || hunt.id || null,
+
+title: hunt.title || `Hunt #${index + 1}`,
         casino: hunt.casino || "Unknown",
         startCost: Number(hunt.startCost || hunt.start_amount || 0),
         totalWinnings: Number(hunt?.stats?.totalWinnings || hunt.totalWinnings || 0),
@@ -264,10 +301,14 @@ export default function PredictionsLivePage() {
         profitLossPercentage: Number(
           hunt?.stats?.profitLossPercentage || hunt.profitLossPercentage || 0
         ),
-        isOpening: Boolean(hunt.isOpening) || hunt.status === "open",
-        currentOpeningSlot: hunt.currentOpeningSlot || null,
-        createdAt: hunt.createdAt || null,
-        updatedAt: hunt.updatedAt || null,
+status: hunt.status || "",
+prediction_status: hunt.prediction_status || "locked",
+
+isOpening: Boolean(hunt.isOpening) || hunt.status === "open",
+currentOpeningSlot: hunt.currentOpeningSlot || null,
+
+createdAt: hunt.createdAt || hunt.created_at || null,
+updatedAt: hunt.updatedAt || hunt.updated_at || null,
         stats: hunt.stats || undefined,
         bonuses: Array.isArray(hunt.bonuses)
           ? hunt.bonuses.map((bonus: any) => ({
@@ -294,22 +335,30 @@ export default function PredictionsLivePage() {
     }
   }, []);
 
-  const loadPredictions = useCallback(async () => {
-    try {
-      const res = await fetch("/api/predictions", { cache: "no-store" });
-      if (!res.ok) {
-        setPredictions([]);
-        return;
-      }
+const loadPredictions = useCallback(async (huntId?: string) => {
+  if (!huntId) return;
 
-      const data = await res.json();
-      const raw = Array.isArray(data?.predictions)
-        ? data.predictions
-        : Array.isArray(data)
-          ? data
-          : [];
+  try {
+    const res = await fetch(
+      `/api/predictions?huntId=${encodeURIComponent(huntId)}`,
+      { cache: "no-store" }
+    );
 
-      const normalized: PredictionItem[] = raw.map((entry: any, index: number) => ({
+    if (!res.ok) {
+      console.error("Predictions request failed:", res.status);
+      return;
+    }
+
+    const data = await res.json();
+
+    const raw = Array.isArray(data?.predictions)
+      ? data.predictions
+      : Array.isArray(data)
+        ? data
+        : [];
+
+    const normalized = raw
+      .map((entry: any, index: number): PredictionItem => ({
         id:
           entry.id?.toString() ||
           entry.profile_id?.toString() ||
@@ -319,54 +368,64 @@ export default function PredictionsLivePage() {
           entry.profile_id ||
           entry.user_name ||
           `viewer-${index + 1}`,
-        guess: Number(entry.guess ?? entry.guessAmount ?? entry.guess_amount ?? 0),
-        createdAt: entry.created_at || entry.updated_at || null,
-      }));
+        guess: Number(
+          entry.guess ?? entry.guessAmount ?? entry.guess_amount ?? 0
+        ),
+        createdAt: entry.updated_at || entry.created_at || null,
+      }))
+      .sort((a: PredictionItem, b: PredictionItem) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      });
 
-      setPredictions(normalized);
-      setPredictionStatus("open");
-    } catch (error) {
-      console.error("Predictions failed to load", error);
-      setPredictions([]);
-    } finally {
-      setPredictionsLoading(false);
+    const uniqueByViewer = new Map<string, PredictionItem>();
+
+    for (const prediction of normalized) {
+      const key = prediction.username.trim().toLowerCase();
+      if (!uniqueByViewer.has(key)) uniqueByViewer.set(key, prediction);
     }
-  }, []);
 
-  useEffect(() => {
-    loadHunts();
-    loadPredictions();
+    setPredictions(Array.from(uniqueByViewer.values()));
+  } catch (error) {
+    console.error("Predictions failed to load", error);
+  } finally {
+    setPredictionsLoading(false);
+  }
+}, []);
 
-    const loadUser = async () => {
-      try {
-        const { data: sessionData } = await supabaseBrowser.auth.getSession();
-        const user = sessionData.session?.user;
+useEffect(() => {
+  const huntId =
+    activeHunt?.localId ||
+    activeHunt?.id ||
+    "";
 
-        if (!user) {
-          setIsTwitchConnected(false);
-          setViewerName("viewer");
-          setViewerDisplayName("viewer");
-          setViewerAvatar("");
-          return;
-        }
+  if (!huntId) {
+    setPredictionsLoading(false);
+    return;
+  }
 
-        const twitchIdentity = extractTwitchIdentity(user);
+setPredictionStatus(
+  activeHunt?.prediction_status === "open"
+    ? "open"
+    : "locked"
+);
 
-        setIsTwitchConnected(true);
-        setViewerName(twitchIdentity.login);
-        setViewerDisplayName(twitchIdentity.displayName);
-        setViewerAvatar(twitchIdentity.avatarUrl);
-      } catch (error) {
-        console.error("loadUser failed", error);
-      }
-    };
+  loadPredictions(huntId);
+}, [
+  activeHunt?.id,
+  activeHunt?.localId,
+  activeHunt?.prediction_status,
+  loadPredictions,
+]);
 
-    loadUser();
+useEffect(() => {
+  const loadUser = async () => {
+    try {
+      const { data: sessionData } =
+        await supabaseBrowser.auth.getSession();
 
-    const {
-      data: { subscription },
-    } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
-      const user = session?.user;
+      const user = sessionData.session?.user;
 
       if (!user) {
         setIsTwitchConnected(false);
@@ -382,64 +441,126 @@ export default function PredictionsLivePage() {
       setViewerName(twitchIdentity.login);
       setViewerDisplayName(twitchIdentity.displayName);
       setViewerAvatar(twitchIdentity.avatarUrl);
-    });
+    } catch (error) {
+      console.error("loadUser failed", error);
+    }
+  };
 
-    const huntTimer = setInterval(loadHunts, 20000);
-    const predictionTimer = setInterval(loadPredictions, 10000);
+  loadHunts();
+  loadUser();
 
-    return () => {
-      subscription.unsubscribe();
-      clearInterval(huntTimer);
-      clearInterval(predictionTimer);
-    };
-  }, [loadHunts, loadPredictions]);
+  const {
+    data: { subscription },
+  } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
+    const user = session?.user;
 
-  useEffect(() => {
+    if (!user) {
+      setIsTwitchConnected(false);
+      setViewerName("viewer");
+      setViewerDisplayName("viewer");
+      setViewerAvatar("");
+      return;
+    }
+
+    const twitchIdentity = extractTwitchIdentity(user);
+
+    setIsTwitchConnected(true);
+    setViewerName(twitchIdentity.login);
+    setViewerDisplayName(twitchIdentity.displayName);
+    setViewerAvatar(twitchIdentity.avatarUrl);
+  });
+
+  const huntTimer = setInterval(() => {
+    loadHunts();
+  }, 20000);
+
+  return () => {
+    subscription.unsubscribe();
+    clearInterval(huntTimer);
+  };
+}, [loadHunts]);
+
+useEffect(() => {
+  const huntId =
+    activeHunt?.localId ||
+    activeHunt?.id ||
+    "";
+
+  if (!huntId) return;
+
+  const predictionTimer = setInterval(() => {
+    loadPredictions(huntId);
+  }, 5000);
+
+  return () => {
+    clearInterval(predictionTimer);
+  };
+}, [
+  activeHunt?.id,
+  activeHunt?.localId,
+  loadPredictions,
+]);
+
+useEffect(() => {
+  if (predictionClockRef.current) {
+    clearInterval(predictionClockRef.current);
+  }
+
+  predictionClockRef.current = setInterval(() => {
+    setPredictions((current) => [...current]);
+  }, 30000);
+
+  return () => {
     if (predictionClockRef.current) {
       clearInterval(predictionClockRef.current);
     }
+  };
+}, []);
 
-    predictionClockRef.current = setInterval(() => {
-      setPredictions((current) => [...current]);
-    }, 30000);
+useEffect(() => {
+  const huntId =
+    activeHunt?.localId ||
+    activeHunt?.id ||
+    "";
 
-    return () => {
-      if (predictionClockRef.current) {
-        clearInterval(predictionClockRef.current);
+  if (!huntId) return;
+
+  const channel = supabaseBrowser
+    .channel(`predictions-live-page-${huntId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "predictions",
+        filter: `hunt_id=eq.${huntId}`,
+      },
+      () => {
+        loadPredictions(huntId);
       }
-    };
-  }, []);
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "hunts",
+      },
+      () => {
+        loadHunts();
+      }
+    )
+    .subscribe();
 
-  useEffect(() => {
-    const channel = supabaseBrowser
-      .channel("predictions-live-page")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "predictions" },
-        () => {
-          loadPredictions();
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "hunts" },
-        (payload: any) => {
-          const nextRow = payload?.new;
-          if (nextRow?.status === "open") {
-            setPredictionStatus("open");
-          } else if (nextRow?.status === "locked" || nextRow?.status === "completed") {
-            setPredictionStatus("locked");
-          }
-          loadPredictions();
-          loadHunts();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabaseBrowser.removeChannel(channel);
-    };
-  }, [loadPredictions, loadHunts]);
+  return () => {
+    supabaseBrowser.removeChannel(channel);
+  };
+}, [
+  activeHunt?.id,
+  activeHunt?.localId,
+  loadPredictions,
+  loadHunts,
+]);
 
   const handleTwitchLogin = async () => {
     try {
@@ -478,49 +599,127 @@ export default function PredictionsLivePage() {
     }
   };
 
-  const handlePredictionSubmit = async () => {
-    if (!isTwitchConnected || predictionStatus !== "open") return;
+const handlePredictionSubmit = async () => {
+  const huntId =
+    activeHunt?.localId ||
+    activeHunt?.id ||
+    "";
 
-    const guess = Number(predictionInput || 0);
+  if (!isTwitchConnected) {
+    setPredictionMessage("Not logged in. Please reconnect Twitch.");
+    return;
+  }
 
-    if (!guess || Number.isNaN(guess)) {
-      setPredictionMessage("Enter a valid guess.");
+  if (predictionStatus !== "open") {
+    setPredictionMessage("Predictions are closed.");
+    return;
+  }
+
+  if (!huntId) {
+    setPredictionMessage("No active hunt found.");
+    return;
+  }
+
+  const guess = Number(predictionInput || 0);
+
+  if (!guess || Number.isNaN(guess)) {
+    setPredictionMessage("Enter a valid guess.");
+    return;
+  }
+
+  try {
+    const { data: sessionData, error: sessionError } =
+      await supabaseBrowser.auth.getSession();
+
+    if (sessionError || !sessionData.session) {
+      setPredictionMessage("Not logged in. Please reconnect Twitch.");
       return;
     }
 
-    try {
-      const token = await getAccessToken();
+    const token = sessionData.session.access_token;
 
-      if (!token) {
-        setPredictionMessage("Missing auth token. Please reconnect Twitch.");
-        return;
-      }
-
-      const res = await fetch("/api/predictions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          guessAmount: guess,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setPredictionMessage(data?.error || "Failed to save prediction.");
-        return;
-      }
-
-      setPredictionInput("");
-      setPredictionMessage("Prediction saved.");
-      loadPredictions();
-    } catch {
-      setPredictionMessage("Failed to save prediction.");
+    if (!token) {
+      setPredictionMessage("Missing auth token. Please reconnect Twitch.");
+      return;
     }
-  };
+
+    const res = await fetch("/api/predictions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        guessAmount: guess,
+        huntId,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setPredictionMessage(data?.error || "Failed to save prediction.");
+      return;
+    }
+
+    const savedUsername =
+      data?.username ||
+      data?.prediction?.username ||
+      viewerName;
+
+    const savedId =
+      data?.prediction?.id?.toString() ||
+      data?.id?.toString() ||
+      `${savedUsername.toLowerCase()}-${huntId}`;
+
+    const savedAt =
+      data?.prediction?.updated_at ||
+      data?.prediction?.created_at ||
+      data?.updated_at ||
+      data?.created_at ||
+      new Date().toISOString();
+
+    setPredictions((current) => {
+      const existingIndex = current.findIndex(
+        (entry) =>
+          entry.id === savedId ||
+          entry.username.toLowerCase() === savedUsername.toLowerCase()
+      );
+
+      if (existingIndex >= 0) {
+        const next = [...current];
+
+        next[existingIndex] = {
+          ...next[existingIndex],
+          id: savedId,
+          username: savedUsername,
+          guess,
+          createdAt: savedAt,
+        };
+
+        return next;
+      }
+
+      return [
+        {
+          id: savedId,
+          username: savedUsername,
+          guess,
+          createdAt: savedAt,
+        },
+        ...current,
+      ];
+    });
+
+    setPredictionInput("");
+    setPredictionMessage("Prediction saved.");
+
+    await loadPredictions(huntId);
+  } catch (error) {
+    console.error("Prediction submit failed", error);
+    setPredictionMessage("Failed to save prediction.");
+  }
+};
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#05010f] text-white">
