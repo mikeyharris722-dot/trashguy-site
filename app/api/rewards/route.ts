@@ -123,22 +123,22 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { data, error } = await supabase
-    .from("rewards")
-.insert({
-  twitch_username: username,
-  kick_username: platform === "kick" ? username : null,
-  display_name: displayName,
-  platform,
-  amount,
-  type,
-  title,
-  status: "unclaimed",
-  claimed: false,
-  paid: false,
-})
-    .select("*");
-
+const { data, error } = await supabase
+  .from("rewards")
+  .insert({
+    twitch_username: platform === "twitch" ? username : null,
+    kick_username: platform === "kick" ? username : null,
+    display_name: displayName,
+    platform,
+    amount,
+    type,
+    title,
+    status: "unclaimed",
+    claimed: false,
+    paid: false,
+  })
+  .select("*");
+  
   if (error) {
     return NextResponse.json({ ok: false, error: error.message });
   }

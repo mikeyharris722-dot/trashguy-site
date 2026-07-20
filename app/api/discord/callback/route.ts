@@ -93,10 +93,10 @@ const platform = decoded?.platform === "kick" ? "kick" : "twitch";
 
   const isInDiscord = memberRes.ok;
 
-  const discordUsername =
-    discordUser.global_name ||
-    discordUser.username ||
-    discordUser.id;
+const discordUsername =
+  discordUser.username ||
+  discordUser.global_name ||
+  discordUser.id;
 
 console.log("DISCORD VIEWER:", viewer, "PLATFORM:", platform);
 
