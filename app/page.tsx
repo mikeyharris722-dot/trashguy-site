@@ -1287,22 +1287,38 @@ const loadRouloLink = useCallback(async () => {
   if (!viewerName || viewerName === "viewer") return;
 
   try {
-    const res = await fetch(`/api/roulo-link?twitch=${encodeURIComponent(viewerName)}`, {
-      cache: "no-store",
-    });
+    const platform =
+      viewerPlatform === "kick" ? "kick" : "twitch";
+
+    const res = await fetch(
+      `/api/roulo-link?viewer=${encodeURIComponent(
+        viewerName
+      )}&platform=${encodeURIComponent(platform)}`,
+      { cache: "no-store" }
+    );
 
     const data = await res.json();
 
     if (data?.ok) {
       setRouloLink(data.link || null);
+
       if (data.link?.roulo_username) {
         setRouloUsernameInput(data.link.roulo_username);
       }
+
+      setRouloLinkMessage("");
+      return;
     }
+
+    setRouloLink(null);
+    setRouloLinkMessage(
+      data?.error || "Could not load Roulo link."
+    );
   } catch {
+    setRouloLink(null);
     setRouloLinkMessage("Could not load Roulo link.");
   }
-}, [viewerName]);
+}, [viewerName, viewerPlatform]);
 
 const loadDiscordLink = useCallback(async () => {
   if (!viewerName || viewerName === "viewer") return;
@@ -1537,6 +1553,9 @@ if (platform === "kick" && kickUsername) {
   localStorage.setItem("viewerPlatform", "kick");
   localStorage.setItem("kickUsername", cleanName);
   localStorage.setItem("kickId", kickId || "");
+
+  // This line was missing.
+  setViewerPlatform("kick");
 
   setIsTwitchConnected(true);
   setViewerName(cleanName.toLowerCase());
@@ -1844,22 +1863,21 @@ useEffect(() => {
 }, []);
 
 const handleTwitchLogin = async () => {
-localStorage.setItem("viewerPlatform", "twitch");
-localStorage.removeItem("kickUsername");
-localStorage.removeItem("kickId");
-setViewerPlatform("twitch");
-localStorage.setItem("viewerPlatform", "twitch");
-localStorage.removeItem("kickUsername");
-localStorage.removeItem("kickId");
+  localStorage.setItem("viewerPlatform", "twitch");
+  localStorage.removeItem("kickUsername");
+  localStorage.removeItem("kickId");
+  setViewerPlatform("twitch");
+
   try {
     setPredictionMessage("");
 
-    const { data, error } = await supabaseBrowser.auth.signInWithOAuth({
-      provider: "twitch",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    const { data, error } =
+      await supabaseBrowser.auth.signInWithOAuth({
+        provider: "twitch",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
     if (error) {
       console.error("OAuth error:", error);
@@ -1868,11 +1886,15 @@ localStorage.removeItem("kickId");
     }
 
     if (!data?.url) {
-      setPredictionMessage("No Twitch redirect URL was returned.");
+      setPredictionMessage(
+        "No Twitch redirect URL was returned."
+      );
     }
   } catch (err: any) {
     console.error("Login crash:", err);
-    setPredictionMessage(err?.message || "Twitch login failed.");
+    setPredictionMessage(
+      err?.message || "Twitch login failed."
+    );
   }
 };
 
