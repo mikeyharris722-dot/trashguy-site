@@ -872,103 +872,6 @@ const setAdminDropdown = (
   const predictionRequestRef = useRef(0);
   const [countdownTick, setCountdownTick] = useState(Date.now());
 
-  const [calendarDate, setCalendarDate] = useState(() => new Date());
-
-const [monthlyRewards, setMonthlyRewards] = useState<Record<string, MonthlyRewardItem>>({});
-
-const loadMonthlyRewards = useCallback(async () => {
-  try {
-    const res = await fetch("/api/monthly-rewards", { cache: "no-store" });
-    const data = await res.json();
-
-    if (!data.ok) return;
-
-    const mapped: Record<string, MonthlyRewardItem> = {};
-
-    (data.rewards || []).forEach((reward: any) => {
-      mapped[reward.reward_date] = {
-        date: reward.reward_date,
-        title: reward.title || "",
-        amount: String(reward.amount || ""),
-        note: reward.note || "",
-      };
-    });
-
-    setMonthlyRewards(mapped);
-  } catch (error) {
-    console.error("Monthly rewards failed to load", error);
-  }
-}, []);
-
-const monthlyRewardDays = useMemo(() => {
-  const year = calendarDate.getFullYear();
-  const month = calendarDate.getMonth();
-
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayOfWeek = new Date(year, month, 1).getDay();
-
-  const blanks = Array.from({ length: firstDayOfWeek }, (_, index) => ({
-    blank: true,
-    key: `blank-${index}`,
-  }));
-
-  const days = Array.from({ length: daysInMonth }, (_, index) => {
-    const day = index + 1;
-
-    const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
-    return {
-      blank: false,
-      key: dateKey,
-      day,
-      dateKey,
-      reward: monthlyRewards[dateKey],
-    };
-  });
-
-  return [...blanks, ...days];
-}, [calendarDate, monthlyRewards]);
-
-const updateMonthlyReward = async (
-  dateKey: string,
-  field: "title" | "amount" | "note",
-  value: string
-) => {
-  const currentReward = monthlyRewards[dateKey] || {
-    date: dateKey,
-    title: "",
-    amount: "",
-    note: "",
-  };
-
-  const nextReward = {
-    ...currentReward,
-    [field]: value,
-  };
-
-  setMonthlyRewards((current) => ({
-    ...current,
-    [dateKey]: nextReward,
-  }));
-
-  try {
-    await fetch("/api/monthly-rewards", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        reward_date: dateKey,
-        title: nextReward.title,
-        amount: nextReward.amount || 0,
-        note: nextReward.note,
-      }),
-    });
-  } catch (error) {
-    console.error("Monthly reward save failed", error);
-  }
-};
-
   const normalizedViewer = viewerName.trim().toLowerCase();
   const adminAllowed = ADMIN_USERS.includes(normalizedViewer);
 
@@ -1405,8 +1308,13 @@ const loadDiscordLink = useCallback(async () => {
   if (!viewerName || viewerName === "viewer") return;
 
   try {
+    const platform =
+      viewerPlatform === "kick" ? "kick" : "twitch";
+
     const res = await fetch(
-      `/api/discord-link?viewer=${encodeURIComponent(viewerName)}`,
+      `/api/discord-link?viewer=${encodeURIComponent(
+        viewerName
+      )}&platform=${encodeURIComponent(platform)}`,
       { cache: "no-store" }
     );
 
@@ -1414,11 +1322,21 @@ const loadDiscordLink = useCallback(async () => {
 
     if (data?.ok) {
       setDiscordLink(data.link || null);
+      setDiscordLinkMessage("");
+      return;
     }
+
+    setDiscordLink(null);
+    setDiscordLinkMessage(
+      data?.error || "Could not load Discord link."
+    );
   } catch {
-    setDiscordLinkMessage("Could not load Discord link.");
+    setDiscordLink(null);
+    setDiscordLinkMessage(
+      "Could not load Discord link."
+    );
   }
-}, [viewerName]);
+}, [viewerName, viewerPlatform]);
 
 const handleLinkRoulo = async () => {
   setRouloLinkMessage("Checking Roulo account...");
@@ -1586,7 +1504,6 @@ useEffect(() => {
   loadLiveStatus();
   loadBracket();
   loadGiveawayEntries();
-  loadMonthlyRewards();
 
   const liveTimer = setInterval(loadLiveStatus, 60000);
   const huntTimer = setInterval(loadHunts, 30000);
@@ -1605,7 +1522,6 @@ useEffect(() => {
   loadHunts,
   loadLeaderboard,
   loadLiveStatus,
-  loadMonthlyRewards,
 ]);
 
 // LOAD USER SESSION
@@ -3115,21 +3031,21 @@ style={{
         <div>
           ⭐ VIP
           <div className="text-cyan-300">
-            $40 - $60 bonus buys ($20 guaranteed)
+            $40 - $50 bonus buys ($20 guaranteed)
           </div>
         </div>
 
         <div>
           ⭐ Affiliate
           <div className="text-cyan-300">
-            $40 - $60 bonus buys (no guarantee)
+            $40 - $50 bonus buys (no guarantee)
           </div>
         </div>
 
         <div>
           ⭐ Not Under Code
           <div className="text-cyan-300">
-            $20 - $30 bonus buys
+            $20 - $30 bonus buys (no guarantee)
           </div>
         </div>
 
@@ -4098,7 +4014,7 @@ onClick={() =>
 {activeSection === "tournaments" && (
   <section className="space-y-4 sm:space-y-5">
 <div className="mx-auto max-w-7xl text-center">
-  <GlowTabTitle label="VIP TOURNAMENTS" />
+  <GlowTabTitle label="TOURNAMENTS" />
 
   <div className="mt-2 text-sm font-black uppercase tracking-[0.18em] text-cyan-200/80 sm:text-base">
     {tournamentView === "bracket"

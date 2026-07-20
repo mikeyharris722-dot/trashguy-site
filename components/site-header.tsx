@@ -37,7 +37,7 @@ const navItems = [
   { id: "leaderboard", label: "Leaderboard" },
   { id: "hunts", label: "Bonus Hunts" },
   { id: "wagerRewards", label: "Wager Rewards" },
-  { id: "tournaments", label: "VIP Tournaments" },
+  { id: "tournaments", label: "Tournaments" },
   { id: "slotpicker", label: "Slot Picker" },
   { id: "prizeportal", label: "Prize Portal" },
   ...(adminAllowed ? [{ id: "admin", label: "Admin" }] : []),
