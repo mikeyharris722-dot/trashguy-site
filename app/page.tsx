@@ -1284,7 +1284,10 @@ const loadViewerRewards = useCallback(async () => {
 }, [viewerName, viewerDisplayName, viewerPlatform]);
 
 const loadRouloLink = useCallback(async () => {
-  if (!viewerName || viewerName === "viewer") return;
+  if (!viewerName || viewerName === "viewer") {
+    setRouloLink(null);
+    return;
+  }
 
   try {
     const platform =
@@ -1294,34 +1297,43 @@ const loadRouloLink = useCallback(async () => {
       `/api/roulo-link?viewer=${encodeURIComponent(
         viewerName
       )}&platform=${encodeURIComponent(platform)}`,
-      { cache: "no-store" }
+      {
+        cache: "no-store",
+      }
     );
 
     const data = await res.json();
 
-    if (data?.ok) {
-      setRouloLink(data.link || null);
-
-      if (data.link?.roulo_username) {
-        setRouloUsernameInput(data.link.roulo_username);
-      }
-
-      setRouloLinkMessage("");
+    if (!res.ok || !data?.ok) {
+      setRouloLink(null);
+      setRouloUsernameInput("");
+      setRouloLinkMessage(
+        data?.error || "Could not load Roulo link."
+      );
       return;
     }
 
-    setRouloLink(null);
-    setRouloLinkMessage(
-      data?.error || "Could not load Roulo link."
-    );
+    setRouloLink(data.link || null);
+
+    if (data.link?.roulo_username) {
+      setRouloUsernameInput(data.link.roulo_username);
+    } else {
+      setRouloUsernameInput("");
+    }
+
+    setRouloLinkMessage("");
   } catch {
     setRouloLink(null);
+    setRouloUsernameInput("");
     setRouloLinkMessage("Could not load Roulo link.");
   }
 }, [viewerName, viewerPlatform]);
 
 const loadDiscordLink = useCallback(async () => {
-  if (!viewerName || viewerName === "viewer") return;
+  if (!viewerName || viewerName === "viewer") {
+    setDiscordLink(null);
+    return;
+  }
 
   try {
     const platform =
@@ -1331,26 +1343,26 @@ const loadDiscordLink = useCallback(async () => {
       `/api/discord-link?viewer=${encodeURIComponent(
         viewerName
       )}&platform=${encodeURIComponent(platform)}`,
-      { cache: "no-store" }
+      {
+        cache: "no-store",
+      }
     );
 
     const data = await res.json();
 
-    if (data?.ok) {
-      setDiscordLink(data.link || null);
-      setDiscordLinkMessage("");
+    if (!res.ok || !data?.ok) {
+      setDiscordLink(null);
+      setDiscordLinkMessage(
+        data?.error || "Could not load Discord link."
+      );
       return;
     }
 
-    setDiscordLink(null);
-    setDiscordLinkMessage(
-      data?.error || "Could not load Discord link."
-    );
+    setDiscordLink(data.link || null);
+    setDiscordLinkMessage("");
   } catch {
     setDiscordLink(null);
-    setDiscordLinkMessage(
-      "Could not load Discord link."
-    );
+    setDiscordLinkMessage("Could not load Discord link.");
   }
 }, [viewerName, viewerPlatform]);
 
@@ -1550,12 +1562,11 @@ const platform = params.get("platform");
 if (platform === "kick" && kickUsername) {
   const cleanName = kickUsername.replace("@", "").trim();
 
+  setViewerPlatform("kick");
+
   localStorage.setItem("viewerPlatform", "kick");
   localStorage.setItem("kickUsername", cleanName);
   localStorage.setItem("kickId", kickId || "");
-
-  // This line was missing.
-  setViewerPlatform("kick");
 
   setIsTwitchConnected(true);
   setViewerName(cleanName.toLowerCase());
@@ -2597,7 +2608,7 @@ const handleClaimReward = async (rewardId: string) => {
     body: JSON.stringify({
       id: rewardId,
       viewer: viewerName,
-      platform: "twitch",
+      platform: viewerPlatform,
     }),
   });
 
