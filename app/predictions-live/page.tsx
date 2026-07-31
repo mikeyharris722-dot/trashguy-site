@@ -190,6 +190,9 @@ export default function PredictionsLivePage() {
   const [predictionsLoading, setPredictionsLoading] = useState(true);
 
   const predictionClockRef = useRef<NodeJS.Timeout | null>(null);
+  const predictionRequestRef = useRef(0);
+  const predictionAbortRef = useRef<AbortController | null>(null);
+  const predictionRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 const activeHunt = useMemo(() => {
   if (!huntsData.length) return null;
@@ -338,10 +341,15 @@ updatedAt: hunt.updatedAt || hunt.updated_at || null,
 const loadPredictions = useCallback(async (huntId?: string) => {
   if (!huntId) return;
 
+  const requestId = ++predictionRequestRef.current;
+  predictionAbortRef.current?.abort();
+  const controller = new AbortController();
+  predictionAbortRef.current = controller;
+
   try {
     const res = await fetch(
       `/api/predictions?huntId=${encodeURIComponent(huntId)}`,
-      { cache: "no-store" }
+      { cache: "no-store", signal: controller.signal }
     );
 
     if (!res.ok) {
@@ -350,6 +358,7 @@ const loadPredictions = useCallback(async (huntId?: string) => {
     }
 
     const data = await res.json();
+    if (requestId !== predictionRequestRef.current) return;
 
     const raw = Array.isArray(data?.predictions)
       ? data.predictions
@@ -388,9 +397,13 @@ const loadPredictions = useCallback(async (huntId?: string) => {
 
     setPredictions(Array.from(uniqueByViewer.values()));
   } catch (error) {
-    console.error("Predictions failed to load", error);
+    if (!(error instanceof DOMException && error.name === "AbortError")) {
+      console.error("Predictions failed to load", error);
+    }
   } finally {
-    setPredictionsLoading(false);
+    if (requestId === predictionRequestRef.current) {
+      setPredictionsLoading(false);
+    }
   }
 }, []);
 
@@ -488,9 +501,10 @@ useEffect(() => {
 
   if (!huntId) return;
 
+  // Realtime is primary; this is only a recovery poll.
   const predictionTimer = setInterval(() => {
     loadPredictions(huntId);
-  }, 5000);
+  }, 60000);
 
   return () => {
     clearInterval(predictionTimer);
@@ -536,7 +550,13 @@ useEffect(() => {
         filter: `hunt_id=eq.${huntId}`,
       },
       () => {
-        loadPredictions(huntId);
+        if (predictionRefreshTimerRef.current) {
+          clearTimeout(predictionRefreshTimerRef.current);
+        }
+
+        predictionRefreshTimerRef.current = setTimeout(() => {
+          loadPredictions(huntId);
+        }, 300);
       }
     )
     .on(
@@ -553,6 +573,11 @@ useEffect(() => {
     .subscribe();
 
   return () => {
+    if (predictionRefreshTimerRef.current) {
+      clearTimeout(predictionRefreshTimerRef.current);
+      predictionRefreshTimerRef.current = null;
+    }
+    predictionAbortRef.current?.abort();
     supabaseBrowser.removeChannel(channel);
   };
 }, [

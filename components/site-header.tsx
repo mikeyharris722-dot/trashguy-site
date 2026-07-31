@@ -11,6 +11,7 @@ type SiteHeaderProps = {
   viewerDisplayName: string;
   viewerName: string;
   handleTwitchLogin: () => void;
+  handleKickLogin: () => void;
   handleLogout: () => void;
   liveLoading: boolean;
   liveStatus: {
@@ -28,6 +29,7 @@ export default function SiteHeader({
   viewerDisplayName,
   viewerName,
   handleTwitchLogin,
+  handleKickLogin,
   handleLogout,
   liveLoading,
   liveStatus,
@@ -99,12 +101,20 @@ return (
               </button>
             </div>
           ) : (
-            <button
-              onClick={handleTwitchLogin}
-              className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-200 shadow-[0_0_18px_rgba(0,245,255,0.18)] sm:px-4 sm:py-3 sm:text-sm"
-            >
-              Login
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={handleTwitchLogin}
+                className="rounded-lg border border-[#9146FF]/40 bg-[#9146FF]/20 px-2.5 py-1.5 text-[10px] font-black text-white transition hover:bg-[#9146FF]/30 sm:px-3 sm:py-2 sm:text-xs"
+              >
+                Twitch
+              </button>
+              <button
+                onClick={handleKickLogin}
+                className="rounded-lg border border-[#53FC18]/40 bg-[#53FC18]/15 px-2.5 py-1.5 text-[10px] font-black text-[#baff9f] transition hover:bg-[#53FC18]/25 sm:px-3 sm:py-2 sm:text-xs"
+              >
+                Kick
+              </button>
+            </div>
           )}
 
           <div className="relative">

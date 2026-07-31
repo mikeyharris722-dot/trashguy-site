@@ -809,47 +809,30 @@ const [manualRewardUsername, setManualRewardUsername] = useState("");
 const [manualRewardAmount, setManualRewardAmount] = useState("");
 const [manualRewardType, setManualRewardType] = useState("discord_giveaway");
 
-const [adminDropdowns, setAdminDropdowns] = useState(() => {
-  if (typeof window === "undefined") {
-    return {
-      giveaway: false,
-      prizePortal: false,
-      predictions: false,
-      tournament: false,
-      slotWheel: false,
-    };
+const [activeAdminTab, setActiveAdminTab] = useState<
+  "giveaway" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel"
+>(() => {
+  if (typeof window === "undefined") return "giveaway";
+
+  const saved = localStorage.getItem("active_admin_tab");
+
+  if (
+    saved === "giveaway" ||
+    saved === "prizePortal" ||
+    saved === "tournament" ||
+    saved === "snakeDraft" ||
+    saved === "slotWheel"
+  ) {
+    return saved;
   }
 
-  const saved = localStorage.getItem("admin_dropdowns");
-
-  return saved
-    ? JSON.parse(saved)
-    : {
-      giveaway: false,
-      prizePortal: false,
-      predictions: false,
-      tournament: false,
-      slotWheel: false,
-      };
+  return "giveaway";
 });
 
 useEffect(() => {
   if (typeof window === "undefined") return;
-  localStorage.setItem("admin_dropdowns", JSON.stringify(adminDropdowns));
-}, [adminDropdowns]);
-
-const setAdminDropdown = (
-  key: "giveaway" | "prizePortal" | "predictions" | "tournament" | "slotWheel",
-  open: boolean
-) => {
-  setAdminDropdowns((current: Record<
-    "giveaway" | "prizePortal" | "predictions" | "tournament" | "slotWheel",
-    boolean
-  >) => ({
-    ...current,
-    [key]: open,
-  }));
-};
+  localStorage.setItem("active_admin_tab", activeAdminTab);
+}, [activeAdminTab]);
 
   const [huntsData, setHuntsData] = useState<HuntItem[]>([]);
   const [huntsLoading, setHuntsLoading] = useState(true);
@@ -870,6 +853,7 @@ const setAdminDropdown = (
 
   const predictionClockRef = useRef<NodeJS.Timeout | null>(null);
   const predictionRequestRef = useRef(0);
+  const predictionRealtimeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [countdownTick, setCountdownTick] = useState(Date.now());
 
   const normalizedViewer = viewerName.trim().toLowerCase();
@@ -1184,7 +1168,11 @@ useEffect(() => {
         : [],
     }));
     
-setHuntsData(normalized);
+if (normalized.length > 0) {
+      setHuntsData(normalized);
+    } else if (!data?.success) {
+      console.warn("Hunts API returned no usable data", data?.error || data?.note);
+    }
   } catch (error) {
     console.error("Hunts failed to load", error);
   } finally {
@@ -1464,16 +1452,18 @@ useEffect(() => {
   const huntId = currentPredictionHunt?.localId || "";
 
   predictionRequestRef.current += 1;
-  setPredictions([]);
   setPredictionScrollIndex(0);
 
-  if (!huntId) return;
+  if (!huntId) {
+    setPredictions([]);
+    return;
+  }
 
   loadPredictions(huntId);
 
   const timer = window.setInterval(() => {
     loadPredictions(huntId);
-  }, 5000);
+  }, 60000);
 
   return () => window.clearInterval(timer);
 }, [currentPredictionHunt?.localId, loadPredictions]);
@@ -1554,138 +1544,108 @@ useEffect(() => {
 
 // LOAD USER SESSION
 useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const kickUsername = params.get("kick_username");
-const kickId = params.get("kick_id");
-const platform = params.get("platform");
+  let cancelled = false;
 
-if (platform === "kick" && kickUsername) {
-  const cleanName = kickUsername.replace("@", "").trim();
-
-  setViewerPlatform("kick");
-
-  localStorage.setItem("viewerPlatform", "kick");
-  localStorage.setItem("kickUsername", cleanName);
-  localStorage.setItem("kickId", kickId || "");
-
-  setIsTwitchConnected(true);
-  setViewerName(cleanName.toLowerCase());
-  setViewerDisplayName(cleanName);
-  setViewerAvatar("");
-  setAuthLoaded(true);
-  setActiveSection("prizeportal");
-
-  window.history.replaceState({}, "", window.location.pathname);
-  return;
-}
-  const authError = params.get("error_description") || params.get("error");
-
-  if (authError) {
-    setPredictionMessage(decodeURIComponent(authError));
-  }
+  const applyLoggedOutState = () => {
+    setIsTwitchConnected(false);
+    setViewerName("viewer");
+    setViewerDisplayName("viewer");
+    setViewerAvatar("");
+  };
 
   const loadUser = async () => {
-  try {
-    const savedPlatform = localStorage.getItem("viewerPlatform");
-const savedKickUsername = localStorage.getItem("kickUsername");
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const authError =
+        params.get("error_description") ||
+        params.get("error") ||
+        params.get("kick_error");
 
-if (savedPlatform === "kick" && savedKickUsername) {
-  setViewerPlatform("kick");
-  setIsTwitchConnected(true);
-  setViewerName(savedKickUsername.toLowerCase());
-  setViewerDisplayName(savedKickUsername);
-  setViewerAvatar("");
-  setAuthLoaded(true);
-  return;
-}
-    const { data: sessionData, error: sessionError } =
-      await supabaseBrowser.auth.getSession();
+      if (authError) {
+        setPredictionMessage(decodeURIComponent(authError));
+      }
 
-    if (sessionError) {
-      console.error("getSession error", sessionError);
+      const preferredPlatform =
+        params.get("platform") || localStorage.getItem("viewerPlatform");
+
+      if (preferredPlatform === "kick") {
+        const kickResponse = await fetch("/api/kick/session", {
+          cache: "no-store",
+          credentials: "include",
+        });
+
+        if (kickResponse.ok) {
+          const kick = await kickResponse.json();
+          if (cancelled) return;
+
+          setViewerPlatform("kick");
+          localStorage.setItem("viewerPlatform", "kick");
+          localStorage.removeItem("kickUsername");
+          localStorage.removeItem("kickId");
+          setIsTwitchConnected(true);
+          setViewerName(String(kick.username || "viewer").toLowerCase());
+          setViewerDisplayName(kick.displayName || kick.username || "viewer");
+          setViewerAvatar(kick.avatarUrl || "");
+          setAuthLoaded(true);
+          window.history.replaceState({}, "", window.location.pathname);
+          return;
+        }
+      }
+
+      const { data: sessionData, error: sessionError } =
+        await supabaseBrowser.auth.getSession();
+
+      if (cancelled) return;
+
+      if (sessionError || !sessionData.session?.user) {
+        applyLoggedOutState();
+        setAuthLoaded(true);
+        return;
+      }
+
+      const twitchIdentity = extractTwitchIdentity(sessionData.session.user);
+      setViewerPlatform("twitch");
+      localStorage.setItem("viewerPlatform", "twitch");
+      localStorage.removeItem("kickUsername");
+      localStorage.removeItem("kickId");
+      setIsTwitchConnected(true);
+      setViewerName(twitchIdentity.login);
+      setViewerDisplayName(twitchIdentity.displayName);
+      setViewerAvatar(twitchIdentity.avatarUrl);
       setAuthLoaded(true);
-      return;
+    } catch (error) {
+      console.error("loadUser failed", error);
+      if (!cancelled) {
+        applyLoggedOutState();
+        setAuthLoaded(true);
+      }
     }
+  };
 
-    const user = sessionData.session?.user;
-if (!user) {
-  const savedPlatform = localStorage.getItem("viewerPlatform");
-  const savedKickUsername = localStorage.getItem("kickUsername");
-
-if (savedPlatform === "kick" && savedKickUsername) {
-  setViewerPlatform("kick");
-  setIsTwitchConnected(true);
-  setViewerName(savedKickUsername.toLowerCase());
-  setViewerDisplayName(savedKickUsername);
-  setViewerAvatar("");
-  return;
-}
-
-  setIsTwitchConnected(false);
-  setViewerName("viewer");
-  setViewerDisplayName("viewer");
-  setViewerAvatar("");
-  setAuthLoaded(true);
-  return;
-}
-
-const twitchIdentity = extractTwitchIdentity(user);
-
-setViewerPlatform("twitch");
-localStorage.setItem("viewerPlatform", "twitch");
-localStorage.removeItem("kickUsername");
-localStorage.removeItem("kickId");
-setIsTwitchConnected(true);
-setViewerName(twitchIdentity.login);
-setViewerDisplayName(twitchIdentity.displayName);
-setViewerAvatar(twitchIdentity.avatarUrl);
-    setAuthLoaded(true);
-  } catch (error) {
-    console.error("loadUser failed", error);
-    setAuthLoaded(true);
-  }
-};
-
-loadUser();
+  loadUser();
 
   const {
     data: { subscription },
   } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
+    if (localStorage.getItem("viewerPlatform") === "kick") return;
+
     const user = session?.user;
+    if (!user) {
+      applyLoggedOutState();
+      return;
+    }
 
-if (!user) {
-  const savedPlatform = localStorage.getItem("viewerPlatform");
-  const savedKickUsername = localStorage.getItem("kickUsername");
-
-if (savedPlatform === "kick" && savedKickUsername) {
-  setViewerPlatform("kick");
-  setIsTwitchConnected(true);
-  setViewerName(savedKickUsername.toLowerCase());
-  setViewerDisplayName(savedKickUsername);
-  setViewerAvatar("");
-  return;
-}
-
-  setIsTwitchConnected(false);
-  setViewerName("viewer");
-  setViewerDisplayName("viewer");
-  setViewerAvatar("");
-  return;
-}
-
-const twitchIdentity = extractTwitchIdentity(user);
-
-setViewerPlatform("twitch");
-localStorage.setItem("viewerPlatform", "twitch");
-localStorage.removeItem("kickUsername");
-localStorage.removeItem("kickId");
-setIsTwitchConnected(true);
-setViewerName(twitchIdentity.login);
-setViewerDisplayName(twitchIdentity.displayName);
-setViewerAvatar(twitchIdentity.avatarUrl);
+    const twitchIdentity = extractTwitchIdentity(user);
+    setViewerPlatform("twitch");
+    localStorage.setItem("viewerPlatform", "twitch");
+    setIsTwitchConnected(true);
+    setViewerName(twitchIdentity.login);
+    setViewerDisplayName(twitchIdentity.displayName);
+    setViewerAvatar(twitchIdentity.avatarUrl);
   });
 
   return () => {
+    cancelled = true;
     subscription.unsubscribe();
   };
 }, []);
@@ -1773,9 +1733,15 @@ useEffect(() => {
       "postgres_changes",
       { event: "*", schema: "public", table: "predictions" },
       () => {
-        if (activePredictionHuntId) {
-          loadPredictions(activePredictionHuntId);
+        if (!activePredictionHuntId) return;
+
+        if (predictionRealtimeTimerRef.current) {
+          clearTimeout(predictionRealtimeTimerRef.current);
         }
+
+        predictionRealtimeTimerRef.current = setTimeout(() => {
+          loadPredictions(activePredictionHuntId);
+        }, 500);
       }
     )
     .on(
@@ -1795,6 +1761,10 @@ useEffect(() => {
     .subscribe();
 
   return () => {
+    if (predictionRealtimeTimerRef.current) {
+      clearTimeout(predictionRealtimeTimerRef.current);
+      predictionRealtimeTimerRef.current = null;
+    }
     supabaseBrowser.removeChannel(channel);
   };
 }, [activePredictionHuntId, loadBracket, loadHunts, loadPredictions]);
@@ -1873,6 +1843,11 @@ useEffect(() => {
   return () => clearInterval(timer);
 }, []);
 
+const handleKickLogin = () => {
+  localStorage.setItem("viewerPlatform", "kick");
+  window.location.href = "/api/kick";
+};
+
 const handleTwitchLogin = async () => {
   localStorage.setItem("viewerPlatform", "twitch");
   localStorage.removeItem("kickUsername");
@@ -1911,14 +1886,22 @@ const handleTwitchLogin = async () => {
 
   const handleLogout = async () => {
   try {
-    await supabaseBrowser.auth.signOut();
+    await Promise.allSettled([
+      supabaseBrowser.auth.signOut(),
+      fetch("/api/kick/logout", { method: "POST", credentials: "include" }),
+    ]);
+
     setIsTwitchConnected(false);
     setViewerName("viewer");
     setViewerDisplayName("viewer");
     setViewerAvatar("");
+    setViewerPlatform("twitch");
     setIsAdmin(false);
     setActiveSection("home");
 
+    localStorage.removeItem("viewerPlatform");
+    localStorage.removeItem("kickUsername");
+    localStorage.removeItem("kickId");
     localStorage.removeItem(STORAGE_KEYS.adminMode);
     localStorage.removeItem(STORAGE_KEYS.activeHuntId);
     localStorage.removeItem(STORAGE_KEYS.predictionStatus);
@@ -1944,26 +1927,27 @@ const handleTwitchLogin = async () => {
   }
 
   try {
-    const { data: sessionData, error: sessionError } =
-      await supabaseBrowser.auth.getSession();
+    let authorizationHeader: Record<string, string> = {};
 
-    if (sessionError || !sessionData.session) {
-      setPredictionMessage("Not logged in. Please reconnect Twitch.");
-      return;
-    }
+    if (viewerPlatform === "twitch") {
+      const { data: sessionData, error: sessionError } =
+        await supabaseBrowser.auth.getSession();
 
-    const token = sessionData.session.access_token;
+      const token = sessionData.session?.access_token;
+      if (sessionError || !token) {
+        setPredictionMessage("Not logged in. Please reconnect Twitch.");
+        return;
+      }
 
-    if (!token) {
-      setPredictionMessage("Missing auth token. Please reconnect Twitch.");
-      return;
+      authorizationHeader = { Authorization: `Bearer ${token}` };
     }
 
     const res = await fetch("/api/predictions", {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        ...authorizationHeader,
       },
 body: JSON.stringify({
   guessAmount: guess,
@@ -2465,18 +2449,36 @@ function getSnakeTeamStyle(captain: string) {
   return styles[index % styles.length] || styles[0];
 }
 
+const SLOT_WHEEL_ITEM_HEIGHT = 44;
+const SLOT_WHEEL_VIEWPORT_HEIGHT = 220;
+const SLOT_WHEEL_LOOPS = 12;
+
 const handleSpinSlotWheel = () => {
   if (isSlotWheelSpinning || slotCalls.length === 0) return;
 
-  const winner = slotCalls[Math.floor(Math.random() * slotCalls.length)];
+  const winnerIndex = Math.floor(Math.random() * slotCalls.length);
+  const winner = slotCalls[winnerIndex];
+  const targetLoop = SLOT_WHEEL_LOOPS - 3;
+  const targetIndex = targetLoop * slotCalls.length + winnerIndex;
+  const centerOffset =
+    SLOT_WHEEL_VIEWPORT_HEIGHT / 2 - SLOT_WHEEL_ITEM_HEIGHT / 2;
+  const targetRotation =
+    targetIndex * SLOT_WHEEL_ITEM_HEIGHT - centerOffset;
 
-  setIsSlotWheelSpinning(true);
   setPickedSlotCall(null);
+  setIsSlotWheelSpinning(true);
+  setSlotWheelRotation(0);
 
-  setTimeout(() => {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      setSlotWheelRotation(targetRotation);
+    });
+  });
+
+  window.setTimeout(() => {
     setPickedSlotCall(winner);
     setIsSlotWheelSpinning(false);
-  }, 1200);
+  }, 4300);
 };
 
 const handleShuffleSlotWheel = () => {
@@ -2510,8 +2512,22 @@ const handleRemovePickedSlot = async () => {
 };
 
 const slotWheelLoop = useMemo(() => {
-  return pickedSlotCall ? [pickedSlotCall] : slotCalls;
-}, [slotCalls, pickedSlotCall]);
+  if (slotCalls.length === 0) return [];
+
+  return Array.from(
+    { length: SLOT_WHEEL_LOOPS },
+    () => slotCalls
+  ).flat();
+}, [slotCalls]);
+
+const idleSlotWheelOffset = useMemo(() => {
+  const visibleHeight = Math.min(
+    slotCalls.length * SLOT_WHEEL_ITEM_HEIGHT,
+    SLOT_WHEEL_VIEWPORT_HEIGHT
+  );
+
+  return Math.max(0, (SLOT_WHEEL_VIEWPORT_HEIGHT - visibleHeight) / 2);
+}, [slotCalls.length]);
 
 const handleCreateManualReward = async () => {
   const username = manualRewardUsername.trim().replace("@", "");
@@ -2929,6 +2945,7 @@ const rankedWinners = useMemo(() => {
   viewerDisplayName={viewerDisplayName}
   viewerName={viewerName}
   handleTwitchLogin={handleTwitchLogin}
+  handleKickLogin={handleKickLogin}
   handleLogout={handleLogout}
   liveLoading={liveLoading}
   liveStatus={liveStatus}
@@ -3078,7 +3095,7 @@ style={{
         <div>
           ⭐ Not Under Code
           <div className="text-cyan-300">
-            $20 - $30 bonus buys (no guarantee)
+            NO GIVEAWAYS AWARDED
           </div>
         </div>
 
@@ -3530,12 +3547,20 @@ const rankBox =
 
 <div className="mt-2 sm:mt-3">
   {!isTwitchConnected ? (
-    <button
-      onClick={handleTwitchLogin}
-      className="mx-auto flex rounded-lg border border-[#9146FF]/40 bg-[#9146FF]/25 px-4 py-2 text-xs font-black text-white transition hover:bg-[#9146FF]/35 sm:rounded-xl sm:px-6 sm:py-3 sm:text-sm"
-    >
-      Sign in with Twitch
-    </button>
+    <div className="mx-auto flex max-w-sm gap-2">
+      <button
+        onClick={handleTwitchLogin}
+        className="flex-1 rounded-lg border border-[#9146FF]/40 bg-[#9146FF]/25 px-3 py-2 text-[11px] font-black text-white transition hover:bg-[#9146FF]/35 sm:text-xs"
+      >
+        Twitch
+      </button>
+      <button
+        onClick={handleKickLogin}
+        className="flex-1 rounded-lg border border-[#53FC18]/40 bg-[#53FC18]/15 px-3 py-2 text-[11px] font-black text-[#baff9f] transition hover:bg-[#53FC18]/25 sm:text-xs"
+      >
+        Kick
+      </button>
+    </div>
   ) : (
     <div className="mx-auto max-w-md">
       <input
@@ -4572,15 +4597,50 @@ onClick={() =>
 )}
       </div>
 
-      <div className="mt-3 grid gap-3 sm:mt-6 sm:gap-4">
+      <div className="mt-3 overflow-x-auto rounded-xl border border-cyan-300/15 bg-black/70 p-1.5 sm:mt-4">
+        <div className="flex min-w-max gap-1.5">
+          {[
+            { id: "giveaway", label: "Giveaways" },
+            { id: "prizePortal", label: "Prize Portal" },
+            { id: "tournament", label: "Tournaments" },
+            { id: "snakeDraft", label: "Snake Drafts" },
+            { id: "slotWheel", label: "Slot Call Wheel" },
+          ].map((tab) => {
+            const active = activeAdminTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() =>
+                  setActiveAdminTab(
+                    tab.id as
+                      | "giveaway"
+                      | "prizePortal"
+                      | "tournament"
+                      | "snakeDraft"
+                      | "slotWheel"
+                  )
+                }
+                className={`whitespace-nowrap rounded-lg border px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition sm:text-xs ${
+                  active
+                    ? "border-cyan-300/40 bg-cyan-400/15 text-cyan-100 shadow-[0_0_16px_rgba(0,245,255,0.12)]"
+                    : "border-white/10 bg-white/[0.03] text-white/55 hover:border-cyan-300/20 hover:text-white"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-2 grid gap-2 sm:mt-3 sm:gap-3">
         <details
-          open={adminDropdowns.giveaway}
-          onToggle={(e) => setAdminDropdown("giveaway", e.currentTarget.open)}
-          className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
+          open={activeAdminTab === "giveaway"}
+          className={`${activeAdminTab === "giveaway" ? "block" : "hidden"} rounded-xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
         >
-          <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
-            Giveaway System
-          </summary>
+          <summary className="hidden">Giveaway System</summary>
 
 <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
   <div className="grid grid-cols-2 gap-2 sm:gap-3">
@@ -4827,13 +4887,10 @@ onClick={() =>
         </details>
 
 <details
-  open={adminDropdowns.prizePortal}
-  onToggle={(e) => setAdminDropdown("prizePortal", e.currentTarget.open)}
-  className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
+  open={activeAdminTab === "prizePortal"}
+  className={`${activeAdminTab === "prizePortal" ? "block" : "hidden"} rounded-xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
 >
-  <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
-    Prize Portal Manager
-  </summary>
+  <summary className="hidden">Prize Portal Manager</summary>
 
   <div className="mt-4 grid gap-4">
     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -5157,188 +5214,148 @@ onClick={() =>
 </details>
 
         <details
-          open={adminDropdowns.tournament}
-          onToggle={(e) => setAdminDropdown("tournament", e.currentTarget.open)}
-          className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
+          open={activeAdminTab === "tournament"}
+          className={`${activeAdminTab === "tournament" ? "block" : "hidden"} rounded-xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-3`}
         >
-          <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
-            Tournament Editor
-          </summary>
+          <summary className="hidden">Tournament Editor</summary>
 
-          <div className="mt-4 sm:mt-6">
-            <SectionLabel>Tournament Admin</SectionLabel>
-            <h2 className="mt-2 text-2xl font-black tracking-wide sm:mt-3 sm:text-4xl">
-              EDIT BRACKET
-            </h2>
-
-            <div className="mt-4 grid gap-3 sm:mt-8 sm:gap-5">
-              <div className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-3 sm:rounded-[1.5rem] sm:p-5">
-                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
-                  Bracket Title
-                </div>
-                <input
-                  value={bracket.title}
-                  onChange={(e) => updateBracketTitle(e.target.value)}
-                  disabled={!isAdmin}
-                  placeholder="Enter tournament title"
-                  className="mt-2 w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-300/35 disabled:opacity-40 sm:mt-3 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
-                />
+          <div className="grid gap-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <SectionLabel>Tournament</SectionLabel>
+                <h2 className="mt-1 text-lg font-black tracking-wide text-white sm:text-xl">
+                  EDIT BRACKET
+                </h2>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-3 sm:rounded-[1.5rem] sm:p-5">
-                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
-                  Generate New Bracket
-                </div>
+              <div className="flex min-w-0 flex-1 flex-wrap items-end justify-end gap-2">
+                <label className="min-w-[170px] flex-1 sm:max-w-[280px]">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
+                    Title
+                  </span>
+                  <input
+                    value={bracket.title}
+                    onChange={(e) => updateBracketTitle(e.target.value)}
+                    disabled={!isAdmin}
+                    placeholder="Tournament title"
+                    className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-black/45 px-2.5 text-xs text-white outline-none focus:border-cyan-300/35 disabled:opacity-40"
+                  />
+                </label>
 
-                <div className="mt-3 grid grid-cols-[1fr_auto] gap-2 sm:mt-4 md:grid-cols-[220px_1fr]">
+                <label className="w-[110px]">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
+                    Teams
+                  </span>
                   <select
                     value={generatorTeamCount}
                     onChange={(e) => setGeneratorTeamCount(e.target.value)}
                     disabled={!isAdmin}
-                    className="rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
+                    className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-black/45 px-2 text-xs text-white outline-none disabled:opacity-40"
                   >
-                    <option value="2">2 Teams</option>
-                    <option value="3">3 Teams</option>
-                    <option value="4">4 Teams</option>
-                    <option value="5">5 Teams</option>
-                    <option value="6">6 Teams</option>
-                    <option value="7">7 Teams</option>
-                    <option value="8">8 Teams</option>
-                    <option value="9">9 Teams</option>
-                    <option value="10">10 Teams</option>
-                    <option value="11">11 Teams</option>
-                    <option value="12">12 Teams</option>
-                    <option value="13">13 Teams</option>
-                    <option value="14">14 Teams</option>
-                    <option value="15">15 Teams</option>
-                    <option value="16">16 Teams</option>
+                    {Array.from({ length: 15 }, (_, index) => index + 2).map((count) => (
+                      <option key={count} value={count}>{count}</option>
+                    ))}
                   </select>
+                </label>
 
-                  <ActionButton onClick={handleGenerateBracket} disabled={!isAdmin} variant="green">
-                    Generate
-                  </ActionButton>
-                </div>
-
-                <div className="mt-2 text-xs text-white/45 sm:mt-3 sm:text-sm">
-                  Odd team counts include BYEs.
-                </div>
+                <ActionButton
+                  onClick={handleGenerateBracket}
+                  disabled={!isAdmin}
+                  variant="green"
+                  className="min-h-[36px] px-3 py-1.5 text-[9px]"
+                >
+                  Generate
+                </ActionButton>
               </div>
+            </div>
 
-              <div className="grid max-h-[620px] gap-3 overflow-y-auto pr-1 sm:max-h-none sm:gap-4 sm:overflow-visible sm:pr-0">
+            <div className="max-h-[560px] overflow-y-auto rounded-xl border border-white/8 bg-black/35 p-2">
+              <div className="grid gap-2 xl:grid-cols-2">
                 {bracket.rounds.map((round) => (
                   <div
                     key={round.id}
-                    className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(14,14,14,0.94),rgba(8,8,8,0.98))] p-3 sm:rounded-[1.5rem] sm:p-5"
+                    className="rounded-lg border border-white/10 bg-white/[0.025] p-2"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-                      <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:text-xs sm:tracking-[0.22em]">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <div className="text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200">
                         {round.name}
                       </div>
-
                       <input
                         value={round.name}
                         onChange={(e) => updateRoundName(round.id, e.target.value)}
                         disabled={!isAdmin}
-                        className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-300/35 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base md:max-w-[220px]"
+                        className="h-7 w-[130px] rounded-md border border-white/10 bg-black/45 px-2 text-[10px] text-white outline-none focus:border-cyan-300/35 disabled:opacity-40"
                       />
                     </div>
 
-                    <div className="mt-3 grid gap-3 sm:mt-5 xl:grid-cols-2">
+                    <div className="grid gap-1.5">
                       {round.matches.map((match) => (
                         <div
                           key={match.id}
-                          className="rounded-xl border border-white/10 bg-white/[0.025] p-3 sm:rounded-2xl"
+                          className="rounded-lg border border-white/8 bg-black/35 p-2"
                         >
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 sm:mb-3">
-                            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35 sm:text-xs sm:tracking-[0.22em]">
+                          <div className="mb-1.5 flex items-center justify-between gap-2">
+                            <span className="text-[9px] font-black uppercase tracking-[0.14em] text-white/35">
                               {match.id.toUpperCase()}
-                            </div>
-
-                            <div className="max-w-[180px] truncate text-[10px] uppercase tracking-[0.16em] text-white/30 sm:text-xs sm:tracking-[0.22em]">
+                            </span>
+                            <span className="max-w-[150px] truncate text-[9px] text-cyan-200/70">
                               {match.winner ? `Winner: ${match.winner}` : "No winner"}
-                            </div>
+                            </span>
                           </div>
 
-                          <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
-                            <div className="grid gap-2">
-                              <input
-                                value={match.player1}
-                                onChange={(e) =>
-                                  updateMatchField(round.id, match.id, "player1", e.target.value)
-                                }
-                                disabled={!isAdmin || match.player1 === "BYE"}
-                                placeholder="Player"
-                                className="rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-300/35 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
-                              />
-
-                              <input
-                                value={match.player1Amount || ""}
-                                onChange={(e) =>
-                                  updateMatchField(
-                                    round.id,
-                                    match.id,
-                                    "player1Amount",
-                                    e.target.value.replace(/[^0-9.]/g, "")
-                                  )
-                                }
-                                disabled={!isAdmin || match.player1 === "BYE"}
-                                placeholder="Amount"
-                                className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none transition focus:border-yellow-300/35 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3"
-                              />
-                            </div>
-
-                            <div className="grid gap-2">
-                              <input
-                                value={match.player2}
-                                onChange={(e) =>
-                                  updateMatchField(round.id, match.id, "player2", e.target.value)
-                                }
-                                disabled={!isAdmin || match.player2 === "BYE"}
-                                placeholder="Player"
-                                className="rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-300/35 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
-                              />
-
-                              <input
-                                value={match.player2Amount || ""}
-                                onChange={(e) =>
-                                  updateMatchField(
-                                    round.id,
-                                    match.id,
-                                    "player2Amount",
-                                    e.target.value.replace(/[^0-9.]/g, "")
-                                  )
-                                }
-                                disabled={!isAdmin || match.player2 === "BYE"}
-                                placeholder="Amount"
-                                className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none transition focus:border-yellow-300/35 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-3"
-                              />
-                            </div>
+                          <div className="grid grid-cols-[1fr_72px] gap-1.5 sm:grid-cols-[1fr_80px_1fr_80px]">
+                            <input
+                              value={match.player1}
+                              onChange={(e) => updateMatchField(round.id, match.id, "player1", e.target.value)}
+                              disabled={!isAdmin || match.player1 === "BYE"}
+                              placeholder="Player 1"
+                              className="h-8 min-w-0 rounded-md border border-white/10 bg-black/45 px-2 text-[11px] text-white outline-none focus:border-cyan-300/35 disabled:opacity-40"
+                            />
+                            <input
+                              value={match.player1Amount || ""}
+                              onChange={(e) => updateMatchField(round.id, match.id, "player1Amount", e.target.value.replace(/[^0-9.]/g, ""))}
+                              disabled={!isAdmin || match.player1 === "BYE"}
+                              placeholder="$"
+                              className="h-8 rounded-md border border-white/10 bg-black/30 px-2 text-[11px] text-white outline-none focus:border-yellow-300/35 disabled:opacity-40"
+                            />
+                            <input
+                              value={match.player2}
+                              onChange={(e) => updateMatchField(round.id, match.id, "player2", e.target.value)}
+                              disabled={!isAdmin || match.player2 === "BYE"}
+                              placeholder="Player 2"
+                              className="h-8 min-w-0 rounded-md border border-white/10 bg-black/45 px-2 text-[11px] text-white outline-none focus:border-cyan-300/35 disabled:opacity-40"
+                            />
+                            <input
+                              value={match.player2Amount || ""}
+                              onChange={(e) => updateMatchField(round.id, match.id, "player2Amount", e.target.value.replace(/[^0-9.]/g, ""))}
+                              disabled={!isAdmin || match.player2 === "BYE"}
+                              placeholder="$"
+                              className="h-8 rounded-md border border-white/10 bg-black/30 px-2 text-[11px] text-white outline-none focus:border-yellow-300/35 disabled:opacity-40"
+                            />
                           </div>
 
-                          <div className="mt-3 grid grid-cols-3 gap-1.5 sm:mt-4 sm:gap-2">
+                          <div className="mt-1.5 grid grid-cols-3 gap-1">
                             <ActionButton
                               onClick={() => selectMatchWinner(round.id, match.id, match.player1)}
                               disabled={!isAdmin || !match.player1.trim() || match.player1 === "BYE"}
                               variant={match.winner === match.player1 ? "green" : "dark"}
-                              className="min-h-[34px] px-2 py-1 text-[9px]"
+                              className="min-h-[28px] px-1.5 py-1 text-[8px]"
                             >
                               Pick 1
                             </ActionButton>
-
                             <ActionButton
                               onClick={() => selectMatchWinner(round.id, match.id, match.player2)}
                               disabled={!isAdmin || !match.player2.trim() || match.player2 === "BYE"}
                               variant={match.winner === match.player2 ? "green" : "dark"}
-                              className="min-h-[34px] px-2 py-1 text-[9px]"
+                              className="min-h-[28px] px-1.5 py-1 text-[8px]"
                             >
                               Pick 2
                             </ActionButton>
-
                             <ActionButton
                               onClick={() => clearMatchWinner(round.id, match.id)}
                               disabled={!isAdmin}
                               variant="red"
-                              className="min-h-[34px] px-2 py-1 text-[9px]"
+                              className="min-h-[28px] px-1.5 py-1 text-[8px]"
                             >
                               Clear
                             </ActionButton>
@@ -5349,28 +5366,26 @@ onClick={() =>
                   </div>
                 ))}
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-2">
-                <ActionButton onClick={saveBracket} disabled={!isAdmin} variant="green">
-                  Save
-                </ActionButton>
-
-                <ActionButton onClick={resetBracket} disabled={!isAdmin} variant="red">
-                  Reset
-                </ActionButton>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-white/75 sm:rounded-2xl sm:p-4 sm:text-sm">
-                {bracketMessage || "Generate a bracket, enter teams, pick winners, then save it live."}
+            <div className="flex flex-wrap items-center gap-2">
+              <ActionButton onClick={saveBracket} disabled={!isAdmin} variant="green" className="min-h-[34px] px-4 py-1.5 text-[9px]">
+                Save
+              </ActionButton>
+              <ActionButton onClick={resetBracket} disabled={!isAdmin} variant="red" className="min-h-[34px] px-4 py-1.5 text-[9px]">
+                Reset
+              </ActionButton>
+              <div className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[10px] text-white/60">
+                {bracketMessage || "Generate, edit, pick winners, then save."}
               </div>
             </div>
           </div>
         </details>
-
-        <details className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm">
-  <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
-    Snake Draft
-  </summary>
+        <details
+          open={activeAdminTab === "snakeDraft"}
+          className={`${activeAdminTab === "snakeDraft" ? "block" : "hidden"} rounded-xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
+        >
+  <summary className="hidden">Snake Draft</summary>
 
   <div className="mt-4 grid gap-4">
     <div className="grid gap-3 sm:grid-cols-[180px_1fr_1fr]">
@@ -5622,202 +5637,209 @@ onClick={() =>
 </details>
 
 <details
-  open={adminDropdowns.slotWheel}
-  onToggle={(e) => setAdminDropdown("slotWheel", e.currentTarget.open)}
-  className="rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm"
+  open={activeAdminTab === "slotWheel"}
+  className={`${activeAdminTab === "slotWheel" ? "block" : "hidden"} rounded-xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-3`}
 >
-  <summary className="cursor-pointer text-base font-black text-white sm:text-xl">
-    Slot Call Wheel
-  </summary>
+  <summary className="hidden">Slot Call Wheel</summary>
 
-  <div className="pt-4 sm:p-4">
-    <div className="mx-auto max-w-4xl rounded-[1.7rem] border border-cyan-300/35 bg-[linear-gradient(180deg,rgba(0,245,255,0.08),rgba(0,0,0,0.94))] p-4 text-center shadow-[0_0_38px_rgba(0,245,255,0.16)] sm:p-6">
+  <div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+    <div className="rounded-xl border border-cyan-300/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.07),rgba(0,0,0,0.94))] p-3 shadow-[0_0_28px_rgba(0,245,255,0.10)]">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <SectionLabel>Slot Call Wheel</SectionLabel>
+          <div className="mt-1 text-lg font-black uppercase tracking-[0.08em] text-cyan-100 sm:text-xl">
+            Pick A Winner
+          </div>
+        </div>
 
-      <div className="mt-2 text-3xl font-black uppercase tracking-[0.12em] text-cyan-200 drop-shadow-[0_0_18px_rgba(0,245,255,0.55)] sm:text-5xl">
-        Trashguy Wheel
+        <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[10px] font-black text-cyan-100">
+          {slotCalls.length} entries
+        </div>
       </div>
 
-      <div className="relative mx-auto mt-5 h-[260px] max-w-3xl overflow-hidden rounded-2xl border border-cyan-300/25 bg-black/90 shadow-[inset_0_0_28px_rgba(0,245,255,0.08)] sm:h-[300px]">
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 bg-gradient-to-b from-black via-black/80 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24 bg-gradient-to-t from-black via-black/80 to-transparent" />
-
-        <div className="pointer-events-none absolute left-0 right-0 top-1/2 z-30 h-[60px] -translate-y-1/2 border-y border-cyan-300/45 bg-cyan-400/10 shadow-[0_0_28px_rgba(0,245,255,0.18)]" />
+      <div
+        className="relative mx-auto mt-3 overflow-hidden rounded-xl border border-cyan-300/25 bg-black/90 shadow-[inset_0_0_24px_rgba(0,245,255,0.08)]"
+        style={{ height: `${SLOT_WHEEL_VIEWPORT_HEIGHT}px` }}
+      >
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-16 bg-gradient-to-b from-black via-black/85 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-16 bg-gradient-to-t from-black via-black/85 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-2 top-1/2 z-30 h-11 -translate-y-1/2 rounded-lg border border-cyan-200/50 bg-cyan-400/12 shadow-[0_0_26px_rgba(0,245,255,0.22)]" />
+        <div className="pointer-events-none absolute left-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-l-[12px] border-y-transparent border-l-cyan-300" />
+        <div className="pointer-events-none absolute right-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-r-[12px] border-y-transparent border-r-cyan-300" />
 
         {slotCalls.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm font-semibold text-white/40">
+          <div className="flex h-full items-center justify-center text-xs font-semibold text-white/40">
             Waiting for slot calls...
           </div>
-        ) : (
-<>
-  <style>{`
-    @keyframes slotWheelIdleScroll {
-      from {
-        transform: translateY(0);
-      }
-      to {
-        transform: translateY(calc(var(--slot-loop-distance) * -1));
-      }
-    }
-  `}</style>
-
-  <div
-    className={
-      isSlotWheelSpinning
-        ? "transition-transform duration-[4200ms] ease-out"
-        : ""
-    }
-style={
-  isSlotWheelSpinning
-    ? { transform: `translateY(-${slotWheelRotation}px)` }
-    : pickedSlotCall
-      ? { transform: "translateY(116px)" }
-      : slotCalls.length >= 5
-        ? ({
-            "--slot-loop-distance": `${slotCalls.length * 46}px`,
-            animation: "slotWheelIdleScroll 8s linear infinite",
-          } as React.CSSProperties)
-        : {
-            transform: `translateY(${(260 - slotCalls.length * 46) / 2}px)`,
-          }
-}
-  >
-{slotWheelLoop.map((call, index) => (
-  <div
-    key={`${call.username}-${call.slotName}-${index}`}
-    className="flex h-[46px] items-center justify-between gap-3 border-b border-white/5 px-3 sm:px-4"
-  >
-    <div className="flex min-w-0 items-center gap-2">
-      <div className="w-7 text-[10px] font-black text-cyan-300/70">
-        #{(index % slotCalls.length) + 1}
-      </div>
-
-      <div className="truncate text-[12px] font-black text-white sm:text-sm">
-        {call.username}
-      </div>
-    </div>
-
-    <div className="truncate text-right text-[12px] font-black text-cyan-100 sm:text-sm">
-      {call.slotName}
-    </div>
-  </div>
-))}
-  </div>
-</>
-        )}
-      </div>
-
-      <div className="mt-4 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-white/55">
-        Entries
-        <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-cyan-200">
-          {slotCalls.length}
-        </span>
-      </div>
-
-      <div className="mx-auto mt-4 max-w-2xl">
-        {pickedSlotCall ? (
-          <div className="rounded-xl border border-cyan-300/35 bg-cyan-400/10 p-4 shadow-[0_0_30px_rgba(0,245,255,0.14)]">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/70">
-              Picked Slot
-            </div>
-
-            <div className="mt-2 truncate text-3xl font-black text-cyan-300 drop-shadow-[0_0_18px_rgba(0,245,255,0.8)] sm:text-5xl">
-              {pickedSlotCall.slotName}
-            </div>
-
-            <div className="mt-2 text-sm text-white/45">
-              called by {pickedSlotCall.username}
-            </div>
+        ) : isSlotWheelSpinning ? (
+          <div
+            className="transition-transform duration-[4200ms] ease-[cubic-bezier(0.12,0.72,0.08,1)]"
+            style={{ transform: `translateY(-${slotWheelRotation}px)` }}
+          >
+            {slotWheelLoop.map((call, index) => (
+              <div
+                key={`${call.id || call.username}-${call.slotName}-${index}`}
+                className="flex items-center justify-between gap-3 border-b border-white/5 px-3"
+                style={{ height: `${SLOT_WHEEL_ITEM_HEIGHT}px` }}
+              >
+                <div className="min-w-0 truncate text-[11px] font-black text-white sm:text-xs">
+                  {call.username}
+                </div>
+                <div className="min-w-0 truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
+                  {call.slotName}
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm font-semibold text-white/45">
-            {slotCalls.length === 0 ? "Waiting for slot calls..." : "Ready to spin."}
+          <div style={{ transform: `translateY(${idleSlotWheelOffset}px)` }}>
+            {slotCalls.map((call, index) => {
+              const isWinner =
+                pickedSlotCall?.id === call.id &&
+                pickedSlotCall?.username === call.username &&
+                pickedSlotCall?.slotName === call.slotName;
+
+              return (
+                <div
+                  key={`${call.id || call.username}-${call.slotName}-${index}`}
+                  className={`flex items-center justify-between gap-3 border-b border-white/5 px-3 ${isWinner ? "bg-cyan-400/12" : ""}`}
+                  style={{ height: `${SLOT_WHEEL_ITEM_HEIGHT}px` }}
+                >
+                  <div className="min-w-0 truncate text-[11px] font-black text-white sm:text-xs">
+                    {call.username}
+                  </div>
+                  <div className="min-w-0 truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
+                    {call.slotName}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
-      <div className="mx-auto mt-5 grid max-w-2xl gap-3">
+      <div className="mt-3 grid grid-cols-[1fr_auto_auto] gap-2">
         <ActionButton
           onClick={handleSpinSlotWheel}
           disabled={isSlotWheelSpinning || slotCalls.length === 0}
           variant="green"
+          className="min-h-[38px] text-[10px]"
         >
           {isSlotWheelSpinning ? "Spinning..." : "Spin Wheel"}
         </ActionButton>
-
-        <div className="grid grid-cols-2 gap-3">
-          <ActionButton
-            onClick={handleShuffleSlotWheel}
-            disabled={slotCalls.length <= 1 || isSlotWheelSpinning}
-            variant="purple"
-          >
-            Shuffle
-          </ActionButton>
-
-          <ActionButton
-            onClick={handleRemovePickedSlot}
-            disabled={!pickedSlotCall}
-            variant="red"
-          >
-            Remove
-          </ActionButton>
-        </div>
-      </div>
-    </div>
-
-    <div className="mt-5 rounded-xl border border-white/10 bg-black/85 p-4 sm:rounded-[2rem] sm:p-5">
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/80 sm:text-xs sm:tracking-[0.24em]">
-          Live Slot Calls
-        </div>
-
         <ActionButton
-          onClick={() => setSlotCalls([])}
-          variant="red"
-          className="min-h-[34px] px-3 py-1 text-[9px] sm:min-h-[42px] sm:text-xs"
+          onClick={handleShuffleSlotWheel}
+          disabled={slotCalls.length <= 1 || isSlotWheelSpinning}
+          variant="purple"
+          className="min-h-[38px] px-3 text-[9px]"
         >
-          Clear
+          Shuffle
+        </ActionButton>
+        <ActionButton
+          onClick={handleRemovePickedSlot}
+          disabled={!pickedSlotCall || isSlotWheelSpinning}
+          variant="red"
+          className="min-h-[38px] px-3 text-[9px]"
+        >
+          Remove Winner
         </ActionButton>
       </div>
 
-      <div className="mt-4 max-h-[420px] overflow-y-auto rounded-xl border border-white/10 bg-black/80 p-3 sm:rounded-2xl">
+      <div className="mt-3 min-h-[74px] rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+        {pickedSlotCall ? (
+          <>
+            <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300/70">
+              Winner
+            </div>
+            <div className="mt-1 truncate text-xl font-black text-cyan-200 drop-shadow-[0_0_12px_rgba(0,245,255,0.65)] sm:text-2xl">
+              {pickedSlotCall.slotName}
+            </div>
+            <div className="mt-0.5 truncate text-[11px] text-white/45">
+              called by {pickedSlotCall.username}
+            </div>
+          </>
+        ) : (
+          <div className="flex h-[48px] items-center justify-center text-xs font-semibold text-white/40">
+            {slotCalls.length === 0 ? "No entries yet." : "Ready to spin."}
+          </div>
+        )}
+      </div>
+    </div>
+
+    <div className="rounded-xl border border-white/10 bg-black/75 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+            Live Calls
+          </div>
+          <div className="mt-0.5 text-[11px] text-white/35">
+            Names update automatically from chat.
+          </div>
+        </div>
+
+        <ActionButton
+          onClick={async () => {
+  if (!confirm("Clear every slot call from the wheel?")) return;
+
+  const res = await fetch("/api/slot-calls?clearAll=true", {
+    method: "DELETE",
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.ok) {
+    alert(data.error || "Failed to clear slot calls.");
+    return;
+  }
+
+  setSlotCalls([]);
+  setPickedSlotCall(null);
+  setSlotWheelRotation(0);
+}}
+          disabled={slotCalls.length === 0 || isSlotWheelSpinning}
+          variant="red"
+          className="min-h-[32px] px-3 py-1 text-[8px]"
+        >
+          Clear All
+        </ActionButton>
+      </div>
+
+      <div className="mt-3 max-h-[354px] overflow-y-auto rounded-lg border border-white/8 bg-black/50 p-2">
         {slotCalls.length === 0 ? (
-          <div className="p-6 text-center text-xs text-white/40 sm:text-sm">
+          <div className="p-5 text-center text-xs text-white/35">
             No slot calls yet.
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-1.5">
             {slotCalls.map((call, index) => (
               <div
-                key={`${call.username}-${call.slotName}-${index}`}
-                className="rounded-xl border border-white/10 bg-white/[0.04] p-3 transition hover:border-cyan-300/25 hover:bg-cyan-400/[0.06]"
+                key={`${call.id || call.username}-${call.slotName}-${index}`}
+                className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-white/8 bg-white/[0.025] px-2 py-1.5"
               >
-                <div className="truncate text-sm font-black text-white">
-                  {call.slotName}
+                <div className="text-[9px] font-black text-cyan-300/60">
+                  {index + 1}
                 </div>
-
-                <div className="mt-1 truncate text-xs text-white/35">
-                  by {call.username}
+                <div className="min-w-0">
+                  <div className="truncate text-[11px] font-black text-white">
+                    {call.slotName}
+                  </div>
+                  <div className="truncate text-[9px] text-white/35">
+                    {call.username}
+                  </div>
                 </div>
-
-<ActionButton
-  onClick={async () => {
-    if (call.id) {
-      await fetch(`/api/slot-calls?id=${call.id}`, {
-        method: "DELETE",
-      });
-    }
-
-    setSlotCalls((current) =>
-      current.filter((item) => item.id !== call.id)
-    );
-
-    await loadSlotCalls();
-  }}
-  variant="red"
-  className="mt-3 min-h-[32px] w-full px-2 py-1 text-[9px]"
->
-  Remove
-</ActionButton>
+                <button
+                  onClick={async () => {
+                    if (call.id) {
+                      await fetch(`/api/slot-calls?id=${call.id}`, { method: "DELETE" });
+                    }
+                    setSlotCalls((current) => current.filter((item) => item.id !== call.id));
+                    await loadSlotCalls();
+                  }}
+                  disabled={isSlotWheelSpinning}
+                  className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20 disabled:opacity-40"
+                >
+                  Remove
+                </button>
               </div>
             ))}
           </div>

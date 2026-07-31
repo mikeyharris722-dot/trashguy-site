@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { KICK_SESSION_COOKIE, verifyKickSessionToken } from "@/lib/kick-session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,7 +45,7 @@ async function getSignedInUser(request: NextRequest) {
   const { data, error } = await supabaseAuth.auth.getUser(token);
 
   if (error || !data?.user) {
-    return { user: null, error: "Invalid Twitch session." };
+    return { user: null, error: "Invalid login session." };
   }
 
   return { user: data.user, error: null };
@@ -323,9 +324,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getSignedInUser(request);
+    const kickSession = verifyKickSessionToken(
+      request.cookies.get(KICK_SESSION_COOKIE)?.value
+    );
+    const auth = kickSession
+      ? { user: null as any, error: null }
+      : await getSignedInUser(request);
 
-    if (!auth.user) {
+    if (!kickSession && !auth.user) {
       return NextResponse.json({ error: auth.error }, { status: 401 });
     }
 
@@ -360,87 +366,68 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const username = getTwitchUsername(auth.user);
-    const twitchUserId = getTwitchUserId(auth.user);
+    let username = "";
+    let profileId = "";
 
-    if (!twitchUserId) {
-      return NextResponse.json(
-        { error: "Missing Twitch user id." },
-        { status: 400 }
+    if (kickSession) {
+      username = normalizeUsername(kickSession.username);
+      profileId = kickSession.profileId;
+    } else {
+      const usernameFromTwitch = getTwitchUsername(auth.user);
+      const twitchUserId = getTwitchUserId(auth.user);
+
+      if (!twitchUserId) {
+        return NextResponse.json(
+          { error: "Missing Twitch user id." },
+          { status: 400 }
+        );
+      }
+
+      const profile = await resolveProfile(
+        auth.user.id,
+        usernameFromTwitch,
+        twitchUserId
       );
-    }
 
-    const profile = await resolveProfile(auth.user.id, username, twitchUserId);
+      if (!profile.profileId) {
+        return NextResponse.json(
+          { error: profile.error || "Failed to resolve profile." },
+          { status: 500 }
+        );
+      }
 
-    if (!profile.profileId) {
-      return NextResponse.json(
-        { error: profile.error || "Failed to resolve profile." },
-        { status: 500 }
-      );
+      username = usernameFromTwitch;
+      profileId = profile.profileId;
     }
 
     const now = new Date().toISOString();
 
-    const { data: existingRows, error: existingError } = await supabaseAdmin
+    const { data: saved, error: saveError } = await supabaseAdmin
       .from("predictions")
-      .select("id")
-      .eq("hunt_id", resolved.hunt.id)
-      .eq("profile_id", profile.profileId)
-      .order("updated_at", { ascending: false })
-      .limit(1);
-
-    if (existingError) {
-      return NextResponse.json({ error: existingError.message }, { status: 500 });
-    }
-
-    const existingId = existingRows?.[0]?.id;
-
-    if (existingId) {
-      const { data: updated, error: updateError } = await supabaseAdmin
-        .from("predictions")
-        .update({ guess_amount: guessAmount, updated_at: now })
-        .eq("id", existingId)
-        .select("id, profile_id, guess_amount, created_at, updated_at")
-        .single();
-
-      if (updateError) {
-        return NextResponse.json({ error: updateError.message }, { status: 500 });
-      }
-
-      return NextResponse.json({
-        success: true,
-        username,
-        prediction: {
-          ...updated,
-          username,
-          guess: Number(updated.guess_amount || 0),
+      .upsert(
+        {
+          hunt_id: resolved.hunt.id,
+          profile_id: profileId,
+          guess_amount: guessAmount,
+          updated_at: now,
         },
-      });
-    }
-
-    const { data: inserted, error: insertError } = await supabaseAdmin
-      .from("predictions")
-      .insert({
-        hunt_id: resolved.hunt.id,
-        profile_id: profile.profileId,
-        guess_amount: guessAmount,
-        created_at: now,
-        updated_at: now,
-      })
+        { onConflict: "hunt_id,profile_id" }
+      )
       .select("id, profile_id, guess_amount, created_at, updated_at")
       .single();
 
-    if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    if (saveError) {
+      return NextResponse.json({ error: saveError.message }, { status: 500 });
     }
 
     return NextResponse.json({
       success: true,
+      platform: kickSession ? "kick" : "twitch",
       username,
       prediction: {
-        ...inserted,
+        ...saved,
         username,
-        guess: Number(inserted.guess_amount || 0),
+        guess: Number(saved.guess_amount || 0),
       },
     });
   } catch (error) {

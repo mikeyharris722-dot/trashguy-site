@@ -73,9 +73,29 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
+  const clearAll = req.nextUrl.searchParams.get("clearAll") === "true";
+
+  if (clearAll) {
+    const { error } = await supabase
+      .from("slot_calls")
+      .delete()
+      .not("id", "is", null);
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ ok: true, cleared: true });
+  }
 
   if (!id) {
-    return NextResponse.json({ error: "Missing slot call id" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing slot call id" },
+      { status: 400 }
+    );
   }
 
   const { error } = await supabase
@@ -84,7 +104,10 @@ export async function DELETE(req: NextRequest) {
     .eq("id", id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ ok: true });

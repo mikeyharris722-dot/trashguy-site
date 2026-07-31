@@ -6,6 +6,8 @@ const KICK_CHANNEL = "trashguy";
 
 const API_URL = "https://trashguy.me/api/chat-giveaway/enter";
 const SLOT_CALL_API_URL = "https://trashguy.me/api/slot-calls";
+const WINNER_MESSAGE_API_URL =
+  "https://trashguy.me/api/chat-giveaway/winner-message";
 
 let enteredUsers = new Set();
 const cooldownUsers = new Set();
@@ -84,12 +86,66 @@ console.log(`${displayName} entered giveaway from ${platform} x${data.entry.weig
   }
 }
 
-async function handleChatMessage({ platform, username, displayName, twitchId = "", message }) {
+async function submitWinnerMessage({
+  platform,
+  username,
+  displayName,
+  message,
+}) {
+  const cleanUsername = normalizeUsername(username);
+  const cleanMessage = String(message || "").trim();
+
+  if (!cleanUsername || !cleanMessage) return;
+
+  try {
+    const res = await fetch(WINNER_MESSAGE_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        platform,
+        username: cleanUsername,
+        displayName: displayName || cleanUsername,
+        message: cleanMessage,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.ok) {
+      console.log(
+        `${platform} winner message failed:`,
+        data.error || res.status
+      );
+    }
+  } catch (error) {
+    console.log(`${platform} winner message failed:`, error.message);
+  }
+}
+
+async function handleChatMessage({
+  platform,
+  username,
+  displayName,
+  twitchId = "",
+  message,
+}) {
   const rawText = String(message || "").trim();
   const text = rawText.toLowerCase();
 
+  await submitWinnerMessage({
+    platform,
+    username,
+    displayName,
+    message: rawText,
+  });
+
   if (text === "trash") {
-    await enterGiveaway({ platform, username, displayName, twitchId });
+    await enterGiveaway({
+      platform,
+      username,
+      displayName,
+      twitchId,
+    });
     return;
   }
 
@@ -144,7 +200,6 @@ async function startKick() {
     });
   });
 
-  await kickClient.login();
 }
 
 startKick().catch((err) => {

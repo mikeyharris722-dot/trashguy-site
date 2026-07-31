@@ -6,6 +6,9 @@ function base64url(buffer: Buffer) {
 }
 
 export async function GET() {
+  if (!process.env.KICK_CLIENT_ID || !process.env.KICK_REDIRECT_URI) {
+    return NextResponse.json({ error: "Kick OAuth is not configured." }, { status: 500 });
+  }
   const codeVerifier = base64url(crypto.randomBytes(32));
   const codeChallenge = base64url(crypto.createHash("sha256").update(codeVerifier).digest());
   const state = base64url(crypto.randomBytes(16));
@@ -25,6 +28,7 @@ export async function GET() {
   res.cookies.set("kick_code_verifier", codeVerifier, {
     httpOnly: true,
     sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 60 * 10,
   });
@@ -32,6 +36,7 @@ export async function GET() {
   res.cookies.set("kick_state", state, {
     httpOnly: true,
     sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 60 * 10,
   });
