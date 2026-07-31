@@ -1770,44 +1770,63 @@ useEffect(() => {
 }, [activePredictionHuntId, loadBracket, loadHunts, loadPredictions]);
 
 useEffect(() => {
-  if (!currentGiveawayWinner) return;
+  if (!currentGiveawayWinner) {
+    setWinnerChatMessages([]);
+    return;
+  }
 
-  let client: any;
+  let cancelled = false;
 
-  const connectChat = async () => {
-    const tmiModule: any = await import("tmi.js");
-    const tmi = tmiModule.default || tmiModule;
-
-    client = new tmi.Client({
-      channels: ["trashguy__"],
-    });
-
-    await client.connect().catch(() => {});
-
-    client.on("message", (_channel: string, tags: any, message: string, self: boolean) => {
-      if (self) return;
-
-      const chatter = String(tags.username || tags["display-name"] || "")
-        .replace("@", "")
-        .trim()
-        .toLowerCase();
-
-      if (chatter !== currentGiveawayWinner) return;
-
-      setGiveawayRespondedTime((current) => current || Date.now());
-
-      setWinnerChatMessages((current) =>
-        [`${tags["display-name"] || chatter}: ${message}`, ...current].slice(0, 6)
+  const loadWinnerMessages = async () => {
+    try {
+      const res = await fetch(
+        "/api/chat-giveaway/winner-message",
+        { cache: "no-store" }
       );
-    });
+
+      const data = await res.json();
+
+      if (
+        cancelled ||
+        !res.ok ||
+        !data?.ok ||
+        data.winnerUsername !== currentGiveawayWinner
+      ) {
+        return;
+      }
+
+      const messages = Array.isArray(data.messages)
+        ? data.messages
+        : [];
+
+      setWinnerChatMessages(
+        messages.map(
+          (item: any) =>
+            `${item.display_name || item.username}: ${item.message}`
+        )
+      );
+
+      if (messages.length > 0) {
+        setGiveawayRespondedTime(
+          (current) =>
+            current ||
+            new Date(
+              messages[messages.length - 1].created_at
+            ).getTime()
+        );
+      }
+    } catch (error) {
+      console.error("Winner messages failed to load:", error);
+    }
   };
 
-  connectChat();
+  loadWinnerMessages();
+
+  const timer = window.setInterval(loadWinnerMessages, 1500);
 
   return () => {
-    if (client) {
-      client.disconnect().catch(() => {});
-    }
+    cancelled = true;
+    window.clearInterval(timer);
   };
 }, [currentGiveawayWinner]);
 
