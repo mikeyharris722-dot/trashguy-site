@@ -735,6 +735,7 @@ const [pickedSlotCall, setPickedSlotCall] = useState<{
   createdAt: number;
 } | null>(null);
 const [slotWheelRotation, setSlotWheelRotation] = useState(0);
+const [slotWheelIdleIndex, setSlotWheelIdleIndex] = useState(0);
 
 const [giveawayEntries, setGiveawayEntries] = useState<any[]>([]);
 const [recentGiveawayWinners, setRecentGiveawayWinners] = useState<any[]>([]);
@@ -1863,6 +1864,27 @@ useEffect(() => {
   return () => clearInterval(timer);
 }, []);
 
+useEffect(() => {
+  if (pickedSlotCall || isSlotWheelSpinning || slotCalls.length <= 1) return;
+
+  const timer = window.setInterval(() => {
+    setSlotWheelIdleIndex((current) =>
+      slotCalls.length ? (current + 1) % slotCalls.length : 0
+    );
+  }, 1400);
+
+  return () => window.clearInterval(timer);
+}, [pickedSlotCall, isSlotWheelSpinning, slotCalls.length]);
+
+useEffect(() => {
+  if (!slotCalls.length) {
+    setSlotWheelIdleIndex(0);
+    return;
+  }
+
+  setSlotWheelIdleIndex((current) => current % slotCalls.length);
+}, [slotCalls.length]);
+
 const handleKickLogin = () => {
   localStorage.setItem("viewerPlatform", "kick");
   window.location.href = "/api/kick";
@@ -2472,9 +2494,10 @@ function getSnakeTeamStyle(captain: string) {
 const SLOT_WHEEL_ITEM_HEIGHT = 44;
 const SLOT_WHEEL_VIEWPORT_HEIGHT = 220;
 const SLOT_WHEEL_LOOPS = 12;
+const SLOT_WHEEL_VISIBLE_ROWS = 5;
 
 const handleSpinSlotWheel = () => {
-  if (isSlotWheelSpinning || slotCalls.length === 0) return;
+  if (isSlotWheelSpinning || pickedSlotCall || slotCalls.length === 0) return;
 
   const winnerIndex = Math.floor(Math.random() * slotCalls.length);
   const winner = slotCalls[winnerIndex];
@@ -2485,7 +2508,6 @@ const handleSpinSlotWheel = () => {
   const targetRotation =
     targetIndex * SLOT_WHEEL_ITEM_HEIGHT - centerOffset;
 
-  setPickedSlotCall(null);
   setIsSlotWheelSpinning(true);
   setSlotWheelRotation(0);
 
@@ -2495,27 +2517,24 @@ const handleSpinSlotWheel = () => {
     });
   });
 
-  window.setTimeout(() => {
-    setPickedSlotCall(winner);
-    setIsSlotWheelSpinning(false);
-  }, 4300);
+window.setTimeout(() => {
+  // Prepare the locked winner first.
+  setPickedSlotCall(winner);
+  setSlotWheelRotation(0);
+
+  // Let React paint the winner before removing the spinning list.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      setIsSlotWheelSpinning(false);
+    });
+  });
+}, 4300);
 };
 
 const handleShuffleSlotWheel = () => {
-  if (slotCalls.length <= 1 || isSlotWheelSpinning) return;
+  if (slotCalls.length <= 1 || isSlotWheelSpinning || pickedSlotCall) return;
 
-  setPickedSlotCall(null);
-
-  setSlotCalls((current) => {
-    const shuffled = [...current];
-
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-
-    return shuffled;
-  });
+  setSlotWheelIdleIndex(Math.floor(Math.random() * slotCalls.length));
 };
 
 const handleRemovePickedSlot = async () => {
@@ -2528,6 +2547,8 @@ const handleRemovePickedSlot = async () => {
   }
 
   setPickedSlotCall(null);
+  setSlotWheelRotation(0);
+  setSlotWheelIdleIndex(0);
   await loadSlotCalls();
 };
 
@@ -2540,14 +2561,30 @@ const slotWheelLoop = useMemo(() => {
   ).flat();
 }, [slotCalls]);
 
-const idleSlotWheelOffset = useMemo(() => {
-  const visibleHeight = Math.min(
-    slotCalls.length * SLOT_WHEEL_ITEM_HEIGHT,
-    SLOT_WHEEL_VIEWPORT_HEIGHT
-  );
+const slotWheelRestingRows = useMemo(() => {
+  if (!slotCalls.length) return [];
 
-  return Math.max(0, (SLOT_WHEEL_VIEWPORT_HEIGHT - visibleHeight) / 2);
-}, [slotCalls.length]);
+  const centerIndex = pickedSlotCall
+    ? Math.max(
+        0,
+        slotCalls.findIndex((call) => call.id === pickedSlotCall.id)
+      )
+    : slotWheelIdleIndex % slotCalls.length;
+
+  const half = Math.floor(SLOT_WHEEL_VISIBLE_ROWS / 2);
+
+  return Array.from({ length: SLOT_WHEEL_VISIBLE_ROWS }, (_, rowIndex) => {
+    const offset = rowIndex - half;
+    const callIndex =
+      (centerIndex + offset + slotCalls.length) % slotCalls.length;
+
+    return {
+      call: slotCalls[callIndex],
+      isCenter: rowIndex === half,
+      rowKey: `${slotCalls[callIndex].id}-${rowIndex}-${centerIndex}`,
+    };
+  });
+}, [pickedSlotCall, slotCalls, slotWheelIdleIndex]);
 
 const handleCreateManualReward = async () => {
   const username = manualRewardUsername.trim().replace("@", "");
@@ -4515,34 +4552,7 @@ onClick={() =>
 )}
 
 {activeSection === "admin" && adminAllowed && (
-  <section className="admin-mobile-root mx-auto grid min-w-0 max-w-6xl gap-2 overflow-x-hidden px-1 sm:gap-3 sm:px-0">
-    <style jsx global>{`
-      @media (max-width: 639px) {
-        .admin-mobile-root,
-        .admin-mobile-root * {
-          box-sizing: border-box;
-          min-width: 0;
-        }
-        .admin-mobile-root input,
-        .admin-mobile-root select,
-        .admin-mobile-root textarea,
-        .admin-mobile-root button {
-          max-width: 100%;
-        }
-        .admin-mobile-root table {
-          display: block;
-          width: 100%;
-          overflow-x: auto;
-          white-space: nowrap;
-        }
-        .admin-mobile-root [class*="grid-cols-["] {
-          grid-template-columns: minmax(0, 1fr) !important;
-        }
-        .admin-mobile-root [class*="min-w-["] {
-          min-width: 0 !important;
-        }
-      }
-    `}</style>
+  <section className="mx-auto grid max-w-6xl gap-2 sm:gap-3">
     <div>
 <div className="text-center">
   <GlowTabTitle label="ADMIN CONTROL CENTER" />
@@ -4622,8 +4632,8 @@ onClick={() =>
 )}
       </div>
 
-      <div className="mt-3 min-w-0 rounded-xl border border-cyan-300/15 bg-black/70 p-1.5 sm:mt-4">
-        <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap">
+      <div className="mt-3 overflow-x-auto rounded-xl border border-cyan-300/15 bg-black/70 p-1.5 sm:mt-4">
+        <div className="flex min-w-max gap-1.5">
           {[
             { id: "giveaway", label: "Giveaways" },
             { id: "prizePortal", label: "Prize Portal" },
@@ -4647,7 +4657,7 @@ onClick={() =>
                       | "slotWheel"
                   )
                 }
-                className={`w-full min-w-0 whitespace-normal rounded-lg border px-2 py-2 text-[9px] sm:w-auto sm:whitespace-nowrap sm:px-3 sm:text-[10px] font-black uppercase tracking-[0.08em] transition sm:text-xs ${
+                className={`whitespace-nowrap rounded-lg border px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition sm:text-xs ${
                   active
                     ? "border-cyan-300/40 bg-cyan-400/15 text-cyan-100 shadow-[0_0_16px_rgba(0,245,255,0.12)]"
                     : "border-white/10 bg-white/[0.03] text-white/55 hover:border-cyan-300/20 hover:text-white"
@@ -4806,7 +4816,7 @@ onClick={() =>
         .map((reward) => (
           <div
             key={reward.id}
-            className="flex min-w-0 flex-col gap-3 px-3 py-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+            className="flex items-start justify-between gap-4 px-3 py-2.5"
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
@@ -4839,7 +4849,7 @@ onClick={() =>
               </div>
             </div>
 
-            <div className="flex w-full shrink-0 flex-row items-center justify-between gap-2 sm:w-auto sm:flex-col sm:items-end">
+            <div className="flex shrink-0 flex-col items-end gap-2">
               <div className="text-base font-black text-cyan-200">
                 ${Number(reward.amount || 0).toLocaleString()}
               </div>
@@ -4880,7 +4890,7 @@ onClick={() =>
     .map((reward) => (
       <div
         key={reward.id}
-        className="flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+        className="flex items-start justify-between gap-4 p-3"
       >
         {/* LEFT SIDE */}
         <div className="min-w-0 flex-1">
@@ -5427,7 +5437,7 @@ onClick={() =>
 
   <div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
     <div className="rounded-xl border border-cyan-300/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.07),rgba(0,0,0,0.94))] p-3 shadow-[0_0_28px_rgba(0,245,255,0.10)]">
-      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <SectionLabel>Slot Call Wheel</SectionLabel>
           <div className="mt-1 text-lg font-black uppercase tracking-[0.08em] text-cyan-100 sm:text-xl">
@@ -5474,37 +5484,55 @@ onClick={() =>
               </div>
             ))}
           </div>
-        ) : (
-          <div style={{ transform: `translateY(${idleSlotWheelOffset}px)` }}>
-            {slotCalls.map((call, index) => {
-              const isWinner =
-                pickedSlotCall?.id === call.id &&
-                pickedSlotCall?.username === call.username &&
-                pickedSlotCall?.slotName === call.slotName;
+) : pickedSlotCall ? (
+  <div>
+    {slotWheelRestingRows.map(({ call, isCenter, rowKey }) => (
+      <div
+        key={rowKey}
+        className={`flex items-center justify-between gap-3 border-b border-white/5 px-3 ${
+          isCenter
+            ? "bg-cyan-400/12 opacity-100"
+            : "opacity-55"
+        }`}
+        style={{ height: `${SLOT_WHEEL_ITEM_HEIGHT}px` }}
+      >
+        <div className="min-w-0 truncate text-[11px] font-black text-white sm:text-xs">
+          {call.username}
+        </div>
 
-              return (
-                <div
-                  key={`${call.id || call.username}-${call.slotName}-${index}`}
-                  className={`flex items-center justify-between gap-3 border-b border-white/5 px-3 ${isWinner ? "bg-cyan-400/12" : ""}`}
-                  style={{ height: `${SLOT_WHEEL_ITEM_HEIGHT}px` }}
-                >
-                  <div className="min-w-0 truncate text-[11px] font-black text-white sm:text-xs">
-                    {call.username}
-                  </div>
-                  <div className="min-w-0 truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
-                    {call.slotName}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <div className="min-w-0 truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
+          {call.slotName}
+        </div>
+      </div>
+    ))}
+  </div>
+) : (
+  <div className="transition-transform duration-500 ease-out">
+    {slotWheelRestingRows.map(({ call, isCenter, rowKey }) => (
+      <div
+        key={rowKey}
+        className={`flex items-center justify-between gap-3 border-b border-white/5 px-3 transition-all duration-500 ${
+          isCenter ? "bg-cyan-400/12" : "opacity-55"
+        }`}
+        style={{ height: `${SLOT_WHEEL_ITEM_HEIGHT}px` }}
+      >
+        <div className="min-w-0 truncate text-[11px] font-black text-white sm:text-xs">
+          {call.username}
+        </div>
+
+        <div className="min-w-0 truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
+          {call.slotName}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
       </div>
 
       <div className="mt-3 grid grid-cols-[1fr_auto_auto] gap-2">
         <ActionButton
           onClick={handleSpinSlotWheel}
-          disabled={isSlotWheelSpinning || slotCalls.length === 0}
+          disabled={isSlotWheelSpinning || Boolean(pickedSlotCall) || slotCalls.length === 0}
           variant="green"
           className="min-h-[38px] text-[10px]"
         >
@@ -5512,7 +5540,7 @@ onClick={() =>
         </ActionButton>
         <ActionButton
           onClick={handleShuffleSlotWheel}
-          disabled={slotCalls.length <= 1 || isSlotWheelSpinning}
+          disabled={slotCalls.length <= 1 || isSlotWheelSpinning || Boolean(pickedSlotCall)}
           variant="purple"
           className="min-h-[38px] px-3 text-[9px]"
         >
