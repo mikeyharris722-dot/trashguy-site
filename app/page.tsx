@@ -4515,7 +4515,34 @@ onClick={() =>
 )}
 
 {activeSection === "admin" && adminAllowed && (
-  <section className="mx-auto grid max-w-6xl gap-2 sm:gap-3">
+  <section className="admin-mobile-root mx-auto grid min-w-0 max-w-6xl gap-2 overflow-x-hidden px-1 sm:gap-3 sm:px-0">
+    <style jsx global>{`
+      @media (max-width: 639px) {
+        .admin-mobile-root,
+        .admin-mobile-root * {
+          box-sizing: border-box;
+          min-width: 0;
+        }
+        .admin-mobile-root input,
+        .admin-mobile-root select,
+        .admin-mobile-root textarea,
+        .admin-mobile-root button {
+          max-width: 100%;
+        }
+        .admin-mobile-root table {
+          display: block;
+          width: 100%;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+        .admin-mobile-root [class*="grid-cols-["] {
+          grid-template-columns: minmax(0, 1fr) !important;
+        }
+        .admin-mobile-root [class*="min-w-["] {
+          min-width: 0 !important;
+        }
+      }
+    `}</style>
     <div>
 <div className="text-center">
   <GlowTabTitle label="ADMIN CONTROL CENTER" />
@@ -4595,8 +4622,8 @@ onClick={() =>
 )}
       </div>
 
-      <div className="mt-3 overflow-x-auto rounded-xl border border-cyan-300/15 bg-black/70 p-1.5 sm:mt-4">
-        <div className="flex min-w-max gap-1.5">
+      <div className="mt-3 min-w-0 rounded-xl border border-cyan-300/15 bg-black/70 p-1.5 sm:mt-4">
+        <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap">
           {[
             { id: "giveaway", label: "Giveaways" },
             { id: "prizePortal", label: "Prize Portal" },
@@ -4620,7 +4647,7 @@ onClick={() =>
                       | "slotWheel"
                   )
                 }
-                className={`whitespace-nowrap rounded-lg border px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition sm:text-xs ${
+                className={`w-full min-w-0 whitespace-normal rounded-lg border px-2 py-2 text-[9px] sm:w-auto sm:whitespace-nowrap sm:px-3 sm:text-[10px] font-black uppercase tracking-[0.08em] transition sm:text-xs ${
                   active
                     ? "border-cyan-300/40 bg-cyan-400/15 text-cyan-100 shadow-[0_0_16px_rgba(0,245,255,0.12)]"
                     : "border-white/10 bg-white/[0.03] text-white/55 hover:border-cyan-300/20 hover:text-white"
@@ -4779,7 +4806,7 @@ onClick={() =>
         .map((reward) => (
           <div
             key={reward.id}
-            className="flex items-start justify-between gap-4 px-3 py-2.5"
+            className="flex min-w-0 flex-col gap-3 px-3 py-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
@@ -4812,7 +4839,7 @@ onClick={() =>
               </div>
             </div>
 
-            <div className="flex shrink-0 flex-col items-end gap-2">
+            <div className="flex w-full shrink-0 flex-row items-center justify-between gap-2 sm:w-auto sm:flex-col sm:items-end">
               <div className="text-base font-black text-cyan-200">
                 ${Number(reward.amount || 0).toLocaleString()}
               </div>
@@ -4853,7 +4880,7 @@ onClick={() =>
     .map((reward) => (
       <div
         key={reward.id}
-        className="flex items-start justify-between gap-4 p-3"
+        className="flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
       >
         {/* LEFT SIDE */}
         <div className="min-w-0 flex-1">
@@ -5400,7 +5427,7 @@ onClick={() =>
 
   <div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
     <div className="rounded-xl border border-cyan-300/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.07),rgba(0,0,0,0.94))] p-3 shadow-[0_0_28px_rgba(0,245,255,0.10)]">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div>
           <SectionLabel>Slot Call Wheel</SectionLabel>
           <div className="mt-1 text-lg font-black uppercase tracking-[0.08em] text-cyan-100 sm:text-xl">
