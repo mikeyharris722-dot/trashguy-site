@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
+import GiveawayAdmin from "./components/admin/giveaways/GiveawayAdmin";
 import { FaTwitch, FaDiscord, FaInstagram } from "react-icons/fa";
 import { SiKick } from "react-icons/si";
 import { slotData, providerLogos, type SlotItem } from "./slotData";
@@ -3082,7 +3083,7 @@ style={{
 
       <div className="mt-3 space-y-2 text-center text-xs text-white/80 sm:text-sm">
         <div>⭐ $5k+ wagered on previous or current leaderboard</div>
-        <div>⭐ Exclusive VIP giveaways</div>
+        <div>⭐ Daily VIP giveaways</div>
         <div>⭐ Exclusive VIP tournaments</div>
         <div>⭐ Community hunt equity</div>
       </div>
@@ -3092,32 +3093,13 @@ style={{
       <div className="text-center text-2xl">🎁</div>
 
       <h3 className="mt-1 text-center text-lg font-black text-cyan-100 sm:text-xl">
-        DAILY STREAM GIVEAWAYS
+        AFFILIATE REWARDS
       </h3>
 
       <div className="mt-3 space-y-2 text-center text-xs text-white/80 sm:text-sm">
-
-        <div>
-          ⭐ VIP
-          <div className="text-cyan-300">
-            $40 - $50 bonus buys ($20 guaranteed)
-          </div>
-        </div>
-
-        <div>
-          ⭐ Affiliate
-          <div className="text-cyan-300">
-            $40 - $50 bonus buys (no guarantee)
-          </div>
-        </div>
-
-        <div>
-          ⭐ Not Under Code
-          <div className="text-cyan-300">
-            NO GIVEAWAYS AWARDED
-          </div>
-        </div>
-
+        <div>⭐ Stream giveaway</div>
+        <div>⭐ Slot call of the day</div>
+        <div>⭐ Bonus hunt predictions</div>
       </div>
     </div>
 
@@ -3506,10 +3488,7 @@ const rankBox =
 
             <div className="mt-2 flex flex-wrap justify-center gap-1.5 sm:mt-4 sm:gap-2">
               <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black text-cyan-100 sm:px-3 sm:py-1 sm:text-[13px]">
-                1st Closest $20
-              </div>
-              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black text-cyan-100 sm:px-3 sm:py-1 sm:text-[13px]">
-                2nd $10
+                1st Closest $15
               </div>
             </div>
           </div>
@@ -4657,252 +4636,10 @@ onClick={() =>
       <div className="mt-2 grid gap-2 sm:mt-3 sm:gap-3">
         <details
           open={activeAdminTab === "giveaway"}
-          className={`${activeAdminTab === "giveaway" ? "block" : "hidden"} rounded-xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
+          className={`${activeAdminTab === "giveaway" ? "block" : "hidden"} min-w-0 rounded-xl border border-cyan-300/15 bg-black/85 p-2 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
         >
           <summary className="hidden">Giveaway System</summary>
-
-<div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
-  <div className="grid grid-cols-2 gap-2 sm:gap-3">
-    <ActionButton
-      onClick={handleStartGiveaway}
-      disabled={!isAdmin}
-      variant="green"
-    >
-      Start Giveaway
-    </ActionButton>
-
-    <ActionButton
-      onClick={handleDrawGiveawayWinner}
-      disabled={!isAdmin}
-      variant="purple"
-    >
-      Draw Winner
-    </ActionButton>
-  </div>
-
-  <div className="rounded-xl border border-cyan-300/20 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.10),rgba(0,0,0,0.92))] p-3 sm:rounded-2xl sm:p-5">
-    <div className="flex items-start justify-between gap-3">
-      <div>
-        <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/70 sm:text-xs sm:tracking-[0.25em]">
-          🎯 Current Winner
-        </div>
-
-        <div className="mt-2 text-xl font-black text-cyan-200 drop-shadow-[0_0_18px_rgba(0,245,255,0.75)] sm:text-3xl">
-          {giveawayMessage || "Waiting..."}
-        </div>
-
-        <div className="mt-2 flex flex-wrap gap-2">
-
-{currentGiveawayWinner && (() => {
-  const winnerEntry = giveawayEntries.find(
-    (entry) =>
-      String(entry.username || entry.display_name || "")
-        .toLowerCase()
-        .replace("@", "") === currentGiveawayWinner.toLowerCase()
-  );
-
-  const weight = Number(winnerEntry?.weight || 1);
-  const role = String(winnerEntry?.role || "viewer").toLowerCase();
-  const isVip = role === "vip";
-  const isOnCode = !!winnerEntry?.roulo_username || !!winnerEntry?.is_roulo_affiliate;
-  const isDiscord = !!winnerEntry?.is_in_discord || !!winnerEntry?.discord_username;
-
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      <div
-        className={`rounded-full border px-3 py-1 text-[10px] font-black sm:text-xs ${
-          isVip
-            ? "border-cyan-300/25 bg-cyan-400/10 text-cyan-200"
-            : isOnCode
-            ? "border-yellow-300/25 bg-yellow-400/10 text-yellow-200"
-            : "border-white/10 bg-white/5 text-white/70"
-        }`}
-      >
-        {isVip ? "👑 VIP" : isOnCode ? "💎 Code" : "👤 Viewer"}
-      </div>
-
-      {isDiscord && (
-        <div className="rounded-full border border-indigo-300/20 bg-indigo-400/10 px-3 py-1 text-[10px] font-black text-indigo-200 sm:text-xs">
-          💬 Discord
-        </div>
-      )}
-
-      <div className="rounded-full border border-green-300/20 bg-green-400/10 px-3 py-1 text-[10px] font-black text-green-200 sm:text-xs">
-        {weight.toFixed(1)}x Odds
-      </div>
-    </div>
-  );
-})()}
-
-{winnerFollowAge && (
-  <div className="rounded-full border border-purple-300/20 bg-purple-400/10 px-3 py-1 text-[10px] font-black text-purple-200 sm:text-xs">
-    FOLLOWING {winnerFollowAge}
-  </div>
-)}
-        </div>
-      </div>
-
-      <div className="shrink-0 rounded-xl border border-green-300/20 bg-green-400/10 px-3 py-2 text-center">
-        <div className="text-[9px] uppercase tracking-[0.14em] text-green-200/70">
-          TIMER
-        </div>
-
-        <div className="mt-1 text-sm font-black text-green-200 sm:text-lg">
-          {giveawayResponseTimer}
-        </div>
-      </div>
-    </div>
-
-    <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3">
-      <div className="text-[10px] uppercase tracking-[0.18em] text-white/40 sm:text-xs">
-        Winner Chat
-      </div>
-
-      <div className="mt-3 max-h-[160px] min-h-[100px] space-y-2 overflow-y-auto">
-        {!currentGiveawayWinner ? (
-          <div className="text-xs text-white/35">
-            Draw a winner to track their chat.
-          </div>
-        ) : winnerChatMessages.length === 0 ? (
-          <div className="text-xs text-white/35">
-            Waiting for @{currentGiveawayWinner} to type...
-          </div>
-        ) : (
-          winnerChatMessages.map((msg, index) => (
-            <div
-              key={index}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white"
-            >
-              {msg}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-
-    <div className="mt-4 flex justify-end">
-
-      <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-white/45 sm:text-xs">
-          Award Prize $
-        </div>
-
-<input
-  value={giveawayPrizeAmount}
-  onChange={(e) =>
-    setGiveawayPrizeAmount(
-      e.target.value.replace(/[^0-9.]/g, "")
-    )
-  }
-  placeholder="e.g. 50"
-  className="mt-3 w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-sm font-black text-white outline-none focus:border-cyan-300/35"
-/>
-
-<ActionButton
-  onClick={handleAwardGiveawayPrize}
-  disabled={!isAdmin || !currentGiveawayWinner}
-  className="mt-3 w-full"
-  variant="purple"
->
-  Award Prize
-</ActionButton>
-      </div>
-    </div>
-  </div>
-
-
-<div className="col-span-full w-full overflow-hidden rounded-xl border border-white/10 bg-black/35">
-  <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
-    <div className="text-[10px] font-black uppercase tracking-[0.16em] text-white/55">
-      Live Entries
-    </div>
-
-    <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[9px] font-black text-cyan-200">
-      {giveawayEntries.length}
-    </div>
-  </div>
-
-  {giveawayEntries.length === 0 ? (
-    <div className="px-3 py-4 text-center text-xs text-white/40">
-      No entries yet.
-    </div>
-  ) : (
-    <div
-      className={`divide-y divide-white/5 ${
-        giveawayEntries.length > 10
-          ? "max-h-[320px] overflow-y-auto"
-          : ""
-      }`}
-    >
-      {giveawayEntries.map((entry, index) => {
-        const isVip =
-          String(entry.role || "").toLowerCase() === "vip";
-
-        const isOnCode =
-          Boolean(entry.roulo_username) ||
-          Boolean(entry.is_roulo_affiliate);
-
-        const isInDiscord =
-          Boolean(entry.is_in_discord) ||
-          Boolean(entry.discord_username);
-
-        const baseOdds = Number(
-          entry.base_odds ??
-            entry.base_weight ??
-            entry.weight ??
-            1
-        );
-
-        const luckOdds = Number(entry.luck_odds || 0);
-
-        const totalOdds = Number(
-          entry.total_odds ??
-            entry.weight ??
-            baseOdds + luckOdds
-        );
-
-        return (
-          <div
-            key={
-              entry.id ||
-              `${entry.platform || "viewer"}-${entry.username}-${index}`
-            }
-            className="flex items-center justify-between gap-3 px-3 py-2"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="truncate text-[15px] sm:text-base font-black text-white sm:text-[13px]">
-                  {entry.display_name || entry.username}
-                </div>
-
-                <div className="flex shrink-0 items-center gap-1 text-[11px]">
-                  {isVip && <span>👑</span>}
-                  {isOnCode && <span>💎</span>}
-                  {isInDiscord && <span>💬</span>}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2 text-xs font-black sm:text-[10px]">
-              <span className="text-white/55">
-                Base {baseOdds.toFixed(1)}x
-              </span>
-
-              <span className="text-green-300">
-                Luck +{luckOdds.toFixed(1)}x
-              </span>
-
-              <span className="rounded-md border border-red-300/25 bg-red-400/10 px-3 py-1 text-xs font-black text-red-200">
-                Total {totalOdds.toFixed(1)}x
-              </span>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  )}
-</div>
-</div>
+          <GiveawayAdmin isAdmin={isAdmin} />
         </details>
 
 <details

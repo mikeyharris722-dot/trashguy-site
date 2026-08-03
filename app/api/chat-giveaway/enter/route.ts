@@ -8,7 +8,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
 
-function normalize(value: string) {
+function normalize(value: unknown) {
   return String(value || "").replace("@", "").trim().toLowerCase();
 }
 
@@ -18,7 +18,9 @@ async function getSavedRouloBoost(username: string, platform: string) {
 
   const { data: link, error } = await supabase
     .from("roulo_links")
-    .select("roulo_username, wagered, role, weight, is_in_discord, discord_id, discord_username")
+    .select(
+      "roulo_username, wagered, role, weight, is_in_discord, discord_id, discord_username"
+    )
     .eq(usernameColumn, cleanUsername)
     .maybeSingle();
 
@@ -38,98 +40,131 @@ async function getSavedRouloBoost(username: string, platform: string) {
     };
   }
 
-const hasRoulo = !!link.roulo_username;
-const hasDiscord =
-  !!link.is_in_discord ||
-  !!link.discord_id ||
-  !!link.discord_username;
+  const hasRoulo = Boolean(link.roulo_username);
+  const hasDiscord = Boolean(
+    link.is_in_discord || link.discord_id || link.discord_username
+  );
+  const savedRole = normalize(link.role);
+  const role = savedRole === "vip" ? "vip" : hasRoulo ? "affiliate" : "viewer";
 
-const savedRole = String(link.role || "").toLowerCase();
-const role = savedRole === "vip" ? "vip" : hasRoulo ? "affiliate" : "viewer";
+  const weight = Number(
+    (
+      1 +
+      (hasRoulo ? 1 : 0) +
+      (hasDiscord ? 1 : 0) +
+      (role === "vip" ? 1 : 0)
+    ).toFixed(2)
+  );
 
-const weight = Number(
-  (
-    1 +
-    (hasRoulo ? 1 : 0) +
-    (hasDiscord ? 1 : 0) +
-    (role === "vip" ? 1 : 0)
-  ).toFixed(2)
-);
-
-return {
-  weight,
-  role,
-  isRouloAffiliate: hasRoulo,
-  rouloWagered: Number(link.wagered || 0),
-  rouloUsername: link.roulo_username || null,
-  isInDiscord: hasDiscord,
-  discordUsername: link.discord_username || null,
-};
+  return {
+    weight,
+    role,
+    isRouloAffiliate: hasRoulo,
+    rouloWagered: Number(link.wagered || 0),
+    rouloUsername: link.roulo_username || null,
+    isInDiscord: hasDiscord,
+    discordUsername: link.discord_username || null,
+  };
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  try {
+    const body = await req.json();
+    const username = normalize(body.username);
+    const platform = normalize(body.platform) === "kick" ? "kick" : "twitch";
 
-  const username = normalize(body.username || "");
-  const platform = normalize(body.platform || "twitch") === "kick" ? "kick" : "twitch";
+    if (!username) {
+      return NextResponse.json(
+        { ok: false, error: "Missing username" },
+        { status: 400 }
+      );
+    }
 
-  if (!username) {
+    const boost = await getSavedRouloBoost(username, platform);
+
+    const { data: liveGiveaways, error: giveawayError } = await supabase
+      .from("chat_giveaways")
+      .select("id, giveaway_type")
+      .eq("status", "live")
+      .in("giveaway_type", ["regular", "vip"])
+      .order("created_at", { ascending: false });
+
+    if (giveawayError) {
+      return NextResponse.json(
+        { ok: false, error: giveawayError.message },
+        { status: 500 }
+      );
+    }
+
+    const eligibleGiveaways = (liveGiveaways || []).filter((giveaway: any) => {
+      if (giveaway.giveaway_type === "regular") return true;
+      return giveaway.giveaway_type === "vip" && boost.role === "vip";
+    });
+
+    if (eligibleGiveaways.length === 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            boost.role === "vip"
+              ? "No live giveaway"
+              : "No live regular giveaway",
+        },
+        { status: 400 }
+      );
+    }
+
+    const savedEntries: any[] = [];
+
+    for (const giveaway of eligibleGiveaways) {
+      const { data, error } = await supabase
+        .from("chat_giveaway_entries")
+        .upsert(
+          {
+            giveaway_id: giveaway.id,
+            username,
+            display_name: body.display_name || username,
+            twitch_id: body.twitch_id || null,
+            avatar_url: body.avatar_url || null,
+            platform,
+            weight: boost.weight,
+            role: boost.role,
+            is_roulo_affiliate: boost.isRouloAffiliate,
+            roulo_wagered: boost.rouloWagered,
+            roulo_username: boost.rouloUsername,
+            is_in_discord: boost.isInDiscord,
+            discord_username: boost.discordUsername,
+          },
+          { onConflict: "giveaway_id,username" }
+        )
+        .select("*")
+        .single();
+
+      if (error) {
+        return NextResponse.json(
+          { ok: false, error: error.message },
+          { status: 500 }
+        );
+      }
+
+      savedEntries.push({
+        ...data,
+        giveaway_type: giveaway.giveaway_type,
+      });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      entry: savedEntries[0],
+      entries: savedEntries,
+      enteredRegular: savedEntries.some((entry) => entry.giveaway_type === "regular"),
+      enteredVip: savedEntries.some((entry) => entry.giveaway_type === "vip"),
+      role: boost.role,
+    });
+  } catch (error: any) {
     return NextResponse.json(
-      { ok: false, error: "Missing username" },
-      { status: 400 }
-    );
-  }
-
-  const { data: giveaway, error: giveawayError } = await supabase
-    .from("chat_giveaways")
-    .select("id")
-    .eq("status", "live")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (giveawayError || !giveaway) {
-    return NextResponse.json(
-      { ok: false, error: "No live giveaway" },
-      { status: 400 }
-    );
-  }
-
-  const boost = await getSavedRouloBoost(username, platform);
-
-  const { data, error } = await supabase
-    .from("chat_giveaway_entries")
-    .upsert(
-      {
-        giveaway_id: giveaway.id,
-        username,
-        display_name: body.display_name || username,
-        twitch_id: body.twitch_id || null,
-        avatar_url: body.avatar_url || null,
-        platform,
-
-        weight: boost.weight,
-        role: boost.role,
-        is_roulo_affiliate: boost.isRouloAffiliate,
-        roulo_wagered: boost.rouloWagered,
-        roulo_username: boost.rouloUsername,
-        is_in_discord: boost.isInDiscord,
-        discord_username: boost.discordUsername,
-      },
-      { onConflict: "giveaway_id,username" }
-    )
-    .select("*")
-    .single();
-
-  if (error) {
-    return NextResponse.json(
-      { ok: false, error: error.message },
+      { ok: false, error: error?.message || "Failed to enter giveaway" },
       { status: 500 }
     );
   }
-
-  return NextResponse.json({
-    ok: true,
-    entry: data,
-  });
 }
