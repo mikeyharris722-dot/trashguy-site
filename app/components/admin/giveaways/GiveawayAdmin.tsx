@@ -62,7 +62,7 @@ function SmallButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`min-h-[42px] rounded-xl border px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${variants[variant]} ${className}`}
+      className={`min-h-[42px] min-w-0 max-w-full rounded-xl border px-2 py-2 text-[10px] sm:px-3 sm:text-[11px] font-black uppercase tracking-[0.08em] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${variants[variant]} ${className}`}
     >
       {children}
     </button>
@@ -274,8 +274,8 @@ export default function GiveawayAdmin({ isAdmin }: { isAdmin: boolean }) {
   const isWinnerDiscord = Boolean(winnerEntry?.is_in_discord || winnerEntry?.discord_username);
 
   return (
-    <div className="min-w-0">
-      <div className="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-black/40 p-1.5">
+    <div className="w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 rounded-xl border border-white/10 bg-black/40 p-1 sm:gap-2 sm:p-1.5">
         {(["regular", "vip"] as GiveawayType[]).map((type) => {
           const active = activeType === type;
           const live = states[type].giveaway?.status === "live";
@@ -284,7 +284,7 @@ export default function GiveawayAdmin({ isAdmin }: { isAdmin: boolean }) {
               key={type}
               type="button"
               onClick={() => setActiveType(type)}
-              className={`min-w-0 rounded-lg border px-2 py-2 text-[10px] font-black uppercase tracking-[0.07em] transition sm:text-xs ${
+              className={`min-w-0 rounded-lg border px-1 py-2 text-[9px] font-black uppercase leading-tight tracking-[0.03em] transition sm:px-2 sm:text-xs sm:tracking-[0.07em] ${
                 active
                   ? "border-cyan-300/40 bg-cyan-400/15 text-cyan-100"
                   : "border-transparent bg-white/[0.03] text-white/55"
@@ -299,13 +299,13 @@ export default function GiveawayAdmin({ isAdmin }: { isAdmin: boolean }) {
         })}
       </div>
 
-      <div className="mt-3 grid gap-3">
-        <div className="grid grid-cols-2 gap-2">
+      <div className="mt-2 grid w-full min-w-0 max-w-full gap-2.5 sm:mt-3 sm:gap-3">
+        <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 sm:gap-2">
           <SmallButton onClick={handleStart} disabled={!isAdmin || state.loading}>Start Giveaway</SmallButton>
           <SmallButton onClick={handleDraw} disabled={!isAdmin || state.loading} variant="purple">Draw Winner</SmallButton>
         </div>
 
-        <div className="rounded-xl border border-cyan-300/20 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.10),rgba(0,0,0,0.92))] p-3 sm:p-4">
+        <div className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/20 bg-[radial-gradient(circle_at_top,rgba(0,245,255,0.10),rgba(0,0,0,0.92))] p-2.5 sm:p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
               <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/70">Current Winner</div>

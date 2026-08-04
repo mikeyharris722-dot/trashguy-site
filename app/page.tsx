@@ -3225,7 +3225,7 @@ style={{
 )}
 
 {activeSection === "leaderboard" && (
-  <section className="space-y-4 sm:space-y-6">
+  <section className="w-full min-w-0 max-w-full space-y-4 overflow-x-hidden sm:space-y-6">
 <div className="mx-auto max-w-5xl">
   <GlowTabTitle label="$1,500 LEADERBOARD" />
 
@@ -3238,12 +3238,12 @@ style={{
   </div>
 </div>
 
-<div className="mx-auto max-w-5xl space-y-1.5 sm:space-y-2">
-      <div className="grid grid-cols-[52px_1fr_100px] rounded-xl bg-black/55 px-3 py-2 text-[9px] font-black uppercase tracking-[0.16em] text-white/55 sm:grid-cols-[80px_1fr_180px_140px] sm:px-5 sm:text-[11px]">
+<div className="mx-auto w-full min-w-0 max-w-5xl space-y-1.5 overflow-x-hidden sm:space-y-2">
+      <div className="grid grid-cols-[42px_minmax(0,1fr)_88px_48px] items-center rounded-xl bg-black/55 px-2 py-2 text-[8px] font-black uppercase tracking-[0.08em] text-white/55 sm:grid-cols-[80px_1fr_180px_140px] sm:px-5 sm:text-[11px] sm:tracking-[0.16em]">
         <div>Rank</div>
         <div>Player</div>
         <div className="text-right">Wagered</div>
-        <div className="hidden text-right sm:block">Prize</div>
+        <div className="text-right">Prize</div>
       </div>
 
       {leaderboardLoading && leaderboardData.length === 0 ? (
@@ -3285,7 +3285,7 @@ const rankBox =
           return (
             <div
               key={`${player.rank}-${player.username}`}
-              className={`grid grid-cols-[52px_1fr_100px] items-center rounded-2xl border px-3 py-2.5 shadow-[0_0_18px_rgba(0,0,0,0.22)] transition hover:bg-white/[0.04] sm:grid-cols-[80px_1fr_180px_140px] sm:px-5 sm:py-3.5 ${rowBg}`}
+              className={`grid grid-cols-[42px_minmax(0,1fr)_88px_48px] items-center rounded-2xl border px-2 py-2.5 shadow-[0_0_18px_rgba(0,0,0,0.22)] transition hover:bg-white/[0.04] sm:grid-cols-[80px_1fr_180px_140px] sm:px-5 sm:py-3.5 ${rowBg}`}
             >
 <div>
   <div
@@ -3300,16 +3300,13 @@ const rankBox =
                   {player.username}
                 </div>
 
-                <div className="mt-0.5 text-[10px] font-black text-[#f5c451] sm:hidden">
-                  {prize > 0 ? `$${prize.toLocaleString()}` : "-"}
-                </div>
               </div>
 
-              <div className="text-right text-[11px] font-black text-white/90 sm:text-lg">
+              <div className="whitespace-nowrap text-right text-[10px] font-black text-white/90 sm:text-lg">
                 {formatMoney(player.wagered)}
               </div>
 
-              <div className="hidden text-right text-lg font-black text-[#f5c451] sm:block">
+              <div className="whitespace-nowrap text-right text-[10px] font-black text-[#f5c451] sm:text-lg">
                 {prize > 0 ? `$${prize.toLocaleString()}` : "-"}
               </div>
             </div>
@@ -4552,13 +4549,13 @@ onClick={() =>
 )}
 
 {activeSection === "admin" && adminAllowed && (
-  <section className="mx-auto grid max-w-6xl gap-2 sm:gap-3">
+  <section className="mx-auto grid w-full min-w-0 max-w-6xl gap-2 overflow-x-hidden px-0 sm:gap-3 [&_input]:max-w-full [&_select]:max-w-full [&_textarea]:max-w-full">
     <div>
-<div className="text-center">
+<div className="min-w-0 px-1 text-center">
   <GlowTabTitle label="ADMIN CONTROL CENTER" />
 </div>
 
-      <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
+      <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
         <div className="grid gap-2 sm:gap-3 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
           <div className="rounded-xl border border-white/10 bg-black/35 p-2.5 sm:p-4">
             <div className="text-[9px] uppercase tracking-[0.16em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
@@ -4632,8 +4629,8 @@ onClick={() =>
 )}
       </div>
 
-      <div className="mt-3 overflow-x-auto rounded-xl border border-cyan-300/15 bg-black/70 p-1.5 sm:mt-4">
-        <div className="flex min-w-max gap-1.5">
+      <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/70 p-1.5 sm:mt-4">
+        <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5">
           {[
             { id: "giveaway", label: "Giveaways" },
             { id: "prizePortal", label: "Prize Portal" },
@@ -4657,7 +4654,7 @@ onClick={() =>
                       | "slotWheel"
                   )
                 }
-                className={`whitespace-nowrap rounded-lg border px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition sm:text-xs ${
+                className={`min-w-0 whitespace-normal break-words rounded-lg border px-1.5 py-2 text-[9px] font-black uppercase leading-tight tracking-[0.04em] transition sm:px-3 sm:text-xs sm:tracking-[0.08em] ${
                   active
                     ? "border-cyan-300/40 bg-cyan-400/15 text-cyan-100 shadow-[0_0_16px_rgba(0,245,255,0.12)]"
                     : "border-white/10 bg-white/[0.03] text-white/55 hover:border-cyan-300/20 hover:text-white"
@@ -4670,7 +4667,7 @@ onClick={() =>
         </div>
       </div>
 
-      <div className="mt-2 grid gap-2 sm:mt-3 sm:gap-3">
+      <div className="mt-2 grid w-full min-w-0 max-w-full gap-2 overflow-x-hidden sm:mt-3 sm:gap-3">
         <details
           open={activeAdminTab === "giveaway"}
           className={`${activeAdminTab === "giveaway" ? "block" : "hidden"} min-w-0 rounded-xl border border-cyan-300/15 bg-black/85 p-2 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
@@ -4681,7 +4678,7 @@ onClick={() =>
 
 <details
   open={activeAdminTab === "prizePortal"}
-  className={`${activeAdminTab === "prizePortal" ? "block" : "hidden"} rounded-xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
+  className={`${activeAdminTab === "prizePortal" ? "block" : "hidden"} min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
 >
   <summary className="hidden">Prize Portal Manager</summary>
 
@@ -5008,7 +5005,7 @@ onClick={() =>
 
         <details
           open={activeAdminTab === "tournament"}
-          className={`${activeAdminTab === "tournament" ? "block" : "hidden"} rounded-xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-3`}
+          className={`${activeAdminTab === "tournament" ? "block" : "hidden"} min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-3`}
         >
           <summary className="hidden">Tournament Editor</summary>
 
@@ -5176,7 +5173,7 @@ onClick={() =>
         </details>
         <details
           open={activeAdminTab === "snakeDraft"}
-          className={`${activeAdminTab === "snakeDraft" ? "block" : "hidden"} rounded-xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
+          className={`${activeAdminTab === "snakeDraft" ? "block" : "hidden"} min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
         >
   <summary className="hidden">Snake Draft</summary>
 
@@ -5431,7 +5428,7 @@ onClick={() =>
 
 <details
   open={activeAdminTab === "slotWheel"}
-  className={`${activeAdminTab === "slotWheel" ? "block" : "hidden"} rounded-xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-3`}
+  className={`${activeAdminTab === "slotWheel" ? "block" : "hidden"} min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-3`}
 >
   <summary className="hidden">Slot Call Wheel</summary>
 
