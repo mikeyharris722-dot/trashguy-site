@@ -1195,13 +1195,12 @@ if (normalized.length > 0) {
             player.name ||
             player.display_name ||
             `Player ${index + 1}`,
-          wagered: Number(
-            player.wagered_amount ||
-              player.wagered ||
-              player.amount_wagered ||
-              player.total_wagered ||
-              0
-          ),
+wagered: Number(
+  player.weighted_wagered_amount ??
+    player.weightedWageredAmount ??
+    player.weighted_wagered ??
+    0
+),
         }))
         .sort((a: LeaderboardPlayer, b: LeaderboardPlayer) => b.wagered - a.wagered)
         .slice(0, 10)

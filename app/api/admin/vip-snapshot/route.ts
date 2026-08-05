@@ -28,12 +28,9 @@ function getPlayerName(player: any) {
 
 function getPlayerWagered(player: any) {
   return Number(
-    player?.wagered_amount ??
-      player?.amount_wagered ??
-      player?.wagered ??
-      player?.total_wagered ??
-      player?.totalWagered ??
-      player?.wageredAmount ??
+    player?.weighted_wagered_amount ??
+      player?.weightedWageredAmount ??
+      player?.weighted_wagered ??
       0
   );
 }

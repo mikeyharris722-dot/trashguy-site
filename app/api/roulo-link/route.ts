@@ -137,13 +137,12 @@ async function getRouloAffiliate(rouloUsername: string) {
     return null;
   }
 
-  const wagered = Number(
-    match.wagered_amount ||
-      match.amount_wagered ||
-      match.wagered ||
-      match.total_wagered ||
-      0
-  );
+const wagered = Number(
+  match.weighted_wagered_amount ??
+  match.weightedWageredAmount ??
+  match.weighted_wagered ??
+  0
+);
 
   return {
     rouloUsername: normalize(rouloUsername),
