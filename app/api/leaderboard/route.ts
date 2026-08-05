@@ -18,6 +18,7 @@ export async function GET() {
     url.searchParams.set("start_at", "2026-08-05");
     url.searchParams.set("end_at", "2026-09-05");
     url.searchParams.set("key", apiKey);
+    url.searchParams.set("weighted", "true");
 
     const res = await fetch(url.toString(), { cache: "no-store" });
 

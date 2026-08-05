@@ -52,6 +52,7 @@ export async function POST() {
   url.searchParams.set("start_at", periodStart);
   url.searchParams.set("end_at", periodEnd);
   url.searchParams.set("key", key);
+  url.searchParams.set("weighted", "true");
 
   const res = await fetch(url.toString(), { cache: "no-store" });
   const json = await res.json();

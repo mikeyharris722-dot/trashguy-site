@@ -56,9 +56,28 @@ return (
             className="h-8 w-8 rounded-lg object-cover sm:h-11 sm:w-11"
           />
 
-          <div className="truncate text-xl font-black tracking-tight text-white sm:text-3xl">
-            TRASHGUY
-          </div>
+<div className="relative shrink-0">
+  <div
+    className="
+      bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_28%,#94a3b8_52%,#ffffff_68%,#38bdf8_100%)]
+      bg-clip-text
+      text-xl
+      font-black
+      italic
+      tracking-[-0.04em]
+      text-transparent
+      drop-shadow-[0_3px_0_rgba(0,0,0,0.95)]
+      sm:text-4xl
+    "
+    style={{
+      WebkitTextStroke: "1px rgba(15,23,42,0.95)",
+      textShadow:
+        "0 1px 0 #ffffff, 0 3px 0 #334155, 0 5px 0 #020617, 0 0 10px rgba(56,189,248,0.45)",
+    }}
+  >
+    TRASHGUY
+  </div>
+</div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
