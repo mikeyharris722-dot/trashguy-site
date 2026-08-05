@@ -53,14 +53,12 @@ const fallbackLeaderboard = [
 const leaderboardTotal = 1500;
 
 const leaderboardPrizes: Record<number, number> = {
-  1: 400,
-  2: 300,
+  1: 450,
+  2: 350,
   3: 250,
   4: 200,
-  5: 125,
+  5: 150,
   6: 100,
-  7: 75,
-  8: 50,
 };
 
 const fallbackHunts: HuntItem[] = [];
@@ -941,7 +939,7 @@ const currentPredictionAvgX =
     : "0.00";
 
     const leaderboardCountdown = useMemo(() => {
-  const end = new Date("2026-08-04T19:00:00-04:00").getTime();
+  const end = new Date("2026-09-04T19:00:00-04:00").getTime();
   const diff = end - countdownTick;
 
   if (diff <= 0) return "Ended";
@@ -955,8 +953,8 @@ const currentPredictionAvgX =
 }, [countdownTick]);
 
 const leaderboardProgress = useMemo(() => {
-  const start = new Date("2026-07-04T19:00:00-04:00").getTime();
-  const end = new Date("2026-08-04T19:00:00-04:00").getTime();
+  const start = new Date("2026-08-04T19:00:00-04:00").getTime();
+  const end = new Date("2026-09-04T19:00:00-04:00").getTime();
   const total = end - start;
   const elapsed = countdownTick - start;
 
