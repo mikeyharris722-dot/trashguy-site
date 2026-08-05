@@ -45,8 +45,8 @@ export async function POST() {
     return NextResponse.json({ ok: false, error: "Missing ROULO_API_KEY" }, { status: 500 });
   }
 
-  const periodStart = "2026-06-05";
-  const periodEnd = "2026-07-05";
+  const periodStart = "2026-07-05";
+  const periodEnd = "2026-08-05";
 
   const url = new URL("https://api.roulobets.com/v1/external/affiliates");
   url.searchParams.set("start_at", periodStart);
@@ -83,15 +83,31 @@ const affiliates = Array.isArray(json)
     }))
     .filter((row: any) => row.roulo_username && row.wagered >= 5000);
 
-  const { error } = await supabase
-    .from("vip_snapshots")
-    .upsert(vipRows, {
-      onConflict: "period_start,period_end,roulo_username",
-    });
+const { error: snapshotDeleteError } = await supabase
+  .from("vip_snapshots")
+  .delete()
+  .eq("period_start", periodStart)
+  .eq("period_end", periodEnd);
 
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  }
+if (snapshotDeleteError) {
+  return NextResponse.json(
+    { ok: false, error: snapshotDeleteError.message },
+    { status: 500 }
+  );
+}
+
+const { error: snapshotUpsertError } = await supabase
+  .from("vip_snapshots")
+  .upsert(vipRows, {
+    onConflict: "period_start,period_end,roulo_username",
+  });
+
+if (snapshotUpsertError) {
+  return NextResponse.json(
+    { ok: false, error: snapshotUpsertError.message },
+    { status: 500 }
+  );
+}
 
   return NextResponse.json({
     ok: true,
