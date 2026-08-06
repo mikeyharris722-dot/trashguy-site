@@ -105,6 +105,7 @@ export const slotData: SlotItem[] = [
 { name: "4 Wolf Drums", provider: "3 Oaks" },
 { name: "3 Jewel Crowns", provider: "3 Oaks" },
 { name: "Green Chilli", provider: "3 Oaks" },
+{ name: "Joker Glitz x1000", provider: "3 Oaks" },
 
 // AvatarUX
 { name: "Jungle Pop", provider: "AvatarUX" },
@@ -184,6 +185,10 @@ export const slotData: SlotItem[] = [
 { name: "Pots of Power: Zeus", provider: "AvatarUX" },
 
 // BGaming
+{ name: "Yokai", provider: "BGaming" },
+{ name: "Alien Fruits 3", provider: "BGaming" },
+{ name: "Sweet Samurai", provider: "BGaming" },
+{ name: "Multi Rush", provider: "BGaming" },
 { name: "Gemhalla Xtreme", provider: "BGaming" },
 { name: "Shark & Spark Hold & Win", provider: "BGaming" },
 { name: "Lucky Pack: 2026 Cup", provider: "BGaming" },
@@ -382,6 +387,19 @@ export const slotData: SlotItem[] = [
 { name: "Beaver Bonk", provider: "Backseat Gaming" },
 { name: "Wrath of Anubis", provider: "Backseat Gaming" },
 { name: "Tomb Lords", provider: "Backseat Gaming" },
+{ name: "Born in Hell", provider: "Backseat Gaming" },
+{ name: "Draw at Dusk", provider: "Backseat Gaming" },
+{ name: "The Great Herd", provider: "Backseat Gaming" },
+{ name: "Firelord", provider: "Backseat Gaming" },
+{ name: "Nut Job", provider: "Backseat Gaming" },
+{ name: "FIRE!", provider: "Backseat Gaming" },
+{ name: "Deep Sea Mafia", provider: "Backseat Gaming" },
+{ name: "Timeless Magic", provider: "Backseat Gaming" },
+{ name: "Dusty Dollars", provider: "Backseat Gaming" },
+{ name: "Wonder of Circus", provider: "Backseat Gaming" },
+{ name: "Drac's Bonanza", provider: "Backseat Gaming" },
+{ name: "Dusty Duel", provider: "Backseat Gaming" },
+{ name: "Bust The Piggy", provider: "Backseat Gaming" },
 
 // Bullshark (FINAL - VERIFIED)
 { name: "Junkyard Kings 2", provider: "Bullshark" },
@@ -414,6 +432,8 @@ export const slotData: SlotItem[] = [
 { name: "Captain Coil", provider: "Bullshark" },
 { name: "Lemur Levels", provider: "Bullshark" },
 { name: "Crowned Corners", provider: "Bullshark" },
+{ name: "Clawsy Collector", provider: "Bullshark" },
+{ name: "Behind Bars Masterplan", provider: "Bullshark" },
 
 // Clawbuster
 { name: "3 Pots Bonanza", provider: "Clawbuster" },
@@ -644,8 +664,19 @@ export const slotData: SlotItem[] = [
 { name: "Dynasty of Death", provider: "Hacksaw" },
 { name: "Marlin Masters: Atlantis", provider: "Hacksaw" },
 { name: "Power of Ten", provider: "Hacksaw" },
+{ name: "Drill the Thrill", provider: "Hacksaw" },
+{ name: "Supreme Zeus", provider: "Hacksaw" },
+{ name: "Aliens Among Us", provider: "Hacksaw" },
+{ name: "Opa Santorini", provider: "Hacksaw" },
+{ name: "Nitro Nights", provider: "Hacksaw" },
+{ name: "Death Becomes You", provider: "Hacksaw" },
+{ name: "Dandy Diamonds", provider: "Hacksaw" },
+{ name: "Great Game Rockies", provider: "Hacksaw" },
 
 // NoLimit City
+{ name: "AFK Airport Security", provider: "NoLimit City" },
+{ name: "Soaked by Seamen", provider: "NoLimit City" },
+{ name: "Tanked 3", provider: "NoLimit City" },
 { name: "True Grit Redemption 2", provider: "NoLimit City" },
 { name: "Tombstone Begins", provider: "NoLimit City" },
 { name: "Punk Rocker 3", provider: "NoLimit City" },
@@ -836,6 +867,9 @@ export const slotData: SlotItem[] = [
 { name: "The Soapranos", provider: "Peter & Sons" },
 
 // PopiPlay
+{ name: "Spice", provider: "PopiPlay" },
+{ name: "Dirty Dates", provider: "PopiPlay" },
+{ name: "Bushido Blood", provider: "PopiPlay" },
 { name: "Wild Zombies", provider: "PopiPlay" },
 { name: "Area 69", provider: "PopiPlay" },
 { name: "Baba Jam", provider: "PopiPlay" },
@@ -904,6 +938,19 @@ export const slotData: SlotItem[] = [
 { name: "Jellyens X", provider: "PopiPlay" },
 
 // Pragmatic Play
+{ name: "Curse of the Werewolf Megaways", provider: "Pragmatic Play" },
+{ name: "Crypto Genesis", provider: "Pragmatic Play" },
+{ name: "Out of the Woods", provider: "Pragmatic Play" },
+{ name: "Big Bass Blast", provider: "Pragmatic Play" },
+{ name: "Sunnydaze Asylum", provider: "Pragmatic Play" },
+{ name: "Sleeping Dragon Ultra Dark", provider: "Pragmatic Play" },
+{ name: "Cosmic Clusters", provider: "Pragmatic Play" },
+{ name: "The Dog House Megaways 1000", provider: "Pragmatic Play" },
+{ name: "Death Dominion", provider: "Pragmatic Play" },
+{ name: "Lexor of Cleopatra", provider: "Pragmatic Play" },
+{ name: "Better Barnhouse Bonanza", provider: "Pragmatic Play" },
+{ name: "Fury of Anubis", provider: "Pragmatic Play" },
+{ name: "Bear Crazy", provider: "Pragmatic Play" },
 { name: "Caishen's Cash Pots", provider: "Pragmatic Play" },
 { name: "Joker's Revenge", provider: "Pragmatic Play" },
 { name: "Candy Rush", provider: "Pragmatic Play" },
@@ -1185,6 +1232,8 @@ export const slotData: SlotItem[] = [
 { name: "Black Friday", provider: "Shady Lady" },
 { name: "Preach TV", provider: "Shady Lady" },
 { name: "Truth", provider: "Shady Lady" },
+{ name: "Sheeple", provider: "Shady Lady" },
+{ name: "Mortal Bromance", provider: "Shady Lady" },
 ];
 
 export const providerLogos: Record<string, string> = {

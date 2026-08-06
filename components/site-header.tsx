@@ -56,12 +56,12 @@ return (
     className="h-8 w-8 rounded-lg object-cover sm:h-11 sm:w-11"
   />
 
-  <img
-    src="/trashguy-chrome.png"
-    alt="TRASHGUY"
-    className="h-7 w-auto object-contain select-none sm:h-9 lg:h-10"
-    draggable={false}
-  />
+<img
+  src="/trashguy-chrome.png"
+  alt="TRASHGUY"
+  className="h-12 w-auto object-contain select-none sm:h-14 lg:h-16"
+  draggable={false}
+/>
 </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
