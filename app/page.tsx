@@ -591,6 +591,7 @@ export default function Home() {
   const [pickedSlot, setPickedSlot] = useState<SlotItem | null>(null);
   const [isPickingSlot, setIsPickingSlot] = useState(false);
   const lastPickedRef = useRef<string | null>(null);
+  const lastSlotCallWinnerRef = useRef<string | null>(null);
 
   const [viewerName, setViewerName] = useState("viewer");
   const [viewerDisplayName, setViewerDisplayName] = useState("viewer");
@@ -2494,16 +2495,83 @@ const SLOT_WHEEL_LOOPS = 12;
 const SLOT_WHEEL_VISIBLE_ROWS = 5;
 
 const handleSpinSlotWheel = () => {
-  if (isSlotWheelSpinning || pickedSlotCall || slotCalls.length === 0) return;
+  if (
+    isSlotWheelSpinning ||
+    pickedSlotCall ||
+    slotCalls.length === 0
+  ) {
+    return;
+  }
 
-  const winnerIndex = Math.floor(Math.random() * slotCalls.length);
-  const winner = slotCalls[winnerIndex];
-  const targetLoop = SLOT_WHEEL_LOOPS - 3;
-  const targetIndex = targetLoop * slotCalls.length + winnerIndex;
+  const getRandomIndex = (length: number) => {
+    if (length <= 1) return 0;
+
+    const values = new Uint32Array(1);
+    crypto.getRandomValues(values);
+
+    return values[0] % length;
+  };
+
+  const getCallKey = (call: any) =>
+    String(
+      call.id ||
+        `${call.platform || "unknown"}:${call.username}:${call.slotName}`
+    );
+
+  /*
+    Avoid selecting the immediately previous winner when
+    more than one entry is available.
+  */
+  const availableCalls =
+    slotCalls.length > 1
+      ? slotCalls.filter(
+          (call) =>
+            getCallKey(call) !==
+            lastSlotCallWinnerRef.current
+        )
+      : slotCalls;
+
+  const winner =
+    availableCalls[
+      getRandomIndex(availableCalls.length)
+    ];
+
+  const winnerIndex = slotCalls.findIndex(
+    (call) => getCallKey(call) === getCallKey(winner)
+  );
+
+  /*
+    Vary the number of full loops so every spin does not
+    travel exactly the same distance.
+  */
+  const maximumTargetLoop = Math.max(
+    1,
+    SLOT_WHEEL_LOOPS - 2
+  );
+
+  const minimumTargetLoop = Math.max(
+    1,
+    maximumTargetLoop - 3
+  );
+
+  const loopRange =
+    maximumTargetLoop - minimumTargetLoop + 1;
+
+  const targetLoop =
+    minimumTargetLoop +
+    getRandomIndex(loopRange);
+
+  const targetIndex =
+    targetLoop * slotCalls.length +
+    winnerIndex;
+
   const centerOffset =
-    SLOT_WHEEL_VIEWPORT_HEIGHT / 2 - SLOT_WHEEL_ITEM_HEIGHT / 2;
+    SLOT_WHEEL_VIEWPORT_HEIGHT / 2 -
+    SLOT_WHEEL_ITEM_HEIGHT / 2;
+
   const targetRotation =
-    targetIndex * SLOT_WHEEL_ITEM_HEIGHT - centerOffset;
+    targetIndex * SLOT_WHEEL_ITEM_HEIGHT -
+    centerOffset;
 
   setIsSlotWheelSpinning(true);
   setSlotWheelRotation(0);
@@ -2514,18 +2582,19 @@ const handleSpinSlotWheel = () => {
     });
   });
 
-window.setTimeout(() => {
-  // Prepare the locked winner first.
-  setPickedSlotCall(winner);
-  setSlotWheelRotation(0);
+  window.setTimeout(() => {
+    lastSlotCallWinnerRef.current =
+      getCallKey(winner);
 
-  // Let React paint the winner before removing the spinning list.
-  requestAnimationFrame(() => {
+    setPickedSlotCall(winner);
+    setSlotWheelRotation(0);
+
     requestAnimationFrame(() => {
-      setIsSlotWheelSpinning(false);
+      requestAnimationFrame(() => {
+        setIsSlotWheelSpinning(false);
+      });
     });
-  });
-}, 4300);
+  }, 4300);
 };
 
 const handleShuffleSlotWheel = () => {
