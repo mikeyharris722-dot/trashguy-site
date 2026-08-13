@@ -4477,120 +4477,128 @@ onClick={() =>
       <GlowTabTitle label="SLOT PICKER" />
     </div>
 
-    {/* PROVIDERS */}
-    <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-cyan-300/15 bg-black/85 shadow-[0_0_35px_rgba(0,245,255,0.10)] backdrop-blur-sm sm:rounded-[1.5rem]">
-      <div className="border-b border-white/[0.06] px-4 py-3 sm:px-6 sm:py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[9px] font-black uppercase tracking-[0.28em] text-cyan-200/60 sm:text-xs">
-              Provider Control
-            </div>
+{/* PROVIDERS */}
+<div className="mx-auto max-w-5xl overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 shadow-[0_0_25px_rgba(0,245,255,0.08)] backdrop-blur-sm">
+  {/* PROVIDER HEADER */}
+  <div className="border-b border-white/[0.06] px-3 py-2.5 sm:px-4 sm:py-3">
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <div className="text-[8px] font-black uppercase tracking-[0.24em] text-cyan-200/60 sm:text-[10px]">
+          Provider Control
+        </div>
 
-            <div className="mt-1 text-xs font-bold text-white/45 sm:text-sm">
-              Choose providers or leave all active
-            </div>
-          </div>
-
-          <div className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.06] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.14em] text-cyan-100/60 sm:text-xs">
-            {filteredSlots.length} Slots
-          </div>
+        <div className="mt-0.5 truncate text-[10px] font-bold text-white/40 sm:text-xs">
+          Choose providers or leave all active
         </div>
       </div>
 
-      <div className="p-3 sm:p-5">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
-          {slotProviders.map((provider) => {
-            const active = selectedProviders.includes(provider);
-            const logo = providerLogos[provider];
-
-            const providerSlotCount = slotData.filter(
-              (slot) => slot.provider === provider
-            ).length;
-
-            return (
-              <button
-                key={provider}
-                onClick={() => toggleSlotProvider(provider)}
-                className={`group relative flex min-h-[68px] items-center gap-2 overflow-hidden rounded-xl border px-2.5 py-2 text-left transition-all duration-300 sm:min-h-[82px] sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3 ${
-                  active
-                    ? "border-cyan-300/55 bg-[linear-gradient(135deg,rgba(0,245,255,0.18),rgba(0,90,110,0.08),rgba(0,0,0,0.85))] text-white shadow-[inset_0_0_22px_rgba(0,245,255,0.06),0_0_22px_rgba(0,245,255,0.14)]"
-                    : "border-white/[0.08] bg-[linear-gradient(135deg,rgba(255,255,255,0.025),rgba(0,0,0,0.88))] text-white/50 hover:border-cyan-300/20 hover:text-white/80"
-                }`}
-              >
-                {active && (
-                  <div className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_8px_rgba(0,245,255,1)] sm:h-2 sm:w-2" />
-                )}
-
-                <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border bg-black/80 transition sm:h-11 sm:w-11 sm:rounded-xl ${
-                    active
-                      ? "border-cyan-300/25 shadow-[0_0_12px_rgba(0,245,255,0.10)]"
-                      : "border-white/10"
-                  }`}
-                >
-                  {logo ? (
-                    <img
-                      src={logo}
-                      alt={provider}
-                      className={`h-6 w-6 object-contain transition sm:h-7 sm:w-7 ${
-                        active ? "opacity-100" : "opacity-55"
-                      }`}
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <span className="text-[10px] font-black text-[#8fffd0] sm:text-xs">
-                      {provider.charAt(0)}
-                    </span>
-                  )}
-                </div>
-
-                <div className="min-w-0">
-                  <div className="truncate text-[11px] font-black sm:text-base">
-                    {provider}
-                  </div>
-
-                  <div
-                    className={`mt-0.5 text-[9px] sm:text-xs ${
-                      active ? "text-cyan-100/45" : "text-white/25"
-                    }`}
-                  >
-                    {providerSlotCount} slots
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/[0.06] pt-4">
-          <div className="min-w-0">
-            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white/55 sm:text-xs">
-              {selectedProviders.length === 0
-                ? "All Providers Active"
-                : `${selectedProviders.length} Provider${
-                    selectedProviders.length === 1 ? "" : "s"
-                  } Active`}
-            </div>
-
-            <div className="mt-0.5 text-[9px] text-white/30 sm:text-xs">
-              {filteredSlots.length} eligible slots
-            </div>
-          </div>
-
-          <button
-            onClick={() => {
-              setSelectedProviders([]);
-              setPickedSlot(null);
-            }}
-            className="shrink-0 rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-white/45 transition hover:border-cyan-300/25 hover:text-cyan-100 sm:px-4 sm:py-2 sm:text-xs"
-          >
-            Reset
-          </button>
-        </div>
+      <div className="shrink-0 rounded-full border border-cyan-300/15 bg-cyan-400/[0.06] px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-cyan-100/60 sm:px-3 sm:text-[10px]">
+        {filteredSlots.length} Slots
       </div>
     </div>
+  </div>
+
+  {/* PROVIDER GRID */}
+  <div className="p-2 sm:p-3">
+    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2 lg:grid-cols-4">
+      {slotProviders.map((provider) => {
+        const active = selectedProviders.includes(provider);
+        const logo = providerLogos[provider];
+
+        const providerSlotCount = slotData.filter(
+          (slot) => slot.provider === provider
+        ).length;
+
+        return (
+          <button
+            key={provider}
+            onClick={() => toggleSlotProvider(provider)}
+            className={`group relative flex min-h-[44px] items-center gap-2 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition-all duration-200 sm:min-h-[50px] sm:px-2.5 sm:py-2 ${
+              active
+                ? "border-cyan-300/45 bg-[linear-gradient(135deg,rgba(0,245,255,0.15),rgba(0,80,100,0.06),rgba(0,0,0,0.88))] text-white shadow-[0_0_12px_rgba(0,245,255,0.10)]"
+                : "border-white/[0.08] bg-black/75 text-white/50 hover:border-cyan-300/20 hover:text-white/80"
+            }`}
+          >
+            {/* ACTIVE DOT */}
+            {active && (
+              <div className="absolute right-1.5 top-1.5 h-1 w-1 rounded-full bg-cyan-300 shadow-[0_0_5px_rgba(0,245,255,1)]" />
+            )}
+
+            {/* LOGO */}
+            <div
+              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border bg-black/80 ${
+                active
+                  ? "border-cyan-300/25"
+                  : "border-white/10"
+              }`}
+            >
+              {logo ? (
+                <img
+                  src={logo}
+                  alt={provider}
+                  className={`h-5 w-5 object-contain transition ${
+                    active ? "opacity-100" : "opacity-55"
+                  }`}
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              ) : (
+                <span className="text-[8px] font-black text-[#8fffd0]">
+                  {provider.charAt(0)}
+                </span>
+              )}
+            </div>
+
+            {/* PROVIDER INFO */}
+            <div className="min-w-0">
+              <div className="truncate text-[9px] font-black leading-tight sm:text-[11px]">
+                {provider}
+              </div>
+
+              <div
+                className={`mt-0.5 text-[7px] leading-none sm:text-[9px] ${
+                  active
+                    ? "text-cyan-100/45"
+                    : "text-white/25"
+                }`}
+              >
+                {providerSlotCount} slots
+              </div>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+
+    {/* PROVIDER STATUS */}
+    <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-white/[0.06] pt-2.5">
+      <div className="min-w-0">
+        <div className="text-[8px] font-black uppercase tracking-[0.13em] text-white/55 sm:text-[10px]">
+          {selectedProviders.length === 0
+            ? "All Providers Active"
+            : `${selectedProviders.length} Provider${
+                selectedProviders.length === 1 ? "" : "s"
+              } Active`}
+        </div>
+
+        <div className="mt-0.5 text-[8px] text-white/30 sm:text-[9px]">
+          {filteredSlots.length} eligible slots
+        </div>
+      </div>
+
+      <button
+        onClick={() => {
+          setSelectedProviders([]);
+          setPickedSlot(null);
+        }}
+        className="shrink-0 rounded-full border border-white/10 bg-black/60 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-white/45 transition hover:border-cyan-300/25 hover:text-cyan-100 sm:px-3 sm:text-[9px]"
+      >
+        Reset
+      </button>
+    </div>
+  </div>
+</div>
 
     {/* SLOT MACHINE */}
     <div className="mx-auto max-w-5xl overflow-hidden rounded-[1.4rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,18,22,0.97),rgba(0,0,0,0.98))] shadow-[0_0_45px_rgba(0,245,255,0.12)] sm:rounded-[2rem]">

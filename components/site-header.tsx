@@ -38,10 +38,10 @@ const navItems = [
   { id: "home", label: "Home" },
   { id: "leaderboard", label: "Leaderboard" },
   { id: "hunts", label: "Bonus Hunts" },
-  { id: "wagerRewards", label: "Wager Rewards" },
+  { id: "slotwheel", label: "Viewer Wheel" },
   { id: "tournaments", label: "Tournaments" },
   { id: "slotpicker", label: "Slot Picker" },
-  { id: "prizeportal", label: "Prize Portal" },
+  { id: "prizeportal", label: "Profile" },
   ...(adminAllowed ? [{ id: "admin", label: "Admin" }] : []),
 ];
 
@@ -120,52 +120,103 @@ return (
             </div>
           )}
 
-          <div className="relative">
-            <details className="group relative">
-              <summary className="flex cursor-pointer list-none items-center justify-center rounded-xl border border-cyan-300/25 bg-black/70 px-3 py-2 text-sm font-black text-cyan-200 shadow-[0_0_18px_rgba(0,245,255,0.12)] transition hover:bg-cyan-400/10 sm:px-4">
-                ☰
-              </summary>
+<div className="relative">
+  <details className="group relative">
+    {/* MENU BUTTON */}
+    <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-xl border border-cyan-300/25 bg-black/75 text-xl text-cyan-100 shadow-[0_0_18px_rgba(0,245,255,0.12)] transition hover:border-cyan-300/45 hover:bg-cyan-400/10">
+      ☰
+    </summary>
 
-              <div className="absolute right-0 z-50 mt-3 w-[245px] overflow-hidden rounded-2xl border border-cyan-300/20 bg-black/95 p-2 shadow-[0_0_35px_rgba(0,245,255,0.18)] backdrop-blur-xl">
-                {navItems.map((item) => {
-                  const active = activeSection === item.id;
+    {/* DROPDOWN */}
+    <div className="absolute right-0 z-50 mt-3 w-[280px] overflow-hidden rounded-2xl border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(8,17,24,0.98),rgba(2,7,10,0.99))] p-2.5 shadow-[0_18px_50px_rgba(0,0,0,0.65),0_0_35px_rgba(0,245,255,0.14)] backdrop-blur-xl">
 
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setActiveSection(item.id);
+      {/* MENU LABEL */}
+      <div className="mb-2 px-2 pb-2 pt-1 text-[9px] font-black uppercase tracking-[0.25em] text-cyan-100/35">
+        Navigation
+      </div>
 
-                        const details = document.querySelector("details");
-                        if (details) details.removeAttribute("open");
-                      }}
-                      className={`mb-1 flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-xs font-black uppercase tracking-[0.12em] transition last:mb-0 sm:text-sm ${
-                        active
-                          ? "border-cyan-300/35 bg-cyan-400/15 text-cyan-200"
-                          : "border-white/10 bg-white/[0.03] text-white/70 hover:border-cyan-300/20 hover:text-white"
-                      }`}
-                    >
-                      <span>{item.label}</span>
-                      {active && <span className="text-cyan-300">●</span>}
-                    </button>
-                  );
-                })}
+      {/* NAV ITEMS */}
+      <div className="grid gap-1.5">
+        {navItems.map((item) => {
+          const active = activeSection === item.id;
 
-                {isTwitchConnected && (
-                  <button
-                    onClick={() => {
-                      handleLogout();
+const icons: Record<string, string> = {
+  home: "🏠",
+  leaderboard: "🏆",
+  hunts: "🎁",
+  slotwheel: "🎡",
+  tournaments: "🏅",
+  slotpicker: "🎰",
+  profile: "👤",
+  admin: "👑",
+};
 
-                      const details = document.querySelector("details");
-                      if (details) details.removeAttribute("open");
-                    }}
-                    className="mt-2 flex w-full items-center justify-between rounded-xl border border-red-300/20 bg-red-500/10 px-4 py-3 text-left text-xs font-black uppercase tracking-[0.12em] text-red-200 transition hover:bg-red-500/15 sm:hidden"
-                  >
-                    <span>Logout</span>
-                  </button>
-                )}
+          return (
+            <button
+              key={item.id}
+              onClick={() => {
+                setActiveSection(item.id);
+
+                const details = document.querySelector("details");
+                if (details) details.removeAttribute("open");
+              }}
+              className={`group/item flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all duration-200 ${
+                active
+                  ? "border-cyan-300/40 bg-[linear-gradient(90deg,rgba(0,245,255,0.16),rgba(0,245,255,0.05))] text-cyan-100 shadow-[0_0_16px_rgba(0,245,255,0.12)]"
+                  : "border-white/[0.07] bg-white/[0.025] text-white/65 hover:border-cyan-300/20 hover:bg-white/[0.05] hover:text-white"
+              }`}
+            >
+              {/* ICON */}
+              <div
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-base ${
+                  active
+                    ? "border-cyan-300/25 bg-cyan-400/10"
+                    : "border-white/[0.07] bg-black/40"
+                }`}
+              >
+                {icons[item.id] || "•"}
               </div>
-            </details>
+
+              {/* LABEL */}
+              <span className="min-w-0 flex-1 text-[11px] font-black uppercase tracking-[0.09em]">
+                {item.label}
+              </span>
+
+              {/* ACTIVE INDICATOR */}
+              {active && (
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300 shadow-[0_0_8px_rgba(0,245,255,1)]" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* LOGOUT - MOBILE */}
+      {isTwitchConnected && (
+        <>
+          <div className="my-2.5 h-px bg-white/[0.07] sm:hidden" />
+
+          <button
+            onClick={() => {
+              handleLogout();
+
+              const details = document.querySelector("details");
+              if (details) details.removeAttribute("open");
+            }}
+            className="flex w-full items-center gap-3 rounded-xl border border-red-300/15 bg-red-500/[0.07] px-3 py-2.5 text-left text-red-200/80 transition hover:border-red-300/30 hover:bg-red-500/10 sm:hidden"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-300/10 bg-red-500/5 text-base">
+              🚪
+            </div>
+
+            <span className="text-[11px] font-black uppercase tracking-[0.09em]">
+              Logout
+            </span>
+          </button>
+        </>
+      )}
+    </div>
+  </details>
           </div>
         </div>
       </div>
