@@ -1017,6 +1017,13 @@ const toggleSlotProvider = (provider: string) => {
   );
 };
 
+const topSlotCallWinner =
+  slotCallResults.length > 0
+    ? [...slotCallResults].sort(
+        (a, b) => b.payout - a.payout
+      )[0]
+    : null;
+
 const pickRandomSlot = () => {
   if (!filteredSlots.length || isPickingSlot) return;
 
@@ -4289,6 +4296,43 @@ onClick={() =>
         )}
       </div>
 
+{/* TOP WINNER */}
+<div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-yellow-300/25 bg-[linear-gradient(135deg,rgba(120,85,0,0.28),rgba(0,0,0,0.92))] p-3 shadow-[0_0_28px_rgba(250,204,21,0.10)] sm:p-4">
+  {topSlotCallWinner ? (
+    <div className="grid grid-cols-[auto_minmax(0,0.8fr)_minmax(0,1fr)_auto] items-center gap-2 sm:gap-4">
+      <div className="text-lg sm:text-2xl">
+        👑
+      </div>
+
+      <div className="min-w-0">
+        <div className="text-[8px] font-black uppercase tracking-[0.18em] text-yellow-200/60 sm:text-[10px]">
+          Top Winner
+        </div>
+
+        <div className="truncate text-[10px] font-black text-white sm:text-sm">
+          {topSlotCallWinner.username}
+        </div>
+      </div>
+
+      <div className="min-w-0 truncate text-right text-[9px] text-white/55 sm:text-xs">
+        {topSlotCallWinner.slotName}
+      </div>
+
+      <div className="whitespace-nowrap text-right text-[11px] font-black text-yellow-300 sm:text-base">
+        $
+        {topSlotCallWinner.payout.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}
+      </div>
+    </div>
+  ) : (
+    <div className="py-2 text-center text-xs text-white/35">
+      No top winner yet.
+    </div>
+  )}
+</div>
+
       <div className="mt-3 flex items-center justify-center gap-4 text-[10px] font-black uppercase tracking-[0.14em] sm:text-xs">
         <div className="text-white/45">
           Entries{" "}
@@ -6014,86 +6058,203 @@ onClick={() =>
 </div>
 </div>
 
-    <div className="rounded-xl border border-white/10 bg-black/75 p-3">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
-            Live Calls
-          </div>
-          <div className="mt-0.5 text-[11px] text-white/35">
-            Names update automatically from chat.
-          </div>
+<div className="space-y-3">
+  {/* LIVE CALLS */}
+  <div className="rounded-xl border border-white/10 bg-black/75 p-3">
+    <div className="flex items-center justify-between gap-2">
+      <div>
+        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+          Live Calls
         </div>
 
-        <ActionButton
-          onClick={async () => {
-  if (!confirm("Clear every slot call from the wheel?")) return;
-
-  const res = await fetch("/api/slot-calls?clearAll=true", {
-    method: "DELETE",
-  });
-
-  const data = await res.json();
-
-  if (!res.ok || !data.ok) {
-    alert(data.error || "Failed to clear slot calls.");
-    return;
-  }
-
-  setSlotCalls([]);
-  setPickedSlotCall(null);
-  setSlotWheelRotation(0);
-}}
-          disabled={slotCalls.length === 0 || isSlotWheelSpinning}
-          variant="red"
-          className="min-h-[32px] px-3 py-1 text-[8px]"
-        >
-          Clear All
-        </ActionButton>
+        <div className="mt-0.5 text-[11px] text-white/35">
+          Names update automatically from chat.
+        </div>
       </div>
 
-      <div className="mt-3 max-h-[354px] overflow-y-auto rounded-lg border border-white/8 bg-black/50 p-2">
-        {slotCalls.length === 0 ? (
-          <div className="p-5 text-center text-xs text-white/35">
-            No slot calls yet.
-          </div>
-        ) : (
-          <div className="grid gap-1.5">
-            {slotCalls.map((call, index) => (
-              <div
-                key={`${call.id || call.username}-${call.slotName}-${index}`}
-                className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-white/8 bg-white/[0.025] px-2 py-1.5"
-              >
-                <div className="text-[9px] font-black text-cyan-300/60">
-                  {index + 1}
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate text-[11px] font-black text-white">
-                    {call.slotName}
-                  </div>
-                  <div className="truncate text-[9px] text-white/35">
-                    {call.username}
-                  </div>
-                </div>
-                <button
-                  onClick={async () => {
-                    if (call.id) {
-                      await fetch(`/api/slot-calls?id=${call.id}`, { method: "DELETE" });
-                    }
-                    setSlotCalls((current) => current.filter((item) => item.id !== call.id));
-                    await loadSlotCalls();
-                  }}
-                  disabled={isSlotWheelSpinning}
-                  className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20 disabled:opacity-40"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <ActionButton
+        onClick={async () => {
+          if (!confirm("Clear every slot call from the wheel?")) return;
+
+          const res = await fetch("/api/slot-calls?clearAll=true", {
+            method: "DELETE",
+          });
+
+          const data = await res.json();
+
+          if (!res.ok || !data.ok) {
+            alert(data.error || "Failed to clear slot calls.");
+            return;
+          }
+
+          setSlotCalls([]);
+          setPickedSlotCall(null);
+          setSlotWheelRotation(0);
+        }}
+        disabled={slotCalls.length === 0 || isSlotWheelSpinning}
+        variant="red"
+        className="min-h-[32px] px-3 py-1 text-[8px]"
+      >
+        Clear All
+      </ActionButton>
     </div>
+
+    <div className="mt-3 max-h-[354px] overflow-y-auto rounded-lg border border-white/8 bg-black/50 p-2">
+      {slotCalls.length === 0 ? (
+        <div className="p-5 text-center text-xs text-white/35">
+          No slot calls yet.
+        </div>
+      ) : (
+        <div className="grid gap-1.5">
+          {slotCalls.map((call, index) => (
+            <div
+              key={`${call.id || call.username}-${call.slotName}-${index}`}
+              className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-white/8 bg-white/[0.025] px-2 py-1.5"
+            >
+              <div className="text-[9px] font-black text-cyan-300/60">
+                {index + 1}
+              </div>
+
+              <div className="min-w-0">
+                <div className="truncate text-[11px] font-black text-white">
+                  {call.slotName}
+                </div>
+
+                <div className="truncate text-[9px] text-white/35">
+                  {call.username}
+                </div>
+              </div>
+
+              <button
+                onClick={async () => {
+                  if (call.id) {
+                    await fetch(`/api/slot-calls?id=${call.id}`, {
+                      method: "DELETE",
+                    });
+                  }
+
+                  setSlotCalls((current) =>
+                    current.filter((item) => item.id !== call.id)
+                  );
+
+                  await loadSlotCalls();
+                }}
+                disabled={isSlotWheelSpinning}
+                className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20 disabled:opacity-40"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+
+  {/* ROLLED RESULTS */}
+  <div className="rounded-xl border border-white/10 bg-black/75 p-3">
+    <div className="flex items-center justify-between gap-2">
+      <div>
+        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+          Rolled Results
+        </div>
+
+        <div className="mt-0.5 text-[11px] text-white/35">
+          Remove old rolled winners and payouts.
+        </div>
+      </div>
+
+      <ActionButton
+        onClick={async () => {
+          if (!confirm("Clear all rolled winners and payouts?")) return;
+
+          const res = await fetch("/api/slot-calls?clearResults=true", {
+            method: "DELETE",
+          });
+
+          const data = await res.json();
+
+          if (!res.ok || !data.ok) {
+            alert(data.error || "Failed to clear rolled results.");
+            return;
+          }
+
+          setSlotCallResults([]);
+          await loadSlotCalls();
+        }}
+        disabled={slotCallResults.length === 0}
+        variant="red"
+        className="min-h-[32px] px-3 py-1 text-[8px]"
+      >
+        Clear All
+      </ActionButton>
+    </div>
+
+    <div className="mt-3 max-h-[300px] overflow-y-auto rounded-lg border border-white/8 bg-black/50 p-2">
+      {slotCallResults.length === 0 ? (
+        <div className="p-5 text-center text-xs text-white/35">
+          No rolled results yet.
+        </div>
+      ) : (
+        <div className="grid gap-1.5">
+          {slotCallResults.map((result, index) => (
+            <div
+              key={result.id}
+              className="grid grid-cols-[24px_minmax(0,0.8fr)_minmax(0,1fr)_70px_auto] items-center gap-2 rounded-lg border border-white/8 bg-white/[0.025] px-2 py-1.5"
+            >
+              <div className="text-[8px] font-black text-cyan-300/60">
+                {index + 1}
+              </div>
+
+              <div className="truncate text-[9px] font-black text-white">
+                {result.username}
+              </div>
+
+              <div className="truncate text-[9px] text-white/45">
+                {result.slotName}
+              </div>
+
+              <div className="truncate text-right text-[9px] font-black text-emerald-300">
+                $
+                {result.payout.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
+
+              <button
+                onClick={async () => {
+                  const res = await fetch(
+                    `/api/slot-calls?resultId=${result.id}`,
+                    {
+                      method: "DELETE",
+                    }
+                  );
+
+                  const data = await res.json();
+
+                  if (!res.ok || !data.ok) {
+                    alert(data.error || "Failed to remove rolled result.");
+                    return;
+                  }
+
+                  setSlotCallResults((current) =>
+                    current.filter((item) => item.id !== result.id)
+                  );
+
+                  await loadSlotCalls();
+                }}
+                className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+  </div>
   </div>
 </details>
       </div>
