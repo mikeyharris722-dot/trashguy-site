@@ -1716,7 +1716,7 @@ useEffect(() => {
 }, [huntsLoading, huntsData]);
 
 useEffect(() => {
-  if (activeSection === "prizeportal") {
+  if (activeSection === "profile") {
     loadViewerRewards();
     loadRouloLink();
     loadDiscordLink();
@@ -3850,10 +3850,10 @@ const rankBox =
   </section>
 )}
 
-{activeSection === "prizeportal" && (
+{activeSection === "profile" && (
   <section className="space-y-4 sm:space-y-6">
     <div className="mx-auto max-w-5xl text-center">
-      <GlowTabTitle label="PRIZE PORTAL" />
+      <GlowTabTitle label="PROFILE" />
     </div>
 
 {false ? (
@@ -4297,7 +4297,7 @@ onClick={() =>
       </div>
 
 {/* TOP WINNER */}
-<div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-yellow-300/25 bg-[linear-gradient(135deg,rgba(120,85,0,0.28),rgba(0,0,0,0.92))] p-3 shadow-[0_0_28px_rgba(250,204,21,0.10)] sm:p-4">
+<div className="mx-auto mt-3 max-w-5xl overflow-hidden rounded-2xl border border-yellow-300/25 bg-[linear-gradient(135deg,rgba(120,85,0,0.28),rgba(0,0,0,0.92))] p-3 shadow-[0_0_28px_rgba(250,204,21,0.10)] sm:mt-4 sm:p-4">
   {topSlotCallWinner ? (
     <div className="grid grid-cols-[auto_minmax(0,0.8fr)_minmax(0,1fr)_auto] items-center gap-2 sm:gap-4">
       <div className="text-lg sm:text-2xl">

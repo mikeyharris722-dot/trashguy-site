@@ -41,7 +41,7 @@ const navItems = [
   { id: "slotwheel", label: "Viewer Wheel" },
   { id: "tournaments", label: "Tournaments" },
   { id: "slotpicker", label: "Slot Picker" },
-  { id: "prizeportal", label: "Profile" },
+  { id: "profile", label: "Profile" },
   ...(adminAllowed ? [{ id: "admin", label: "Admin" }] : []),
 ];
 
