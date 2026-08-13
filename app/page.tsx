@@ -721,6 +721,17 @@ const [slotCalls, setSlotCalls] = useState<
     createdAt: number;
   }[]
 >([]);
+const [slotCallResults, setSlotCallResults] = useState<
+  {
+    id: string;
+    username: string;
+    slotName: string;
+    payout: number;
+    createdAt: number;
+  }[]
+>([]);
+
+const [slotPayoutInput, setSlotPayoutInput] = useState("");
 const [slotCallMessage, setSlotCallMessage] = useState("");
 const [isSlotWheelSpinning, setIsSlotWheelSpinning] = useState(false);
 const [pickedSlotCall, setPickedSlotCall] = useState<{
@@ -1826,21 +1837,43 @@ useEffect(() => {
 
 const loadSlotCalls = async () => {
   try {
-    const res = await fetch("/api/slot-calls", { cache: "no-store" });
+    const res = await fetch("/api/slot-calls", {
+      cache: "no-store",
+    });
+
     const data = await res.json();
 
     if (Array.isArray(data.calls)) {
-setSlotCalls(
-  data.calls.map((call: any) => ({
-    id: call.id,
-    username: call.username,
-    slotName: call.slot_name,
-    createdAt: new Date(call.created_at).getTime(),
-  }))
-);
+      setSlotCalls(
+        data.calls.map((call: any) => ({
+          id: call.id,
+          username: call.username,
+          slotName: call.slot_name,
+          createdAt: new Date(
+            call.created_at
+          ).getTime(),
+        }))
+      );
+    }
+
+    if (Array.isArray(data.results)) {
+      setSlotCallResults(
+        data.results.map((result: any) => ({
+          id: result.id,
+          username: result.username,
+          slotName: result.slot_name,
+          payout: Number(result.payout || 0),
+          createdAt: new Date(
+            result.created_at
+          ).getTime(),
+        }))
+      );
     }
   } catch (err) {
-    console.error("Failed to load slot calls", err);
+    console.error(
+      "Failed to load slot calls",
+      err
+    );
   }
 };
 
@@ -4157,19 +4190,208 @@ onClick={() =>
   </section>
 )}
 
-{activeSection === "wagerRewards" && (
+{activeSection === "slotwheel" && (
   <section className="space-y-4 sm:space-y-6">
+    {/* TITLE */}
     <div className="mx-auto max-w-5xl text-center">
-      <GlowTabTitle label="WAGER REWARDS" />
+      <GlowTabTitle label="SLOT CALL OF THE DAY" />
     </div>
 
-    <div className="mx-auto max-w-4xl rounded-2xl border border-cyan-300/15 bg-black/80 p-6 text-center">
-      <div className="text-2xl font-black text-cyan-200">
-        🚧 Coming Soon
+    {/* MAIN WHEEL */}
+    <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,18,24,0.96),rgba(0,0,0,0.98))] p-3 shadow-[0_0_35px_rgba(0,245,255,0.12)] sm:rounded-[1.5rem] sm:p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-200/60 sm:text-xs">
+            Live Viewer Wheel
+          </div>
+
+          <div className="mt-1 text-sm font-black text-white sm:text-lg">
+            Slot Calls
+          </div>
+        </div>
+
+        <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[10px] font-black text-cyan-100 sm:text-xs">
+          {slotCalls.length} entries
+        </div>
       </div>
 
-      <div className="mt-3 text-white/60">
-        Wager milestones for anyone under code TRASHGUY
+      <div
+        className="relative mx-auto mt-3 overflow-hidden rounded-xl border border-cyan-300/30 bg-black/90 shadow-[inset_0_0_30px_rgba(0,245,255,0.08),0_0_24px_rgba(0,245,255,0.10)]"
+        style={{
+          height: `${SLOT_WHEEL_VIEWPORT_HEIGHT}px`,
+        }}
+      >
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-16 bg-gradient-to-b from-black via-black/85 to-transparent" />
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-16 bg-gradient-to-t from-black via-black/85 to-transparent" />
+
+        <div className="pointer-events-none absolute inset-x-2 top-1/2 z-30 h-11 -translate-y-1/2 rounded-lg border border-cyan-200/50 bg-cyan-400/12 shadow-[0_0_26px_rgba(0,245,255,0.22)]" />
+
+        <div className="pointer-events-none absolute left-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-l-[12px] border-y-transparent border-l-cyan-300" />
+
+        <div className="pointer-events-none absolute right-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-r-[12px] border-y-transparent border-r-cyan-300" />
+
+        {slotCalls.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-xs font-semibold text-white/35 sm:text-sm">
+            No entries yet
+          </div>
+        ) : isSlotWheelSpinning ? (
+          <div
+            className="transition-transform duration-[4200ms] ease-[cubic-bezier(0.12,0.72,0.08,1)]"
+            style={{
+              transform: `translateY(-${slotWheelRotation}px)`,
+            }}
+          >
+            {slotWheelLoop.map((call, index) => (
+              <div
+                key={`${call.id || call.username}-${call.slotName}-${index}`}
+                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3"
+                style={{
+                  height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
+                }}
+              >
+                <div className="truncate text-[11px] font-black text-white sm:text-xs">
+                  {call.username}
+                </div>
+
+                <div className="truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
+                  {call.slotName}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="transition-transform duration-500 ease-out">
+            {slotWheelRestingRows.map(
+              ({ call, isCenter, rowKey }) => (
+                <div
+                  key={rowKey}
+                  className={`grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3 transition-all duration-300 ${
+                    isCenter
+                      ? "bg-cyan-400/12 opacity-100"
+                      : "opacity-50"
+                  }`}
+                  style={{
+                    height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
+                  }}
+                >
+                  <div className="truncate text-[11px] font-black text-white sm:text-xs">
+                    {call.username}
+                  </div>
+
+                  <div className="truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
+                    {call.slotName}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 flex items-center justify-center gap-4 text-[10px] font-black uppercase tracking-[0.14em] sm:text-xs">
+        <div className="text-white/45">
+          Entries{" "}
+          <span className="ml-1 rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-1 text-cyan-100">
+            {slotCalls.length}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-emerald-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_7px_rgba(110,231,183,1)]" />
+          Live
+        </div>
+      </div>
+    </div>
+
+    {/* ENTRIES */}
+    <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-cyan-300/15 bg-black/80 shadow-[0_0_24px_rgba(0,245,255,0.08)]">
+      <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-3 sm:px-4">
+        <div className="text-sm font-black uppercase tracking-[0.12em] text-white sm:text-base">
+          Entries
+        </div>
+
+        <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-black text-cyan-100 sm:text-xs">
+          {slotCalls.length}
+        </div>
+      </div>
+
+      <div className="max-h-[360px] overflow-y-auto p-2 sm:p-3">
+        {slotCalls.length === 0 ? (
+          <div className="py-6 text-center text-xs text-white/35 sm:text-sm">
+            No entries yet.
+          </div>
+        ) : (
+          <div className="grid gap-1">
+            {slotCalls.map((call, index) => (
+              <div
+                key={`${call.id}-${index}`}
+                className="grid grid-cols-[28px_minmax(0,0.9fr)_minmax(0,1.1fr)] items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.025] px-2.5 py-2 sm:grid-cols-[40px_minmax(0,1fr)_minmax(0,1.3fr)] sm:px-3"
+              >
+                <div className="truncate text-[9px] font-black text-cyan-300/55 sm:text-[10px]">
+                  {index + 1}.
+                </div>
+
+                <div className="truncate text-[10px] font-black text-white sm:text-xs">
+                  {call.username}
+                </div>
+
+                <div className="truncate text-right text-[10px] text-white/55 sm:text-xs">
+                  {call.slotName}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+
+    {/* ROLLED / PAYOUT */}
+    <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-cyan-300/15 bg-black/80 shadow-[0_0_24px_rgba(0,245,255,0.08)]">
+      <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-3 sm:px-4">
+        <div className="text-sm font-black uppercase tracking-[0.12em] text-white sm:text-base">
+          Rolled / Payout
+        </div>
+
+        <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-black text-cyan-100 sm:text-xs">
+          {slotCallResults.length}
+        </div>
+      </div>
+
+      <div className="max-h-[360px] overflow-y-auto p-2 sm:p-3">
+        {slotCallResults.length === 0 ? (
+          <div className="py-6 text-center text-xs text-white/35 sm:text-sm">
+            No rolled slots yet.
+          </div>
+        ) : (
+          <div className="grid gap-1">
+            {slotCallResults.map((result, index) => (
+              <div
+                key={`${result.id}-${index}`}
+                className="grid grid-cols-[24px_minmax(0,0.75fr)_minmax(0,1fr)_70px] items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.025] px-2 py-2 sm:grid-cols-[40px_minmax(0,0.9fr)_minmax(0,1.3fr)_100px] sm:px-3"
+              >
+                <div className="truncate text-[8px] font-black text-cyan-300/55 sm:text-[10px]">
+                  {index + 1}.
+                </div>
+
+                <div className="truncate text-[9px] font-black text-white sm:text-xs">
+                  {result.username}
+                </div>
+
+                <div className="truncate text-[9px] text-white/55 sm:text-xs">
+                  {result.slotName}
+                </div>
+
+                <div className="truncate text-right text-[9px] font-black text-emerald-300 sm:text-xs">
+                  ${result.payout.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   </section>
@@ -5704,26 +5926,93 @@ onClick={() =>
         </ActionButton>
       </div>
 
-      <div className="mt-3 min-h-[74px] rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
-        {pickedSlotCall ? (
-          <>
-            <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300/70">
-              Winner
-            </div>
-            <div className="mt-1 truncate text-xl font-black text-cyan-200 drop-shadow-[0_0_12px_rgba(0,245,255,0.65)] sm:text-2xl">
-              {pickedSlotCall.slotName}
-            </div>
-            <div className="mt-0.5 truncate text-[11px] text-white/45">
-              called by {pickedSlotCall.username}
-            </div>
-          </>
-        ) : (
-          <div className="flex h-[48px] items-center justify-center text-xs font-semibold text-white/40">
-            {slotCalls.length === 0 ? "No entries yet." : "Ready to spin."}
-          </div>
-        )}
+<div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+  {pickedSlotCall ? (
+    <>
+      <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300/70">
+        Winner
       </div>
+
+      <div className="mt-1 truncate text-xl font-black text-cyan-200 drop-shadow-[0_0_12px_rgba(0,245,255,0.65)] sm:text-2xl">
+        {pickedSlotCall.slotName}
+      </div>
+
+      <div className="mt-0.5 truncate text-[11px] text-white/45">
+        called by {pickedSlotCall.username}
+      </div>
+
+      <div className="mx-auto mt-4 max-w-sm">
+        <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
+          Payout
+        </div>
+
+        <div className="mt-2 flex items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center rounded-lg border border-cyan-300/15 bg-black/60 px-3">
+            <span className="mr-1 text-sm font-black text-cyan-200/60">
+              $
+            </span>
+
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={slotPayoutInput}
+              onChange={(e) => setSlotPayoutInput(e.target.value)}
+              placeholder="0.00"
+              className="min-w-0 flex-1 bg-transparent py-2 text-sm font-black text-white outline-none placeholder:text-white/20"
+            />
+          </div>
+
+          <ActionButton
+            onClick={async () => {
+              const payout = Number(slotPayoutInput);
+
+              if (!Number.isFinite(payout) || payout < 0) {
+                alert("Enter a valid payout amount.");
+                return;
+              }
+
+              const res = await fetch("/api/slot-calls", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  action: "saveResult",
+                  username: pickedSlotCall.username,
+                  slotName: pickedSlotCall.slotName,
+                  payout,
+                }),
+              });
+
+              const data = await res.json();
+
+              if (!res.ok || !data.ok) {
+                alert(data.error || "Failed to save payout.");
+                return;
+              }
+
+              setSlotPayoutInput("");
+
+              await loadSlotCalls();
+
+              alert("Rolled slot saved.");
+            }}
+            variant="green"
+            className="min-h-[36px] shrink-0 px-3 text-[9px]"
+          >
+            Save Payout
+          </ActionButton>
+        </div>
+      </div>
+    </>
+  ) : (
+    <div className="flex h-[48px] items-center justify-center text-xs font-semibold text-white/40">
+      {slotCalls.length === 0 ? "No entries yet." : "Ready to spin."}
     </div>
+  )}
+</div>
+</div>
 
     <div className="rounded-xl border border-white/10 bg-black/75 p-3">
       <div className="flex items-center justify-between gap-2">
