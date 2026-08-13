@@ -606,10 +606,6 @@ export default function Home() {
   const [predictionMessage, setPredictionMessage] = useState("");
   const [predictionScrollIndex, setPredictionScrollIndex] = useState(0);
 
-  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(STORAGE_KEYS.adminMode) === "true";
-});
 
   const [adminName, setAdminName] = useState("Trashguy");
   const [finalResult, setFinalResult] = useState("");
@@ -800,6 +796,7 @@ const [rouloLinkMessage, setRouloLinkMessage] = useState("");
 const [discordLink, setDiscordLink] = useState<any>(null);
 const [discordLinkMessage, setDiscordLinkMessage] = useState("");
 
+const [isAdmin, setIsAdmin] = useState(false);
 const [adminRewards, setAdminRewards] = useState<any[]>([]);
 const [adminRewardsSearch, setAdminRewardsSearch] = useState("");
 const [adminRewardsMessage, setAdminRewardsMessage] = useState("");
@@ -1064,19 +1061,23 @@ const pickRandomSlot = () => {
   spinLoop();
 };
 
-  useEffect(() => {
+useEffect(() => {
   if (!authLoaded) return;
-  if (!isTwitchConnected) return;
 
-  if (!adminAllowed) {
+  if (adminAllowed) {
+    setIsAdmin(true);
+  } else {
     setIsAdmin(false);
-    localStorage.removeItem(STORAGE_KEYS.adminMode);
 
     if (activeSection === "admin") {
       setActiveSection("home");
     }
   }
-}, [adminAllowed, activeSection, authLoaded, isTwitchConnected]);
+}, [
+  adminAllowed,
+  activeSection,
+  authLoaded,
+]);
 
 useEffect(() => {
   const timer = setInterval(() => {
@@ -1092,16 +1093,6 @@ useEffect(() => {
   }, 1000);
 
   return () => clearInterval(timer);
-}, []);
-
-useEffect(() => {
-  if (typeof window === "undefined") return;
-
-  const storedAdminMode = localStorage.getItem(STORAGE_KEYS.adminMode);
-
-  if (storedAdminMode === "true") {
-    setIsAdmin(true);
-  }
 }, []);
 
   const navButton = (id: string, label: string) => (
@@ -1650,29 +1641,28 @@ useEffect(() => {
   };
 }, []);
 
-// RESTORE ADMIN + SECTION AFTER REFRESH
+// RESTORE ACTIVE SECTION AFTER REFRESH
 useEffect(() => {
   if (typeof window === "undefined") return;
 
-  const storedAdminMode = localStorage.getItem(STORAGE_KEYS.adminMode);
-  const storedSection = localStorage.getItem(STORAGE_KEYS.activeSection);
-
-  if (storedAdminMode === "true") {
-    setIsAdmin(true);
-  }
+  const storedSection = localStorage.getItem(
+    STORAGE_KEYS.activeSection
+  );
 
   if (storedSection) {
     setActiveSection(storedSection);
   }
 }, []);
 
-// SAVE ADMIN + ACTIVE TAB
+// SAVE ACTIVE TAB
 useEffect(() => {
   if (typeof window === "undefined") return;
 
-  localStorage.setItem(STORAGE_KEYS.adminMode, String(isAdmin));
-  localStorage.setItem(STORAGE_KEYS.activeSection, activeSection);
-}, [isAdmin, activeSection]);
+  localStorage.setItem(
+    STORAGE_KEYS.activeSection,
+    activeSection
+  );
+}, [activeSection]);
 
 useEffect(() => {
   if (typeof window === "undefined" || huntsLoading) return;
@@ -1942,7 +1932,6 @@ const handleTwitchLogin = async () => {
     localStorage.removeItem("viewerPlatform");
     localStorage.removeItem("kickUsername");
     localStorage.removeItem("kickId");
-    localStorage.removeItem(STORAGE_KEYS.adminMode);
     localStorage.removeItem(STORAGE_KEYS.activeHuntId);
     localStorage.removeItem(STORAGE_KEYS.predictionStatus);
     localStorage.removeItem(STORAGE_KEYS.activeSection);
@@ -3344,7 +3333,7 @@ const rankBox =
     ? "text-zinc-200"
     : player.rank === 3
     ? "text-amber-400"
-    : player.rank >= 4 && player.rank <= 8
+    : player.rank >= 4 && player.rank <= 6
     ? "text-cyan-200"
     : "text-white/80";
 
@@ -3360,7 +3349,6 @@ const rankBox =
     {rankIcons[player.rank] || player.rank}
   </div>
 </div>
-
               <div className="min-w-0">
                 <div className="truncate text-sm font-black text-white sm:text-xl">
                   {player.username}
@@ -3379,6 +3367,26 @@ const rankBox =
           );
         })
       )}
+{adminAllowed && (
+  <div className="mx-auto mt-4 w-full max-w-5xl rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-4">
+    <div className="text-xs font-black uppercase tracking-[0.18em] text-yellow-200">
+      VIP Snapshot
+    </div>
+
+    <div className="mt-2 text-sm text-white/55">
+      {adminMessage ||
+        "Save everyone with $5,000+ wagered from the completed leaderboard as VIPs for the next leaderboard."}
+    </div>
+
+    <ActionButton
+      onClick={handleGenerateVipSnapshot}
+      variant="gold"
+      className="mt-3 w-full"
+    >
+      Generate VIP Snapshot
+    </ActionButton>
+  </div>
+)}
     </div>
   </section>
 )}
@@ -4464,151 +4472,288 @@ onClick={() =>
 
 {activeSection === "slotpicker" && (
   <section className="space-y-4 sm:space-y-6">
-<div className="mx-auto max-w-5xl text-center">
-  <GlowTabTitle label="SLOT PICKER" />
-</div>
+    {/* TITLE */}
+    <div className="mx-auto max-w-5xl text-center">
+      <GlowTabTitle label="SLOT PICKER" />
+    </div>
 
-    <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6">
-      <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/40 sm:text-xs sm:tracking-[0.24em]">
-        Providers
+    {/* PROVIDERS */}
+    <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-cyan-300/15 bg-black/85 shadow-[0_0_35px_rgba(0,245,255,0.10)] backdrop-blur-sm sm:rounded-[1.5rem]">
+      <div className="border-b border-white/[0.06] px-4 py-3 sm:px-6 sm:py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[9px] font-black uppercase tracking-[0.28em] text-cyan-200/60 sm:text-xs">
+              Provider Control
+            </div>
+
+            <div className="mt-1 text-xs font-bold text-white/45 sm:text-sm">
+              Choose providers or leave all active
+            </div>
+          </div>
+
+          <div className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.06] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.14em] text-cyan-100/60 sm:text-xs">
+            {filteredSlots.length} Slots
+          </div>
+        </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
-        {slotProviders.map((provider) => {
-          const active = selectedProviders.includes(provider);
-          const logo = providerLogos[provider];
+      <div className="p-3 sm:p-5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
+          {slotProviders.map((provider) => {
+            const active = selectedProviders.includes(provider);
+            const logo = providerLogos[provider];
 
-          return (
-            <button
-              key={provider}
-              onClick={() => toggleSlotProvider(provider)}
-              className={`flex min-h-[72px] items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all duration-200 sm:min-h-[82px] sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3 ${
-                active
-                  ? "border-cyan-300/40 bg-cyan-400/12 text-white shadow-[0_0_20px_rgba(0,245,255,0.14)]"
-                  : "border-white/10 bg-black/70 text-white/65 hover:border-white/20 hover:text-white"
-              }`}
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/80 sm:h-11 sm:w-11 sm:rounded-xl">
-                {logo ? (
+            const providerSlotCount = slotData.filter(
+              (slot) => slot.provider === provider
+            ).length;
+
+            return (
+              <button
+                key={provider}
+                onClick={() => toggleSlotProvider(provider)}
+                className={`group relative flex min-h-[68px] items-center gap-2 overflow-hidden rounded-xl border px-2.5 py-2 text-left transition-all duration-300 sm:min-h-[82px] sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3 ${
+                  active
+                    ? "border-cyan-300/55 bg-[linear-gradient(135deg,rgba(0,245,255,0.18),rgba(0,90,110,0.08),rgba(0,0,0,0.85))] text-white shadow-[inset_0_0_22px_rgba(0,245,255,0.06),0_0_22px_rgba(0,245,255,0.14)]"
+                    : "border-white/[0.08] bg-[linear-gradient(135deg,rgba(255,255,255,0.025),rgba(0,0,0,0.88))] text-white/50 hover:border-cyan-300/20 hover:text-white/80"
+                }`}
+              >
+                {active && (
+                  <div className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_8px_rgba(0,245,255,1)] sm:h-2 sm:w-2" />
+                )}
+
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border bg-black/80 transition sm:h-11 sm:w-11 sm:rounded-xl ${
+                    active
+                      ? "border-cyan-300/25 shadow-[0_0_12px_rgba(0,245,255,0.10)]"
+                      : "border-white/10"
+                  }`}
+                >
+                  {logo ? (
+                    <img
+                      src={logo}
+                      alt={provider}
+                      className={`h-6 w-6 object-contain transition sm:h-7 sm:w-7 ${
+                        active ? "opacity-100" : "opacity-55"
+                      }`}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <span className="text-[10px] font-black text-[#8fffd0] sm:text-xs">
+                      {provider.charAt(0)}
+                    </span>
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <div className="truncate text-[11px] font-black sm:text-base">
+                    {provider}
+                  </div>
+
+                  <div
+                    className={`mt-0.5 text-[9px] sm:text-xs ${
+                      active ? "text-cyan-100/45" : "text-white/25"
+                    }`}
+                  >
+                    {providerSlotCount} slots
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/[0.06] pt-4">
+          <div className="min-w-0">
+            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white/55 sm:text-xs">
+              {selectedProviders.length === 0
+                ? "All Providers Active"
+                : `${selectedProviders.length} Provider${
+                    selectedProviders.length === 1 ? "" : "s"
+                  } Active`}
+            </div>
+
+            <div className="mt-0.5 text-[9px] text-white/30 sm:text-xs">
+              {filteredSlots.length} eligible slots
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              setSelectedProviders([]);
+              setPickedSlot(null);
+            }}
+            className="shrink-0 rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-white/45 transition hover:border-cyan-300/25 hover:text-cyan-100 sm:px-4 sm:py-2 sm:text-xs"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* SLOT MACHINE */}
+    <div className="mx-auto max-w-5xl overflow-hidden rounded-[1.4rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,18,22,0.97),rgba(0,0,0,0.98))] shadow-[0_0_45px_rgba(0,245,255,0.12)] sm:rounded-[2rem]">
+      {/* MACHINE HEADER */}
+      <div className="relative overflow-hidden border-b border-cyan-300/10 px-4 py-4 text-center sm:px-8 sm:py-6">
+        <div className="absolute inset-x-[15%] top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
+
+        <div className="text-[9px] font-black uppercase tracking-[0.4em] text-cyan-200/45 sm:text-xs">
+          Random Slot Generator
+        </div>
+
+        <div className="mt-1 text-lg font-black tracking-[0.08em] text-white sm:text-2xl">
+          {isPickingSlot ? "SELECTING..." : "READY TO SPIN"}
+        </div>
+
+        <div className="mx-auto mt-2 flex w-fit items-center gap-1.5">
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              isPickingSlot
+                ? "animate-pulse bg-yellow-300 shadow-[0_0_8px_rgba(253,224,71,1)]"
+                : "bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,1)]"
+            }`}
+          />
+
+          <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/35 sm:text-[10px]">
+            {filteredSlots.length} slots loaded
+          </span>
+        </div>
+      </div>
+
+      {/* PICKER WINDOW */}
+      <div className="p-3 sm:p-7">
+        <div
+          className={`relative flex min-h-[210px] items-center justify-center overflow-hidden rounded-2xl border bg-black/95 px-8 py-8 transition-all duration-300 sm:min-h-[300px] sm:rounded-[1.6rem] sm:px-16 sm:py-12 ${
+            isPickingSlot
+              ? "border-cyan-300/55 shadow-[inset_0_0_55px_rgba(0,245,255,0.10),0_0_35px_rgba(0,245,255,0.20)]"
+              : pickedSlot
+              ? "border-emerald-300/35 shadow-[inset_0_0_50px_rgba(0,255,180,0.07),0_0_30px_rgba(0,245,255,0.12)]"
+              : "border-white/10"
+          }`}
+        >
+          {/* background lines */}
+          <div className="pointer-events-none absolute inset-0 opacity-30">
+            <div className="absolute left-0 right-0 top-1/2 h-px bg-gradient-to-r from-transparent via-cyan-300/25 to-transparent" />
+            <div className="absolute bottom-0 left-1/2 top-0 w-px bg-gradient-to-b from-transparent via-cyan-300/10 to-transparent" />
+          </div>
+
+          {/* center selection brackets */}
+          <div className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 sm:left-5">
+            <div className="h-0 w-0 border-b-[10px] border-l-[16px] border-t-[10px] border-b-transparent border-l-cyan-300 border-t-transparent drop-shadow-[0_0_8px_rgba(0,245,255,0.9)] sm:border-b-[14px] sm:border-l-[22px] sm:border-t-[14px]" />
+          </div>
+
+          <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 sm:right-5">
+            <div className="h-0 w-0 border-b-[10px] border-r-[16px] border-t-[10px] border-b-transparent border-r-cyan-300 border-t-transparent drop-shadow-[0_0_8px_rgba(0,245,255,0.9)] sm:border-b-[14px] sm:border-r-[22px] sm:border-t-[14px]" />
+          </div>
+
+          {!pickedSlot ? (
+            <div className="relative z-10 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-cyan-300/15 bg-cyan-400/[0.04] shadow-[0_0_25px_rgba(0,245,255,0.08)] sm:h-20 sm:w-20">
+                <span className="text-3xl sm:text-4xl">🎰</span>
+              </div>
+
+              <div className="mt-4 text-sm font-black uppercase tracking-[0.16em] text-white/55 sm:text-lg">
+                Waiting For Spin
+              </div>
+
+              <div className="mt-1 text-[10px] text-white/25 sm:text-xs">
+                Your random slot will appear here
+              </div>
+            </div>
+          ) : (
+            <div className="relative z-10 w-full text-center">
+              <div
+                className={`text-[9px] font-black uppercase tracking-[0.32em] transition sm:text-xs ${
+                  isPickingSlot
+                    ? "text-cyan-200/45"
+                    : "text-emerald-200/60"
+                }`}
+              >
+                {isPickingSlot ? "Scanning Slots" : "Selected Slot"}
+              </div>
+
+              {pickedSlot.image && (
+                <img
+                  src={pickedSlot.image}
+                  alt={pickedSlot.name}
+                  className={`mx-auto mt-4 h-20 max-w-[180px] object-contain transition-all duration-150 sm:h-28 sm:max-w-[260px] ${
+                    isPickingSlot
+                      ? "scale-95 opacity-60 blur-[1px]"
+                      : "scale-100 opacity-100"
+                  }`}
+                />
+              )}
+
+              <div
+                className={`mx-auto mt-4 max-w-3xl text-[clamp(1.35rem,5vw,3.5rem)] font-black leading-[1.05] transition-all duration-150 ${
+                  isPickingSlot
+                    ? "scale-95 text-white/60 blur-[0.7px]"
+                    : "scale-100 text-[#9fffd7] drop-shadow-[0_0_22px_rgba(0,245,255,0.55)]"
+                }`}
+              >
+                {pickedSlot.name}
+              </div>
+
+              <div
+                className={`mx-auto mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.12em] transition-all sm:mt-5 sm:px-5 sm:text-xs ${
+                  isPickingSlot
+                    ? "border-white/10 bg-white/[0.03] text-white/35"
+                    : "border-cyan-300/25 bg-cyan-400/[0.08] text-cyan-100 shadow-[0_0_18px_rgba(0,245,255,0.12)]"
+                }`}
+              >
+                {providerLogos[pickedSlot.provider] && (
                   <img
-                    src={logo}
-                    alt={provider}
-                    className="h-6 w-6 object-contain sm:h-7 sm:w-7"
+                    src={providerLogos[pickedSlot.provider]}
+                    alt={pickedSlot.provider}
+                    className="h-5 w-5 object-contain sm:h-6 sm:w-6"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                     }}
                   />
-                ) : (
-                  <span className="text-[10px] font-black text-[#8fffd0] sm:text-xs">
-                    {provider.charAt(0)}
-                  </span>
                 )}
+
+                {pickedSlot.provider}
               </div>
-
-              <div className="min-w-0">
-                <div className="truncate text-xs font-black sm:text-base">
-                  {provider}
-                </div>
-
-                <div className="text-[10px] text-white/35 sm:text-xs">
-                  {
-                    slotData.filter(
-                      (slot) => slot.provider === provider
-                    ).length
-                  }{" "}
-                  slots
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 sm:mt-5 sm:gap-3">
-        <div className="text-xs text-white/45 sm:text-sm">
-          {selectedProviders.length === 0
-            ? `🎲 All Providers Active (${slotData.length} slots)`
-            : `${filteredSlots.length} slots from ${selectedProviders.length} provider(s)`}
+            </div>
+          )}
         </div>
 
+        {/* SPIN BUTTON */}
         <button
-          onClick={() => {
-            setSelectedProviders([]);
-            setPickedSlot(null);
-          }}
-          className="rounded-full border border-white/10 bg-black/70 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/55 transition hover:text-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.18em]"
+          onClick={pickRandomSlot}
+          disabled={isPickingSlot || filteredSlots.length === 0}
+          className={`relative mt-3 w-full overflow-hidden rounded-xl border px-4 py-4 text-sm font-black uppercase tracking-[0.16em] transition-all duration-300 sm:mt-5 sm:rounded-2xl sm:px-6 sm:py-5 sm:text-lg ${
+            isPickingSlot
+              ? "cursor-wait border-cyan-300/20 bg-cyan-400/[0.08] text-cyan-100/55"
+              : "border-cyan-300/45 bg-[linear-gradient(180deg,rgba(0,245,255,0.25),rgba(0,110,130,0.18))] text-[#baffdf] shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_0_30px_rgba(0,245,255,0.15)] hover:border-cyan-200/70 hover:bg-cyan-400/25 hover:shadow-[0_0_40px_rgba(0,245,255,0.25)]"
+          } disabled:cursor-not-allowed disabled:opacity-50`}
         >
-          Reset
+          <span className="relative z-10 flex items-center justify-center gap-3">
+            <span className={isPickingSlot ? "animate-spin" : ""}>
+              {isPickingSlot ? "◌" : "🎰"}
+            </span>
+
+            {isPickingSlot
+              ? "Randomizing..."
+              : pickedSlot
+              ? "Spin Again"
+              : "Pick Random Slot"}
+          </span>
         </button>
-      </div>
-    </div>
 
-    <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 text-center shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:rounded-[1.5rem] sm:p-8">
-      <button
-        onClick={pickRandomSlot}
-        disabled={isPickingSlot || filteredSlots.length === 0}
-        className="w-full rounded-xl border border-cyan-300/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.22),rgba(0,245,255,0.08))] px-4 py-3 text-xs font-black text-[#b8ffd8] shadow-[0_0_20px_rgba(0,245,255,0.10)] transition hover:border-cyan-300/45 hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-lg"
-      >
-        {isPickingSlot ? "Spinning..." : "Pick Random Slot"}
-      </button>
-
-      <div
-        className={`mt-4 rounded-2xl border bg-black/90 p-4 transition-all duration-300 sm:mt-8 sm:p-8 ${
-          isPickingSlot
-            ? "scale-[1.02] border-cyan-300/40 shadow-[0_0_45px_rgba(0,245,255,0.22)] blur-[0.2px]"
-            : "border-white/10 shadow-[0_0_28px_rgba(0,245,255,0.10)]"
-        }`}
-      >
-        {!pickedSlot ? (
-          <div className="py-8 text-sm text-white/45 sm:py-12 sm:text-base">
-            No slot picked yet.
-          </div>
-        ) : (
-          <>
-            <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/35 sm:text-xs sm:tracking-[0.3em]">
-              Selected Slot
-            </div>
-
-            {pickedSlot.image && (
-              <img
-                src={pickedSlot.image}
-                alt={pickedSlot.name}
-                className="mx-auto mb-3 mt-4 h-24 object-contain sm:mb-4 sm:mt-6 sm:h-32"
-              />
-            )}
-
-            <div
-              className={`mt-3 text-[clamp(1.2rem,6vw,4rem)] font-black transition-all duration-200 sm:mt-5 ${
-                isPickingSlot
-                  ? "scale-95 text-white/70 blur-[1px]"
-                  : "scale-105 text-[#8fffd0] drop-shadow-[0_0_25px_rgba(0,245,255,0.65)]"
-              }`}
-            >
-              {pickedSlot.name}
-            </div>
-
-            <div
-              className={`mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-200 sm:mt-5 sm:gap-3 sm:px-5 sm:text-sm ${
-                isPickingSlot
-                  ? "scale-95 border-white/10 bg-white/5 text-white/40"
-                  : "scale-105 border-cyan-300/20 bg-cyan-400/10 text-[#b8ffd8] shadow-[0_0_20px_rgba(0,245,255,0.35)]"
-              }`}
-            >
-              {providerLogos[pickedSlot.provider] && (
-                <img
-                  src={providerLogos[pickedSlot.provider]}
-                  alt={pickedSlot.provider}
-                  className="h-5 w-5 object-contain sm:h-6 sm:w-6"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-              )}
-
-              {pickedSlot.provider}
-            </div>
-          </>
-        )}
+        {/* FOOTER STATUS */}
+        <div className="mt-3 flex items-center justify-center gap-2 text-[9px] font-bold uppercase tracking-[0.14em] text-white/25 sm:mt-4 sm:text-[10px]">
+          <span>Random Selection</span>
+          <span className="text-cyan-300/30">•</span>
+          <span>{filteredSlots.length} Eligible</span>
+          <span className="text-cyan-300/30">•</span>
+          <span>
+            {selectedProviders.length === 0
+              ? "All Providers"
+              : `${selectedProviders.length} Selected`}
+          </span>
+        </div>
       </div>
     </div>
   </section>
@@ -4617,82 +4762,14 @@ onClick={() =>
 {activeSection === "admin" && adminAllowed && (
   <section className="mx-auto grid w-full min-w-0 max-w-6xl gap-2 overflow-x-hidden px-0 sm:gap-3 [&_input]:max-w-full [&_select]:max-w-full [&_textarea]:max-w-full">
     <div>
-<div className="min-w-0 px-1 text-center">
-  <GlowTabTitle label="ADMIN CONTROL CENTER" />
-</div>
+      <div className="min-w-0 px-1 text-center">
+        <GlowTabTitle label="ADMIN CONTROL CENTER" />
+      </div>
 
       <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
-        <div className="grid gap-2 sm:gap-3 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
-          <div className="rounded-xl border border-white/10 bg-black/35 p-2.5 sm:p-4">
-            <div className="text-[9px] uppercase tracking-[0.16em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
-              Signed in as
-            </div>
-
-            <div className="mt-2 flex items-center gap-2 sm:mt-3 sm:gap-3">
-              {viewerAvatar && (
-                <img
-                  src={viewerAvatar}
-                  alt={viewerDisplayName}
-                  className="h-9 w-9 rounded-full border border-cyan-300/25 object-cover sm:h-12 sm:w-12"
-                />
-              )}
-
-              <div className="min-w-0">
-                <div className="truncate text-base font-black text-white sm:text-xl">
-                  {viewerDisplayName}
-                </div>
-                <div className="truncate text-xs text-white/45 sm:text-sm">
-                  @{viewerName}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-white/10 bg-black/35 p-2.5 sm:p-4">
-            <div className="text-[9px] uppercase tracking-[0.16em] text-white/45 sm:text-xs sm:tracking-[0.22em]">
-              Admin Name
-            </div>
-
-            <input
-              value={adminName}
-              onChange={(e) => setAdminName(e.target.value)}
-              className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-300/35 sm:mt-3 sm:rounded-xl sm:px-4 sm:py-3 sm:text-base"
-            />
-          </div>
-
-          <ActionButton
-            onClick={() => setIsAdmin((v) => !v)}
-            variant={isAdmin ? "green" : "dark"}
-            className="min-h-[40px] w-full px-3 py-2 text-[10px] sm:min-h-[86px] sm:text-sm lg:w-[260px]"
-          >
-            {isAdmin ? `Admin Enabled` : "Enable Admin"}
-          </ActionButton>
+        <div className="rounded-xl border border-cyan-300/15 bg-cyan-400/5 px-3 py-2 text-[11px] font-semibold leading-5 text-cyan-100/75 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
+          {viewerDisplayName} control center is active.
         </div>
-
-        <div className="mt-2 rounded-xl border border-cyan-300/15 bg-cyan-400/5 px-3 py-2 text-[11px] font-semibold leading-5 text-cyan-100/75 sm:mt-4 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
-          {isAdmin
-            ? `${adminName} control center is active.`
-            : "Enable admin mode to use the tools below."}
-        </div>
-{isAdmin && (
-  <div className="mt-3 rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-4">
-    <div className="text-xs font-black uppercase tracking-[0.18em] text-yellow-200">
-      Monthly VIPs
-    </div>
-
-<div className="mt-2 text-sm text-white/55">
-  {adminMessage || "Saves everyone with $5,000+ wagered from the previous leaderboard as VIP for the next leaderboard."}
-</div>
-
-    <ActionButton
-      onClick={handleGenerateVipSnapshot}
-      variant="gold"
-      className="mt-3 w-full"
-    >
-      Generate VIP Snapshot
-    </ActionButton>
-  </div>
-)}
       </div>
 
       <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/70 p-1.5 sm:mt-4">
