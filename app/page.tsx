@@ -36,8 +36,8 @@ const socials = [
     icon: FaInstagram,
   },
   {
-    name: "X",
-    href: "YOUR_X_LINK_HERE",
+    name: "Twitter",
+    href: "https://x.com/trashguy__",
     icon: FaXTwitter,
   },
 ];
@@ -6646,10 +6646,10 @@ const rankBadgeStyle = isFirst
   </a>
 
   <a
-    href="YOUR_X_LINK_HERE"
+    href="https://x.com/trashguy__"
     target="_blank"
     rel="noreferrer"
-    aria-label="X"
+    aria-label="Twitter"
     className="transition hover:scale-110"
   >
     <FaXTwitter className="text-2xl text-white sm:text-3xl md:text-4xl" />
