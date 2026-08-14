@@ -3334,7 +3334,7 @@ style={{
                 ? "text-[#5865F2]"
                 : social.name === "Instagram"
                 ? "text-[#E1306C]"
-                : social.name === "X"
+                : social.name === "Twitter"
                 ? "text-white"
                 : "text-cyan-200"
             }`}
