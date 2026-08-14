@@ -70,7 +70,7 @@ function SmallButton({
 }
 
 export default function GiveawayAdmin({ isAdmin }: { isAdmin: boolean }) {
-  const [activeType, setActiveType] = useState<GiveawayType>("regular");
+  const [activeType, setActiveType] = useState<GiveawayType>("vip");
   const [tick, setTick] = useState(Date.now());
   const [states, setStates] = useState<Record<GiveawayType, GiveawayViewState>>({
     regular: emptyState(),
@@ -276,7 +276,7 @@ export default function GiveawayAdmin({ isAdmin }: { isAdmin: boolean }) {
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden">
       <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 rounded-xl border border-white/10 bg-black/40 p-1 sm:gap-2 sm:p-1.5">
-        {(["regular", "vip"] as GiveawayType[]).map((type) => {
+        {(["vip", "regular"] as GiveawayType[]).map((type) => {
           const active = activeType === type;
           const live = states[type].giveaway?.status === "live";
           return (

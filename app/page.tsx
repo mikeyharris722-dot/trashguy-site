@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
 import GiveawayAdmin from "./components/admin/giveaways/GiveawayAdmin";
-import { FaTwitch, FaDiscord, FaInstagram } from "react-icons/fa";
+import { FaTwitch, FaDiscord, FaInstagram, FaXTwitter } from "react-icons/fa6";
 import { SiKick } from "react-icons/si";
 import { slotData, providerLogos, type SlotItem } from "./slotData";
 import { Russo_One } from "next/font/google";
@@ -34,6 +34,11 @@ const socials = [
     name: "Instagram",
     href: "https://instagram.com/trashguy__",
     icon: FaInstagram,
+  },
+  {
+    name: "X",
+    href: "YOUR_X_LINK_HERE",
+    icon: FaXTwitter,
   },
 ];
 
@@ -591,7 +596,7 @@ export default function Home() {
   const [pickedSlot, setPickedSlot] = useState<SlotItem | null>(null);
   const [isPickingSlot, setIsPickingSlot] = useState(false);
   const lastPickedRef = useRef<string | null>(null);
-  const lastSlotCallWinnerRef = useRef<string | null>(null);
+  const slotWheelWinnersThisCycleRef = useRef<Set<string>>(new Set());
 
   const [viewerName, setViewerName] = useState("viewer");
   const [viewerDisplayName, setViewerDisplayName] = useState("viewer");
@@ -734,15 +739,15 @@ const [slotCallResults, setSlotCallResults] = useState<
 const [slotPayoutInput, setSlotPayoutInput] = useState("");
 const [slotCallMessage, setSlotCallMessage] = useState("");
 const [isSlotWheelSpinning, setIsSlotWheelSpinning] = useState(false);
+
 const [pickedSlotCall, setPickedSlotCall] = useState<{
   id: string;
   username: string;
   slotName: string;
   createdAt: number;
 } | null>(null);
-const [slotWheelRotation, setSlotWheelRotation] = useState(0);
-const [slotWheelIdleIndex, setSlotWheelIdleIndex] = useState(0);
 
+const [slotWheelRotation, setSlotWheelRotation] = useState(0);
 const [giveawayEntries, setGiveawayEntries] = useState<any[]>([]);
 const [recentGiveawayWinners, setRecentGiveawayWinners] = useState<any[]>([]);
 const [giveawayWinnerCounts, setGiveawayWinnerCounts] = useState<Record<string, number>>({});
@@ -1892,27 +1897,6 @@ useEffect(() => {
   return () => clearInterval(timer);
 }, []);
 
-useEffect(() => {
-  if (pickedSlotCall || isSlotWheelSpinning || slotCalls.length <= 1) return;
-
-  const timer = window.setInterval(() => {
-    setSlotWheelIdleIndex((current) =>
-      slotCalls.length ? (current + 1) % slotCalls.length : 0
-    );
-  }, 1400);
-
-  return () => window.clearInterval(timer);
-}, [pickedSlotCall, isSlotWheelSpinning, slotCalls.length]);
-
-useEffect(() => {
-  if (!slotCalls.length) {
-    setSlotWheelIdleIndex(0);
-    return;
-  }
-
-  setSlotWheelIdleIndex((current) => current % slotCalls.length);
-}, [slotCalls.length]);
-
 const handleKickLogin = () => {
   localStorage.setItem("viewerPlatform", "kick");
   window.location.href = "/api/kick";
@@ -2532,63 +2516,85 @@ const handleSpinSlotWheel = () => {
     return;
   }
 
+  const normalizeUsername = (value: string) =>
+    String(value || "")
+      .trim()
+      .toLowerCase();
+
   const getRandomIndex = (length: number) => {
     if (length <= 1) return 0;
 
+    const maxUint32 = 0x100000000;
+    const limit =
+      maxUint32 - (maxUint32 % length);
+
     const values = new Uint32Array(1);
-    crypto.getRandomValues(values);
+
+    do {
+      crypto.getRandomValues(values);
+    } while (values[0] >= limit);
 
     return values[0] % length;
   };
 
-  const getCallKey = (call: any) =>
-    String(
-      call.id ||
-        `${call.platform || "unknown"}:${call.username}:${call.slotName}`
-    );
+  /*
+    Only viewers who have NOT already won
+    during this cycle are eligible.
+  */
+  let eligibleCalls = slotCalls.filter(
+    (call) =>
+      !slotWheelWinnersThisCycleRef.current.has(
+        normalizeUsername(call.username)
+      )
+  );
 
   /*
-    Avoid selecting the immediately previous winner when
-    more than one entry is available.
+    Once everyone currently on the wheel
+    has won, start a brand-new cycle.
   */
-  const availableCalls =
-    slotCalls.length > 1
-      ? slotCalls.filter(
-          (call) =>
-            getCallKey(call) !==
-            lastSlotCallWinnerRef.current
-        )
-      : slotCalls;
+  if (eligibleCalls.length === 0) {
+    slotWheelWinnersThisCycleRef.current.clear();
+    eligibleCalls = [...slotCalls];
+  }
 
+  /*
+    Pick a genuinely random eligible entry.
+  */
   const winner =
-    availableCalls[
-      getRandomIndex(availableCalls.length)
+    eligibleCalls[
+      getRandomIndex(eligibleCalls.length)
     ];
 
   const winnerIndex = slotCalls.findIndex(
-    (call) => getCallKey(call) === getCallKey(winner)
+    (call) => call.id === winner.id
   );
 
+  if (winnerIndex < 0) {
+    console.error(
+      "Selected wheel winner was not found."
+    );
+    return;
+  }
+
   /*
-    Vary the number of full loops so every spin does not
-    travel exactly the same distance.
+    Randomize how many complete passes the
+    visual wheel makes before landing.
   */
-  const maximumTargetLoop = Math.max(
-    1,
+  const maximumLoop = Math.max(
+    4,
     SLOT_WHEEL_LOOPS - 2
   );
 
-  const minimumTargetLoop = Math.max(
-    1,
-    maximumTargetLoop - 3
+  const minimumLoop = Math.max(
+    2,
+    maximumLoop - 3
   );
 
-  const loopRange =
-    maximumTargetLoop - minimumTargetLoop + 1;
-
   const targetLoop =
-    minimumTargetLoop +
-    getRandomIndex(loopRange);
+    minimumLoop +
+    getRandomIndex(
+      maximumLoop - minimumLoop + 1
+    );
 
   const targetIndex =
     targetLoop * slotCalls.length +
@@ -2612,8 +2618,17 @@ const handleSpinSlotWheel = () => {
   });
 
   window.setTimeout(() => {
-    lastSlotCallWinnerRef.current =
-      getCallKey(winner);
+    /*
+      Save the USERNAME, not just the slot.
+
+      So if Twanny wins, removes that slot,
+      and immediately enters another slot,
+      Twanny still cannot win again until
+      everybody else in this cycle has won.
+    */
+    slotWheelWinnersThisCycleRef.current.add(
+      normalizeUsername(winner.username)
+    );
 
     setPickedSlotCall(winner);
     setSlotWheelRotation(0);
@@ -2627,23 +2642,69 @@ const handleSpinSlotWheel = () => {
 };
 
 const handleShuffleSlotWheel = () => {
-  if (slotCalls.length <= 1 || isSlotWheelSpinning || pickedSlotCall) return;
+  if (
+    slotCalls.length <= 1 ||
+    isSlotWheelSpinning ||
+    pickedSlotCall
+  ) {
+    return;
+  }
 
-  setSlotWheelIdleIndex(Math.floor(Math.random() * slotCalls.length));
+  const getRandomIndex = (length: number) => {
+    if (length <= 1) return 0;
+
+    const maxUint32 = 0x100000000;
+    const limit =
+      maxUint32 - (maxUint32 % length);
+
+    const values = new Uint32Array(1);
+
+    do {
+      crypto.getRandomValues(values);
+    } while (values[0] >= limit);
+
+    return values[0] % length;
+  };
+
+  setSlotCalls((current) => {
+    const shuffled = [...current];
+
+    for (
+      let index = shuffled.length - 1;
+      index > 0;
+      index--
+    ) {
+      const randomIndex =
+        getRandomIndex(index + 1);
+
+      [
+        shuffled[index],
+        shuffled[randomIndex],
+      ] = [
+        shuffled[randomIndex],
+        shuffled[index],
+      ];
+    }
+
+    return shuffled;
+  });
 };
 
 const handleRemovePickedSlot = async () => {
   if (!pickedSlotCall) return;
 
   if (pickedSlotCall.id) {
-    await fetch(`/api/slot-calls?id=${pickedSlotCall.id}`, {
-      method: "DELETE",
-    });
+    await fetch(
+      `/api/slot-calls?id=${pickedSlotCall.id}`,
+      {
+        method: "DELETE",
+      }
+    );
   }
 
   setPickedSlotCall(null);
   setSlotWheelRotation(0);
-  setSlotWheelIdleIndex(0);
+
   await loadSlotCalls();
 };
 
@@ -2659,27 +2720,38 @@ const slotWheelLoop = useMemo(() => {
 const slotWheelRestingRows = useMemo(() => {
   if (!slotCalls.length) return [];
 
-  const centerIndex = pickedSlotCall
-    ? Math.max(
-        0,
-        slotCalls.findIndex((call) => call.id === pickedSlotCall.id)
+  const pickedIndex = pickedSlotCall
+    ? slotCalls.findIndex(
+        (call) => call.id === pickedSlotCall.id
       )
-    : slotWheelIdleIndex % slotCalls.length;
+    : 0;
 
-  const half = Math.floor(SLOT_WHEEL_VISIBLE_ROWS / 2);
+  const centerIndex =
+    pickedIndex >= 0 ? pickedIndex : 0;
 
-  return Array.from({ length: SLOT_WHEEL_VISIBLE_ROWS }, (_, rowIndex) => {
-    const offset = rowIndex - half;
-    const callIndex =
-      (centerIndex + offset + slotCalls.length) % slotCalls.length;
+  const half = Math.floor(
+    SLOT_WHEEL_VISIBLE_ROWS / 2
+  );
 
-    return {
-      call: slotCalls[callIndex],
-      isCenter: rowIndex === half,
-      rowKey: `${slotCalls[callIndex].id}-${rowIndex}-${centerIndex}`,
-    };
-  });
-}, [pickedSlotCall, slotCalls, slotWheelIdleIndex]);
+  return Array.from(
+    { length: SLOT_WHEEL_VISIBLE_ROWS },
+    (_, rowIndex) => {
+      const offset = rowIndex - half;
+
+      const callIndex =
+        (centerIndex +
+          offset +
+          slotCalls.length) %
+        slotCalls.length;
+
+      return {
+        call: slotCalls[callIndex],
+        isCenter: rowIndex === half,
+        rowKey: `${slotCalls[callIndex].id}-${rowIndex}-${centerIndex}`,
+      };
+    }
+  );
+}, [pickedSlotCall, slotCalls]);
 
 const handleCreateManualReward = async () => {
   const username = manualRewardUsername.trim().replace("@", "");
@@ -3238,84 +3310,87 @@ style={{
   </div>
 </div>
 
-    <section className="relative py-1 sm:py-3">
-      <div className="mx-auto grid max-w-5xl grid-cols-4 gap-2 sm:grid-cols-4 sm:gap-4">
-        {socials.map((social) => {
-          const Icon = social.icon;
+<section className="relative py-1 sm:py-3">
+  <div className="mx-auto grid max-w-5xl grid-cols-5 gap-1.5 sm:gap-3">
+    {socials.map((social) => {
+      const Icon = social.icon;
 
-          return (
-            <a
-              key={social.name}
-              href={social.href}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={social.name}
-              className="group flex min-h-[72px] flex-col items-center justify-center rounded-xl border border-white/10 bg-black/50 p-2 backdrop-blur-md transition hover:-translate-y-0.5 hover:border-cyan-300/35 hover:bg-cyan-400/10 sm:min-h-[110px] sm:rounded-2xl sm:p-4"
-            >
-<Icon
-  className={`text-2xl transition group-hover:scale-110 sm:text-4xl ${
-    social.name === "Twitch"
-      ? "text-[#9146FF]"
-      : social.name === "Kick"
-      ? "text-[#53FC18]"
-      : social.name === "Discord"
-      ? "text-[#5865F2]"
-      : social.name === "Instagram"
-      ? "text-[#E1306C]"
-      : "text-cyan-200"
-  }`}
-/>
-
-              <div className="mt-1 text-[9px] font-black uppercase tracking-[0.14em] text-white/55 sm:mt-2 sm:text-xs">
-                {social.name}
-              </div>
-            </a>
-          );
-        })}
-      </div>
-    </section>
-
-    <section className="relative py-2 sm:py-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <SectionLabel>Live Stream</SectionLabel>
-          <h2 className="mt-2 text-xl font-black sm:text-3xl">
-            WATCH TRASHGUY LIVE
-          </h2>
-        </div>
-      </div>
-
-      <div className="mt-3 aspect-video overflow-hidden rounded-[1.25rem] border border-cyan-300/20 bg-black sm:rounded-[2rem]">
-        {liveStatus.isLive ? (
-          <iframe
-            src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
-            height="100%"
-            width="100%"
-            allowFullScreen
+      return (
+        <a
+          key={social.name}
+          href={social.href}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={social.name}
+          className="group flex min-h-[64px] min-w-0 flex-col items-center justify-center rounded-xl border border-white/10 bg-black/50 p-1.5 backdrop-blur-md transition hover:-translate-y-0.5 hover:border-cyan-300/35 hover:bg-cyan-400/10 sm:min-h-[100px] sm:rounded-2xl sm:p-3"
+        >
+          <Icon
+            className={`text-xl transition group-hover:scale-110 sm:text-4xl ${
+              social.name === "Twitch"
+                ? "text-[#9146FF]"
+                : social.name === "Kick"
+                ? "text-[#53FC18]"
+                : social.name === "Discord"
+                ? "text-[#5865F2]"
+                : social.name === "Instagram"
+                ? "text-[#E1306C]"
+                : social.name === "X"
+                ? "text-white"
+                : "text-cyan-200"
+            }`}
           />
-        ) : (
-          <a
-            href="https://www.twitch.tv/trashguy__"
-            target="_blank"
-            rel="noreferrer"
-            className="relative flex h-full items-center justify-center overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-[url('/trashguy-casino.png')] bg-cover bg-center opacity-45" />
-            <div className="absolute inset-0 bg-black/45" />
 
-            <div className="relative z-10 text-center">
-              <div className="text-3xl font-black text-white sm:text-5xl">
-                OFFLINE
-              </div>
+          <div className="mt-1 truncate text-[7px] font-black uppercase tracking-[0.08em] text-white/55 sm:mt-2 sm:text-xs sm:tracking-[0.14em]">
+            {social.name}
+          </div>
+        </a>
+      );
+    })}
+  </div>
+</section>
 
-              <div className="mt-2 text-sm text-white/50 sm:text-base">
-                Tap to open Twitch
-              </div>
-            </div>
-          </a>
-        )}
-      </div>
-    </section>
+<section className="relative mx-auto max-w-[850px] py-2 sm:py-4">
+  <div className="flex items-end justify-between gap-3">
+    <div>
+      <SectionLabel>Live Stream</SectionLabel>
+
+      <h2 className="mt-1 text-lg font-black sm:text-2xl">
+        WATCH TRASHGUY LIVE
+      </h2>
+    </div>
+  </div>
+
+  <div className="mt-3 aspect-video w-full overflow-hidden rounded-xl border border-cyan-300/20 bg-black shadow-[0_0_24px_rgba(0,245,255,0.06)] sm:rounded-2xl">
+    {liveStatus.isLive ? (
+      <iframe
+        src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
+        height="100%"
+        width="100%"
+        allowFullScreen
+      />
+    ) : (
+      <a
+        href="https://www.twitch.tv/trashguy__"
+        target="_blank"
+        rel="noreferrer"
+        className="relative flex h-full items-center justify-center overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-[url('/trashguy-casino.png')] bg-cover bg-center opacity-45" />
+        <div className="absolute inset-0 bg-black/45" />
+
+        <div className="relative z-10 text-center">
+          <div className="text-2xl font-black text-white sm:text-4xl">
+            OFFLINE
+          </div>
+
+          <div className="mt-1 text-xs text-white/50 sm:text-sm">
+            Tap to open Twitch
+          </div>
+        </div>
+      </a>
+    )}
+  </div>
+</section>
   </section>
 )}
 
@@ -3341,90 +3416,143 @@ style={{
         <div className="text-right">Prize</div>
       </div>
 
-      {leaderboardLoading && leaderboardData.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-black/35 px-4 py-6 text-sm text-white/60">
-          Loading leaderboard...
-        </div>
-      ) : (
-        leaderboardData.map((player) => {
-          const prize = leaderboardPrizes[player.rank] || 0;
-
-          const rankIcons: Record<number, string> = {
-            1: "🥇",
-            2: "🥈",
-            3: "🥉",
-          };
-
-const rowBg =
-  player.rank === 1
-    ? "border-yellow-300/35 bg-[linear-gradient(90deg,rgba(90,60,0,0.96),rgba(15,10,0,0.98))]"
-    : player.rank === 2
-    ? "border-zinc-200/30 bg-[linear-gradient(90deg,rgba(85,85,95,0.96),rgba(18,18,18,0.98))]"
-    : player.rank === 3
-    ? "border-amber-500/35 bg-[linear-gradient(90deg,rgba(95,45,10,0.96),rgba(20,10,0,0.98))]"
-    : player.rank >= 4 && player.rank <= 8
-    ? "border-cyan-300/25 bg-[linear-gradient(90deg,rgba(0,140,255,0.22),rgba(0,0,0,0.97))]"
-    : "border-white/8 bg-black/95";
-
-const rankBox =
-  player.rank === 1
-    ? "text-yellow-300"
-    : player.rank === 2
-    ? "text-zinc-200"
-    : player.rank === 3
-    ? "text-amber-400"
-    : player.rank >= 4 && player.rank <= 6
-    ? "text-cyan-200"
-    : "text-white/80";
-
-          return (
-            <div
-              key={`${player.rank}-${player.username}`}
-              className={`grid grid-cols-[42px_minmax(0,1fr)_88px_48px] items-center rounded-2xl border px-2 py-2.5 shadow-[0_0_18px_rgba(0,0,0,0.22)] transition hover:bg-white/[0.04] sm:grid-cols-[80px_1fr_180px_140px] sm:px-5 sm:py-3.5 ${rowBg}`}
-            >
-<div>
-  <div
-    className={`flex h-9 w-9 items-center justify-center text-base font-black sm:h-11 sm:w-11 sm:text-xl ${rankBox}`}
-  >
-    {rankIcons[player.rank] || player.rank}
+{leaderboardLoading && leaderboardData.length === 0 ? (
+  <div className="rounded-xl border border-white/10 bg-black/35 px-4 py-5 text-sm text-white/60">
+    Loading leaderboard...
   </div>
-</div>
-              <div className="min-w-0">
-                <div className="truncate text-sm font-black text-white sm:text-xl">
-                  {player.username}
-                </div>
+) : (
+  <div className="space-y-2">
+    {leaderboardData.map((player) => {
+      const prize = leaderboardPrizes[player.rank] || 0;
 
+      const isFirst = player.rank === 1;
+      const isSecond = player.rank === 2;
+      const isThird = player.rank === 3;
+      const isTopThree = player.rank <= 3;
+
+const topRowStyle = isFirst
+  ? "border-yellow-300/70 bg-[linear-gradient(110deg,rgb(135,92,0),rgb(72,48,0),rgb(18,14,3))] shadow-[0_0_28px_rgba(250,204,21,0.25)]"
+  : isSecond
+  ? "border-slate-200/65 bg-[linear-gradient(110deg,rgb(95,112,132),rgb(52,64,80),rgb(14,18,25))] shadow-[0_0_26px_rgba(220,230,245,0.18)]"
+  : "border-orange-400/65 bg-[linear-gradient(110deg,rgb(130,58,14),rgb(72,31,8),rgb(18,10,4))] shadow-[0_0_26px_rgba(251,146,60,0.20)]";
+
+const rankBadgeStyle = isFirst
+  ? "border-yellow-200/70 bg-yellow-300/20 text-yellow-100 shadow-[0_0_16px_rgba(250,204,21,0.30)]"
+  : isSecond
+  ? "border-slate-100/65 bg-slate-100/15 text-white shadow-[0_0_16px_rgba(226,232,240,0.22)]"
+  : isThird
+  ? "border-orange-300/65 bg-orange-400/15 text-orange-100 shadow-[0_0_16px_rgba(251,146,60,0.24)]"
+  : "border-cyan-300/15 bg-cyan-400/[0.04] text-cyan-100/75";
+
+      const rankLabel = isFirst
+        ? "🥇"
+        : isSecond
+        ? "🥈"
+        : isThird
+        ? "🥉"
+        : `#${player.rank}`;
+
+      if (isTopThree) {
+        return (
+          <div
+            key={`${player.rank}-${player.username}`}
+            className={`grid grid-cols-[56px_minmax(0,1fr)_92px_64px] items-center rounded-2xl border px-3 py-3 sm:grid-cols-[82px_minmax(0,1fr)_180px_130px] sm:px-5 sm:py-4 ${topRowStyle}`}
+          >
+            <div className="flex justify-start">
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-xl border text-lg font-black sm:h-12 sm:w-12 sm:text-2xl ${rankBadgeStyle}`}
+              >
+                {rankLabel}
+              </div>
+            </div>
+
+            <div className="min-w-0 pl-1 sm:pl-3">
+              <div className="truncate text-sm font-black text-white sm:text-xl">
+                {player.username}
               </div>
 
-              <div className="whitespace-nowrap text-right text-[10px] font-black text-white/90 sm:text-lg">
+              <div className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-white/30 sm:text-[10px]">
+                Rank #{player.rank}
+              </div>
+            </div>
+
+            <div className="text-right">
+              <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/25 sm:text-[9px]">
+                Wagered
+              </div>
+
+              <div className="mt-0.5 whitespace-nowrap text-[10px] font-black text-white sm:text-base">
                 {formatMoney(player.wagered)}
               </div>
+            </div>
 
-              <div className="whitespace-nowrap text-right text-[10px] font-black text-[#f5c451] sm:text-lg">
+            <div className="text-right">
+              <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/25 sm:text-[9px]">
+                Prize
+              </div>
+
+              <div className="mt-0.5 whitespace-nowrap text-[10px] font-black text-emerald-300 drop-shadow-[0_0_10px_rgba(110,231,183,0.30)] sm:text-base">
                 {prize > 0 ? `$${prize.toLocaleString()}` : "-"}
               </div>
             </div>
-          );
-        })
-      )}
+          </div>
+        );
+      }
+
+      return (
+        <div
+          key={`${player.rank}-${player.username}`}
+          className="grid grid-cols-[48px_minmax(0,1fr)_92px_58px] items-center border-b border-cyan-300/[0.08] bg-[#08111f]/88 px-3 py-2.5 transition hover:bg-[#0b1728] sm:grid-cols-[70px_minmax(0,1fr)_180px_120px] sm:px-5 sm:py-3"
+        >
+          <div className="flex justify-start">
+            <div
+              className={`flex h-8 min-w-[40px] items-center justify-center rounded-full border px-2 text-[10px] font-black sm:h-9 sm:min-w-[48px] sm:text-xs ${rankBadgeStyle}`}
+            >
+              {rankLabel}
+            </div>
+          </div>
+
+          <div className="min-w-0 pl-2 sm:pl-4">
+            <div className="truncate text-[11px] font-black text-white sm:text-base">
+              {player.username}
+            </div>
+          </div>
+
+          <div className="whitespace-nowrap text-right text-[9px] font-black text-white/85 sm:text-sm">
+            {formatMoney(player.wagered)}
+          </div>
+
+          <div className="whitespace-nowrap text-right text-[9px] font-black text-emerald-300 drop-shadow-[0_0_9px_rgba(110,231,183,0.24)] sm:text-sm">
+            {prize > 0 ? `$${prize.toLocaleString()}` : "-"}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+)}
+
 {adminAllowed && (
-  <div className="mx-auto mt-4 w-full max-w-5xl rounded-xl border border-yellow-300/20 bg-yellow-400/10 p-4">
-    <div className="text-xs font-black uppercase tracking-[0.18em] text-yellow-200">
-      VIP Snapshot
-    </div>
+  <div className="mx-auto mt-4 w-full max-w-xl rounded-xl border border-yellow-300/20 bg-yellow-400/[0.08] px-3 py-3 shadow-[0_0_18px_rgba(250,204,21,0.06)]">
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-200 sm:text-xs">
+          👑 VIP Snapshot
+        </div>
 
-    <div className="mt-2 text-sm text-white/55">
-      {adminMessage ||
-        "Save everyone with $5,000+ wagered from the completed leaderboard as VIPs for the next leaderboard."}
-    </div>
+        <div className="mt-1 text-[10px] leading-tight text-white/45 sm:text-xs">
+          {adminMessage ||
+            "Save $5,000+ wagered players as VIPs for the next leaderboard."}
+        </div>
+      </div>
 
-    <ActionButton
-      onClick={handleGenerateVipSnapshot}
-      variant="gold"
-      className="mt-3 w-full"
-    >
-      Generate VIP Snapshot
-    </ActionButton>
+      <ActionButton
+        onClick={handleGenerateVipSnapshot}
+        variant="gold"
+        className="shrink-0 px-3 py-2 text-[9px] sm:px-4 sm:text-[10px]"
+      >
+        Generate Snapshot
+      </ActionButton>
+    </div>
   </div>
 )}
     </div>
@@ -3851,347 +3979,378 @@ const rankBox =
 )}
 
 {activeSection === "profile" && (
-  <section className="space-y-4 sm:space-y-6">
+  <section className="space-y-3">
+    {/* TITLE */}
     <div className="mx-auto max-w-5xl text-center">
       <GlowTabTitle label="PROFILE" />
     </div>
 
-{false ? (
-  <div className="mx-auto max-w-4xl rounded-2xl border border-white/10 bg-black/70 p-5 text-center text-sm text-white/60">
-    Owner accounts do not use the Prize Portal.
-  </div>
-) : (
-      <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/15 bg-black/80 p-3 shadow-[0_0_24px_rgba(0,245,255,0.08)] sm:p-5">
-        {!isTwitchConnected ? (
-          <div className="text-center">
-            <div className="text-sm font-black uppercase tracking-[0.18em] text-white/55">
-              Connect Your Account
+    {!isTwitchConnected ? (
+      /* NOT CONNECTED */
+      <div className="mx-auto max-w-5xl rounded-xl border border-white/10 bg-black/60 p-4 text-center">
+        <div className="text-xs font-black uppercase tracking-[0.18em] text-white/55">
+          Connect Your Account
+        </div>
+
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <button
+            onClick={handleTwitchLogin}
+            className="rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#9146FF]/30"
+          >
+            Connect Twitch
+          </button>
+
+          <button
+            onClick={() => {
+              window.location.href = "/api/kick";
+            }}
+            className="rounded-xl border border-[#53FC18]/40 bg-[#53FC18]/20 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#53FC18]/30"
+          >
+            Connect Kick
+          </button>
+        </div>
+      </div>
+    ) : (
+      <div className="mx-auto w-full max-w-5xl space-y-3">
+
+        {/* USER */}
+        <div className="rounded-xl border border-white/10 bg-black/60 p-3">
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-black text-white ${
+                viewerPlatform === "kick"
+                  ? "border border-[#53FC18]/30 bg-[#53FC18]/20"
+                  : "border border-purple-300/30 bg-purple-500/20"
+              }`}
+            >
+              {viewerDisplayName?.charAt(0)?.toUpperCase() || "T"}
             </div>
 
-<div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-center">
-  <button
-    onClick={handleTwitchLogin}
-    className="rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-[#9146FF]/30"
-  >
-    Connect Twitch to View Portal
-  </button>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-base font-black text-white">
+                {viewerDisplayName || viewerName}
+              </div>
 
-  <button
-    onClick={() => {
-      window.location.href = "/api/kick";
-    }}
-    className="rounded-xl border border-[#53FC18]/40 bg-[#53FC18]/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-[#53FC18]/30"
-  >
-    Connect Kick to View Portal
-  </button>
-</div>
-          </div>
-        ) : (
-          <>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
-              <div className="flex items-center gap-3">
-<div
-  className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-black text-white ${
-    viewerPlatform === "kick"
-      ? "border border-[#53FC18]/30 bg-[#53FC18]/20"
-      : "border border-purple-300/30 bg-purple-500/20"
-  }`}
->
-                  {viewerDisplayName?.charAt(0)?.toUpperCase() || "T"}
+              <div className="mt-0.5 flex items-center gap-2">
+                <div className="truncate text-xs font-bold text-white/60">
+                  @{viewerName}
                 </div>
 
-                <div className="min-w-0">
-                  <div className="truncate text-lg font-black text-white">
-                    {viewerDisplayName || viewerName}
-                  </div>
-<div className="mt-1 flex items-center gap-2">
-  <div className="truncate text-sm font-bold text-white/80">
-    @{viewerName}
-  </div>
-
-<div
-  className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.18em] ${
-    viewerPlatform === "kick"
-      ? "border border-[#53FC18]/30 bg-[#53FC18]/15 text-[#53FC18]"
-      : "border border-purple-300/30 bg-purple-500/15 text-purple-300"
-  }`}
->
-  {viewerPlatform === "kick" ? "kick" : "twitch"}
-</div>
-</div>
+                <div
+                  className={`rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.16em] ${
+                    viewerPlatform === "kick"
+                      ? "border border-[#53FC18]/30 bg-[#53FC18]/15 text-[#53FC18]"
+                      : "border border-purple-300/30 bg-purple-500/15 text-purple-300"
+                  }`}
+                >
+                  {viewerPlatform === "kick" ? "kick" : "twitch"}
                 </div>
               </div>
             </div>
-
-            {/* Profile Card */}
-
-<div className="mt-3 grid grid-cols-1 gap-2">
-  <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3 text-center">
-    <div className="text-[12px] font-black uppercase tracking-[0.16em] text-cyan-200/70">
-      Leaderboard Wagered
-    </div>
-
-    <div className="mt-1 text-lg font-black text-white sm:text-2xl">
-      ${Number(
-  leaderboardData.find(
-    (player) =>
-      player.username?.toLowerCase() === viewerName.toLowerCase() ||
-      player.username?.toLowerCase() === rouloLink?.roulo_username?.toLowerCase()
-  )?.wagered || 0
-).toLocaleString()}
-    </div>
-  </div>
-</div>
-
-{/* Discord Account */}
-
-<div className="mt-3 rounded-2xl border border-cyan-300/15 bg-black/60 p-3 sm:p-4">
-  <div className="space-y-4">
-
-    {/* DISCORD ACCOUNT */}
-    <div>
-      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300/80">
-        Discord Account
-      </div>
-
-      <div className="mt-3">
-{discordLink?.is_in_discord ? (
-  <div className="rounded-xl border border-indigo-300/20 bg-indigo-500/10 px-4 py-3 text-center">
-    <div className="text-sm font-black text-indigo-300">
-      ✅ Discord Linked
-    </div>
-
-    <div className="mt-1 text-xs text-white/60">
-      {discordLink?.discord_username}
-    </div>
-  </div>
-) : (
-  <button
-    type="button"
-onClick={() =>
-  (window.location.href = `/api/discord/login?viewer=${viewerName}&platform=${viewerPlatform}`)
-}
-    className="w-full rounded-xl border border-indigo-300/20 bg-indigo-400/10 px-4 py-3 text-sm font-black text-indigo-200 hover:bg-indigo-400/20"
-  >
-    💬 Link Discord
-  </button>
-)}
-      </div>
-    </div>
-
-    {/* ROULO ACCOUNT */}
-    <div>
-      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300/80">
-        Roulo Account
-      </div>
-
-      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-        <input
-          value={rouloUsernameInput}
-          onChange={(e) => setRouloUsernameInput(e.target.value)}
-          placeholder="Enter your Roulo username"
-          className="w-full rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-sm text-white outline-none"
-        />
-
-        <button
-          onClick={handleLinkRoulo}
-          className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 hover:bg-cyan-400/20"
-        >
-          Link Roulo
-        </button>
-      </div>
-
-      {rouloLinkMessage && (
-        <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-2 text-xs text-white/70">
-          {rouloLinkMessage}
-        </div>
-      )}
-    </div>
-
-  </div>
-</div>
-
-{rouloLink && (
-<div className="mt-3 rounded-xl border border-white/10 bg-black/40 p-4">
-  <div className="space-y-3 text-sm">
-
-    <div className="flex items-center justify-between">
-      <span className="font-semibold text-white">
-        ✅ Twitch
-      </span>
-
-      <span className="font-black text-white">
-        🎲 Base Odds: {viewerOdds.baseOdds.toFixed(1)}x
-      </span>
-    </div>
-
-    <div className="flex items-center justify-between">
-      <span className="font-semibold text-white">
-        ✅ Roulo
-      </span>
-
-      <span className="font-black text-green-300">
-        🍀 Luck Odds: +{viewerOdds.luckOdds.toFixed(1)}x
-      </span>
-    </div>
-
-    <div className="flex items-center justify-between">
-      <span className="font-semibold text-white">
-        {(rouloLink as any)?.is_in_discord ? "✅" : "❌"} Discord
-      </span>
-
-      <span className="font-black text-red-300">
-        ❤️ Total Odds: {viewerOdds.totalOdds.toFixed(1)}x
-      </span>
-    </div>
-
-    <div className="flex items-center justify-between">
-      <span className="font-semibold text-white">
-        👑{" "}
-        {String(rouloLink?.role || "").toLowerCase() === "vip"
-          ? "VIP"
-          : rouloLink?.roulo_username
-          ? "Affiliate"
-          : "Viewer"}
-      </span>
-
-      <span className="font-black text-cyan-300">
-        📈 Next Loss: {viewerOdds.nextOdds.toFixed(1)}x
-      </span>
-    </div>
-
-    <div className="border-t border-white/10 pt-3" />
-
-    <div className="flex items-center justify-between">
-      <span className="font-black text-yellow-200">
-        💰 Pending
-      </span>
-
-      <span className="font-black text-yellow-200">
-        ${viewerRewardsPending.toLocaleString()}
-      </span>
-    </div>
-
-    <div className="flex items-center justify-between">
-      <span className="font-black text-green-300">
-        ✅ Paid
-      </span>
-
-      <span className="font-black text-green-300">
-        ${viewerRewardsPaid.toLocaleString()}
-      </span>
-    </div>
-
-  </div>
-
-    {!((rouloLink as any)?.is_in_discord || discordLink?.is_in_discord) && (
-      <button
-        onClick={() =>
-          (window.location.href = `/api/discord/login?viewer=${viewerName}&platform=${viewerPlatform}`)
-        }
-        className="mt-4 w-full rounded-xl border border-indigo-300/20 bg-indigo-400/10 px-4 py-3 text-sm font-black text-indigo-200 hover:bg-indigo-400/20"
-      >
-        💬 Link Discord (+0.5 Odds)
-      </button>
-    )}
-  </div>
-)}
-
-<div className="mt-3 space-y-3">
-  {viewerRewards.length === 0 ? (
-    <div className="rounded-xl border border-white/10 bg-black/60 px-4 py-6 text-center text-sm text-white/45">
-      {viewerRewardsMessage || "No rewards yet."}
-    </div>
-  ) : (
-    <>
-      {[
-        {
-          title: "Ready to Claim",
-          items: viewerRewards.filter((r) => !r.claimed && !r.paid),
-          empty: "No prizes to claim.",
-          color: "yellow",
-        },
-        {
-          title: "Waiting for Payment",
-          items: viewerRewards.filter((r) => r.claimed && !r.paid),
-          empty: "No claimed prizes waiting.",
-          color: "orange",
-        },
-        {
-          title: "Paid",
-          items: viewerRewards.filter((r) => r.paid),
-          empty: "No paid prizes yet.",
-          color: "cyan",
-        },
-      ].map((section) => (
-        <div
-          key={section.title}
-          className="overflow-hidden rounded-xl border border-white/10 bg-black/60"
-        >
-          <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
-            <div className="text-[11px] font-black uppercase tracking-[0.16em] text-white">
-              {section.title}
-            </div>
-            <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-black text-cyan-200">
-              {section.items.length}
-            </div>
           </div>
+        </div>
 
-          {section.items.length === 0 ? (
-            <div className="px-3 py-4 text-center text-xs text-white/35">
-              {section.empty}
+        {/* DISCORD */}
+        <div className="rounded-xl border border-indigo-300/15 bg-indigo-500/[0.06] px-3 py-2.5">
+          {discordLink?.is_in_discord ? (
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[9px] font-black uppercase tracking-[0.18em] text-indigo-300/60">
+                  Discord
+                </div>
+
+                <div className="mt-0.5 truncate text-xs font-black text-white">
+                  {discordLink?.discord_username || "Linked"}
+                </div>
+              </div>
+
+              <div className="shrink-0 text-[10px] font-black text-green-300">
+                ✓ LINKED
+              </div>
             </div>
           ) : (
-            <div className="divide-y divide-white/5">
-              {section.items.map((reward: any) => (
-                <div
-                  key={reward.id}
-                  className="flex items-center justify-between gap-3 px-3 py-3"
-                >
-                  <div className="min-w-0 text-left">
-                    <div className="truncate text-sm font-black text-white">
-                      {reward.title || "Chat Giveaway"}
-                    </div>
-                    <div className="mt-0.5 text-[10px] text-white/35">
-                      {reward.created_at
-                        ? new Date(reward.created_at).toLocaleString()
-                        : "Recently"}
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 text-right">
-                    <div className="text-base font-black text-cyan-200">
-                      ${Number(reward.amount || 0).toLocaleString()}
-                    </div>
-
-                    {!reward.claimed && !reward.paid ? (
-                      <button
-                        onClick={() => handleClaimReward(reward.id)}
-                        className="mt-1 rounded-lg border border-yellow-300/30 bg-yellow-400/10 px-3 py-1 text-[10px] font-black text-yellow-200"
-                      >
-                        Claim
-                      </button>
-                    ) : reward.paid ? (
-                      <div className="mt-1 text-[10px] font-black text-cyan-200">
-                        Paid ✅
-                      </div>
-                    ) : (
-                      <div className="mt-1 text-[10px] font-black text-orange-200">
-                        Waiting
-                      </div>
-                    )}
-                  </div>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[9px] font-black uppercase tracking-[0.18em] text-indigo-300/60">
+                  Discord
                 </div>
-              ))}
+
+                <div className="mt-0.5 text-xs text-white/40">
+                  Not linked
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  (window.location.href = `/api/discord/login?viewer=${viewerName}&platform=${viewerPlatform}`)
+                }
+                className="rounded-lg border border-indigo-300/20 bg-indigo-400/10 px-3 py-1.5 text-[10px] font-black text-indigo-200 hover:bg-indigo-400/20"
+              >
+                Link Discord
+              </button>
             </div>
           )}
         </div>
-      ))}
-    </>
-  )}
-</div>
+
+        {/* ROULO */}
+        <div className="rounded-xl border border-cyan-300/15 bg-cyan-400/[0.05] px-3 py-2.5">
+          {rouloLink?.roulo_username ? (
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300/60">
+                  Roulo
+                </div>
+
+                <div className="mt-0.5 truncate text-xs font-black text-white">
+                  {rouloLink.roulo_username}
+                </div>
+              </div>
+
+              <div className="shrink-0 text-[10px] font-black text-green-300">
+                ✓ LINKED
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300/60">
+                Roulo
+              </div>
+
+              <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <input
+                  value={rouloUsernameInput}
+                  onChange={(e) => setRouloUsernameInput(e.target.value)}
+                  placeholder="Roulo username"
+                  className="min-w-0 rounded-lg border border-white/10 bg-black/60 px-3 py-1.5 text-xs text-white outline-none"
+                />
+
+                <button
+                  onClick={handleLinkRoulo}
+                  className="rounded-lg border border-cyan-300/25 bg-cyan-400/10 px-3 py-1.5 text-[10px] font-black text-cyan-200 hover:bg-cyan-400/20"
+                >
+                  Link
+                </button>
+              </div>
+
+              {rouloLinkMessage && (
+                <div className="mt-2 text-[10px] text-white/50">
+                  {rouloLinkMessage}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* LEADERBOARD WAGERED + STATUS */}
+        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-cyan-300/15 bg-black/60">
+          <div className="border-r border-white/[0.06] px-3 py-3 text-center">
+            <div className="text-[8px] font-black uppercase tracking-[0.16em] text-white/40 sm:text-[9px]">
+              Leaderboard Wagered
+            </div>
+
+            <div className="mt-1 text-base font-black text-cyan-200 sm:text-lg">
+              $
+              {Number(
+                leaderboardData.find(
+                  (player) =>
+                    player.username?.toLowerCase() ===
+                      viewerName.toLowerCase() ||
+                    player.username?.toLowerCase() ===
+                      rouloLink?.roulo_username?.toLowerCase()
+                )?.wagered || 0
+              ).toLocaleString()}
+            </div>
+          </div>
+
+          <div className="px-3 py-3 text-center">
+            <div className="text-[8px] font-black uppercase tracking-[0.16em] text-white/40 sm:text-[9px]">
+              Status
+            </div>
+
+            <div className="mt-1 text-base font-black text-yellow-200 sm:text-lg">
+              {String(rouloLink?.role || "").toLowerCase() === "vip"
+                ? "👑 VIP"
+                : rouloLink?.roulo_username
+                ? "Affiliate"
+                : "Viewer"}
+            </div>
+          </div>
+        </div>
+
+        {/* GIVEAWAY ODDS */}
+        {rouloLink && (
+          <div className="rounded-xl border border-cyan-300/15 bg-black/60 p-3">
+            <div className="mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300/60">
+              Giveaway Odds
+            </div>
+
+            <div className="grid grid-cols-4 divide-x divide-white/[0.06]">
+              <div className="px-1 text-center">
+                <div className="text-[8px] font-black uppercase text-white/35">
+                  Base
+                </div>
+                <div className="mt-1 text-xs font-black text-white sm:text-sm">
+                  {viewerOdds.baseOdds.toFixed(1)}x
+                </div>
+              </div>
+
+              <div className="px-1 text-center">
+                <div className="text-[8px] font-black uppercase text-white/35">
+                  Luck
+                </div>
+                <div className="mt-1 text-xs font-black text-green-300 sm:text-sm">
+                  +{viewerOdds.luckOdds.toFixed(1)}x
+                </div>
+              </div>
+
+              <div className="px-1 text-center">
+                <div className="text-[8px] font-black uppercase text-white/35">
+                  Total
+                </div>
+                <div className="mt-1 text-xs font-black text-red-300 sm:text-sm">
+                  {viewerOdds.totalOdds.toFixed(1)}x
+                </div>
+              </div>
+
+              <div className="px-1 text-center">
+                <div className="text-[8px] font-black uppercase text-white/35">
+                  Next Loss
+                </div>
+                <div className="mt-1 text-xs font-black text-cyan-300 sm:text-sm">
+                  {viewerOdds.nextOdds.toFixed(1)}x
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* REWARD SECTIONS */}
+        {viewerRewards.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-black/60 px-3 py-4 text-center text-xs text-white/40">
+            {viewerRewardsMessage || "No rewards yet."}
+          </div>
+        ) : (
+          <>
+            {[
+              {
+                title: "Ready to Claim",
+                items: viewerRewards.filter(
+                  (r) => !r.claimed && !r.paid
+                ),
+                empty: "No prizes to claim.",
+              },
+              {
+                title: "Waiting for Payment",
+                items: viewerRewards.filter(
+                  (r) => r.claimed && !r.paid
+                ),
+                empty: "No claimed prizes waiting.",
+              },
+              {
+                title: "Paid",
+                items: viewerRewards.filter((r) => r.paid),
+                empty: "No paid prizes yet.",
+              },
+            ].map((rewardSection) => (
+              <div
+                key={rewardSection.title}
+                className="overflow-hidden rounded-xl border border-white/10 bg-black/60"
+              >
+                <div className="flex items-center justify-between border-b border-white/[0.05] px-3 py-2">
+                  <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white">
+                    {rewardSection.title}
+                  </div>
+
+                  <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[9px] font-black text-cyan-200">
+                    {rewardSection.items.length}
+                  </div>
+                </div>
+
+                {rewardSection.items.length === 0 ? (
+                  <div className="px-3 py-3 text-center text-[10px] text-white/30">
+                    {rewardSection.empty}
+                  </div>
+                ) : (
+                  <div className="divide-y divide-white/[0.05]">
+                    {rewardSection.items.map((reward: any) => (
+                      <div
+                        key={reward.id}
+                        className="flex items-center justify-between gap-3 px-3 py-2"
+                      >
+                        <div className="min-w-0 text-left">
+                          <div className="truncate text-xs font-black text-white">
+                            {reward.title || "Chat Giveaway"}
+                          </div>
+
+                          <div className="mt-0.5 text-[9px] text-white/30">
+                            {reward.created_at
+                              ? new Date(
+                                  reward.created_at
+                                ).toLocaleString()
+                              : "Recently"}
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <div className="text-sm font-black text-cyan-200">
+                            $
+                            {Number(
+                              reward.amount || 0
+                            ).toLocaleString()}
+                          </div>
+
+                          {!reward.claimed && !reward.paid ? (
+                            <button
+                              onClick={() =>
+                                handleClaimReward(reward.id)
+                              }
+                              className="mt-1 rounded-md border border-yellow-300/30 bg-yellow-400/10 px-2 py-0.5 text-[9px] font-black text-yellow-200"
+                            >
+                              Claim
+                            </button>
+                          ) : reward.paid ? (
+                            <div className="mt-0.5 text-[9px] font-black text-cyan-200">
+                              Paid ✓
+                            </div>
+                          ) : (
+                            <div className="mt-0.5 text-[9px] font-black text-orange-200">
+                              Waiting
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </>
         )}
+
+        {/* TOTALS - LAST */}
+        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-black/60">
+          <div className="border-r border-white/[0.06] px-3 py-2.5 text-center">
+            <div className="text-[8px] font-black uppercase tracking-[0.16em] text-yellow-200/60">
+              Pending
+            </div>
+
+            <div className="mt-0.5 text-sm font-black text-yellow-200">
+              ${viewerRewardsPending.toLocaleString()}
+            </div>
+          </div>
+
+          <div className="px-3 py-2.5 text-center">
+            <div className="text-[8px] font-black uppercase tracking-[0.16em] text-green-300/60">
+              Paid
+            </div>
+
+            <div className="mt-0.5 text-sm font-black text-green-300">
+              ${viewerRewardsPaid.toLocaleString()}
+            </div>
+          </div>
+        </div>
+
       </div>
     )}
   </section>
@@ -4204,8 +4363,22 @@ onClick={() =>
       <GlowTabTitle label="SLOT CALL OF THE DAY" />
     </div>
 
-    {/* MAIN WHEEL */}
+    {/* IDLE SCROLL ANIMATION */}
+    <style>{`
+      @keyframes viewerWheelIdleScroll {
+        from {
+          transform: translateY(0);
+        }
+
+        to {
+          transform: translateY(-${slotCalls.length * SLOT_WHEEL_ITEM_HEIGHT}px);
+        }
+      }
+    `}</style>
+
+    {/* MAIN WHEEL CARD */}
     <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,18,24,0.96),rgba(0,0,0,0.98))] p-3 shadow-[0_0_35px_rgba(0,245,255,0.12)] sm:rounded-[1.5rem] sm:p-5">
+      {/* HEADER */}
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-200/60 sm:text-xs">
@@ -4222,27 +4395,35 @@ onClick={() =>
         </div>
       </div>
 
+      {/* WHEEL */}
       <div
         className="relative mx-auto mt-3 overflow-hidden rounded-xl border border-cyan-300/30 bg-black/90 shadow-[inset_0_0_30px_rgba(0,245,255,0.08),0_0_24px_rgba(0,245,255,0.10)]"
         style={{
           height: `${SLOT_WHEEL_VIEWPORT_HEIGHT}px`,
         }}
       >
+        {/* TOP FADE */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-16 bg-gradient-to-b from-black via-black/85 to-transparent" />
 
+        {/* BOTTOM FADE */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-16 bg-gradient-to-t from-black via-black/85 to-transparent" />
 
+        {/* CENTER SELECTOR */}
         <div className="pointer-events-none absolute inset-x-2 top-1/2 z-30 h-11 -translate-y-1/2 rounded-lg border border-cyan-200/50 bg-cyan-400/12 shadow-[0_0_26px_rgba(0,245,255,0.22)]" />
 
+        {/* LEFT ARROW */}
         <div className="pointer-events-none absolute left-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-l-[12px] border-y-transparent border-l-cyan-300" />
 
+        {/* RIGHT ARROW */}
         <div className="pointer-events-none absolute right-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-r-[12px] border-y-transparent border-r-cyan-300" />
 
+        {/* WHEEL CONTENT */}
         {slotCalls.length === 0 ? (
           <div className="flex h-full items-center justify-center text-xs font-semibold text-white/35 sm:text-sm">
             No entries yet
           </div>
         ) : isSlotWheelSpinning ? (
+          /* ACTUAL SPIN */
           <div
             className="transition-transform duration-[4200ms] ease-[cubic-bezier(0.12,0.72,0.08,1)]"
             style={{
@@ -4251,7 +4432,7 @@ onClick={() =>
           >
             {slotWheelLoop.map((call, index) => (
               <div
-                key={`${call.id || call.username}-${call.slotName}-${index}`}
+                key={`spin-${call.id || call.username}-${call.slotName}-${index}`}
                 className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3"
                 style={{
                   height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
@@ -4267,13 +4448,14 @@ onClick={() =>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="transition-transform duration-500 ease-out">
+        ) : pickedSlotCall ? (
+          /* LOCKED WINNER */
+          <div>
             {slotWheelRestingRows.map(
               ({ call, isCenter, rowKey }) => (
                 <div
                   key={rowKey}
-                  className={`grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3 transition-all duration-300 ${
+                  className={`grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3 ${
                     isCenter
                       ? "bg-cyan-400/12 opacity-100"
                       : "opacity-50"
@@ -4293,46 +4475,76 @@ onClick={() =>
               )
             )}
           </div>
+        ) : (
+          /* SLOW CONTINUOUS IDLE SCROLL */
+          <div
+            style={{
+              animation: `viewerWheelIdleScroll ${Math.max(
+                slotCalls.length * 2.5,
+                8
+              )}s linear infinite`,
+              willChange: "transform",
+            }}
+          >
+            {slotWheelLoop.map((call, index) => (
+              <div
+                key={`idle-main-${call.id || call.username}-${call.slotName}-${index}`}
+                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3"
+                style={{
+                  height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
+                }}
+              >
+                <div className="truncate text-[11px] font-black text-white sm:text-xs">
+                  {call.username}
+                </div>
+
+                <div className="truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
+                  {call.slotName}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
-{/* TOP WINNER */}
-<div className="mx-auto mt-3 max-w-5xl overflow-hidden rounded-2xl border border-yellow-300/25 bg-[linear-gradient(135deg,rgba(120,85,0,0.28),rgba(0,0,0,0.92))] p-3 shadow-[0_0_28px_rgba(250,204,21,0.10)] sm:mt-4 sm:p-4">
-  {topSlotCallWinner ? (
-    <div className="grid grid-cols-[auto_minmax(0,0.8fr)_minmax(0,1fr)_auto] items-center gap-2 sm:gap-4">
-      <div className="text-lg sm:text-2xl">
-        👑
+      {/* TOP WINNER */}
+      <div className="mx-auto mt-3 max-w-5xl overflow-hidden rounded-2xl border border-yellow-300/25 bg-[linear-gradient(135deg,rgba(120,85,0,0.28),rgba(0,0,0,0.92))] p-3 shadow-[0_0_28px_rgba(250,204,21,0.10)] sm:mt-4 sm:p-4">
+        {topSlotCallWinner ? (
+          <div className="grid grid-cols-[auto_minmax(0,0.8fr)_minmax(0,1fr)_auto] items-center gap-2 sm:gap-4">
+            <div className="text-lg sm:text-2xl">
+              👑
+            </div>
+
+            <div className="min-w-0">
+              <div className="text-[8px] font-black uppercase tracking-[0.18em] text-yellow-200/60 sm:text-[10px]">
+                Top Winner
+              </div>
+
+              <div className="truncate text-[10px] font-black text-white sm:text-sm">
+                {topSlotCallWinner.username}
+              </div>
+            </div>
+
+            <div className="min-w-0 truncate text-right text-[9px] text-white/55 sm:text-xs">
+              {topSlotCallWinner.slotName}
+            </div>
+
+            <div className="whitespace-nowrap text-right text-[11px] font-black text-yellow-300 sm:text-base">
+              $
+              {topSlotCallWinner.payout.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="py-2 text-center text-xs text-white/35">
+            No top winner yet.
+          </div>
+        )}
       </div>
 
-      <div className="min-w-0">
-        <div className="text-[8px] font-black uppercase tracking-[0.18em] text-yellow-200/60 sm:text-[10px]">
-          Top Winner
-        </div>
-
-        <div className="truncate text-[10px] font-black text-white sm:text-sm">
-          {topSlotCallWinner.username}
-        </div>
-      </div>
-
-      <div className="min-w-0 truncate text-right text-[9px] text-white/55 sm:text-xs">
-        {topSlotCallWinner.slotName}
-      </div>
-
-      <div className="whitespace-nowrap text-right text-[11px] font-black text-yellow-300 sm:text-base">
-        $
-        {topSlotCallWinner.payout.toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}
-      </div>
-    </div>
-  ) : (
-    <div className="py-2 text-center text-xs text-white/35">
-      No top winner yet.
-    </div>
-  )}
-</div>
-
+      {/* STATUS */}
       <div className="mt-3 flex items-center justify-center gap-4 text-[10px] font-black uppercase tracking-[0.14em] sm:text-xs">
         <div className="text-white/45">
           Entries{" "}
@@ -4427,7 +4639,8 @@ onClick={() =>
                 </div>
 
                 <div className="truncate text-right text-[9px] font-black text-emerald-300 sm:text-xs">
-                  ${result.payout.toLocaleString("en-US", {
+                  $
+                  {result.payout.toLocaleString("en-US", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -5845,15 +6058,32 @@ onClick={() =>
 
 <details
   open={activeAdminTab === "slotWheel"}
-  className={`${activeAdminTab === "slotWheel" ? "block" : "hidden"} min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-3`}
+  className={`${
+    activeAdminTab === "slotWheel" ? "block" : "hidden"
+  } min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-3`}
 >
   <summary className="hidden">Slot Call Wheel</summary>
 
+  {/* SAME SMOOTH IDLE SCROLL AS VIEWER WHEEL */}
+  <style>{`
+    @keyframes adminWheelIdleScroll {
+      from {
+        transform: translateY(0);
+      }
+
+      to {
+        transform: translateY(-${slotCalls.length * SLOT_WHEEL_ITEM_HEIGHT}px);
+      }
+    }
+  `}</style>
+
   <div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+    {/* LEFT SIDE */}
     <div className="rounded-xl border border-cyan-300/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.07),rgba(0,0,0,0.94))] p-3 shadow-[0_0_28px_rgba(0,245,255,0.10)]">
       <div className="flex items-center justify-between gap-3">
         <div>
           <SectionLabel>Slot Call Wheel</SectionLabel>
+
           <div className="mt-1 text-lg font-black uppercase tracking-[0.08em] text-cyan-100 sm:text-xl">
             Pick A Winner
           </div>
@@ -5864,102 +6094,146 @@ onClick={() =>
         </div>
       </div>
 
+      {/* WHEEL */}
       <div
         className="relative mx-auto mt-3 overflow-hidden rounded-xl border border-cyan-300/25 bg-black/90 shadow-[inset_0_0_24px_rgba(0,245,255,0.08)]"
-        style={{ height: `${SLOT_WHEEL_VIEWPORT_HEIGHT}px` }}
+        style={{
+          height: `${SLOT_WHEEL_VIEWPORT_HEIGHT}px`,
+        }}
       >
+        {/* TOP FADE */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-16 bg-gradient-to-b from-black via-black/85 to-transparent" />
+
+        {/* BOTTOM FADE */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-16 bg-gradient-to-t from-black via-black/85 to-transparent" />
+
+        {/* CENTER SELECTOR */}
         <div className="pointer-events-none absolute inset-x-2 top-1/2 z-30 h-11 -translate-y-1/2 rounded-lg border border-cyan-200/50 bg-cyan-400/12 shadow-[0_0_26px_rgba(0,245,255,0.22)]" />
+
+        {/* LEFT ARROW */}
         <div className="pointer-events-none absolute left-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-l-[12px] border-y-transparent border-l-cyan-300" />
+
+        {/* RIGHT ARROW */}
         <div className="pointer-events-none absolute right-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-r-[12px] border-y-transparent border-r-cyan-300" />
 
+        {/* WHEEL CONTENT */}
         {slotCalls.length === 0 ? (
           <div className="flex h-full items-center justify-center text-xs font-semibold text-white/40">
             Waiting for slot calls...
           </div>
         ) : isSlotWheelSpinning ? (
+          /* ACTUAL SPIN */
           <div
             className="transition-transform duration-[4200ms] ease-[cubic-bezier(0.12,0.72,0.08,1)]"
-            style={{ transform: `translateY(-${slotWheelRotation}px)` }}
+            style={{
+              transform: `translateY(-${slotWheelRotation}px)`,
+            }}
           >
             {slotWheelLoop.map((call, index) => (
               <div
-                key={`${call.id || call.username}-${call.slotName}-${index}`}
-                className="flex items-center justify-between gap-3 border-b border-white/5 px-3"
-                style={{ height: `${SLOT_WHEEL_ITEM_HEIGHT}px` }}
+                key={`admin-spin-${call.id || call.username}-${call.slotName}-${index}`}
+                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3"
+                style={{
+                  height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
+                }}
               >
-                <div className="min-w-0 truncate text-[11px] font-black text-white sm:text-xs">
+                <div className="truncate text-[11px] font-black text-white sm:text-xs">
                   {call.username}
                 </div>
-                <div className="min-w-0 truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
+
+                <div className="truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
                   {call.slotName}
                 </div>
               </div>
             ))}
           </div>
-) : pickedSlotCall ? (
-  <div>
-    {slotWheelRestingRows.map(({ call, isCenter, rowKey }) => (
-      <div
-        key={rowKey}
-        className={`flex items-center justify-between gap-3 border-b border-white/5 px-3 ${
-          isCenter
-            ? "bg-cyan-400/12 opacity-100"
-            : "opacity-55"
-        }`}
-        style={{ height: `${SLOT_WHEEL_ITEM_HEIGHT}px` }}
-      >
-        <div className="min-w-0 truncate text-[11px] font-black text-white sm:text-xs">
-          {call.username}
-        </div>
+        ) : pickedSlotCall ? (
+          /* LOCKED WINNER */
+          <div>
+            {slotWheelRestingRows.map(
+              ({ call, isCenter, rowKey }) => (
+                <div
+                  key={rowKey}
+                  className={`grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3 ${
+                    isCenter
+                      ? "bg-cyan-400/12 opacity-100"
+                      : "opacity-55"
+                  }`}
+                  style={{
+                    height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
+                  }}
+                >
+                  <div className="truncate text-[11px] font-black text-white sm:text-xs">
+                    {call.username}
+                  </div>
 
-        <div className="min-w-0 truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
-          {call.slotName}
-        </div>
-      </div>
-    ))}
-  </div>
-) : (
-  <div className="transition-transform duration-500 ease-out">
-    {slotWheelRestingRows.map(({ call, isCenter, rowKey }) => (
-      <div
-        key={rowKey}
-        className={`flex items-center justify-between gap-3 border-b border-white/5 px-3 transition-all duration-500 ${
-          isCenter ? "bg-cyan-400/12" : "opacity-55"
-        }`}
-        style={{ height: `${SLOT_WHEEL_ITEM_HEIGHT}px` }}
-      >
-        <div className="min-w-0 truncate text-[11px] font-black text-white sm:text-xs">
-          {call.username}
-        </div>
+                  <div className="truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
+                    {call.slotName}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        ) : (
+          /* SMOOTH CONTINUOUS IDLE SCROLL */
+          <div
+            style={{
+              animation: `adminWheelIdleScroll ${Math.max(
+                slotCalls.length * 2.5,
+                8
+              )}s linear infinite`,
+              willChange: "transform",
+            }}
+          >
+            {slotWheelLoop.map((call, index) => (
+              <div
+                key={`admin-idle-${call.id || call.username}-${call.slotName}-${index}`}
+                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3"
+                style={{
+                  height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
+                }}
+              >
+                <div className="truncate text-[11px] font-black text-white sm:text-xs">
+                  {call.username}
+                </div>
 
-        <div className="min-w-0 truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
-          {call.slotName}
-        </div>
-      </div>
-    ))}
-  </div>
-)}
+                <div className="truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
+                  {call.slotName}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
+      {/* CONTROLS */}
       <div className="mt-3 grid grid-cols-[1fr_auto_auto] gap-2">
         <ActionButton
           onClick={handleSpinSlotWheel}
-          disabled={isSlotWheelSpinning || Boolean(pickedSlotCall) || slotCalls.length === 0}
+          disabled={
+            isSlotWheelSpinning ||
+            Boolean(pickedSlotCall) ||
+            slotCalls.length === 0
+          }
           variant="green"
           className="min-h-[38px] text-[10px]"
         >
           {isSlotWheelSpinning ? "Spinning..." : "Spin Wheel"}
         </ActionButton>
+
         <ActionButton
           onClick={handleShuffleSlotWheel}
-          disabled={slotCalls.length <= 1 || isSlotWheelSpinning || Boolean(pickedSlotCall)}
+          disabled={
+            slotCalls.length <= 1 ||
+            isSlotWheelSpinning ||
+            Boolean(pickedSlotCall)
+          }
           variant="purple"
           className="min-h-[38px] px-3 text-[9px]"
         >
           Shuffle
         </ActionButton>
+
         <ActionButton
           onClick={handleRemovePickedSlot}
           disabled={!pickedSlotCall || isSlotWheelSpinning}
@@ -5970,291 +6244,353 @@ onClick={() =>
         </ActionButton>
       </div>
 
-<div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
-  {pickedSlotCall ? (
-    <>
-      <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300/70">
-        Winner
+      {/* WINNER / PAYOUT */}
+      <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+        {pickedSlotCall ? (
+          <>
+            <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300/70">
+              Winner
+            </div>
+
+            <div className="mt-1 truncate text-xl font-black text-cyan-200 drop-shadow-[0_0_12px_rgba(0,245,255,0.65)] sm:text-2xl">
+              {pickedSlotCall.slotName}
+            </div>
+
+            <div className="mt-0.5 truncate text-[11px] text-white/45">
+              called by {pickedSlotCall.username}
+            </div>
+
+            <div className="mx-auto mt-4 max-w-sm">
+              <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
+                Payout
+              </div>
+
+              <div className="mt-2 flex items-center gap-2">
+                <div className="flex min-w-0 flex-1 items-center rounded-lg border border-cyan-300/15 bg-black/60 px-3">
+                  <span className="mr-1 text-sm font-black text-cyan-200/60">
+                    $
+                  </span>
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={slotPayoutInput}
+                    onChange={(e) =>
+                      setSlotPayoutInput(e.target.value)
+                    }
+                    placeholder="0.00"
+                    className="min-w-0 flex-1 bg-transparent py-2 text-sm font-black text-white outline-none placeholder:text-white/20"
+                  />
+                </div>
+
+                <ActionButton
+                  onClick={async () => {
+                    const payout = Number(slotPayoutInput);
+
+                    if (
+                      !Number.isFinite(payout) ||
+                      payout < 0
+                    ) {
+                      alert("Enter a valid payout amount.");
+                      return;
+                    }
+
+                    const res = await fetch(
+                      "/api/slot-calls",
+                      {
+                        method: "POST",
+                        headers: {
+                          "Content-Type":
+                            "application/json",
+                        },
+                        body: JSON.stringify({
+                          action: "saveResult",
+                          username:
+                            pickedSlotCall.username,
+                          slotName:
+                            pickedSlotCall.slotName,
+                          payout,
+                        }),
+                      }
+                    );
+
+                    const data = await res.json();
+
+                    if (!res.ok || !data.ok) {
+                      alert(
+                        data.error ||
+                          "Failed to save payout."
+                      );
+                      return;
+                    }
+
+                    setSlotPayoutInput("");
+
+                    await loadSlotCalls();
+
+                    alert("Rolled slot saved.");
+                  }}
+                  variant="green"
+                  className="min-h-[36px] shrink-0 px-3 text-[9px]"
+                >
+                  Save Payout
+                </ActionButton>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex h-[48px] items-center justify-center text-xs font-semibold text-white/40">
+            {slotCalls.length === 0
+              ? "No entries yet."
+              : "Ready to spin."}
+          </div>
+        )}
       </div>
+    </div>
 
-      <div className="mt-1 truncate text-xl font-black text-cyan-200 drop-shadow-[0_0_12px_rgba(0,245,255,0.65)] sm:text-2xl">
-        {pickedSlotCall.slotName}
-      </div>
+    {/* RIGHT SIDE */}
+    <div className="space-y-3">
+      {/* LIVE CALLS */}
+      <div className="rounded-xl border border-white/10 bg-black/75 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+              Live Calls
+            </div>
 
-      <div className="mt-0.5 truncate text-[11px] text-white/45">
-        called by {pickedSlotCall.username}
-      </div>
-
-      <div className="mx-auto mt-4 max-w-sm">
-        <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
-          Payout
-        </div>
-
-        <div className="mt-2 flex items-center gap-2">
-          <div className="flex min-w-0 flex-1 items-center rounded-lg border border-cyan-300/15 bg-black/60 px-3">
-            <span className="mr-1 text-sm font-black text-cyan-200/60">
-              $
-            </span>
-
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={slotPayoutInput}
-              onChange={(e) => setSlotPayoutInput(e.target.value)}
-              placeholder="0.00"
-              className="min-w-0 flex-1 bg-transparent py-2 text-sm font-black text-white outline-none placeholder:text-white/20"
-            />
+            <div className="mt-0.5 text-[11px] text-white/35">
+              Names update automatically from chat.
+            </div>
           </div>
 
           <ActionButton
             onClick={async () => {
-              const payout = Number(slotPayoutInput);
-
-              if (!Number.isFinite(payout) || payout < 0) {
-                alert("Enter a valid payout amount.");
+              if (
+                !confirm(
+                  "Clear every slot call from the wheel?"
+                )
+              )
                 return;
-              }
 
-              const res = await fetch("/api/slot-calls", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  action: "saveResult",
-                  username: pickedSlotCall.username,
-                  slotName: pickedSlotCall.slotName,
-                  payout,
-                }),
-              });
+              const res = await fetch(
+                "/api/slot-calls?clearAll=true",
+                {
+                  method: "DELETE",
+                }
+              );
 
               const data = await res.json();
 
               if (!res.ok || !data.ok) {
-                alert(data.error || "Failed to save payout.");
+                alert(
+                  data.error ||
+                    "Failed to clear slot calls."
+                );
                 return;
               }
 
-              setSlotPayoutInput("");
-
-              await loadSlotCalls();
-
-              alert("Rolled slot saved.");
+              setSlotCalls([]);
+              setPickedSlotCall(null);
+              setSlotWheelRotation(0);
+              slotWheelWinnersThisCycleRef.current.clear();
             }}
-            variant="green"
-            className="min-h-[36px] shrink-0 px-3 text-[9px]"
+            disabled={
+              slotCalls.length === 0 ||
+              isSlotWheelSpinning
+            }
+            variant="red"
+            className="min-h-[32px] px-3 py-1 text-[8px]"
           >
-            Save Payout
+            Clear All
           </ActionButton>
         </div>
-      </div>
-    </>
-  ) : (
-    <div className="flex h-[48px] items-center justify-center text-xs font-semibold text-white/40">
-      {slotCalls.length === 0 ? "No entries yet." : "Ready to spin."}
-    </div>
-  )}
-</div>
-</div>
 
-<div className="space-y-3">
-  {/* LIVE CALLS */}
-  <div className="rounded-xl border border-white/10 bg-black/75 p-3">
-    <div className="flex items-center justify-between gap-2">
-      <div>
-        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
-          Live Calls
-        </div>
-
-        <div className="mt-0.5 text-[11px] text-white/35">
-          Names update automatically from chat.
-        </div>
-      </div>
-
-      <ActionButton
-        onClick={async () => {
-          if (!confirm("Clear every slot call from the wheel?")) return;
-
-          const res = await fetch("/api/slot-calls?clearAll=true", {
-            method: "DELETE",
-          });
-
-          const data = await res.json();
-
-          if (!res.ok || !data.ok) {
-            alert(data.error || "Failed to clear slot calls.");
-            return;
-          }
-
-          setSlotCalls([]);
-          setPickedSlotCall(null);
-          setSlotWheelRotation(0);
-        }}
-        disabled={slotCalls.length === 0 || isSlotWheelSpinning}
-        variant="red"
-        className="min-h-[32px] px-3 py-1 text-[8px]"
-      >
-        Clear All
-      </ActionButton>
-    </div>
-
-    <div className="mt-3 max-h-[354px] overflow-y-auto rounded-lg border border-white/8 bg-black/50 p-2">
-      {slotCalls.length === 0 ? (
-        <div className="p-5 text-center text-xs text-white/35">
-          No slot calls yet.
-        </div>
-      ) : (
-        <div className="grid gap-1.5">
-          {slotCalls.map((call, index) => (
-            <div
-              key={`${call.id || call.username}-${call.slotName}-${index}`}
-              className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-white/8 bg-white/[0.025] px-2 py-1.5"
-            >
-              <div className="text-[9px] font-black text-cyan-300/60">
-                {index + 1}
-              </div>
-
-              <div className="min-w-0">
-                <div className="truncate text-[11px] font-black text-white">
-                  {call.slotName}
-                </div>
-
-                <div className="truncate text-[9px] text-white/35">
-                  {call.username}
-                </div>
-              </div>
-
-              <button
-                onClick={async () => {
-                  if (call.id) {
-                    await fetch(`/api/slot-calls?id=${call.id}`, {
-                      method: "DELETE",
-                    });
-                  }
-
-                  setSlotCalls((current) =>
-                    current.filter((item) => item.id !== call.id)
-                  );
-
-                  await loadSlotCalls();
-                }}
-                disabled={isSlotWheelSpinning}
-                className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20 disabled:opacity-40"
-              >
-                Remove
-              </button>
+        <div className="mt-3 max-h-[354px] overflow-y-auto rounded-lg border border-white/8 bg-black/50 p-2">
+          {slotCalls.length === 0 ? (
+            <div className="p-5 text-center text-xs text-white/35">
+              No slot calls yet.
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  </div>
+          ) : (
+            <div className="grid gap-1.5">
+              {slotCalls.map((call, index) => (
+                <div
+                  key={`${call.id || call.username}-${call.slotName}-${index}`}
+                  className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-white/8 bg-white/[0.025] px-2 py-1.5"
+                >
+                  <div className="text-[9px] font-black text-cyan-300/60">
+                    {index + 1}
+                  </div>
 
-  {/* ROLLED RESULTS */}
-  <div className="rounded-xl border border-white/10 bg-black/75 p-3">
-    <div className="flex items-center justify-between gap-2">
-      <div>
-        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
-          Rolled Results
-        </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-[11px] font-black text-white">
+                      {call.slotName}
+                    </div>
 
-        <div className="mt-0.5 text-[11px] text-white/35">
-          Remove old rolled winners and payouts.
+                    <div className="truncate text-[9px] text-white/35">
+                      {call.username}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={async () => {
+                      if (call.id) {
+                        await fetch(
+                          `/api/slot-calls?id=${call.id}`,
+                          {
+                            method: "DELETE",
+                          }
+                        );
+                      }
+
+                      setSlotCalls((current) =>
+                        current.filter(
+                          (item) => item.id !== call.id
+                        )
+                      );
+
+                      await loadSlotCalls();
+                    }}
+                    disabled={isSlotWheelSpinning}
+                    className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20 disabled:opacity-40"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      <ActionButton
-        onClick={async () => {
-          if (!confirm("Clear all rolled winners and payouts?")) return;
-
-          const res = await fetch("/api/slot-calls?clearResults=true", {
-            method: "DELETE",
-          });
-
-          const data = await res.json();
-
-          if (!res.ok || !data.ok) {
-            alert(data.error || "Failed to clear rolled results.");
-            return;
-          }
-
-          setSlotCallResults([]);
-          await loadSlotCalls();
-        }}
-        disabled={slotCallResults.length === 0}
-        variant="red"
-        className="min-h-[32px] px-3 py-1 text-[8px]"
-      >
-        Clear All
-      </ActionButton>
-    </div>
-
-    <div className="mt-3 max-h-[300px] overflow-y-auto rounded-lg border border-white/8 bg-black/50 p-2">
-      {slotCallResults.length === 0 ? (
-        <div className="p-5 text-center text-xs text-white/35">
-          No rolled results yet.
-        </div>
-      ) : (
-        <div className="grid gap-1.5">
-          {slotCallResults.map((result, index) => (
-            <div
-              key={result.id}
-              className="grid grid-cols-[24px_minmax(0,0.8fr)_minmax(0,1fr)_70px_auto] items-center gap-2 rounded-lg border border-white/8 bg-white/[0.025] px-2 py-1.5"
-            >
-              <div className="text-[8px] font-black text-cyan-300/60">
-                {index + 1}
-              </div>
-
-              <div className="truncate text-[9px] font-black text-white">
-                {result.username}
-              </div>
-
-              <div className="truncate text-[9px] text-white/45">
-                {result.slotName}
-              </div>
-
-              <div className="truncate text-right text-[9px] font-black text-emerald-300">
-                $
-                {result.payout.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </div>
-
-              <button
-                onClick={async () => {
-                  const res = await fetch(
-                    `/api/slot-calls?resultId=${result.id}`,
-                    {
-                      method: "DELETE",
-                    }
-                  );
-
-                  const data = await res.json();
-
-                  if (!res.ok || !data.ok) {
-                    alert(data.error || "Failed to remove rolled result.");
-                    return;
-                  }
-
-                  setSlotCallResults((current) =>
-                    current.filter((item) => item.id !== result.id)
-                  );
-
-                  await loadSlotCalls();
-                }}
-                className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20"
-              >
-                Remove
-              </button>
+      {/* ROLLED RESULTS */}
+      <div className="rounded-xl border border-white/10 bg-black/75 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+              Rolled Results
             </div>
-          ))}
+
+            <div className="mt-0.5 text-[11px] text-white/35">
+              Remove old rolled winners and payouts.
+            </div>
+          </div>
+
+          <ActionButton
+            onClick={async () => {
+              if (
+                !confirm(
+                  "Clear all rolled winners and payouts?"
+                )
+              )
+                return;
+
+              const res = await fetch(
+                "/api/slot-calls?clearResults=true",
+                {
+                  method: "DELETE",
+                }
+              );
+
+              const data = await res.json();
+
+              if (!res.ok || !data.ok) {
+                alert(
+                  data.error ||
+                    "Failed to clear rolled results."
+                );
+                return;
+              }
+
+              setSlotCallResults([]);
+              await loadSlotCalls();
+            }}
+            disabled={slotCallResults.length === 0}
+            variant="red"
+            className="min-h-[32px] px-3 py-1 text-[8px]"
+          >
+            Clear All
+          </ActionButton>
         </div>
-      )}
+
+        <div className="mt-3 max-h-[300px] overflow-y-auto rounded-lg border border-white/8 bg-black/50 p-2">
+          {slotCallResults.length === 0 ? (
+            <div className="p-5 text-center text-xs text-white/35">
+              No rolled results yet.
+            </div>
+          ) : (
+            <div className="grid gap-1.5">
+              {slotCallResults.map(
+                (result, index) => (
+                  <div
+                    key={result.id}
+                    className="grid grid-cols-[24px_minmax(0,0.8fr)_minmax(0,1fr)_70px_auto] items-center gap-2 rounded-lg border border-white/8 bg-white/[0.025] px-2 py-1.5"
+                  >
+                    <div className="text-[8px] font-black text-cyan-300/60">
+                      {index + 1}
+                    </div>
+
+                    <div className="truncate text-[9px] font-black text-white">
+                      {result.username}
+                    </div>
+
+                    <div className="truncate text-[9px] text-white/45">
+                      {result.slotName}
+                    </div>
+
+                    <div className="truncate text-right text-[9px] font-black text-emerald-300">
+                      $
+                      {result.payout.toLocaleString(
+                        "en-US",
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )}
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        const res = await fetch(
+                          `/api/slot-calls?resultId=${result.id}`,
+                          {
+                            method: "DELETE",
+                          }
+                        );
+
+                        const data =
+                          await res.json();
+
+                        if (!res.ok || !data.ok) {
+                          alert(
+                            data.error ||
+                              "Failed to remove rolled result."
+                          );
+                          return;
+                        }
+
+                        setSlotCallResults(
+                          (current) =>
+                            current.filter(
+                              (item) =>
+                                item.id !== result.id
+                            )
+                        );
+
+                        await loadSlotCalls();
+                      }}
+                      className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
-  </div>
-  </div>
   </div>
 </details>
       </div>
@@ -6268,47 +6604,61 @@ onClick={() =>
 
   <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center gap-6 px-6 py-10 text-center">
     
-<div className="flex items-center gap-5">
+<div className="flex items-center gap-4 sm:gap-5">
   <a
     href="https://twitch.tv/trashguy__"
     target="_blank"
     rel="noreferrer"
+    aria-label="Twitch"
     className="transition hover:scale-110"
   >
-    <FaTwitch className="text-2xl sm:text-3xl md:text-4xl text-[#9146FF]" />
+    <FaTwitch className="text-2xl text-[#9146FF] sm:text-3xl md:text-4xl" />
   </a>
 
   <a
     href="https://kick.com/trashguy"
     target="_blank"
     rel="noreferrer"
+    aria-label="Kick"
     className="transition hover:scale-110"
   >
-    <SiKick className="text-2xl sm:text-3xl md:text-4xl text-[#53FC18]" />
+    <SiKick className="text-2xl text-[#53FC18] sm:text-3xl md:text-4xl" />
   </a>
 
   <a
     href="https://discord.gg/EqjwXzkDMK"
     target="_blank"
     rel="noreferrer"
+    aria-label="Discord"
     className="transition hover:scale-110"
   >
-    <FaDiscord className="text-2xl sm:text-3xl md:text-4xl text-[#5865F2]" />
+    <FaDiscord className="text-2xl text-[#5865F2] sm:text-3xl md:text-4xl" />
   </a>
 
   <a
     href="https://instagram.com/trashguy__"
     target="_blank"
     rel="noreferrer"
+    aria-label="Instagram"
     className="transition hover:scale-110"
   >
-    <FaInstagram className="text-2xl sm:text-3xl md:text-4xl text-[#E1306C]" />
+    <FaInstagram className="text-2xl text-[#E1306C] sm:text-3xl md:text-4xl" />
+  </a>
+
+  <a
+    href="YOUR_X_LINK_HERE"
+    target="_blank"
+    rel="noreferrer"
+    aria-label="X"
+    className="transition hover:scale-110"
+  >
+    <FaXTwitter className="text-2xl text-white sm:text-3xl md:text-4xl" />
   </a>
 </div>
 
     <div className="max-w-2xl text-sm leading-7 text-white/45">
       Gamble responsibly. 18+ only.
-      A wise man once said "only gamble with what you can afford to lose".
+      Only gamble with what you can afford to lose.
     </div>
 
     <div className="text-xs uppercase tracking-[0.22em] text-white/25">
