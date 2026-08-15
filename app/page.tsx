@@ -3979,7 +3979,7 @@ const rankBadgeStyle = isFirst
 )}
 
 {activeSection === "profile" && (
-  <section className="space-y-3">
+  <section className="space-y-3 sm:space-y-4">
     {/* TITLE */}
     <div className="mx-auto max-w-5xl text-center">
       <GlowTabTitle label="PROFILE" />
@@ -3987,15 +3987,19 @@ const rankBadgeStyle = isFirst
 
     {!isTwitchConnected ? (
       /* NOT CONNECTED */
-      <div className="mx-auto max-w-5xl rounded-xl border border-white/10 bg-black/60 p-4 text-center">
-        <div className="text-xs font-black uppercase tracking-[0.18em] text-white/55">
+      <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(0,25,32,0.96),rgba(0,0,0,0.96))] p-4 text-center shadow-[0_0_30px_rgba(0,245,255,0.10)]">
+        <div className="text-[10px] font-black uppercase tracking-[0.20em] text-cyan-200/70">
           Connect Your Account
+        </div>
+
+        <div className="mt-1 text-xs text-white/45">
+          Sign in to view your profile and rewards.
         </div>
 
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-center">
           <button
             onClick={handleTwitchLogin}
-            className="rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#9146FF]/30"
+            className="rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#9146FF]/30"
           >
             Connect Twitch
           </button>
@@ -4004,43 +4008,42 @@ const rankBadgeStyle = isFirst
             onClick={() => {
               window.location.href = "/api/kick";
             }}
-            className="rounded-xl border border-[#53FC18]/40 bg-[#53FC18]/20 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#53FC18]/30"
+            className="rounded-xl border border-[#53FC18]/40 bg-[#53FC18]/20 px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#53FC18]/30"
           >
             Connect Kick
           </button>
         </div>
       </div>
     ) : (
-      <div className="mx-auto w-full max-w-5xl space-y-3">
-
+      <div className="mx-auto w-full max-w-5xl space-y-2.5 sm:space-y-3">
         {/* USER */}
-        <div className="rounded-xl border border-white/10 bg-black/60 p-3">
-          <div className="flex items-center gap-3">
+        <div className="overflow-hidden rounded-2xl border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(0,25,32,0.96),rgba(0,0,0,0.96))] p-3.5 shadow-[0_0_28px_rgba(0,245,255,0.10)] sm:p-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-black text-white ${
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-black text-white shadow-[0_0_18px_rgba(0,0,0,0.35)] sm:h-14 sm:w-14 sm:text-lg ${
                 viewerPlatform === "kick"
-                  ? "border border-[#53FC18]/30 bg-[#53FC18]/20"
-                  : "border border-purple-300/30 bg-purple-500/20"
+                  ? "border border-[#53FC18]/45 bg-[#53FC18]/20 shadow-[0_0_18px_rgba(83,252,24,0.12)]"
+                  : "border border-purple-300/45 bg-purple-500/25 shadow-[0_0_18px_rgba(168,85,247,0.16)]"
               }`}
             >
               {viewerDisplayName?.charAt(0)?.toUpperCase() || "T"}
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="truncate text-base font-black text-white">
+              <div className="truncate text-lg font-black text-white sm:text-xl">
                 {viewerDisplayName || viewerName}
               </div>
 
-              <div className="mt-0.5 flex items-center gap-2">
-                <div className="truncate text-xs font-bold text-white/60">
+              <div className="mt-1 flex min-w-0 items-center gap-2">
+                <div className="min-w-0 truncate text-xs font-bold text-white/55 sm:text-sm">
                   @{viewerName}
                 </div>
 
                 <div
-                  className={`rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.16em] ${
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.16em] ${
                     viewerPlatform === "kick"
-                      ? "border border-[#53FC18]/30 bg-[#53FC18]/15 text-[#53FC18]"
-                      : "border border-purple-300/30 bg-purple-500/15 text-purple-300"
+                      ? "border border-[#53FC18]/35 bg-[#53FC18]/15 text-[#53FC18]"
+                      : "border border-purple-300/35 bg-purple-500/15 text-purple-300"
                   }`}
                 >
                   {viewerPlatform === "kick" ? "kick" : "twitch"}
@@ -4051,31 +4054,31 @@ const rankBadgeStyle = isFirst
         </div>
 
         {/* DISCORD */}
-        <div className="rounded-xl border border-indigo-300/15 bg-indigo-500/[0.06] px-3 py-2.5">
+        <div className="overflow-hidden rounded-xl border border-[#5865F2]/30 bg-[linear-gradient(90deg,rgba(88,101,242,0.16),rgba(0,0,0,0.90))] px-3.5 py-3 shadow-[0_0_20px_rgba(88,101,242,0.07)] sm:px-4">
           {discordLink?.is_in_discord ? (
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[9px] font-black uppercase tracking-[0.18em] text-indigo-300/60">
+                <div className="text-[9px] font-black uppercase tracking-[0.20em] text-[#9da5ff]">
                   Discord
                 </div>
 
-                <div className="mt-0.5 truncate text-xs font-black text-white">
+                <div className="mt-0.5 truncate text-sm font-black text-white">
                   {discordLink?.discord_username || "Linked"}
                 </div>
               </div>
 
-              <div className="shrink-0 text-[10px] font-black text-green-300">
+              <div className="shrink-0 rounded-full border border-green-300/20 bg-green-400/10 px-2.5 py-1 text-[9px] font-black text-green-300">
                 ✓ LINKED
               </div>
             </div>
           ) : (
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-[9px] font-black uppercase tracking-[0.18em] text-indigo-300/60">
+                <div className="text-[9px] font-black uppercase tracking-[0.20em] text-[#9da5ff]">
                   Discord
                 </div>
 
-                <div className="mt-0.5 text-xs text-white/40">
+                <div className="mt-0.5 text-xs font-bold text-white/40">
                   Not linked
                 </div>
               </div>
@@ -4085,7 +4088,7 @@ const rankBadgeStyle = isFirst
                 onClick={() =>
                   (window.location.href = `/api/discord/login?viewer=${viewerName}&platform=${viewerPlatform}`)
                 }
-                className="rounded-lg border border-indigo-300/20 bg-indigo-400/10 px-3 py-1.5 text-[10px] font-black text-indigo-200 hover:bg-indigo-400/20"
+                className="rounded-lg border border-[#5865F2]/35 bg-[#5865F2]/15 px-3 py-1.5 text-[10px] font-black text-[#aeb4ff] transition hover:bg-[#5865F2]/25"
               >
                 Link Discord
               </button>
@@ -4094,26 +4097,26 @@ const rankBadgeStyle = isFirst
         </div>
 
         {/* ROULO */}
-        <div className="rounded-xl border border-cyan-300/15 bg-cyan-400/[0.05] px-3 py-2.5">
+        <div className="overflow-hidden rounded-xl border border-cyan-300/25 bg-[linear-gradient(90deg,rgba(0,200,220,0.11),rgba(0,0,0,0.90))] px-3.5 py-3 shadow-[0_0_20px_rgba(0,245,255,0.06)] sm:px-4">
           {rouloLink?.roulo_username ? (
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300/60">
+                <div className="text-[9px] font-black uppercase tracking-[0.20em] text-cyan-300/70">
                   Roulo
                 </div>
 
-                <div className="mt-0.5 truncate text-xs font-black text-white">
+                <div className="mt-0.5 truncate text-sm font-black text-white">
                   {rouloLink.roulo_username}
                 </div>
               </div>
 
-              <div className="shrink-0 text-[10px] font-black text-green-300">
+              <div className="shrink-0 rounded-full border border-green-300/20 bg-green-400/10 px-2.5 py-1 text-[9px] font-black text-green-300">
                 ✓ LINKED
               </div>
             </div>
           ) : (
             <div>
-              <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300/60">
+              <div className="text-[9px] font-black uppercase tracking-[0.20em] text-cyan-300/70">
                 Roulo
               </div>
 
@@ -4122,12 +4125,12 @@ const rankBadgeStyle = isFirst
                   value={rouloUsernameInput}
                   onChange={(e) => setRouloUsernameInput(e.target.value)}
                   placeholder="Roulo username"
-                  className="min-w-0 rounded-lg border border-white/10 bg-black/60 px-3 py-1.5 text-xs text-white outline-none"
+                  className="min-w-0 rounded-lg border border-cyan-300/15 bg-black/70 px-3 py-2 text-xs text-white outline-none transition focus:border-cyan-300/40"
                 />
 
                 <button
                   onClick={handleLinkRoulo}
-                  className="rounded-lg border border-cyan-300/25 bg-cyan-400/10 px-3 py-1.5 text-[10px] font-black text-cyan-200 hover:bg-cyan-400/20"
+                  className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-4 py-2 text-[10px] font-black text-cyan-200 transition hover:bg-cyan-400/20"
                 >
                   Link
                 </button>
@@ -4143,13 +4146,13 @@ const rankBadgeStyle = isFirst
         </div>
 
         {/* LEADERBOARD WAGERED + STATUS */}
-        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-cyan-300/15 bg-black/60">
-          <div className="border-r border-white/[0.06] px-3 py-3 text-center">
-            <div className="text-[8px] font-black uppercase tracking-[0.16em] text-white/40 sm:text-[9px]">
+        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(0,25,32,0.95),rgba(0,0,0,0.95))] shadow-[0_0_22px_rgba(0,245,255,0.07)]">
+          <div className="border-r border-cyan-300/10 px-3 py-3.5 text-center">
+            <div className="text-[8px] font-black uppercase tracking-[0.18em] text-cyan-100/45 sm:text-[9px]">
               Leaderboard Wagered
             </div>
 
-            <div className="mt-1 text-base font-black text-cyan-200 sm:text-lg">
+            <div className="mt-1.5 text-lg font-black text-cyan-200 sm:text-xl">
               $
               {Number(
                 leaderboardData.find(
@@ -4163,12 +4166,20 @@ const rankBadgeStyle = isFirst
             </div>
           </div>
 
-          <div className="px-3 py-3 text-center">
-            <div className="text-[8px] font-black uppercase tracking-[0.16em] text-white/40 sm:text-[9px]">
+          <div className="px-3 py-3.5 text-center">
+            <div className="text-[8px] font-black uppercase tracking-[0.18em] text-white/40 sm:text-[9px]">
               Status
             </div>
 
-            <div className="mt-1 text-base font-black text-yellow-200 sm:text-lg">
+            <div
+              className={`mt-1.5 text-lg font-black sm:text-xl ${
+                String(rouloLink?.role || "").toLowerCase() === "vip"
+                  ? "text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.30)]"
+                  : rouloLink?.roulo_username
+                  ? "text-cyan-200"
+                  : "text-white/70"
+              }`}
+            >
               {String(rouloLink?.role || "").toLowerCase() === "vip"
                 ? "👑 VIP"
                 : rouloLink?.roulo_username
@@ -4180,44 +4191,48 @@ const rankBadgeStyle = isFirst
 
         {/* GIVEAWAY ODDS */}
         {rouloLink && (
-          <div className="rounded-xl border border-cyan-300/15 bg-black/60 p-3">
-            <div className="mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300/60">
+          <div className="overflow-hidden rounded-xl border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(0,18,24,0.97),rgba(0,0,0,0.97))] p-3.5 shadow-[0_0_24px_rgba(0,245,255,0.08)]">
+            <div className="mb-3 text-[9px] font-black uppercase tracking-[0.20em] text-cyan-300/70">
               Giveaway Odds
             </div>
 
-            <div className="grid grid-cols-4 divide-x divide-white/[0.06]">
+            <div className="grid grid-cols-4 divide-x divide-cyan-300/10">
               <div className="px-1 text-center">
-                <div className="text-[8px] font-black uppercase text-white/35">
+                <div className="text-[8px] font-black uppercase tracking-wide text-white/35">
                   Base
                 </div>
-                <div className="mt-1 text-xs font-black text-white sm:text-sm">
+
+                <div className="mt-1.5 text-sm font-black text-white sm:text-base">
                   {viewerOdds.baseOdds.toFixed(1)}x
                 </div>
               </div>
 
               <div className="px-1 text-center">
-                <div className="text-[8px] font-black uppercase text-white/35">
+                <div className="text-[8px] font-black uppercase tracking-wide text-white/35">
                   Luck
                 </div>
-                <div className="mt-1 text-xs font-black text-green-300 sm:text-sm">
+
+                <div className="mt-1.5 text-sm font-black text-green-300 sm:text-base">
                   +{viewerOdds.luckOdds.toFixed(1)}x
                 </div>
               </div>
 
               <div className="px-1 text-center">
-                <div className="text-[8px] font-black uppercase text-white/35">
+                <div className="text-[8px] font-black uppercase tracking-wide text-white/35">
                   Total
                 </div>
-                <div className="mt-1 text-xs font-black text-red-300 sm:text-sm">
+
+                <div className="mt-1.5 text-sm font-black text-red-300 sm:text-base">
                   {viewerOdds.totalOdds.toFixed(1)}x
                 </div>
               </div>
 
               <div className="px-1 text-center">
-                <div className="text-[8px] font-black uppercase text-white/35">
+                <div className="text-[8px] font-black uppercase tracking-wide text-white/35">
                   Next Loss
                 </div>
-                <div className="mt-1 text-xs font-black text-cyan-300 sm:text-sm">
+
+                <div className="mt-1.5 text-sm font-black text-cyan-300 sm:text-base">
                   {viewerOdds.nextOdds.toFixed(1)}x
                 </div>
               </div>
@@ -4227,7 +4242,7 @@ const rankBadgeStyle = isFirst
 
         {/* REWARD SECTIONS */}
         {viewerRewards.length === 0 ? (
-          <div className="rounded-xl border border-white/10 bg-black/60 px-3 py-4 text-center text-xs text-white/40">
+          <div className="rounded-xl border border-white/10 bg-black/80 px-3 py-4 text-center text-xs text-white/40">
             {viewerRewardsMessage || "No rewards yet."}
           </div>
         ) : (
@@ -4252,105 +4267,137 @@ const rankBadgeStyle = isFirst
                 items: viewerRewards.filter((r) => r.paid),
                 empty: "No paid prizes yet.",
               },
-            ].map((rewardSection) => (
-              <div
-                key={rewardSection.title}
-                className="overflow-hidden rounded-xl border border-white/10 bg-black/60"
-              >
-                <div className="flex items-center justify-between border-b border-white/[0.05] px-3 py-2">
-                  <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white">
-                    {rewardSection.title}
+            ].map((rewardSection) => {
+              const isReady =
+                rewardSection.title === "Ready to Claim";
+
+              const isWaiting =
+                rewardSection.title === "Waiting for Payment";
+
+              const isPaid =
+                rewardSection.title === "Paid";
+
+              return (
+                <div
+                  key={rewardSection.title}
+                  className={`overflow-hidden rounded-xl border bg-black/85 shadow-[0_0_18px_rgba(0,0,0,0.25)] ${
+                    isReady
+                      ? "border-yellow-300/20"
+                      : isWaiting
+                      ? "border-orange-300/15"
+                      : "border-green-300/15"
+                  }`}
+                >
+                  <div className="flex items-center justify-between border-b border-white/[0.06] px-3.5 py-2.5">
+                    <div
+                      className={`text-[10px] font-black uppercase tracking-[0.16em] ${
+                        isReady
+                          ? "text-yellow-100"
+                          : isWaiting
+                          ? "text-orange-100"
+                          : "text-green-100"
+                      }`}
+                    >
+                      {rewardSection.title}
+                    </div>
+
+                    <div
+                      className={`rounded-full border px-2.5 py-0.5 text-[9px] font-black ${
+                        isReady
+                          ? "border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
+                          : isWaiting
+                          ? "border-orange-300/20 bg-orange-400/10 text-orange-200"
+                          : "border-green-300/20 bg-green-400/10 text-green-200"
+                      }`}
+                    >
+                      {rewardSection.items.length}
+                    </div>
                   </div>
 
-                  <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[9px] font-black text-cyan-200">
-                    {rewardSection.items.length}
-                  </div>
+                  {rewardSection.items.length === 0 ? (
+                    <div className="px-3 py-3.5 text-center text-[10px] text-white/30">
+                      {rewardSection.empty}
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-white/[0.05]">
+                      {rewardSection.items.map((reward: any) => (
+                        <div
+                          key={reward.id}
+                          className="flex items-center justify-between gap-3 px-3.5 py-2.5 transition hover:bg-white/[0.02]"
+                        >
+                          <div className="min-w-0 text-left">
+                            <div className="truncate text-xs font-black text-white sm:text-sm">
+                              {reward.title || "Chat Giveaway"}
+                            </div>
+
+                            <div className="mt-0.5 text-[9px] text-white/30">
+                              {reward.created_at
+                                ? new Date(
+                                    reward.created_at
+                                  ).toLocaleString()
+                                : "Recently"}
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 text-right">
+                            <div className="text-sm font-black text-cyan-200 sm:text-base">
+                              $
+                              {Number(
+                                reward.amount || 0
+                              ).toLocaleString()}
+                            </div>
+
+                            {!reward.claimed && !reward.paid ? (
+                              <button
+                                onClick={() =>
+                                  handleClaimReward(reward.id)
+                                }
+                                className="mt-1 rounded-md border border-yellow-300/30 bg-yellow-400/10 px-2.5 py-0.5 text-[9px] font-black text-yellow-200 transition hover:bg-yellow-400/20"
+                              >
+                                Claim
+                              </button>
+                            ) : reward.paid ? (
+                              <div className="mt-0.5 text-[9px] font-black text-green-300">
+                                Paid ✓
+                              </div>
+                            ) : (
+                              <div className="mt-0.5 text-[9px] font-black text-orange-200">
+                                Waiting
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-
-                {rewardSection.items.length === 0 ? (
-                  <div className="px-3 py-3 text-center text-[10px] text-white/30">
-                    {rewardSection.empty}
-                  </div>
-                ) : (
-                  <div className="divide-y divide-white/[0.05]">
-                    {rewardSection.items.map((reward: any) => (
-                      <div
-                        key={reward.id}
-                        className="flex items-center justify-between gap-3 px-3 py-2"
-                      >
-                        <div className="min-w-0 text-left">
-                          <div className="truncate text-xs font-black text-white">
-                            {reward.title || "Chat Giveaway"}
-                          </div>
-
-                          <div className="mt-0.5 text-[9px] text-white/30">
-                            {reward.created_at
-                              ? new Date(
-                                  reward.created_at
-                                ).toLocaleString()
-                              : "Recently"}
-                          </div>
-                        </div>
-
-                        <div className="shrink-0 text-right">
-                          <div className="text-sm font-black text-cyan-200">
-                            $
-                            {Number(
-                              reward.amount || 0
-                            ).toLocaleString()}
-                          </div>
-
-                          {!reward.claimed && !reward.paid ? (
-                            <button
-                              onClick={() =>
-                                handleClaimReward(reward.id)
-                              }
-                              className="mt-1 rounded-md border border-yellow-300/30 bg-yellow-400/10 px-2 py-0.5 text-[9px] font-black text-yellow-200"
-                            >
-                              Claim
-                            </button>
-                          ) : reward.paid ? (
-                            <div className="mt-0.5 text-[9px] font-black text-cyan-200">
-                              Paid ✓
-                            </div>
-                          ) : (
-                            <div className="mt-0.5 text-[9px] font-black text-orange-200">
-                              Waiting
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
 
-        {/* TOTALS - LAST */}
-        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-black/60">
-          <div className="border-r border-white/[0.06] px-3 py-2.5 text-center">
-            <div className="text-[8px] font-black uppercase tracking-[0.16em] text-yellow-200/60">
+        {/* TOTALS */}
+        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(135deg,rgba(10,10,10,0.98),rgba(0,0,0,0.98))] shadow-[0_0_20px_rgba(0,0,0,0.30)]">
+          <div className="border-r border-white/[0.06] px-3 py-3 text-center">
+            <div className="text-[8px] font-black uppercase tracking-[0.18em] text-yellow-200/60">
               Pending
             </div>
 
-            <div className="mt-0.5 text-sm font-black text-yellow-200">
+            <div className="mt-1 text-base font-black text-yellow-200">
               ${viewerRewardsPending.toLocaleString()}
             </div>
           </div>
 
-          <div className="px-3 py-2.5 text-center">
-            <div className="text-[8px] font-black uppercase tracking-[0.16em] text-green-300/60">
+          <div className="px-3 py-3 text-center">
+            <div className="text-[8px] font-black uppercase tracking-[0.18em] text-green-300/60">
               Paid
             </div>
 
-            <div className="mt-0.5 text-sm font-black text-green-300">
+            <div className="mt-1 text-base font-black text-green-300">
               ${viewerRewardsPaid.toLocaleString()}
             </div>
           </div>
         </div>
-
       </div>
     )}
   </section>
