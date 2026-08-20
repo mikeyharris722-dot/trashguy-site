@@ -595,6 +595,11 @@ export default function Home() {
   const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [pickedSlot, setPickedSlot] = useState<SlotItem | null>(null);
   const [isPickingSlot, setIsPickingSlot] = useState(false);
+  const [slotClawBelt, setSlotClawBelt] = useState<SlotItem[]>([]);
+  const [slotClawFinalists, setSlotClawFinalists] = useState<SlotItem[]>([]);
+  const [slotClawTargetIndex, setSlotClawTargetIndex] = useState<number | null>(null);
+  const [slotClawDropping, setSlotClawDropping] = useState(false);
+  const [slotClawWinnerRevealed, setSlotClawWinnerRevealed] = useState(false);
   const lastPickedRef = useRef<string | null>(null);
   const slotWheelWinnersThisCycleRef = useRef<Set<string>>(new Set());
 
@@ -1029,6 +1034,55 @@ const topSlotCallWinner =
       )[0]
     : null;
 
+const getRandomSlotIndex = (length: number) => {
+  if (length <= 1) return 0;
+
+  const maxUint32 = 0x100000000;
+  const limit = maxUint32 - (maxUint32 % length);
+  const values = new Uint32Array(1);
+
+  do {
+    crypto.getRandomValues(values);
+  } while (values[0] >= limit);
+
+  return values[0] % length;
+};
+
+const shuffleSlotItems = (items: SlotItem[]) => {
+  const shuffled = [...items];
+
+  for (let index = shuffled.length - 1; index > 0; index--) {
+    const randomIndex = getRandomSlotIndex(index + 1);
+    [shuffled[index], shuffled[randomIndex]] = [
+      shuffled[randomIndex],
+      shuffled[index],
+    ];
+  }
+
+  return shuffled;
+};
+
+useEffect(() => {
+  if (isPickingSlot) return;
+
+  if (filteredSlots.length === 0) {
+    setSlotClawBelt([]);
+    setSlotClawFinalists([]);
+    setSlotClawTargetIndex(null);
+    setSlotClawDropping(false);
+    setSlotClawWinnerRevealed(false);
+    setPickedSlot(null);
+    return;
+  }
+
+  setSlotClawBelt(shuffleSlotItems(filteredSlots));
+  setSlotClawFinalists([]);
+  setSlotClawTargetIndex(null);
+  setSlotClawDropping(false);
+  setSlotClawWinnerRevealed(false);
+  setPickedSlot(null);
+}, [selectedProviders]);
+
 const pickRandomSlot = () => {
   if (!filteredSlots.length || isPickingSlot) return;
 
@@ -1038,50 +1092,65 @@ const pickRandomSlot = () => {
   spinSound.play().catch(() => {});
 
   setIsPickingSlot(true);
+  setPickedSlot(null);
+  setSlotClawFinalists([]);
+  setSlotClawTargetIndex(null);
+  setSlotClawDropping(false);
+  setSlotClawWinnerRevealed(false);
+  setSlotClawBelt(shuffleSlotItems(filteredSlots));
 
-  let spins = 0;
-  const maxSpins = 24;
-  let speed = 45;
+  let winner: SlotItem;
 
-  const spinLoop = () => {
-    const randomSlot =
-      filteredSlots[Math.floor(Math.random() * filteredSlots.length)];
+  do {
+    winner = filteredSlots[getRandomSlotIndex(filteredSlots.length)];
+  } while (
+    filteredSlots.length > 1 &&
+    winner.name === lastPickedRef.current
+  );
 
-    // this MUST be the full slot object
-    setPickedSlot(randomSlot);
+  const finalCount = Math.min(5, filteredSlots.length);
+  const winnerPosition = getRandomSlotIndex(finalCount);
+  const otherSlots = shuffleSlotItems(
+    filteredSlots.filter(
+      (slot) =>
+        !(slot.name === winner.name && slot.provider === winner.provider)
+    )
+  ).slice(0, Math.max(0, finalCount - 1));
 
-    spins += 1;
-    speed += spins > 14 ? 18 : 6;
+  const finalists = [...otherSlots];
+  finalists.splice(winnerPosition, 0, winner);
 
-    if (spins >= maxSpins) {
-      spinSound.pause();
-      spinSound.currentTime = 0;
+  // Let the image conveyor race first, then lock the last five cards in place.
+  window.setTimeout(() => {
+    setSlotClawFinalists(finalists);
 
-      let finalSlot: SlotItem;
+    // Give the five finalists a moment to settle before the claw starts moving.
+    window.setTimeout(() => {
+      setSlotClawTargetIndex(winnerPosition);
 
-      do {
-        finalSlot =
-          filteredSlots[Math.floor(Math.random() * filteredSlots.length)];
-      } while (
-        filteredSlots.length > 1 &&
-        finalSlot.name === lastPickedRef.current
-      );
+      window.setTimeout(() => {
+        setSlotClawDropping(true);
 
-      lastPickedRef.current = finalSlot.name;
-      setPickedSlot(finalSlot);
-      setIsPickingSlot(false);
+        window.setTimeout(() => {
+          lastPickedRef.current = winner.name;
+          setPickedSlot(winner);
+          setSlotClawWinnerRevealed(true);
 
-      const clickSound = new Audio("/click.mp3");
-      clickSound.volume = 0.45;
-      clickSound.play().catch(() => {});
+          spinSound.pause();
+          spinSound.currentTime = 0;
 
-      return;
-    }
+          const clickSound = new Audio("/click.mp3");
+          clickSound.volume = 0.45;
+          clickSound.play().catch(() => {});
 
-    setTimeout(spinLoop, speed);
-  };
-
-  spinLoop();
+          window.setTimeout(() => {
+            setSlotClawDropping(false);
+            setIsPickingSlot(false);
+          }, 700);
+        }, 800);
+      }, 900);
+    }, 650);
+  }, 3000);
 };
 
 useEffect(() => {
@@ -5117,6 +5186,11 @@ const rankBadgeStyle = isFirst
         onClick={() => {
           setSelectedProviders([]);
           setPickedSlot(null);
+          setSlotClawFinalists([]);
+          setSlotClawTargetIndex(null);
+          setSlotClawDropping(false);
+          setSlotClawWinnerRevealed(false);
+          setSlotClawBelt(shuffleSlotItems(slotData));
         }}
         className="shrink-0 rounded-full border border-white/10 bg-black/60 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-white/45 transition hover:border-cyan-300/25 hover:text-cyan-100 sm:px-3 sm:text-[9px]"
       >
@@ -5126,21 +5200,36 @@ const rankBadgeStyle = isFirst
   </div>
 </div>
 
-    {/* SLOT MACHINE */}
-    <div className="mx-auto max-w-5xl overflow-hidden rounded-[1.4rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,18,22,0.97),rgba(0,0,0,0.98))] shadow-[0_0_45px_rgba(0,245,255,0.12)] sm:rounded-[2rem]">
+    {/* SLOT CLAW MACHINE */}
+    <div className="mx-auto max-w-6xl overflow-hidden rounded-[1.4rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,18,22,0.98),rgba(0,0,0,0.99))] shadow-[0_0_45px_rgba(0,245,255,0.12)] sm:rounded-[2rem]">
+      <style jsx>{`
+        @keyframes slotClawMarquee {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+      `}</style>
+
       {/* MACHINE HEADER */}
-      <div className="relative overflow-hidden border-b border-cyan-300/10 px-4 py-4 text-center sm:px-8 sm:py-6">
+      <div className="relative overflow-hidden border-b border-cyan-300/10 px-4 py-4 text-center sm:px-8 sm:py-5">
         <div className="absolute inset-x-[15%] top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
 
         <div className="text-[9px] font-black uppercase tracking-[0.4em] text-cyan-200/45 sm:text-xs">
-          Random Slot Generator
+          TrashGuy Slot Claw
         </div>
 
         <div className="mt-1 text-lg font-black tracking-[0.08em] text-white sm:text-2xl">
-          {isPickingSlot ? "SELECTING..." : "READY TO SPIN"}
+          {isPickingSlot
+            ? slotClawFinalists.length > 0
+              ? slotClawDropping
+                ? "CLAW DROPPING..."
+                : "CHOOSING FROM THE FINAL FIVE..."
+              : "SHUFFLING SLOTS..."
+            : pickedSlot
+            ? "WINNER SELECTED"
+            : "READY TO SPIN"}
         </div>
 
-        <div className="mx-auto mt-2 flex w-fit items-center gap-1.5">
+        <div className="mx-auto mt-2 flex w-fit items-center gap-2">
           <span
             className={`h-1.5 w-1.5 rounded-full ${
               isPickingSlot
@@ -5148,121 +5237,167 @@ const rankBadgeStyle = isFirst
                 : "bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,1)]"
             }`}
           />
-
           <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/35 sm:text-[10px]">
-            {filteredSlots.length} slots loaded
+            {filteredSlots.length} eligible slots
           </span>
         </div>
       </div>
 
-      {/* PICKER WINDOW */}
-      <div className="p-3 sm:p-7">
-        <div
-          className={`relative flex min-h-[210px] items-center justify-center overflow-hidden rounded-2xl border bg-black/95 px-8 py-8 transition-all duration-300 sm:min-h-[300px] sm:rounded-[1.6rem] sm:px-16 sm:py-12 ${
-            isPickingSlot
-              ? "border-cyan-300/55 shadow-[inset_0_0_55px_rgba(0,245,255,0.10),0_0_35px_rgba(0,245,255,0.20)]"
-              : pickedSlot
-              ? "border-emerald-300/35 shadow-[inset_0_0_50px_rgba(0,255,180,0.07),0_0_30px_rgba(0,245,255,0.12)]"
-              : "border-white/10"
-          }`}
-        >
-          {/* background lines */}
-          <div className="pointer-events-none absolute inset-0 opacity-30">
-            <div className="absolute left-0 right-0 top-1/2 h-px bg-gradient-to-r from-transparent via-cyan-300/25 to-transparent" />
-            <div className="absolute bottom-0 left-1/2 top-0 w-px bg-gradient-to-b from-transparent via-cyan-300/10 to-transparent" />
-          </div>
+      {/* CLAW CABINET */}
+      <div className="p-2.5 sm:p-5">
+        <div className="relative overflow-hidden rounded-2xl border border-cyan-300/20 bg-black/95 shadow-[inset_0_0_70px_rgba(0,245,255,0.05)]">
+          <div className="absolute inset-x-[10%] top-0 z-30 h-px bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_14px_rgba(0,245,255,0.8)]" />
 
-          {/* center selection brackets */}
-          <div className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 sm:left-5">
-            <div className="h-0 w-0 border-b-[10px] border-l-[16px] border-t-[10px] border-b-transparent border-l-cyan-300 border-t-transparent drop-shadow-[0_0_8px_rgba(0,245,255,0.9)] sm:border-b-[14px] sm:border-l-[22px] sm:border-t-[14px]" />
-          </div>
+          {/* CLAW / RAIL */}
+          <div className="relative h-[112px] overflow-hidden border-b border-cyan-300/10 bg-[linear-gradient(180deg,rgba(0,245,255,0.045),rgba(0,0,0,0.42))] sm:h-[155px]">
+            <div className="absolute left-[4%] right-[4%] top-5 h-[5px] rounded-full border border-cyan-200/25 bg-black shadow-[0_0_15px_rgba(0,245,255,0.15)] sm:top-7" />
 
-          <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 sm:right-5">
-            <div className="h-0 w-0 border-b-[10px] border-r-[16px] border-t-[10px] border-b-transparent border-r-cyan-300 border-t-transparent drop-shadow-[0_0_8px_rgba(0,245,255,0.9)] sm:border-b-[14px] sm:border-r-[22px] sm:border-t-[14px]" />
-          </div>
-
-          {!pickedSlot ? (
-            <div className="relative z-10 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-cyan-300/15 bg-cyan-400/[0.04] shadow-[0_0_25px_rgba(0,245,255,0.08)] sm:h-20 sm:w-20">
-                <span className="text-3xl sm:text-4xl">🎰</span>
+            <div
+              className="absolute top-3 z-40 transition-[left] duration-700 ease-in-out sm:top-5"
+              style={{
+                left:
+                  slotClawTargetIndex === null || slotClawFinalists.length === 0
+                    ? "50%"
+                    : `${((slotClawTargetIndex + 0.5) / slotClawFinalists.length) * 100}%`,
+                transform: "translateX(-50%)",
+              }}
+            >
+              <div className="mx-auto h-7 w-12 rounded-md border border-cyan-200/50 bg-[linear-gradient(180deg,#12343b,#020708)] shadow-[0_0_16px_rgba(0,245,255,0.3)] sm:h-9 sm:w-16">
+                <div className="mx-auto mt-1.5 h-1.5 w-6 rounded-full bg-cyan-300/70 shadow-[0_0_8px_rgba(0,245,255,0.8)] sm:w-8" />
               </div>
 
-              <div className="mt-4 text-sm font-black uppercase tracking-[0.16em] text-white/55 sm:text-lg">
-                Waiting For Spin
-              </div>
+              <div
+                className={`mx-auto w-[2px] bg-gradient-to-b from-cyan-200/80 to-white/40 transition-all duration-700 ${
+                  slotClawDropping ? "h-[58px] sm:h-[88px]" : "h-[25px] sm:h-[38px]"
+                }`}
+              />
 
-              <div className="mt-1 text-[10px] text-white/25 sm:text-xs">
-                Your random slot will appear here
+              <div className="relative mx-auto h-8 w-14 sm:h-11 sm:w-18">
+                <div className="absolute left-1/2 top-0 h-3 w-7 -translate-x-1/2 rounded-b-lg border border-cyan-200/50 bg-[#07171a] shadow-[0_0_10px_rgba(0,245,255,0.25)]" />
+                <div className="absolute left-2 top-2 h-7 w-[3px] origin-top rotate-[30deg] rounded-full bg-cyan-100/85 shadow-[0_0_5px_rgba(0,245,255,0.6)] sm:h-9" />
+                <div className="absolute right-2 top-2 h-7 w-[3px] origin-top -rotate-[30deg] rounded-full bg-cyan-100/85 shadow-[0_0_5px_rgba(0,245,255,0.6)] sm:h-9" />
               </div>
             </div>
-          ) : (
-            <div className="relative z-10 w-full text-center">
-              <div
-                className={`text-[9px] font-black uppercase tracking-[0.32em] transition sm:text-xs ${
-                  isPickingSlot
-                    ? "text-cyan-200/45"
-                    : "text-emerald-200/60"
-                }`}
-              >
-                {isPickingSlot ? "Scanning Slots" : "Selected Slot"}
+          </div>
+
+          {/* IMAGE CONVEYOR */}
+          <div className="relative overflow-hidden px-2 pb-4 pt-3 sm:px-4 sm:pb-6 sm:pt-5">
+            <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-20 w-8 bg-gradient-to-r from-black via-black/80 to-transparent sm:w-20" />
+            <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-20 w-8 bg-gradient-to-l from-black via-black/80 to-transparent sm:w-20" />
+
+            {slotClawFinalists.length === 0 ? (
+              <div className="overflow-hidden">
+                <div
+                  key={`${selectedProviders.join("-")}-${isPickingSlot ? "spin" : "idle"}`}
+                  className="flex w-max gap-2 sm:gap-3"
+                  style={{
+                    animation: `slotClawMarquee ${isPickingSlot ? "2.2s" : "18s"} linear infinite`,
+                  }}
+                >
+                  {[...slotClawBelt, ...slotClawBelt].map((slot, index) => (
+                    <div
+                      key={`${slot.provider}-${slot.name}-${index}`}
+                      className="w-[96px] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black shadow-[0_0_12px_rgba(0,0,0,0.5)] sm:w-[145px] lg:w-[165px]"
+                    >
+                      <div className="aspect-[3/4] overflow-hidden bg-[#050505]">
+                        {slot.image ? (
+                          <img
+                            src={slot.image}
+                            alt={slot.name}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-2xl opacity-25">🎰</div>
+                        )}
+                      </div>
+                      <div className="border-t border-white/[0.06] px-1.5 py-2 text-center">
+                        <div className="truncate text-[7px] font-black text-white sm:text-[9px]">{slot.name}</div>
+                        <div className="mt-0.5 truncate text-[6px] font-bold uppercase text-cyan-100/35 sm:text-[7px]">{slot.provider}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
+            ) : (
+              <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
+                {slotClawFinalists.map((slot, index) => {
+                  const isTarget = slotClawTargetIndex === index;
+                  const isWinner =
+                    slotClawWinnerRevealed &&
+                    pickedSlot?.name === slot.name &&
+                    pickedSlot?.provider === slot.provider;
 
-{pickedSlot.image && (
-  <div
-    className={`mx-auto mt-4 w-full max-w-[190px] overflow-hidden rounded-xl border border-cyan-300/20 bg-black/80 shadow-[0_0_25px_rgba(0,245,255,0.12)] transition-all duration-150 sm:max-w-[260px] ${
-      isPickingSlot
-        ? "scale-95 opacity-60 blur-[1px]"
-        : "scale-100 opacity-100"
-    }`}
-  >
-    <div className="aspect-[4/3] w-full">
-      <img
-        src={pickedSlot.image}
-        alt={pickedSlot.name}
-        className="h-full w-full object-cover"
-        onError={(e) => {
-          e.currentTarget.style.display = "none";
-        }}
-      />
-    </div>
-  </div>
-)}
+                  return (
+                    <div
+                      key={`${slot.provider}-${slot.name}-${index}`}
+                      className={`relative min-w-0 overflow-hidden rounded-xl border bg-black transition-all duration-500 ${
+                        isWinner
+                          ? "-translate-y-2 scale-[1.04] border-emerald-300 shadow-[0_0_30px_rgba(110,231,183,0.55)]"
+                          : isTarget
+                          ? "border-cyan-300/75 shadow-[0_0_24px_rgba(0,245,255,0.35)]"
+                          : "border-white/10"
+                      }`}
+                    >
+                      <div className="aspect-[3/4] overflow-hidden bg-[#050505]">
+                        {slot.image ? (
+                          <img
+                            src={slot.image}
+                            alt={slot.name}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xl opacity-25 sm:text-3xl">🎰</div>
+                        )}
+                      </div>
 
-              <div
-                className={`mx-auto mt-4 max-w-3xl text-[clamp(1.35rem,5vw,3.5rem)] font-black leading-[1.05] transition-all duration-150 ${
-                  isPickingSlot
-                    ? "scale-95 text-white/60 blur-[0.7px]"
-                    : "scale-100 text-[#9fffd7] drop-shadow-[0_0_22px_rgba(0,245,255,0.55)]"
-                }`}
-              >
-                {pickedSlot.name}
+                      <div className="border-t border-white/[0.06] bg-black/95 px-1 py-1.5 text-center sm:px-2 sm:py-2.5">
+                        <div className="truncate text-[6px] font-black text-white sm:text-[9px] lg:text-[10px]">{slot.name}</div>
+                        <div className="mt-0.5 truncate text-[5px] font-bold uppercase text-cyan-100/35 sm:text-[7px] lg:text-[8px]">{slot.provider}</div>
+                      </div>
+
+                      {isWinner && (
+                        <div className="absolute left-1/2 top-1.5 -translate-x-1/2 rounded-full border border-emerald-200/50 bg-black/90 px-1.5 py-0.5 text-[5px] font-black uppercase tracking-[0.1em] text-emerald-200 shadow-[0_0_15px_rgba(110,231,183,0.5)] sm:top-2 sm:px-2 sm:py-1 sm:text-[7px]">
+                          Winner
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+            )}
 
-              <div
-                className={`mx-auto mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.12em] transition-all sm:mt-5 sm:px-5 sm:text-xs ${
-                  isPickingSlot
-                    ? "border-white/10 bg-white/[0.03] text-white/35"
-                    : "border-cyan-300/25 bg-cyan-400/[0.08] text-cyan-100 shadow-[0_0_18px_rgba(0,245,255,0.12)]"
-                }`}
-              >
-                {providerLogos[pickedSlot.provider] && (
-                  <img
-                    src={providerLogos[pickedSlot.provider]}
-                    alt={pickedSlot.provider}
-                    className="h-5 w-5 object-contain sm:h-6 sm:w-6"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                )}
-
-                {pickedSlot.provider}
-              </div>
-            </div>
-          )}
+            <div className="mt-3 h-2 rounded-full border border-cyan-300/15 bg-[repeating-linear-gradient(90deg,#071315_0px,#071315_18px,#0c292e_18px,#0c292e_22px)] shadow-[0_0_12px_rgba(0,245,255,0.08)] sm:mt-4" />
+          </div>
         </div>
 
-        {/* SPIN BUTTON */}
+        {/* WINNER DISPLAY */}
+        {pickedSlot && slotClawWinnerRevealed && (
+          <div className="mt-3 flex items-center justify-center gap-3 rounded-xl border border-emerald-300/20 bg-emerald-300/[0.04] px-3 py-3 text-center shadow-[0_0_20px_rgba(110,231,183,0.08)] sm:mt-4 sm:px-5 sm:py-4">
+            {providerLogos[pickedSlot.provider] && (
+              <img
+                src={providerLogos[pickedSlot.provider]}
+                alt={pickedSlot.provider}
+                className="h-7 w-7 object-contain sm:h-9 sm:w-9"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            )}
+            <div className="min-w-0 text-left">
+              <div className="text-[7px] font-black uppercase tracking-[0.28em] text-emerald-200/50 sm:text-[9px]">Claw Selected</div>
+              <div className="truncate text-base font-black text-[#9fffd7] drop-shadow-[0_0_15px_rgba(0,245,255,0.35)] sm:text-xl">{pickedSlot.name}</div>
+              <div className="text-[8px] font-bold uppercase tracking-[0.12em] text-white/35 sm:text-[10px]">{pickedSlot.provider}</div>
+            </div>
+          </div>
+        )}
+
+        {/* GO BUTTON */}
         <button
           onClick={pickRandomSlot}
           disabled={isPickingSlot || filteredSlots.length === 0}
@@ -5273,29 +5408,23 @@ const rankBadgeStyle = isFirst
           } disabled:cursor-not-allowed disabled:opacity-50`}
         >
           <span className="relative z-10 flex items-center justify-center gap-3">
-            <span className={isPickingSlot ? "animate-spin" : ""}>
-              {isPickingSlot ? "◌" : "🎰"}
-            </span>
-
+            <span className={isPickingSlot ? "animate-spin" : ""}>{isPickingSlot ? "◌" : "🎰"}</span>
             {isPickingSlot
-              ? "Randomizing..."
+              ? slotClawFinalists.length > 0
+                ? "Claw Selecting..."
+                : "Spinning..."
               : pickedSlot
-              ? "Spin Again"
-              : "Pick Random Slot"}
+              ? "Play Again"
+              : "GO"}
           </span>
         </button>
 
-        {/* FOOTER STATUS */}
-        <div className="mt-3 flex items-center justify-center gap-2 text-[9px] font-bold uppercase tracking-[0.14em] text-white/25 sm:mt-4 sm:text-[10px]">
-          <span>Random Selection</span>
+        <div className="mt-3 flex items-center justify-center gap-2 text-[8px] font-bold uppercase tracking-[0.12em] text-white/25 sm:mt-4 sm:text-[10px]">
+          <span>{filteredSlots.length} Slots</span>
           <span className="text-cyan-300/30">•</span>
-          <span>{filteredSlots.length} Eligible</span>
+          <span>{selectedProviders.length === 0 ? "All Providers" : `${selectedProviders.length} Selected`}</span>
           <span className="text-cyan-300/30">•</span>
-          <span>
-            {selectedProviders.length === 0
-              ? "All Providers"
-              : `${selectedProviders.length} Selected`}
-          </span>
+          <span>Random Claw</span>
         </div>
       </div>
     </div>
