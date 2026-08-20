@@ -595,11 +595,12 @@ export default function Home() {
   const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [pickedSlot, setPickedSlot] = useState<SlotItem | null>(null);
   const [isPickingSlot, setIsPickingSlot] = useState(false);
-  const [slotClawBelt, setSlotClawBelt] = useState<SlotItem[]>([]);
-  const [slotClawFinalists, setSlotClawFinalists] = useState<SlotItem[]>([]);
-  const [slotClawTargetIndex, setSlotClawTargetIndex] = useState<number | null>(null);
-  const [slotClawDropping, setSlotClawDropping] = useState(false);
-  const [slotClawWinnerRevealed, setSlotClawWinnerRevealed] = useState(false);
+  const [slotPickerBelt, setSlotPickerBelt] = useState<SlotItem[]>([]);
+  const [slotPickerSliding, setSlotPickerSliding] = useState(false);
+  const [slotPickerTransitionMs, setSlotPickerTransitionMs] = useState(70);
+  const [slotPickerClawIndex, setSlotPickerClawIndex] = useState<number | null>(null);
+  const [slotPickerClawDropping, setSlotPickerClawDropping] = useState(false);
+  const [slotPickerWinnerRevealed, setSlotPickerWinnerRevealed] = useState(false);
   const lastPickedRef = useRef<string | null>(null);
   const slotWheelWinnersThisCycleRef = useRef<Set<string>>(new Set());
 
@@ -1034,7 +1035,7 @@ const topSlotCallWinner =
       )[0]
     : null;
 
-const getRandomSlotIndex = (length: number) => {
+const getSlotPickerRandomIndex = (length: number) => {
   if (length <= 1) return 0;
 
   const maxUint32 = 0x100000000;
@@ -1048,109 +1049,140 @@ const getRandomSlotIndex = (length: number) => {
   return values[0] % length;
 };
 
-const shuffleSlotItems = (items: SlotItem[]) => {
-  const shuffled = [...items];
+const getRandomSlotFromPool = (pool: SlotItem[]) => {
+  return pool[getSlotPickerRandomIndex(pool.length)];
+};
 
-  for (let index = shuffled.length - 1; index > 0; index--) {
-    const randomIndex = getRandomSlotIndex(index + 1);
-    [shuffled[index], shuffled[randomIndex]] = [
-      shuffled[randomIndex],
-      shuffled[index],
-    ];
-  }
+const makeSlotPickerBelt = (pool: SlotItem[], count = 6) => {
+  if (!pool.length) return [];
 
-  return shuffled;
+  return Array.from({ length: count }, () => getRandomSlotFromPool(pool));
 };
 
 useEffect(() => {
   if (isPickingSlot) return;
 
-  if (filteredSlots.length === 0) {
-    setSlotClawBelt([]);
-    setSlotClawFinalists([]);
-    setSlotClawTargetIndex(null);
-    setSlotClawDropping(false);
-    setSlotClawWinnerRevealed(false);
-    setPickedSlot(null);
-    return;
-  }
-
-  setSlotClawBelt(shuffleSlotItems(filteredSlots));
-  setSlotClawFinalists([]);
-  setSlotClawTargetIndex(null);
-  setSlotClawDropping(false);
-  setSlotClawWinnerRevealed(false);
+  setSlotPickerBelt(makeSlotPickerBelt(filteredSlots));
   setPickedSlot(null);
+  setSlotPickerClawIndex(null);
+  setSlotPickerClawDropping(false);
+  setSlotPickerWinnerRevealed(false);
 }, [selectedProviders]);
 
-const pickRandomSlot = () => {
+const pickRandomSlot = async () => {
   if (!filteredSlots.length || isPickingSlot) return;
 
-  const spinSound = new Audio("/spin.mp3");
-  spinSound.loop = true;
-  spinSound.volume = 0.25;
-  spinSound.play().catch(() => {});
-
-  setIsPickingSlot(true);
-  setPickedSlot(null);
-  setSlotClawFinalists([]);
-  setSlotClawTargetIndex(null);
-  setSlotClawDropping(false);
-  setSlotClawWinnerRevealed(false);
-  setSlotClawBelt(shuffleSlotItems(filteredSlots));
+  const sleep = (ms: number) =>
+    new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
   let winner: SlotItem;
 
   do {
-    winner = filteredSlots[getRandomSlotIndex(filteredSlots.length)];
+    winner = getRandomSlotFromPool(filteredSlots);
   } while (
     filteredSlots.length > 1 &&
     winner.name === lastPickedRef.current
   );
 
+  lastPickedRef.current = winner.name;
+
   const finalCount = Math.min(5, filteredSlots.length);
-  const winnerPosition = getRandomSlotIndex(finalCount);
-  const otherSlots = shuffleSlotItems(
-    filteredSlots.filter(
-      (slot) =>
-        !(slot.name === winner.name && slot.provider === winner.provider)
-    )
-  ).slice(0, Math.max(0, finalCount - 1));
+  const winnerIndex = getSlotPickerRandomIndex(finalCount);
 
-  const finalists = [...otherSlots];
-  finalists.splice(winnerPosition, 0, winner);
+  const finalFive: SlotItem[] = [];
+  const availableOthers = filteredSlots.filter(
+    (slot) =>
+      !(slot.name === winner.name && slot.provider === winner.provider)
+  );
 
-  // Let the image conveyor race first, then lock the last five cards in place.
-  window.setTimeout(() => {
-    setSlotClawFinalists(finalists);
+  for (let index = 0; index < finalCount; index++) {
+    if (index === winnerIndex) {
+      finalFive.push(winner);
+      continue;
+    }
 
-    // Give the five finalists a moment to settle before the claw starts moving.
-    window.setTimeout(() => {
-      setSlotClawTargetIndex(winnerPosition);
+    const source = availableOthers.length ? availableOthers : filteredSlots;
+    finalFive.push(getRandomSlotFromPool(source));
+  }
 
-      window.setTimeout(() => {
-        setSlotClawDropping(true);
+  while (finalFive.length < 5) {
+    finalFive.push(getRandomSlotFromPool(filteredSlots));
+  }
 
-        window.setTimeout(() => {
-          lastPickedRef.current = winner.name;
-          setPickedSlot(winner);
-          setSlotClawWinnerRevealed(true);
+  const finalFeed = [
+    ...finalFive,
+    getRandomSlotFromPool(filteredSlots),
+  ];
 
-          spinSound.pause();
-          spinSound.currentTime = 0;
+  const spinSound = new Audio('/spin.mp3');
+  spinSound.loop = true;
+  spinSound.volume = 0.28;
+  spinSound.playbackRate = 1.15;
+  spinSound.play().catch(() => {});
 
-          const clickSound = new Audio("/click.mp3");
-          clickSound.volume = 0.45;
-          clickSound.play().catch(() => {});
+  setIsPickingSlot(true);
+  setPickedSlot(null);
+  setSlotPickerWinnerRevealed(false);
+  setSlotPickerClawDropping(false);
+  setSlotPickerClawIndex(null);
 
-          window.setTimeout(() => {
-            setSlotClawDropping(false);
-            setIsPickingSlot(false);
-          }, 700);
-        }, 800);
-      }, 900);
-    }, 650);
-  }, 3000);
+  let belt = slotPickerBelt.length === 6
+    ? [...slotPickerBelt]
+    : makeSlotPickerBelt(filteredSlots);
+
+  setSlotPickerBelt(belt);
+
+  const randomSteps = 24;
+  const totalSteps = randomSteps + finalFeed.length;
+
+  for (let step = 0; step < totalSteps; step++) {
+    const isFinalFeed = step >= randomSteps;
+    const finalFeedIndex = step - randomSteps;
+
+    const progress = step / Math.max(1, totalSteps - 1);
+    const eased = progress * progress * progress;
+    const transitionMs = Math.round(65 + eased * 355);
+
+    setSlotPickerTransitionMs(transitionMs);
+
+    spinSound.playbackRate = Math.max(0.72, 1.15 - progress * 0.43);
+    spinSound.volume = Math.max(0.12, 0.28 - progress * 0.12);
+
+    const nextSlot = isFinalFeed
+      ? finalFeed[finalFeedIndex]
+      : getRandomSlotFromPool(filteredSlots);
+
+    setSlotPickerSliding(true);
+    await sleep(transitionMs);
+
+    belt = [...belt.slice(1), nextSlot];
+    setSlotPickerBelt(belt);
+    setSlotPickerSliding(false);
+
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    );
+  }
+
+  spinSound.pause();
+  spinSound.currentTime = 0;
+
+  setSlotPickerClawIndex(winnerIndex);
+  await sleep(500);
+
+  setSlotPickerClawDropping(true);
+  await sleep(650);
+
+  setPickedSlot(winner);
+  setSlotPickerWinnerRevealed(true);
+
+  const clickSound = new Audio('/click.mp3');
+  clickSound.volume = 0.45;
+  clickSound.play().catch(() => {});
+
+  await sleep(700);
+  setSlotPickerClawDropping(false);
+  setIsPickingSlot(false);
 };
 
 useEffect(() => {
@@ -5066,366 +5098,270 @@ const rankBadgeStyle = isFirst
 )}
 
 {activeSection === "slotpicker" && (
-  <section className="space-y-4 sm:space-y-6">
-    {/* TITLE */}
+  <section className="space-y-2 sm:space-y-3">
     <div className="mx-auto max-w-5xl text-center">
       <GlowTabTitle label="SLOT PICKER" />
     </div>
 
-{/* PROVIDERS */}
-<div className="mx-auto max-w-5xl overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 shadow-[0_0_25px_rgba(0,245,255,0.08)] backdrop-blur-sm">
-  {/* PROVIDER HEADER */}
-  <div className="border-b border-white/[0.06] px-3 py-2.5 sm:px-4 sm:py-3">
-    <div className="flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <div className="text-[8px] font-black uppercase tracking-[0.24em] text-cyan-200/60 sm:text-[10px]">
-          Provider Control
+    {/* COMPACT PROVIDERS */}
+    <div className="mx-auto max-w-5xl overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm">
+      <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] px-2.5 py-1.5 sm:px-3 sm:py-2">
+        <div>
+          <div className="text-[7px] font-black uppercase tracking-[0.2em] text-cyan-200/55 sm:text-[9px]">
+            Providers
+          </div>
+          <div className="text-[8px] font-bold text-white/30 sm:text-[10px]">
+            Select any combination
+          </div>
         </div>
 
-        <div className="mt-0.5 truncate text-[10px] font-bold text-white/40 sm:text-xs">
-          Choose providers or leave all active
+        <div className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.06] px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.1em] text-cyan-100/60 sm:text-[9px]">
+          {filteredSlots.length} Slots
         </div>
       </div>
 
-      <div className="shrink-0 rounded-full border border-cyan-300/15 bg-cyan-400/[0.06] px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-cyan-100/60 sm:px-3 sm:text-[10px]">
-        {filteredSlots.length} Slots
-      </div>
-    </div>
-  </div>
+      <div className="p-1.5 sm:p-2">
+        <div className="grid grid-cols-3 gap-1 sm:grid-cols-5 sm:gap-1.5">
+          {slotProviders.map((provider) => {
+            const active = selectedProviders.includes(provider);
+            const logo = providerLogos[provider];
+            const providerSlotCount = slotData.filter(
+              (slot) => slot.provider === provider
+            ).length;
 
-  {/* PROVIDER GRID */}
-  <div className="p-2 sm:p-3">
-    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2 lg:grid-cols-4">
-      {slotProviders.map((provider) => {
-        const active = selectedProviders.includes(provider);
-        const logo = providerLogos[provider];
-
-        const providerSlotCount = slotData.filter(
-          (slot) => slot.provider === provider
-        ).length;
-
-        return (
-          <button
-            key={provider}
-            onClick={() => toggleSlotProvider(provider)}
-            className={`group relative flex min-h-[44px] items-center gap-2 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition-all duration-200 sm:min-h-[50px] sm:px-2.5 sm:py-2 ${
-              active
-                ? "border-cyan-300/45 bg-[linear-gradient(135deg,rgba(0,245,255,0.15),rgba(0,80,100,0.06),rgba(0,0,0,0.88))] text-white shadow-[0_0_12px_rgba(0,245,255,0.10)]"
-                : "border-white/[0.08] bg-black/75 text-white/50 hover:border-cyan-300/20 hover:text-white/80"
-            }`}
-          >
-            {/* ACTIVE DOT */}
-            {active && (
-              <div className="absolute right-1.5 top-1.5 h-1 w-1 rounded-full bg-cyan-300 shadow-[0_0_5px_rgba(0,245,255,1)]" />
-            )}
-
-            {/* LOGO */}
-            <div
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border bg-black/80 ${
-                active
-                  ? "border-cyan-300/25"
-                  : "border-white/10"
-              }`}
-            >
-              {logo ? (
-                <img
-                  src={logo}
-                  alt={provider}
-                  className={`h-5 w-5 object-contain transition ${
-                    active ? "opacity-100" : "opacity-55"
-                  }`}
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-              ) : (
-                <span className="text-[8px] font-black text-[#8fffd0]">
-                  {provider.charAt(0)}
-                </span>
-              )}
-            </div>
-
-            {/* PROVIDER INFO */}
-            <div className="min-w-0">
-              <div className="truncate text-[9px] font-black leading-tight sm:text-[11px]">
-                {provider}
-              </div>
-
-              <div
-                className={`mt-0.5 text-[7px] leading-none sm:text-[9px] ${
+            return (
+              <button
+                key={provider}
+                onClick={() => toggleSlotProvider(provider)}
+                disabled={isPickingSlot}
+                className={`group relative flex min-h-[34px] items-center gap-1.5 overflow-hidden rounded-md border px-1.5 py-1 text-left transition-all duration-200 sm:min-h-[38px] sm:px-2 ${
                   active
-                    ? "text-cyan-100/45"
-                    : "text-white/25"
-                }`}
+                    ? "border-cyan-300/45 bg-cyan-400/[0.10] text-white shadow-[0_0_9px_rgba(0,245,255,0.10)]"
+                    : "border-white/[0.07] bg-black/70 text-white/50 hover:border-cyan-300/20 hover:text-white/80"
+                } disabled:cursor-not-allowed disabled:opacity-50`}
               >
-                {providerSlotCount} slots
-              </div>
-            </div>
-          </button>
-        );
-      })}
-    </div>
+                <div
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border bg-black/75 sm:h-7 sm:w-7 ${
+                    active ? "border-cyan-300/25" : "border-white/10"
+                  }`}
+                >
+                  {logo ? (
+                    <img
+                      src={logo}
+                      alt={provider}
+                      className={`h-4 w-4 object-contain sm:h-5 sm:w-5 ${
+                        active ? "opacity-100" : "opacity-50"
+                      }`}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <span className="text-[7px] font-black text-cyan-200">
+                      {provider.charAt(0)}
+                    </span>
+                  )}
+                </div>
 
-    {/* PROVIDER STATUS */}
-    <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-white/[0.06] pt-2.5">
-      <div className="min-w-0">
-        <div className="text-[8px] font-black uppercase tracking-[0.13em] text-white/55 sm:text-[10px]">
-          {selectedProviders.length === 0
-            ? "All Providers Active"
-            : `${selectedProviders.length} Provider${
-                selectedProviders.length === 1 ? "" : "s"
-              } Active`}
+                <div className="min-w-0">
+                  <div className="truncate text-[7px] font-black leading-tight sm:text-[9px]">
+                    {provider}
+                  </div>
+                  <div className="text-[6px] leading-none text-white/25 sm:text-[7px]">
+                    {providerSlotCount}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
-        <div className="mt-0.5 text-[8px] text-white/30 sm:text-[9px]">
-          {filteredSlots.length} eligible slots
+        <div className="mt-1.5 flex items-center justify-between border-t border-white/[0.05] pt-1.5">
+          <span className="text-[7px] font-black uppercase tracking-[0.1em] text-white/35 sm:text-[8px]">
+            {selectedProviders.length === 0
+              ? "All providers active"
+              : `${selectedProviders.length} selected`}
+          </span>
+
+          <button
+            onClick={() => {
+              setSelectedProviders([]);
+              setPickedSlot(null);
+              setSlotPickerClawIndex(null);
+              setSlotPickerClawDropping(false);
+              setSlotPickerWinnerRevealed(false);
+            }}
+            disabled={isPickingSlot}
+            className="rounded-full border border-white/10 bg-black/60 px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.1em] text-white/45 transition hover:border-cyan-300/25 hover:text-cyan-100 disabled:opacity-40 sm:text-[8px]"
+          >
+            Reset
+          </button>
         </div>
       </div>
-
-      <button
-        onClick={() => {
-          setSelectedProviders([]);
-          setPickedSlot(null);
-          setSlotClawFinalists([]);
-          setSlotClawTargetIndex(null);
-          setSlotClawDropping(false);
-          setSlotClawWinnerRevealed(false);
-          setSlotClawBelt(shuffleSlotItems(slotData));
-        }}
-        className="shrink-0 rounded-full border border-white/10 bg-black/60 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-white/45 transition hover:border-cyan-300/25 hover:text-cyan-100 sm:px-3 sm:text-[9px]"
-      >
-        Reset
-      </button>
     </div>
-  </div>
-</div>
 
-    {/* SLOT CLAW MACHINE */}
-    <div className="mx-auto max-w-6xl overflow-hidden rounded-[1.4rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,18,22,0.98),rgba(0,0,0,0.99))] shadow-[0_0_45px_rgba(0,245,255,0.12)] sm:rounded-[2rem]">
-      <style jsx>{`
-        @keyframes slotClawMarquee {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-      `}</style>
-
-      {/* MACHINE HEADER */}
-      <div className="relative overflow-hidden border-b border-cyan-300/10 px-4 py-4 text-center sm:px-8 sm:py-5">
-        <div className="absolute inset-x-[15%] top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
-
-        <div className="text-[9px] font-black uppercase tracking-[0.4em] text-cyan-200/45 sm:text-xs">
-          TrashGuy Slot Claw
+    {/* COMPACT CLAW MACHINE */}
+    <div className="mx-auto max-w-5xl overflow-hidden rounded-xl border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,18,22,0.97),rgba(0,0,0,0.99))] shadow-[0_0_30px_rgba(0,245,255,0.10)]">
+      <div className="flex items-center justify-between border-b border-cyan-300/10 px-3 py-2 sm:px-4">
+        <div>
+          <div className="text-[7px] font-black uppercase tracking-[0.24em] text-cyan-200/45 sm:text-[9px]">
+            Random Slot Machine
+          </div>
+          <div className="mt-0.5 text-xs font-black tracking-[0.08em] text-white sm:text-sm">
+            {isPickingSlot
+              ? slotPickerClawDropping
+                ? "GRABBING..."
+                : slotPickerClawIndex !== null
+                ? "LOCKED ON..."
+                : "SPINNING..."
+              : slotPickerWinnerRevealed
+              ? "WINNER SELECTED"
+              : "READY"}
+          </div>
         </div>
 
-        <div className="mt-1 text-lg font-black tracking-[0.08em] text-white sm:text-2xl">
-          {isPickingSlot
-            ? slotClawFinalists.length > 0
-              ? slotClawDropping
-                ? "CLAW DROPPING..."
-                : "CHOOSING FROM THE FINAL FIVE..."
-              : "SHUFFLING SLOTS..."
-            : pickedSlot
-            ? "WINNER SELECTED"
-            : "READY TO SPIN"}
-        </div>
-
-        <div className="mx-auto mt-2 flex w-fit items-center gap-2">
+        <div className="flex items-center gap-1.5 text-[7px] font-bold uppercase tracking-[0.1em] text-white/30 sm:text-[8px]">
           <span
             className={`h-1.5 w-1.5 rounded-full ${
               isPickingSlot
-                ? "animate-pulse bg-yellow-300 shadow-[0_0_8px_rgba(253,224,71,1)]"
-                : "bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,1)]"
+                ? "animate-pulse bg-yellow-300 shadow-[0_0_7px_rgba(253,224,71,1)]"
+                : "bg-emerald-300 shadow-[0_0_7px_rgba(110,231,183,1)]"
             }`}
           />
-          <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/35 sm:text-[10px]">
-            {filteredSlots.length} eligible slots
-          </span>
+          {filteredSlots.length} eligible
         </div>
       </div>
 
-      {/* CLAW CABINET */}
-      <div className="p-2.5 sm:p-5">
-        <div className="relative overflow-hidden rounded-2xl border border-cyan-300/20 bg-black/95 shadow-[inset_0_0_70px_rgba(0,245,255,0.05)]">
-          <div className="absolute inset-x-[10%] top-0 z-30 h-px bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_14px_rgba(0,245,255,0.8)]" />
-
-          {/* CLAW / RAIL */}
-          <div className="relative h-[112px] overflow-hidden border-b border-cyan-300/10 bg-[linear-gradient(180deg,rgba(0,245,255,0.045),rgba(0,0,0,0.42))] sm:h-[155px]">
-            <div className="absolute left-[4%] right-[4%] top-5 h-[5px] rounded-full border border-cyan-200/25 bg-black shadow-[0_0_15px_rgba(0,245,255,0.15)] sm:top-7" />
+      <div className="p-2 sm:p-3">
+        <div className="relative overflow-hidden rounded-lg border border-cyan-300/15 bg-black/95 shadow-[inset_0_0_40px_rgba(0,245,255,0.04)]">
+          {/* CLAW RAIL */}
+          <div className="relative h-[62px] border-b border-white/[0.05] bg-[linear-gradient(180deg,rgba(0,245,255,0.035),transparent)] sm:h-[72px]">
+            <div className="absolute left-[4%] right-[4%] top-3 h-[3px] rounded-full border border-cyan-300/20 bg-black/80 sm:top-4" />
 
             <div
-              className="absolute top-3 z-40 transition-[left] duration-700 ease-in-out sm:top-5"
+              className="absolute top-1.5 z-30 transition-[left] duration-500 ease-in-out sm:top-2"
               style={{
                 left:
-                  slotClawTargetIndex === null || slotClawFinalists.length === 0
+                  slotPickerClawIndex === null
                     ? "50%"
-                    : `${((slotClawTargetIndex + 0.5) / slotClawFinalists.length) * 100}%`,
+                    : `${((slotPickerClawIndex + 0.5) / 5) * 100}%`,
                 transform: "translateX(-50%)",
               }}
             >
-              <div className="mx-auto h-7 w-12 rounded-md border border-cyan-200/50 bg-[linear-gradient(180deg,#12343b,#020708)] shadow-[0_0_16px_rgba(0,245,255,0.3)] sm:h-9 sm:w-16">
-                <div className="mx-auto mt-1.5 h-1.5 w-6 rounded-full bg-cyan-300/70 shadow-[0_0_8px_rgba(0,245,255,0.8)] sm:w-8" />
+              <div className="mx-auto h-5 w-8 rounded border border-cyan-200/40 bg-[#071619] shadow-[0_0_10px_rgba(0,245,255,0.20)] sm:h-6 sm:w-10">
+                <div className="mx-auto mt-1 h-1 w-4 rounded-full bg-cyan-300/65 sm:w-5" />
               </div>
 
               <div
-                className={`mx-auto w-[2px] bg-gradient-to-b from-cyan-200/80 to-white/40 transition-all duration-700 ${
-                  slotClawDropping ? "h-[58px] sm:h-[88px]" : "h-[25px] sm:h-[38px]"
+                className={`mx-auto w-[2px] bg-cyan-100/65 transition-all duration-500 ${
+                  slotPickerClawDropping ? "h-[36px] sm:h-[44px]" : "h-[13px] sm:h-[16px]"
                 }`}
               />
 
-              <div className="relative mx-auto h-8 w-14 sm:h-11 sm:w-18">
-                <div className="absolute left-1/2 top-0 h-3 w-7 -translate-x-1/2 rounded-b-lg border border-cyan-200/50 bg-[#07171a] shadow-[0_0_10px_rgba(0,245,255,0.25)]" />
-                <div className="absolute left-2 top-2 h-7 w-[3px] origin-top rotate-[30deg] rounded-full bg-cyan-100/85 shadow-[0_0_5px_rgba(0,245,255,0.6)] sm:h-9" />
-                <div className="absolute right-2 top-2 h-7 w-[3px] origin-top -rotate-[30deg] rounded-full bg-cyan-100/85 shadow-[0_0_5px_rgba(0,245,255,0.6)] sm:h-9" />
+              <div className="relative mx-auto h-5 w-9 sm:h-6 sm:w-10">
+                <div className="absolute left-1 top-0 h-5 w-[2px] origin-top rotate-[28deg] rounded bg-cyan-100/75" />
+                <div className="absolute right-1 top-0 h-5 w-[2px] origin-top -rotate-[28deg] rounded bg-cyan-100/75" />
               </div>
             </div>
           </div>
 
-          {/* IMAGE CONVEYOR */}
-          <div className="relative overflow-hidden px-2 pb-4 pt-3 sm:px-4 sm:pb-6 sm:pt-5">
-            <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-20 w-8 bg-gradient-to-r from-black via-black/80 to-transparent sm:w-20" />
-            <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-20 w-8 bg-gradient-to-l from-black via-black/80 to-transparent sm:w-20" />
+          {/* BELT VIEWPORT - 5 CARDS VISIBLE, 6TH OFF SCREEN */}
+          <div className="relative overflow-hidden px-1.5 py-2 sm:px-2 sm:py-2.5">
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-5 bg-gradient-to-r from-black to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-5 bg-gradient-to-l from-black to-transparent" />
 
-            {slotClawFinalists.length === 0 ? (
-              <div className="overflow-hidden">
-                <div
-                  key={`${selectedProviders.join("-")}-${isPickingSlot ? "spin" : "idle"}`}
-                  className="flex w-max gap-2 sm:gap-3"
-                  style={{
-                    animation: `slotClawMarquee ${isPickingSlot ? "2.2s" : "18s"} linear infinite`,
-                  }}
-                >
-                  {[...slotClawBelt, ...slotClawBelt].map((slot, index) => (
-                    <div
-                      key={`${slot.provider}-${slot.name}-${index}`}
-                      className="w-[96px] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black shadow-[0_0_12px_rgba(0,0,0,0.5)] sm:w-[145px] lg:w-[165px]"
-                    >
-                      <div className="aspect-[3/4] overflow-hidden bg-[#050505]">
-                        {slot.image ? (
-                          <img
-                            src={slot.image}
-                            alt={slot.name}
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-2xl opacity-25">🎰</div>
-                        )}
-                      </div>
-                      <div className="border-t border-white/[0.06] px-1.5 py-2 text-center">
-                        <div className="truncate text-[7px] font-black text-white sm:text-[9px]">{slot.name}</div>
-                        <div className="mt-0.5 truncate text-[6px] font-bold uppercase text-cyan-100/35 sm:text-[7px]">{slot.provider}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
-                {slotClawFinalists.map((slot, index) => {
-                  const isTarget = slotClawTargetIndex === index;
-                  const isWinner =
-                    slotClawWinnerRevealed &&
-                    pickedSlot?.name === slot.name &&
-                    pickedSlot?.provider === slot.provider;
+            <div
+              className="flex w-[120%] gap-1.5 sm:gap-2"
+              style={{
+                transform: slotPickerSliding
+                  ? "translateX(-16.6666667%)"
+                  : "translateX(0)",
+                transition: slotPickerSliding
+                  ? `transform ${slotPickerTransitionMs}ms cubic-bezier(0.22, 0.61, 0.36, 1)`
+                  : "none",
+              }}
+            >
+              {slotPickerBelt.map((slot, index) => {
+                const visibleIndex = index;
+                const isWinner =
+                  slotPickerWinnerRevealed &&
+                  slotPickerClawIndex === visibleIndex &&
+                  visibleIndex < 5;
 
-                  return (
-                    <div
-                      key={`${slot.provider}-${slot.name}-${index}`}
-                      className={`relative min-w-0 overflow-hidden rounded-xl border bg-black transition-all duration-500 ${
-                        isWinner
-                          ? "-translate-y-2 scale-[1.04] border-emerald-300 shadow-[0_0_30px_rgba(110,231,183,0.55)]"
-                          : isTarget
-                          ? "border-cyan-300/75 shadow-[0_0_24px_rgba(0,245,255,0.35)]"
-                          : "border-white/10"
-                      }`}
-                    >
-                      <div className="aspect-[3/4] overflow-hidden bg-[#050505]">
-                        {slot.image ? (
-                          <img
-                            src={slot.image}
-                            alt={slot.name}
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-xl opacity-25 sm:text-3xl">🎰</div>
-                        )}
-                      </div>
-
-                      <div className="border-t border-white/[0.06] bg-black/95 px-1 py-1.5 text-center sm:px-2 sm:py-2.5">
-                        <div className="truncate text-[6px] font-black text-white sm:text-[9px] lg:text-[10px]">{slot.name}</div>
-                        <div className="mt-0.5 truncate text-[5px] font-bold uppercase text-cyan-100/35 sm:text-[7px] lg:text-[8px]">{slot.provider}</div>
-                      </div>
-
-                      {isWinner && (
-                        <div className="absolute left-1/2 top-1.5 -translate-x-1/2 rounded-full border border-emerald-200/50 bg-black/90 px-1.5 py-0.5 text-[5px] font-black uppercase tracking-[0.1em] text-emerald-200 shadow-[0_0_15px_rgba(110,231,183,0.5)] sm:top-2 sm:px-2 sm:py-1 sm:text-[7px]">
-                          Winner
+                return (
+                  <div
+                    key={`${slot.provider}-${slot.name}-${index}`}
+                    className={`relative w-1/6 shrink-0 overflow-hidden rounded-md border bg-black transition-all duration-300 ${
+                      isWinner
+                        ? "-translate-y-1 scale-[1.03] border-emerald-300 shadow-[0_0_20px_rgba(110,231,183,0.45)]"
+                        : "border-white/10"
+                    }`}
+                  >
+                    <div className="aspect-[4/5] overflow-hidden bg-[#060606]">
+                      {slot.image ? (
+                        <img
+                          src={slot.image}
+                          alt={slot.name}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-lg opacity-30">
+                          🎰
                         </div>
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            )}
 
-            <div className="mt-3 h-2 rounded-full border border-cyan-300/15 bg-[repeating-linear-gradient(90deg,#071315_0px,#071315_18px,#0c292e_18px,#0c292e_22px)] shadow-[0_0_12px_rgba(0,245,255,0.08)] sm:mt-4" />
+                    <div className="border-t border-white/[0.05] bg-black/95 px-1 py-1 text-center">
+                      <div className="truncate text-[6px] font-black text-white sm:text-[8px]">
+                        {slot.name}
+                      </div>
+                      <div className="mt-0.5 truncate text-[5px] font-bold uppercase text-cyan-100/30 sm:text-[6px]">
+                        {slot.provider}
+                      </div>
+                    </div>
+
+                    {isWinner && (
+                      <div className="absolute left-1/2 top-1 -translate-x-1/2 rounded-full border border-emerald-200/50 bg-black/90 px-1.5 py-0.5 text-[5px] font-black uppercase tracking-[0.08em] text-emerald-200 sm:text-[6px]">
+                        Winner
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-1.5 h-1.5 rounded-full border border-cyan-300/10 bg-[repeating-linear-gradient(90deg,#071315_0px,#071315_12px,#0d2a2f_12px,#0d2a2f_15px)]" />
           </div>
         </div>
 
-        {/* WINNER DISPLAY */}
-        {pickedSlot && slotClawWinnerRevealed && (
-          <div className="mt-3 flex items-center justify-center gap-3 rounded-xl border border-emerald-300/20 bg-emerald-300/[0.04] px-3 py-3 text-center shadow-[0_0_20px_rgba(110,231,183,0.08)] sm:mt-4 sm:px-5 sm:py-4">
-            {providerLogos[pickedSlot.provider] && (
-              <img
-                src={providerLogos[pickedSlot.provider]}
-                alt={pickedSlot.provider}
-                className="h-7 w-7 object-contain sm:h-9 sm:w-9"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
-              />
-            )}
-            <div className="min-w-0 text-left">
-              <div className="text-[7px] font-black uppercase tracking-[0.28em] text-emerald-200/50 sm:text-[9px]">Claw Selected</div>
-              <div className="truncate text-base font-black text-[#9fffd7] drop-shadow-[0_0_15px_rgba(0,245,255,0.35)] sm:text-xl">{pickedSlot.name}</div>
-              <div className="text-[8px] font-bold uppercase tracking-[0.12em] text-white/35 sm:text-[10px]">{pickedSlot.provider}</div>
-            </div>
+        {pickedSlot && slotPickerWinnerRevealed && (
+          <div className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-emerald-300/15 bg-emerald-300/[0.035] px-2 py-1.5 text-center">
+            <span className="text-[7px] font-black uppercase tracking-[0.14em] text-emerald-200/45 sm:text-[8px]">
+              Selected
+            </span>
+            <span className="truncate text-[9px] font-black text-[#9fffd7] sm:text-[11px]">
+              {pickedSlot.name}
+            </span>
+            <span className="hidden text-[7px] font-bold uppercase text-white/30 sm:inline">
+              {pickedSlot.provider}
+            </span>
           </div>
         )}
 
-        {/* GO BUTTON */}
         <button
           onClick={pickRandomSlot}
           disabled={isPickingSlot || filteredSlots.length === 0}
-          className={`relative mt-3 w-full overflow-hidden rounded-xl border px-4 py-4 text-sm font-black uppercase tracking-[0.16em] transition-all duration-300 sm:mt-5 sm:rounded-2xl sm:px-6 sm:py-5 sm:text-lg ${
+          className={`mt-2 w-full rounded-lg border px-3 py-2.5 text-xs font-black uppercase tracking-[0.16em] transition-all duration-200 sm:py-3 sm:text-sm ${
             isPickingSlot
-              ? "cursor-wait border-cyan-300/20 bg-cyan-400/[0.08] text-cyan-100/55"
-              : "border-cyan-300/45 bg-[linear-gradient(180deg,rgba(0,245,255,0.25),rgba(0,110,130,0.18))] text-[#baffdf] shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_0_30px_rgba(0,245,255,0.15)] hover:border-cyan-200/70 hover:bg-cyan-400/25 hover:shadow-[0_0_40px_rgba(0,245,255,0.25)]"
+              ? "cursor-wait border-cyan-300/20 bg-cyan-400/[0.07] text-cyan-100/50"
+              : "border-cyan-300/45 bg-[linear-gradient(180deg,rgba(0,245,255,0.23),rgba(0,110,130,0.16))] text-[#baffdf] shadow-[0_0_20px_rgba(0,245,255,0.12)] hover:border-cyan-200/70 hover:bg-cyan-400/20"
           } disabled:cursor-not-allowed disabled:opacity-50`}
         >
-          <span className="relative z-10 flex items-center justify-center gap-3">
-            <span className={isPickingSlot ? "animate-spin" : ""}>{isPickingSlot ? "◌" : "🎰"}</span>
-            {isPickingSlot
-              ? slotClawFinalists.length > 0
-                ? "Claw Selecting..."
-                : "Spinning..."
-              : pickedSlot
-              ? "Play Again"
-              : "GO"}
-          </span>
+          {isPickingSlot ? "SPINNING..." : "SPIN"}
         </button>
-
-        <div className="mt-3 flex items-center justify-center gap-2 text-[8px] font-bold uppercase tracking-[0.12em] text-white/25 sm:mt-4 sm:text-[10px]">
-          <span>{filteredSlots.length} Slots</span>
-          <span className="text-cyan-300/30">•</span>
-          <span>{selectedProviders.length === 0 ? "All Providers" : `${selectedProviders.length} Selected`}</span>
-          <span className="text-cyan-300/30">•</span>
-          <span>Random Claw</span>
-        </div>
       </div>
     </div>
   </section>
