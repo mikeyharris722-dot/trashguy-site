@@ -5233,7 +5233,7 @@ const rankBadgeStyle = isFirst
       </div>
 
       <div className="p-2.5 sm:p-4">
-        <div className="relative overflow-hidden rounded-lg border border-cyan-300/15 bg-black/95 shadow-[inset_0_0_40px_rgba(0,245,255,0.04)]">
+        <div className="relative overflow-hidden rounded-lg border border-cyan-300/15 bg-black/95 shadow-[inset_0_0_40px_rgba(0,245,255,0.04)] [--slot-gap:8px] sm:[--slot-gap:10px]">
           {/* CLAW RAIL */}
           <div className="relative h-[70px] border-b border-white/[0.05] bg-[linear-gradient(180deg,rgba(0,245,255,0.035),transparent)] sm:h-[82px]">
             <div className="absolute left-[4%] right-[4%] top-3 h-[3px] rounded-full border border-cyan-300/20 bg-black/80 sm:top-4" />
@@ -5244,7 +5244,7 @@ const rankBadgeStyle = isFirst
                 left:
                   slotPickerClawIndex === null
                     ? "50%"
-                    : `${((slotPickerClawIndex + 0.5) / 5) * 100}%`,
+                    : `calc(${slotPickerClawIndex} * (((100% - (4 * var(--slot-gap))) / 5) + var(--slot-gap)) + (((100% - (4 * var(--slot-gap))) / 5) / 2))`,
                 transform: "translateX(-50%)",
               }}
             >
@@ -5254,27 +5254,35 @@ const rankBadgeStyle = isFirst
 
               <div
                 className={`mx-auto w-[2px] bg-cyan-100/65 transition-all duration-500 ${
-                  slotPickerClawDropping ? "h-[36px] sm:h-[44px]" : "h-[13px] sm:h-[16px]"
+                  slotPickerClawDropping ? "h-[145px] sm:h-[185px]" : "h-[13px] sm:h-[16px]"
                 }`}
               />
 
               <div className="relative mx-auto h-5 w-9 sm:h-6 sm:w-10">
-                <div className="absolute left-1 top-0 h-5 w-[2px] origin-top rotate-[28deg] rounded bg-cyan-100/75" />
-                <div className="absolute right-1 top-0 h-5 w-[2px] origin-top -rotate-[28deg] rounded bg-cyan-100/75" />
+                <div
+                  className={`absolute left-1 top-0 h-5 w-[2px] origin-top rounded bg-cyan-100/75 transition-transform duration-300 ${
+                    slotPickerClawDropping ? "rotate-[16deg]" : "rotate-[28deg]"
+                  }`}
+                />
+                <div
+                  className={`absolute right-1 top-0 h-5 w-[2px] origin-top rounded bg-cyan-100/75 transition-transform duration-300 ${
+                    slotPickerClawDropping ? "-rotate-[16deg]" : "-rotate-[28deg]"
+                  }`}
+                />
               </div>
             </div>
           </div>
 
-          {/* BELT VIEWPORT - 5 CARDS VISIBLE, 6TH OFF SCREEN */}
-          <div className="relative overflow-hidden px-2 py-2.5 sm:px-2.5 sm:py-3">
+          {/* BELT VIEWPORT - exactly 5 full cards visible, 6th stays off screen */}
+          <div className="relative overflow-hidden px-2 py-3 sm:px-2.5 sm:py-3.5">
             <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-5 bg-gradient-to-r from-black to-transparent" />
             <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-5 bg-gradient-to-l from-black to-transparent" />
 
             <div
-              className="flex w-[120%] gap-2 sm:gap-2.5"
+              className="flex gap-[var(--slot-gap)]"
               style={{
                 transform: slotPickerSliding
-                  ? "translateX(-16.6666667%)"
+                  ? "translateX(calc(-1 * ((((100% - (4 * var(--slot-gap))) / 5)) + var(--slot-gap))))"
                   : "translateX(0)",
                 transition: slotPickerSliding
                   ? `transform ${slotPickerTransitionMs}ms cubic-bezier(0.22, 0.61, 0.36, 1)`
@@ -5291,11 +5299,14 @@ const rankBadgeStyle = isFirst
                 return (
                   <div
                     key={`${slot.provider}-${slot.name}-${index}`}
-                    className={`relative w-1/6 shrink-0 overflow-hidden rounded-lg border bg-black transition-all duration-300 ${
+                    className={`relative shrink-0 overflow-hidden rounded-lg border bg-black transition-all duration-500 ${
                       isWinner
-                        ? "-translate-y-1 scale-[1.03] border-emerald-300 shadow-[0_0_20px_rgba(110,231,183,0.45)]"
+                        ? "-translate-y-4 scale-[1.045] border-emerald-300 shadow-[0_0_28px_rgba(110,231,183,0.58)]"
                         : "border-white/10"
                     }`}
+                    style={{
+                      flexBasis: "calc((100% - (4 * var(--slot-gap))) / 5)",
+                    }}
                   >
                     <div className="aspect-[4/5] overflow-hidden bg-[#060606]">
                       {slot.image ? (
