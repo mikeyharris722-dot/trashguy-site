@@ -600,9 +600,6 @@ export default function Home() {
   const [slotClawTargetIndex, setSlotClawTargetIndex] = useState<number | null>(null);
   const [slotClawDropping, setSlotClawDropping] = useState(false);
   const [slotClawWinnerRevealed, setSlotClawWinnerRevealed] = useState(false);
-  const [slotClawBraking, setSlotClawBraking] = useState(false);
-  const [slotClawCaptured, setSlotClawCaptured] = useState(false);
-  const slotClawBeltRef = useRef<HTMLDivElement | null>(null);
   const lastPickedRef = useRef<string | null>(null);
   const slotWheelWinnersThisCycleRef = useRef<Set<string>>(new Set());
 
@@ -1086,21 +1083,15 @@ useEffect(() => {
   setPickedSlot(null);
 }, [selectedProviders]);
 
-const pickRandomSlot = async () => {
+const pickRandomSlot = () => {
   if (!filteredSlots.length || isPickingSlot) return;
 
-  const sleep = (ms: number) =>
-    new Promise<void>((resolve) => window.setTimeout(resolve, ms));
-
-  const playClick = (volume = 0.3) => {
-    const click = new Audio("/click.mp3");
-    click.volume = volume;
-    click.play().catch(() => {});
-  };
+  const spinSound = new Audio("/spin.mp3");
+  spinSound.loop = true;
+  spinSound.volume = 0.25;
+  spinSound.play().catch(() => {});
 
   setIsPickingSlot(true);
-  setSlotClawBraking(false);
-  setSlotClawCaptured(false);
   setPickedSlot(null);
   setSlotClawFinalists([]);
   setSlotClawTargetIndex(null);
@@ -1129,128 +1120,37 @@ const pickRandomSlot = async () => {
   const finalists = [...otherSlots];
   finalists.splice(winnerPosition, 0, winner);
 
-  const spinSound = new Audio("/spin.mp3");
-  spinSound.loop = true;
-  spinSound.volume = 0.24;
-  spinSound.playbackRate = 1.08;
-
-  try {
-    /*
-      Wait for React to render the fast conveyor, then control the exact
-      same CSS animation with the Web Animations API. Changing playbackRate
-      lets the pictures truly decelerate instead of restarting a new CSS
-      animation at a slower duration.
-    */
-    await sleep(80);
-
-    const beltAnimation =
-      slotClawBeltRef.current?.getAnimations().find(
-        (animation) => animation.playState !== "finished"
-      ) || null;
-
-    if (beltAnimation) {
-      beltAnimation.playbackRate = 1;
-      beltAnimation.play();
-    }
-
-    spinSound.play().catch(() => {});
-
-    // Full-speed run so lots of artwork passes through the machine.
-    await sleep(1750);
-
-    setSlotClawBraking(true);
-
-    // One continuous deceleration. The sound follows the belt exactly.
-    const brakingSteps = [
-      { rate: 0.82, ms: 360, volume: 0.22 },
-      { rate: 0.66, ms: 420, volume: 0.20 },
-      { rate: 0.52, ms: 480, volume: 0.17 },
-      { rate: 0.40, ms: 540, volume: 0.14 },
-      { rate: 0.30, ms: 600, volume: 0.11 },
-      { rate: 0.21, ms: 680, volume: 0.08 },
-      { rate: 0.14, ms: 720, volume: 0.055 },
-    ];
-
-    for (const step of brakingSteps) {
-      if (beltAnimation) beltAnimation.playbackRate = step.rate;
-      spinSound.playbackRate = Math.max(0.5, step.rate + 0.35);
-      spinSound.volume = step.volume;
-      await sleep(step.ms);
-    }
-
-    // Freeze the moving artwork and kill the spin sound on the same frame.
-    if (beltAnimation) beltAnimation.pause();
-    spinSound.pause();
-    spinSound.currentTime = 0;
-    setSlotClawBraking(false);
-
-    // The five survivors settle into the exact claw positions.
+  // Let the image conveyor race first, then lock the last five cards in place.
+  window.setTimeout(() => {
     setSlotClawFinalists(finalists);
-    playClick(0.22);
-    await sleep(850);
 
-    /*
-      Mechanical search: the claw sweeps across real finalist positions.
-      The last movement always lands over the already-randomized winner.
-    */
-    if (finalCount > 1) {
-      let currentIndex = Math.floor(finalCount / 2);
-      setSlotClawTargetIndex(currentIndex);
-      await sleep(350);
-
-      const searchPath: number[] = [];
-      const sweeps = Math.min(6, finalCount + 2);
-
-      for (let step = 0; step < sweeps; step++) {
-        let nextIndex = getRandomSlotIndex(finalCount);
-        while (nextIndex === currentIndex && finalCount > 1) {
-          nextIndex = getRandomSlotIndex(finalCount);
-        }
-        searchPath.push(nextIndex);
-        currentIndex = nextIndex;
-      }
-
-      searchPath.push(winnerPosition);
-
-      for (let step = 0; step < searchPath.length; step++) {
-        setSlotClawTargetIndex(searchPath[step]);
-        playClick(step === searchPath.length - 1 ? 0.42 : 0.18);
-        await sleep(230 + step * 55);
-      }
-    } else {
+    // Give the five finalists a moment to settle before the claw starts moving.
+    window.setTimeout(() => {
       setSlotClawTargetIndex(winnerPosition);
-      playClick(0.32);
-      await sleep(550);
-    }
 
-    // Lock over the winner before dropping.
-    await sleep(420);
-    setSlotClawDropping(true);
-    playClick(0.3);
-    await sleep(900);
+      window.setTimeout(() => {
+        setSlotClawDropping(true);
 
-    // Grab the card first, then reveal it.
-    lastPickedRef.current = winner.name;
-    setPickedSlot(winner);
-    setSlotClawWinnerRevealed(true);
-    setSlotClawCaptured(true);
-    playClick(0.52);
-    await sleep(420);
+        window.setTimeout(() => {
+          lastPickedRef.current = winner.name;
+          setPickedSlot(winner);
+          setSlotClawWinnerRevealed(true);
 
-    // Retract the claw while the winning card visibly comes up with it.
-    setSlotClawDropping(false);
-    await sleep(900);
+          spinSound.pause();
+          spinSound.currentTime = 0;
 
-    // Put the card back into its finalist bay, leaving the winner glow on.
-    setSlotClawCaptured(false);
-    await sleep(500);
+          const clickSound = new Audio("/click.mp3");
+          clickSound.volume = 0.45;
+          clickSound.play().catch(() => {});
 
-    setIsPickingSlot(false);
-  } finally {
-    spinSound.pause();
-    spinSound.currentTime = 0;
-    setSlotClawBraking(false);
-  }
+          window.setTimeout(() => {
+            setSlotClawDropping(false);
+            setIsPickingSlot(false);
+          }, 700);
+        }, 800);
+      }, 900);
+    }, 650);
+  }, 3000);
 };
 
 useEffect(() => {
@@ -5290,8 +5190,6 @@ const rankBadgeStyle = isFirst
           setSlotClawTargetIndex(null);
           setSlotClawDropping(false);
           setSlotClawWinnerRevealed(false);
-          setSlotClawBraking(false);
-          setSlotClawCaptured(false);
           setSlotClawBelt(shuffleSlotItems(slotData));
         }}
         className="shrink-0 rounded-full border border-white/10 bg-black/60 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-white/45 transition hover:border-cyan-300/25 hover:text-cyan-100 sm:px-3 sm:text-[9px]"
@@ -5309,15 +5207,6 @@ const rankBadgeStyle = isFirst
           from { transform: translateX(0); }
           to { transform: translateX(-50%); }
         }
-        @keyframes slotFinalistsSettle {
-          0% { transform: translateY(14px) scale(0.94); opacity: 0; filter: blur(5px); }
-          70% { transform: translateY(-3px) scale(1.015); opacity: 1; filter: blur(0); }
-          100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0); }
-        }
-        @keyframes slotWinnerPulse {
-          0%, 100% { box-shadow: 0 0 26px rgba(110,231,183,.45); }
-          50% { box-shadow: 0 0 46px rgba(110,231,183,.8); }
-        }
       `}</style>
 
       {/* MACHINE HEADER */}
@@ -5334,8 +5223,6 @@ const rankBadgeStyle = isFirst
               ? slotClawDropping
                 ? "CLAW DROPPING..."
                 : "CHOOSING FROM THE FINAL FIVE..."
-              : slotClawBraking
-              ? "SLOWING DOWN..."
               : "SHUFFLING SLOTS..."
             : pickedSlot
             ? "WINNER SELECTED"
@@ -5362,11 +5249,11 @@ const rankBadgeStyle = isFirst
           <div className="absolute inset-x-[10%] top-0 z-30 h-px bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_14px_rgba(0,245,255,0.8)]" />
 
           {/* CLAW / RAIL */}
-          <div className="relative z-30 h-[112px] overflow-visible border-b border-cyan-300/10 bg-[linear-gradient(180deg,rgba(0,245,255,0.045),rgba(0,0,0,0.42))] sm:h-[155px]">
+          <div className="relative h-[112px] overflow-hidden border-b border-cyan-300/10 bg-[linear-gradient(180deg,rgba(0,245,255,0.045),rgba(0,0,0,0.42))] sm:h-[155px]">
             <div className="absolute left-[4%] right-[4%] top-5 h-[5px] rounded-full border border-cyan-200/25 bg-black shadow-[0_0_15px_rgba(0,245,255,0.15)] sm:top-7" />
 
             <div
-              className="absolute top-3 z-40 transition-[left] duration-300 ease-out sm:top-5"
+              className="absolute top-3 z-40 transition-[left] duration-700 ease-in-out sm:top-5"
               style={{
                 left:
                   slotClawTargetIndex === null || slotClawFinalists.length === 0
@@ -5381,7 +5268,7 @@ const rankBadgeStyle = isFirst
 
               <div
                 className={`mx-auto w-[2px] bg-gradient-to-b from-cyan-200/80 to-white/40 transition-all duration-700 ${
-                  slotClawDropping ? "h-[105px] sm:h-[145px]" : "h-[25px] sm:h-[38px]"
+                  slotClawDropping ? "h-[58px] sm:h-[88px]" : "h-[25px] sm:h-[38px]"
                 }`}
               />
 
@@ -5394,19 +5281,17 @@ const rankBadgeStyle = isFirst
           </div>
 
           {/* IMAGE CONVEYOR */}
-          <div className="relative z-10 overflow-hidden px-2 pb-4 pt-3 sm:px-4 sm:pb-6 sm:pt-5">
+          <div className="relative overflow-hidden px-2 pb-4 pt-3 sm:px-4 sm:pb-6 sm:pt-5">
             <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-20 w-8 bg-gradient-to-r from-black via-black/80 to-transparent sm:w-20" />
             <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-20 w-8 bg-gradient-to-l from-black via-black/80 to-transparent sm:w-20" />
 
             {slotClawFinalists.length === 0 ? (
               <div className="overflow-hidden">
                 <div
-                  ref={slotClawBeltRef}
                   key={`${selectedProviders.join("-")}-${isPickingSlot ? "spin" : "idle"}`}
                   className="flex w-max gap-2 sm:gap-3"
                   style={{
-                    animation: `slotClawMarquee ${isPickingSlot ? "1.9s" : "18s"} linear infinite`,
-                    willChange: "transform",
+                    animation: `slotClawMarquee ${isPickingSlot ? "2.2s" : "18s"} linear infinite`,
                   }}
                 >
                   {[...slotClawBelt, ...slotClawBelt].map((slot, index) => (
@@ -5450,18 +5335,11 @@ const rankBadgeStyle = isFirst
                       key={`${slot.provider}-${slot.name}-${index}`}
                       className={`relative min-w-0 overflow-hidden rounded-xl border bg-black transition-all duration-500 ${
                         isWinner
-                          ? slotClawCaptured
-                            ? "-translate-y-16 scale-[1.08] border-emerald-200 shadow-[0_0_42px_rgba(110,231,183,0.8)] sm:-translate-y-20"
-                            : "-translate-y-3 scale-[1.06] border-emerald-300 shadow-[0_0_30px_rgba(110,231,183,0.55)]"
+                          ? "-translate-y-2 scale-[1.04] border-emerald-300 shadow-[0_0_30px_rgba(110,231,183,0.55)]"
                           : isTarget
                           ? "border-cyan-300/75 shadow-[0_0_24px_rgba(0,245,255,0.35)]"
                           : "border-white/10"
                       }`}
-                      style={{
-                        animation: isWinner
-                          ? "slotWinnerPulse 1.1s ease-in-out infinite"
-                          : `slotFinalistsSettle 520ms ${index * 70}ms both`,
-                      }}
                     >
                       <div className="aspect-[3/4] overflow-hidden bg-[#050505]">
                         {slot.image ? (
@@ -5534,8 +5412,6 @@ const rankBadgeStyle = isFirst
             {isPickingSlot
               ? slotClawFinalists.length > 0
                 ? "Claw Selecting..."
-                : slotClawBraking
-                ? "Slowing Down..."
                 : "Spinning..."
               : pickedSlot
               ? "Play Again"
