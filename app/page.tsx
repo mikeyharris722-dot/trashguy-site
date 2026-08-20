@@ -5099,29 +5099,29 @@ const rankBadgeStyle = isFirst
 
 {activeSection === "slotpicker" && (
   <section className="space-y-2 sm:space-y-3">
-    <div className="mx-auto max-w-5xl text-center">
+    <div className="mx-auto max-w-6xl text-center">
       <GlowTabTitle label="SLOT PICKER" />
     </div>
 
     {/* COMPACT PROVIDERS */}
-    <div className="mx-auto max-w-5xl overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm">
-      <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] px-2.5 py-1.5 sm:px-3 sm:py-2">
+    <div className="mx-auto max-w-6xl overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm">
+      <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] px-4 py-3 sm:px-5 sm:py-3.5">
         <div>
-          <div className="text-[7px] font-black uppercase tracking-[0.2em] text-cyan-200/55 sm:text-[9px]">
+          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200/75 sm:text-[13px]">
             Providers
           </div>
-          <div className="text-[8px] font-bold text-white/30 sm:text-[10px]">
+          <div className="text-[10px] font-bold text-white/45 sm:text-[12px]">
             Select any combination
           </div>
         </div>
 
-        <div className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.06] px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.1em] text-cyan-100/60 sm:text-[9px]">
+        <div className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.06] px-3 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-cyan-100/80 sm:text-[11px]">
           {filteredSlots.length} Slots
         </div>
       </div>
 
-      <div className="p-1.5 sm:p-2">
-        <div className="grid grid-cols-3 gap-1 sm:grid-cols-5 sm:gap-1.5">
+      <div className="p-2.5 sm:p-3.5">
+        <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 sm:gap-2.5">
           {slotProviders.map((provider) => {
             const active = selectedProviders.includes(provider);
             const logo = providerLogos[provider];
@@ -5134,14 +5134,14 @@ const rankBadgeStyle = isFirst
                 key={provider}
                 onClick={() => toggleSlotProvider(provider)}
                 disabled={isPickingSlot}
-                className={`group relative flex min-h-[34px] items-center gap-1.5 overflow-hidden rounded-md border px-1.5 py-1 text-left transition-all duration-200 sm:min-h-[38px] sm:px-2 ${
+                className={`group relative flex min-h-[46px] items-center gap-2 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition-all duration-200 sm:min-h-[56px] sm:px-3 sm:py-2 ${
                   active
                     ? "border-cyan-300/45 bg-cyan-400/[0.10] text-white shadow-[0_0_9px_rgba(0,245,255,0.10)]"
                     : "border-white/[0.07] bg-black/70 text-white/50 hover:border-cyan-300/20 hover:text-white/80"
                 } disabled:cursor-not-allowed disabled:opacity-50`}
               >
                 <div
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border bg-black/75 sm:h-7 sm:w-7 ${
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-black/75 sm:h-11 sm:w-11 ${
                     active ? "border-cyan-300/25" : "border-white/10"
                   }`}
                 >
@@ -5149,7 +5149,7 @@ const rankBadgeStyle = isFirst
                     <img
                       src={logo}
                       alt={provider}
-                      className={`h-4 w-4 object-contain sm:h-5 sm:w-5 ${
+                      className={`h-6 w-6 object-contain sm:h-8 sm:w-8 ${
                         active ? "opacity-100" : "opacity-50"
                       }`}
                       onError={(e) => {
@@ -5157,17 +5157,17 @@ const rankBadgeStyle = isFirst
                       }}
                     />
                   ) : (
-                    <span className="text-[7px] font-black text-cyan-200">
+                    <span className="text-[10px] font-black text-cyan-200">
                       {provider.charAt(0)}
                     </span>
                   )}
                 </div>
 
                 <div className="min-w-0">
-                  <div className="truncate text-[7px] font-black leading-tight sm:text-[9px]">
+                  <div className="truncate text-[9px] font-black leading-tight sm:text-[13px]">
                     {provider}
                   </div>
-                  <div className="text-[6px] leading-none text-white/25 sm:text-[7px]">
+                  <div className="mt-0.5 text-[8px] leading-none text-white/40 sm:text-[10px]">
                     {providerSlotCount}
                   </div>
                 </div>
@@ -5176,8 +5176,8 @@ const rankBadgeStyle = isFirst
           })}
         </div>
 
-        <div className="mt-1.5 flex items-center justify-between border-t border-white/[0.05] pt-1.5">
-          <span className="text-[7px] font-black uppercase tracking-[0.1em] text-white/35 sm:text-[8px]">
+        <div className="mt-2.5 flex items-center justify-between border-t border-white/[0.05] pt-2.5">
+          <span className="text-[9px] font-black uppercase tracking-[0.1em] text-white/55 sm:text-[11px]">
             {selectedProviders.length === 0
               ? "All providers active"
               : `${selectedProviders.length} selected`}
@@ -5192,7 +5192,7 @@ const rankBadgeStyle = isFirst
               setSlotPickerWinnerRevealed(false);
             }}
             disabled={isPickingSlot}
-            className="rounded-full border border-white/10 bg-black/60 px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.1em] text-white/45 transition hover:border-cyan-300/25 hover:text-cyan-100 disabled:opacity-40 sm:text-[8px]"
+            className="rounded-full border border-white/10 bg-black/60 px-3 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white/65 transition hover:border-cyan-300/25 hover:text-cyan-100 disabled:opacity-40 sm:text-[11px]"
           >
             Reset
           </button>
@@ -5201,13 +5201,13 @@ const rankBadgeStyle = isFirst
     </div>
 
     {/* COMPACT CLAW MACHINE */}
-    <div className="mx-auto max-w-5xl overflow-hidden rounded-xl border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,18,22,0.97),rgba(0,0,0,0.99))] shadow-[0_0_30px_rgba(0,245,255,0.10)]">
-      <div className="flex items-center justify-between border-b border-cyan-300/10 px-3 py-2 sm:px-4">
+    <div className="mx-auto max-w-6xl overflow-hidden rounded-xl border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,18,22,0.97),rgba(0,0,0,0.99))] shadow-[0_0_30px_rgba(0,245,255,0.10)]">
+      <div className="flex items-center justify-between border-b border-cyan-300/10 px-4 py-3 sm:px-5 sm:py-4">
         <div>
-          <div className="text-[7px] font-black uppercase tracking-[0.24em] text-cyan-200/45 sm:text-[9px]">
+          <div className="text-[9px] font-black uppercase tracking-[0.24em] text-cyan-200/65 sm:text-[11px]">
             Random Slot Machine
           </div>
-          <div className="mt-0.5 text-xs font-black tracking-[0.08em] text-white sm:text-sm">
+          <div className="mt-1 text-sm font-black tracking-[0.08em] text-white sm:text-lg">
             {isPickingSlot
               ? slotPickerClawDropping
                 ? "GRABBING..."
@@ -5220,9 +5220,9 @@ const rankBadgeStyle = isFirst
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[7px] font-bold uppercase tracking-[0.1em] text-white/30 sm:text-[8px]">
+        <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.1em] text-white/50 sm:text-[11px]">
           <span
-            className={`h-1.5 w-1.5 rounded-full ${
+            className={`h-2 w-2 rounded-full ${
               isPickingSlot
                 ? "animate-pulse bg-yellow-300 shadow-[0_0_7px_rgba(253,224,71,1)]"
                 : "bg-emerald-300 shadow-[0_0_7px_rgba(110,231,183,1)]"
@@ -5232,10 +5232,10 @@ const rankBadgeStyle = isFirst
         </div>
       </div>
 
-      <div className="p-2 sm:p-3">
+      <div className="p-2.5 sm:p-4">
         <div className="relative overflow-hidden rounded-lg border border-cyan-300/15 bg-black/95 shadow-[inset_0_0_40px_rgba(0,245,255,0.04)]">
           {/* CLAW RAIL */}
-          <div className="relative h-[62px] border-b border-white/[0.05] bg-[linear-gradient(180deg,rgba(0,245,255,0.035),transparent)] sm:h-[72px]">
+          <div className="relative h-[70px] border-b border-white/[0.05] bg-[linear-gradient(180deg,rgba(0,245,255,0.035),transparent)] sm:h-[82px]">
             <div className="absolute left-[4%] right-[4%] top-3 h-[3px] rounded-full border border-cyan-300/20 bg-black/80 sm:top-4" />
 
             <div
@@ -5266,12 +5266,12 @@ const rankBadgeStyle = isFirst
           </div>
 
           {/* BELT VIEWPORT - 5 CARDS VISIBLE, 6TH OFF SCREEN */}
-          <div className="relative overflow-hidden px-1.5 py-2 sm:px-2 sm:py-2.5">
+          <div className="relative overflow-hidden px-2 py-2.5 sm:px-2.5 sm:py-3">
             <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-5 bg-gradient-to-r from-black to-transparent" />
             <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-5 bg-gradient-to-l from-black to-transparent" />
 
             <div
-              className="flex w-[120%] gap-1.5 sm:gap-2"
+              className="flex w-[120%] gap-2 sm:gap-2.5"
               style={{
                 transform: slotPickerSliding
                   ? "translateX(-16.6666667%)"
@@ -5291,7 +5291,7 @@ const rankBadgeStyle = isFirst
                 return (
                   <div
                     key={`${slot.provider}-${slot.name}-${index}`}
-                    className={`relative w-1/6 shrink-0 overflow-hidden rounded-md border bg-black transition-all duration-300 ${
+                    className={`relative w-1/6 shrink-0 overflow-hidden rounded-lg border bg-black transition-all duration-300 ${
                       isWinner
                         ? "-translate-y-1 scale-[1.03] border-emerald-300 shadow-[0_0_20px_rgba(110,231,183,0.45)]"
                         : "border-white/10"
@@ -5314,17 +5314,17 @@ const rankBadgeStyle = isFirst
                       )}
                     </div>
 
-                    <div className="border-t border-white/[0.05] bg-black/95 px-1 py-1 text-center">
-                      <div className="truncate text-[6px] font-black text-white sm:text-[8px]">
+                    <div className="border-t border-white/[0.05] bg-black/95 px-1.5 py-1.5 text-center">
+                      <div className="truncate text-[8px] font-black text-white sm:text-[11px]">
                         {slot.name}
                       </div>
-                      <div className="mt-0.5 truncate text-[5px] font-bold uppercase text-cyan-100/30 sm:text-[6px]">
+                      <div className="mt-0.5 truncate text-[7px] font-bold uppercase text-cyan-100/45 sm:text-[9px]">
                         {slot.provider}
                       </div>
                     </div>
 
                     {isWinner && (
-                      <div className="absolute left-1/2 top-1 -translate-x-1/2 rounded-full border border-emerald-200/50 bg-black/90 px-1.5 py-0.5 text-[5px] font-black uppercase tracking-[0.08em] text-emerald-200 sm:text-[6px]">
+                      <div className="absolute left-1/2 top-1 -translate-x-1/2 rounded-full border border-emerald-200/50 bg-black/90 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-[0.08em] text-emerald-200 sm:text-[9px]">
                         Winner
                       </div>
                     )}
@@ -5338,14 +5338,14 @@ const rankBadgeStyle = isFirst
         </div>
 
         {pickedSlot && slotPickerWinnerRevealed && (
-          <div className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-emerald-300/15 bg-emerald-300/[0.035] px-2 py-1.5 text-center">
-            <span className="text-[7px] font-black uppercase tracking-[0.14em] text-emerald-200/45 sm:text-[8px]">
+          <div className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-emerald-300/15 bg-emerald-300/[0.035] px-3 py-2 text-center">
+            <span className="text-[9px] font-black uppercase tracking-[0.14em] text-emerald-200/60 sm:text-[11px]">
               Selected
             </span>
-            <span className="truncate text-[9px] font-black text-[#9fffd7] sm:text-[11px]">
+            <span className="truncate text-[11px] font-black text-[#9fffd7] sm:text-[14px]">
               {pickedSlot.name}
             </span>
-            <span className="hidden text-[7px] font-bold uppercase text-white/30 sm:inline">
+            <span className="hidden text-[9px] font-bold uppercase text-white/45 sm:inline">
               {pickedSlot.provider}
             </span>
           </div>
@@ -5354,7 +5354,7 @@ const rankBadgeStyle = isFirst
         <button
           onClick={pickRandomSlot}
           disabled={isPickingSlot || filteredSlots.length === 0}
-          className={`mt-2 w-full rounded-lg border px-3 py-2.5 text-xs font-black uppercase tracking-[0.16em] transition-all duration-200 sm:py-3 sm:text-sm ${
+          className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm font-black uppercase tracking-[0.16em] transition-all duration-200 sm:py-3.5 sm:text-base ${
             isPickingSlot
               ? "cursor-wait border-cyan-300/20 bg-cyan-400/[0.07] text-cyan-100/50"
               : "border-cyan-300/45 bg-[linear-gradient(180deg,rgba(0,245,255,0.23),rgba(0,110,130,0.16))] text-[#baffdf] shadow-[0_0_20px_rgba(0,245,255,0.12)] hover:border-cyan-200/70 hover:bg-cyan-400/20"
