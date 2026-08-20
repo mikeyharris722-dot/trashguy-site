@@ -5207,17 +5207,26 @@ const rankBadgeStyle = isFirst
                 {isPickingSlot ? "Scanning Slots" : "Selected Slot"}
               </div>
 
-              {pickedSlot.image && (
-                <img
-                  src={pickedSlot.image}
-                  alt={pickedSlot.name}
-                  className={`mx-auto mt-4 h-20 max-w-[180px] object-contain transition-all duration-150 sm:h-28 sm:max-w-[260px] ${
-                    isPickingSlot
-                      ? "scale-95 opacity-60 blur-[1px]"
-                      : "scale-100 opacity-100"
-                  }`}
-                />
-              )}
+{pickedSlot.image && (
+  <div
+    className={`mx-auto mt-4 w-full max-w-[190px] overflow-hidden rounded-xl border border-cyan-300/20 bg-black/80 shadow-[0_0_25px_rgba(0,245,255,0.12)] transition-all duration-150 sm:max-w-[260px] ${
+      isPickingSlot
+        ? "scale-95 opacity-60 blur-[1px]"
+        : "scale-100 opacity-100"
+    }`}
+  >
+    <div className="aspect-[4/3] w-full">
+      <img
+        src={pickedSlot.image}
+        alt={pickedSlot.name}
+        className="h-full w-full object-cover"
+        onError={(e) => {
+          e.currentTarget.style.display = "none";
+        }}
+      />
+    </div>
+  </div>
+)}
 
               <div
                 className={`mx-auto mt-4 max-w-3xl text-[clamp(1.35rem,5vw,3.5rem)] font-black leading-[1.05] transition-all duration-150 ${
