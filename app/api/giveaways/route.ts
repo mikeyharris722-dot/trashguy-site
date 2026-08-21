@@ -121,37 +121,62 @@ export async function GET(req: NextRequest) {
       created_at: giveaway.created_at,
     }));
 
-    const paidRewards = (paidRewardsResult.data || [])
-      .map((reward: any) => {
-        const winnerName = cleanUsername(
-          reward.twitch_username ||
-            reward.kick_username ||
-            reward.username ||
-            reward.winner_name
-        );
+const paidRewards = (paidRewardsResult.data || [])
+  .map((reward: any) => {
+    const winnerName = cleanUsername(
+      reward.twitch_username ||
+        reward.kick_username ||
+        reward.username ||
+        reward.winner_name
+    );
 
-        return {
-          id: `reward-${reward.id}`,
-          original_id: reward.id,
-          winner_name: winnerName,
-          amount: Number(reward.amount || 0),
-          note:
-            reward.note ||
-            reward.description ||
-            reward.reward_type ||
-            reward.type ||
-            null,
-          source: "prize-portal",
-          created_at: getRewardDate(reward),
-        };
-      })
-      .filter((reward: any) => {
-        return (
-          reward.winner_name &&
-          Number.isFinite(reward.amount) &&
-          reward.amount > 0
-        );
-      });
+    return {
+      id: `reward-${reward.id}`,
+      original_id: reward.id,
+
+      winner_name: winnerName,
+      amount: Number(reward.amount || 0),
+
+      // IMPORTANT:
+      // Send the actual reward information to the homepage
+      // so Past Winners knows exactly what kind of prize this was.
+      title:
+        reward.title ||
+        reward.reward_title ||
+        null,
+
+      reward_title:
+        reward.reward_title ||
+        reward.title ||
+        null,
+
+      type:
+        reward.type ||
+        reward.reward_type ||
+        null,
+
+      reward_type:
+        reward.reward_type ||
+        reward.type ||
+        null,
+
+      note:
+        reward.note ||
+        reward.description ||
+        null,
+
+      source: "prize-portal",
+
+      created_at: getRewardDate(reward),
+    };
+  })
+  .filter((reward: any) => {
+    return (
+      reward.winner_name &&
+      Number.isFinite(reward.amount) &&
+      reward.amount > 0
+    );
+  });
 
     /*
      * IDs are prefixed by source so a giveaway ID and reward ID can
