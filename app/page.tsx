@@ -2860,6 +2860,8 @@ const handleCreateManualReward = async () => {
 
   const rewardTitles: Record<string, string> = {
     discord_giveaway: "🎁 Discord Giveaway",
+    twitter_giveaway: "𝕏 Twitter Giveaway",
+    instagram_giveaway: "📸 Instagram Giveaway",
     slot_call: "🎰 Slot Call of the Day",
     prediction: "🎯 Predictions Winner",
     vip_tournament: "👑 VIP Tournament",
@@ -3312,7 +3314,7 @@ style={{
       className="group relative mt-3 inline-flex min-h-[44px] min-w-[220px] items-center justify-center overflow-hidden rounded-xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.34),rgba(0,120,255,0.24))] px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_30px_rgba(0,255,255,0.28)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)] sm:mt-4 sm:min-h-[66px] sm:min-w-[280px] sm:rounded-2xl sm:px-8 sm:py-4 sm:text-sm sm:tracking-[0.22em]"
     >
       <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
-      <span className="relative z-10">Claim Rewards On Roulo</span>
+      <span className="relative z-10">Join on code trashguy here</span>
     </a>
   </div>
 </section>
@@ -3351,24 +3353,56 @@ style={{
     ) : (
       <div className="max-h-[240px] overflow-y-auto rounded-xl border border-white/10 bg-black/55">
         <div className="divide-y divide-white/5">
-          {giveaways.map((giveaway, index) => (
-            <div
-              key={giveaway.id}
-              className="grid grid-cols-[40px_1fr_auto] items-center gap-3 px-4 py-3"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-300/20 bg-cyan-400/10 text-xs font-black text-cyan-200">
-                {index + 1}
-              </div>
+          {giveaways.map((giveaway, index) => {
+            const rawGiveawayType = String(
+              giveaway.title ||
+                giveaway.type ||
+                giveaway.giveaway_type ||
+                giveaway.source ||
+                ""
+            )
+              .trim()
+              .toLowerCase();
 
-              <div className="truncate font-black text-white">
-                {giveaway.winner_name}
-              </div>
+            const giveawayLabel =
+              rawGiveawayType.includes("slot") && rawGiveawayType.includes("call")
+                ? "🎰 Slot Call of the Day"
+                : rawGiveawayType.includes("twitter") || rawGiveawayType.includes(" x ")
+                ? "𝕏 Twitter Giveaway"
+                : rawGiveawayType.includes("instagram")
+                ? "📸 Instagram Giveaway"
+                : rawGiveawayType.includes("discord")
+                ? "🎁 Discord Giveaway"
+                : rawGiveawayType.includes("chat") || rawGiveawayType.includes("stream")
+                ? "💬 Chat Giveaway"
+                : giveaway.title
+                ? String(giveaway.title)
+                : "🎁 Giveaway";
 
-              <div className="font-black text-emerald-300">
-                ${Number(giveaway.amount || 0).toLocaleString()}
+            return (
+              <div
+                key={giveaway.id}
+                className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-300/20 bg-cyan-400/10 text-xs font-black text-cyan-200">
+                  {index + 1}
+                </div>
+
+                <div className="min-w-0">
+                  <div className="truncate font-black text-white">
+                    {giveaway.winner_name}
+                  </div>
+                  <div className="mt-0.5 truncate text-[10px] font-black uppercase tracking-[0.08em] text-cyan-200/65 sm:text-[11px]">
+                    {giveawayLabel}
+                  </div>
+                </div>
+
+                <div className="font-black text-emerald-300">
+                  ${Number(giveaway.amount || 0).toLocaleString()}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     )}
@@ -3386,8 +3420,16 @@ style={{
         VIP REWARDS
       </h3>
 
+      <div className="mx-auto mt-3 max-w-md rounded-xl border border-yellow-300/30 bg-yellow-300/[0.08] px-3 py-2 text-center shadow-[0_0_18px_rgba(253,224,71,0.08)]">
+        <div className="text-[9px] font-black uppercase tracking-[0.16em] text-yellow-200/70 sm:text-[10px]">
+          Requirement
+        </div>
+        <div className="mt-0.5 text-sm font-black text-yellow-100 sm:text-base">
+          ⭐ $5k+ wagered on previous or current leaderboard
+        </div>
+      </div>
+
       <div className="mt-3 space-y-2 text-center text-xs text-white/80 sm:text-sm">
-        <div>⭐ $5k+ wagered on previous or current leaderboard</div>
         <div>⭐ Daily VIP giveaways</div>
         <div>⭐ Exclusive VIP tournaments</div>
         <div>⭐ Community hunt equity</div>
@@ -3400,6 +3442,15 @@ style={{
       <h3 className="mt-1 text-center text-lg font-black text-cyan-100 sm:text-xl">
         AFFILIATE REWARDS
       </h3>
+
+      <div className="mx-auto mt-3 max-w-md rounded-xl border border-cyan-300/30 bg-cyan-300/[0.08] px-3 py-2 text-center shadow-[0_0_18px_rgba(0,245,255,0.08)]">
+        <div className="text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200/70 sm:text-[10px]">
+          Requirement
+        </div>
+        <div className="mt-0.5 text-sm font-black text-cyan-100 sm:text-base">
+          ⭐ Simply join on code <span className="text-[#8fffd0]">trashguy</span>
+        </div>
+      </div>
 
       <div className="mt-3 space-y-2 text-center text-xs text-white/80 sm:text-sm">
         <div>⭐ Stream giveaway</div>
@@ -5521,6 +5572,14 @@ const rankBadgeStyle = isFirst
 >
   <option value="discord_giveaway">
     🎁 Discord Giveaway
+  </option>
+
+  <option value="twitter_giveaway">
+    𝕏 Twitter Giveaway
+  </option>
+
+  <option value="instagram_giveaway">
+    📸 Instagram Giveaway
   </option>
 
   <option value="slot_call">
