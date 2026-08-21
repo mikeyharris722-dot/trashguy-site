@@ -3357,50 +3357,40 @@ style={{
             // Prefer the saved reward/giveaway TYPE first.
             // Some older giveaway rows use a generic title like "Giveaway",
             // while the type still tells us exactly what the prize was.
-            const savedType = String(
-              giveaway.type ||
-                giveaway.giveaway_type ||
-                giveaway.reward_type ||
-                giveaway.source ||
-                ""
-            )
+const savedType = String(
+  giveaway.title ||
+    giveaway.reward_title ||
+    giveaway.type ||
+    giveaway.giveaway_type ||
+    giveaway.reward_type ||
+    ""
+)
               .trim()
               .toLowerCase();
 
             const savedTitle = String(giveaway.title || "").trim();
             const combinedLabelSource = `${savedType} ${savedTitle.toLowerCase()}`;
 
-            const giveawayLabel =
-              combinedLabelSource.includes("vip") &&
-              combinedLabelSource.includes("giveaway")
-                ? "👑 VIP Giveaway"
-                : combinedLabelSource.includes("slot") &&
-                  combinedLabelSource.includes("call")
-                ? "🎰 Slot Call of the Day"
-                : combinedLabelSource.includes("twitter") ||
-                  savedType === "twitter_giveaway"
-                ? "𝕏 Twitter Giveaway"
-                : combinedLabelSource.includes("instagram") ||
-                  savedType === "instagram_giveaway"
-                ? "📸 Instagram Giveaway"
-                : combinedLabelSource.includes("discord") ||
-                  savedType === "discord_giveaway"
-                ? "🎁 Discord Giveaway"
-                : combinedLabelSource.includes("chat") ||
-                  combinedLabelSource.includes("stream") ||
-                  savedType === "chat_giveaway"
-                ? "💬 Chat Giveaway"
-                : combinedLabelSource.includes("prediction")
-                ? "🎯 Predictions Winner"
-                : combinedLabelSource.includes("tournament")
-                ? "👑 VIP Tournament"
-                : savedTitle && savedTitle.toLowerCase() !== "giveaway"
-                ? savedTitle
-                : savedType
-                ? savedType
-                    .replaceAll("_", " ")
-                    .replace(/\b\w/g, (letter) => letter.toUpperCase())
-                : "🎁 Giveaway";
+const normalizedLabel = savedType.trim().toLowerCase();
+
+const giveawayLabel =
+  normalizedLabel.includes("vip giveaway")
+    ? "👑 VIP Giveaway"
+    : normalizedLabel.includes("slot call")
+    ? "🎰 Slot Call of the Day"
+    : normalizedLabel.includes("twitter")
+    ? "𝕏 Twitter Giveaway"
+    : normalizedLabel.includes("instagram")
+    ? "📸 Instagram Giveaway"
+    : normalizedLabel.includes("discord")
+    ? "🎁 Discord Giveaway"
+    : normalizedLabel.includes("chat")
+    ? "💬 Chat Giveaway"
+    : normalizedLabel.includes("prediction")
+    ? "🎯 Predictions Winner"
+    : normalizedLabel.includes("tournament")
+    ? "👑 VIP Tournament"
+    : savedType || "🎁 Giveaway";
 
             return (
               <div
