@@ -3314,7 +3314,7 @@ style={{
       className="group relative mt-3 inline-flex min-h-[44px] min-w-[220px] items-center justify-center overflow-hidden rounded-xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.34),rgba(0,120,255,0.24))] px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_30px_rgba(0,255,255,0.28)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)] sm:mt-4 sm:min-h-[66px] sm:min-w-[280px] sm:rounded-2xl sm:px-8 sm:py-4 sm:text-sm sm:tracking-[0.22em]"
     >
       <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
-      <span className="relative z-10">Join on code trashguy here</span>
+      <span className="relative z-10">Claim Rewards On Roulo</span>
     </a>
   </div>
 </section>
@@ -3354,29 +3354,52 @@ style={{
       <div className="max-h-[240px] overflow-y-auto rounded-xl border border-white/10 bg-black/55">
         <div className="divide-y divide-white/5">
           {giveaways.map((giveaway, index) => {
-            const rawGiveawayType = String(
-              giveaway.title ||
-                giveaway.type ||
+            // Prefer the saved reward/giveaway TYPE first.
+            // Some older giveaway rows use a generic title like "Giveaway",
+            // while the type still tells us exactly what the prize was.
+            const savedType = String(
+              giveaway.type ||
                 giveaway.giveaway_type ||
+                giveaway.reward_type ||
                 giveaway.source ||
                 ""
             )
               .trim()
               .toLowerCase();
 
+            const savedTitle = String(giveaway.title || "").trim();
+            const combinedLabelSource = `${savedType} ${savedTitle.toLowerCase()}`;
+
             const giveawayLabel =
-              rawGiveawayType.includes("slot") && rawGiveawayType.includes("call")
+              combinedLabelSource.includes("vip") &&
+              combinedLabelSource.includes("giveaway")
+                ? "👑 VIP Giveaway"
+                : combinedLabelSource.includes("slot") &&
+                  combinedLabelSource.includes("call")
                 ? "🎰 Slot Call of the Day"
-                : rawGiveawayType.includes("twitter") || rawGiveawayType.includes(" x ")
+                : combinedLabelSource.includes("twitter") ||
+                  savedType === "twitter_giveaway"
                 ? "𝕏 Twitter Giveaway"
-                : rawGiveawayType.includes("instagram")
+                : combinedLabelSource.includes("instagram") ||
+                  savedType === "instagram_giveaway"
                 ? "📸 Instagram Giveaway"
-                : rawGiveawayType.includes("discord")
+                : combinedLabelSource.includes("discord") ||
+                  savedType === "discord_giveaway"
                 ? "🎁 Discord Giveaway"
-                : rawGiveawayType.includes("chat") || rawGiveawayType.includes("stream")
+                : combinedLabelSource.includes("chat") ||
+                  combinedLabelSource.includes("stream") ||
+                  savedType === "chat_giveaway"
                 ? "💬 Chat Giveaway"
-                : giveaway.title
-                ? String(giveaway.title)
+                : combinedLabelSource.includes("prediction")
+                ? "🎯 Predictions Winner"
+                : combinedLabelSource.includes("tournament")
+                ? "👑 VIP Tournament"
+                : savedTitle && savedTitle.toLowerCase() !== "giveaway"
+                ? savedTitle
+                : savedType
+                ? savedType
+                    .replaceAll("_", " ")
+                    .replace(/\b\w/g, (letter) => letter.toUpperCase())
                 : "🎁 Giveaway";
 
             return (
@@ -3420,16 +3443,16 @@ style={{
         VIP REWARDS
       </h3>
 
-      <div className="mx-auto mt-3 max-w-md rounded-xl border border-yellow-300/30 bg-yellow-300/[0.08] px-3 py-2 text-center shadow-[0_0_18px_rgba(253,224,71,0.08)]">
-        <div className="text-[9px] font-black uppercase tracking-[0.16em] text-yellow-200/70 sm:text-[10px]">
-          Requirement
-        </div>
-        <div className="mt-0.5 text-sm font-black text-yellow-100 sm:text-base">
-          ⭐ $5k+ wagered on previous or current leaderboard
-        </div>
+      <div className="mx-auto mt-2 w-fit max-w-full rounded-full border border-yellow-300/25 bg-yellow-300/[0.07] px-3 py-1 text-center">
+        <span className="text-[8px] font-black uppercase tracking-[0.12em] text-yellow-200/60 sm:text-[9px]">
+          Requirement:
+        </span>{" "}
+        <span className="text-[10px] font-black text-yellow-100 sm:text-xs">
+          $5k+ wagered on previous or current leaderboard
+        </span>
       </div>
 
-      <div className="mt-3 space-y-2 text-center text-xs text-white/80 sm:text-sm">
+      <div className="mt-2.5 space-y-2 text-center text-xs text-white/80 sm:text-sm">
         <div>⭐ Daily VIP giveaways</div>
         <div>⭐ Exclusive VIP tournaments</div>
         <div>⭐ Community hunt equity</div>
@@ -3443,16 +3466,16 @@ style={{
         AFFILIATE REWARDS
       </h3>
 
-      <div className="mx-auto mt-3 max-w-md rounded-xl border border-cyan-300/30 bg-cyan-300/[0.08] px-3 py-2 text-center shadow-[0_0_18px_rgba(0,245,255,0.08)]">
-        <div className="text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200/70 sm:text-[10px]">
-          Requirement
-        </div>
-        <div className="mt-0.5 text-sm font-black text-cyan-100 sm:text-base">
-          ⭐ Simply join on code <span className="text-[#8fffd0]">trashguy</span>
-        </div>
+      <div className="mx-auto mt-2 w-fit max-w-full rounded-full border border-cyan-300/25 bg-cyan-300/[0.07] px-3 py-1 text-center">
+        <span className="text-[8px] font-black uppercase tracking-[0.12em] text-cyan-200/60 sm:text-[9px]">
+          Requirement:
+        </span>{" "}
+        <span className="text-[10px] font-black text-cyan-100 sm:text-xs">
+          Simply join on code <span className="text-[#8fffd0]">trashguy</span>
+        </span>
       </div>
 
-      <div className="mt-3 space-y-2 text-center text-xs text-white/80 sm:text-sm">
+      <div className="mt-2.5 space-y-2 text-center text-xs text-white/80 sm:text-sm">
         <div>⭐ Stream giveaway</div>
         <div>⭐ Slot call of the day</div>
         <div>⭐ Bonus hunt predictions</div>
