@@ -3357,40 +3357,62 @@ style={{
             // Prefer the saved reward/giveaway TYPE first.
             // Some older giveaway rows use a generic title like "Giveaway",
             // while the type still tells us exactly what the prize was.
-const savedType = String(
-  giveaway.title ||
-    giveaway.reward_title ||
-    giveaway.type ||
-    giveaway.giveaway_type ||
-    giveaway.reward_type ||
-    ""
-)
-              .trim()
-              .toLowerCase();
-
-            const savedTitle = String(giveaway.title || "").trim();
-            const combinedLabelSource = `${savedType} ${savedTitle.toLowerCase()}`;
-
-const normalizedLabel = savedType.trim().toLowerCase();
+const giveawayLabelSource = [
+  giveaway.title,
+  giveaway.reward_title,
+  giveaway.rewardTitle,
+  giveaway.type,
+  giveaway.reward_type,
+  giveaway.rewardType,
+  giveaway.giveaway_type,
+  giveaway.giveawayType,
+  giveaway.category,
+  giveaway.source,
+  giveaway.reward?.title,
+  giveaway.reward?.type,
+]
+  .filter(Boolean)
+  .join(" ")
+  .trim()
+  .toLowerCase();
 
 const giveawayLabel =
-  normalizedLabel.includes("vip giveaway")
+  giveawayLabelSource.includes("vip_giveaway") ||
+  giveawayLabelSource.includes("vip giveaway")
     ? "👑 VIP Giveaway"
-    : normalizedLabel.includes("slot call")
+
+    : giveawayLabelSource.includes("slot_call") ||
+      giveawayLabelSource.includes("slot call")
     ? "🎰 Slot Call of the Day"
-    : normalizedLabel.includes("twitter")
+
+    : giveawayLabelSource.includes("twitter_giveaway") ||
+      giveawayLabelSource.includes("twitter giveaway")
     ? "𝕏 Twitter Giveaway"
-    : normalizedLabel.includes("instagram")
+
+    : giveawayLabelSource.includes("instagram_giveaway") ||
+      giveawayLabelSource.includes("instagram giveaway")
     ? "📸 Instagram Giveaway"
-    : normalizedLabel.includes("discord")
+
+    : giveawayLabelSource.includes("discord_giveaway") ||
+      giveawayLabelSource.includes("discord giveaway")
     ? "🎁 Discord Giveaway"
-    : normalizedLabel.includes("chat")
+
+    : giveawayLabelSource.includes("chat_giveaway") ||
+      giveawayLabelSource.includes("chat giveaway")
     ? "💬 Chat Giveaway"
-    : normalizedLabel.includes("prediction")
+
+    : giveawayLabelSource.includes("stream_giveaway") ||
+      giveawayLabelSource.includes("stream giveaway")
+    ? "💬 Stream Giveaway"
+
+    : giveawayLabelSource.includes("prediction")
     ? "🎯 Predictions Winner"
-    : normalizedLabel.includes("tournament")
+
+    : giveawayLabelSource.includes("vip_tournament") ||
+      giveawayLabelSource.includes("vip tournament")
     ? "👑 VIP Tournament"
-    : savedType || "🎁 Giveaway";
+
+    : "🎁 Giveaway";
 
             return (
               <div
