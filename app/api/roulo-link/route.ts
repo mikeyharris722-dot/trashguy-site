@@ -37,38 +37,52 @@ function usernameOptions(value: unknown) {
 
 function getPlayerName(player: any) {
   return normalize(
-    player?.username ||
+    player?.affiliate_username ||
+      player?.username ||
       player?.name ||
       player?.display_name ||
       player?.user_name ||
       player?.player_name ||
-      player?.affiliate_username ||
       player?.user?.username ||
       player?.user?.name ||
+      player?.affiliate?.username ||
       ""
   );
 }
 
 function getRawWager(player: any) {
-  return Number(
+  const value =
     player?.wagered_amount ??
-      player?.wageredAmount ??
-      player?.wagered ??
-      player?.amount ??
-      0
-  );
+    player?.wageredAmount ??
+    player?.wagered ??
+    player?.total_wagered ??
+    player?.totalWagered ??
+    player?.raw_wagered ??
+    player?.rawWagered ??
+    player?.amount ??
+    0;
+
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : 0;
 }
 
 function getWeightedWager(player: any) {
-  return Number(
+  const value =
     player?.weighted_wagered_amount ??
-      player?.weightedWageredAmount ??
-      player?.weighted_wagered ??
-      player?.wagered_amount ??
-      player?.wageredAmount ??
-      player?.wagered ??
-      0
-  );
+    player?.weightedWageredAmount ??
+    player?.weighted_wagered ??
+    player?.weightedWagered ??
+    player?.weighted_amount ??
+    player?.weightedAmount ??
+    player?.wagered_amount ??
+    player?.wageredAmount ??
+    player?.wagered ??
+    0;
+
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : 0;
 }
 
 function extractAffiliates(json: any) {
@@ -156,13 +170,6 @@ async function getRouloStats(
     .toISOString()
     .slice(0, 10);
 
-  /*
-   * We intentionally fetch these separately:
-   *
-   * 1. Lifetime RAW wager
-   * 2. Current leaderboard RAW wager
-   * 3. Current leaderboard WEIGHTED wager
-   */
   const [
     lifetimeAffiliates,
     leaderboardAffiliates,
@@ -202,10 +209,6 @@ async function getRouloStats(
     rouloUsername
   );
 
-  /*
-   * If the username doesn't exist anywhere under
-   * the affiliate account, it isn't a valid Roulo link.
-   */
   if (
     !lifetimePlayer &&
     !leaderboardPlayer &&
@@ -254,31 +257,48 @@ async function getRouloStats(
 async function isPreviousLeaderboardVip(
   rouloUsername: string
 ) {
-  /*
-   * The latest saved VIP snapshot represents
-   * qualification from the PREVIOUS leaderboard.
-   */
-  const { data: latestSnapshot } =
-    await supabase
-      .from("vip_snapshots")
-      .select("period_start, period_end")
-      .order("period_end", {
-        ascending: false,
-      })
-      .limit(1)
-      .maybeSingle();
+  const cleanRouloUsername = normalize(
+    rouloUsername
+  );
 
-  if (!latestSnapshot) {
+  if (!cleanRouloUsername) {
     return false;
   }
 
-  const { data } = await supabase
+  const {
+    data: latestSnapshot,
+    error: latestSnapshotError,
+  } = await supabase
     .from("vip_snapshots")
-    .select("id")
-    .eq(
-      "roulo_username",
-      normalize(rouloUsername)
-    )
+    .select("period_start, period_end")
+    .order("period_end", {
+      ascending: false,
+    })
+    .limit(1)
+    .maybeSingle();
+
+  if (latestSnapshotError) {
+    console.error(
+      "Latest VIP snapshot lookup failed:",
+      latestSnapshotError
+    );
+
+    return false;
+  }
+
+  if (
+    !latestSnapshot?.period_start ||
+    !latestSnapshot?.period_end
+  ) {
+    return false;
+  }
+
+  const {
+    data: vipSnapshot,
+    error: vipSnapshotError,
+  } = await supabase
+    .from("vip_snapshots")
+    .select("roulo_username, wagered")
     .eq(
       "period_start",
       latestSnapshot.period_start
@@ -287,10 +307,23 @@ async function isPreviousLeaderboardVip(
       "period_end",
       latestSnapshot.period_end
     )
+    .ilike(
+      "roulo_username",
+      cleanRouloUsername
+    )
     .limit(1)
     .maybeSingle();
 
-  return Boolean(data);
+  if (vipSnapshotError) {
+    console.error(
+      "Previous VIP snapshot lookup failed:",
+      vipSnapshotError
+    );
+
+    return false;
+  }
+
+  return Boolean(vipSnapshot);
 }
 
 async function getRoleAndWeight({
@@ -311,13 +344,6 @@ async function getRoleAndWeight({
     Number(currentWeightedWagered || 0) >=
     VIP_WAGER_REQUIREMENT;
 
-  /*
-   * FINAL VIP RULE:
-   *
-   * Previous leaderboard VIP
-   * OR
-   * Current leaderboard weighted wager >= $5,000
-   */
   const isVip =
     previousLeaderboardVip ||
     currentLeaderboardVip;
@@ -332,14 +358,6 @@ async function getRoleAndWeight({
       existingLink?.discord_username
   );
 
-  /*
-   * Existing giveaway weight system:
-   *
-   * Viewer  +1
-   * On code +1
-   * Discord +1
-   * VIP     +1
-   */
   const weight =
     1 +
     (isOnCode ? 1 : 0) +
@@ -380,12 +398,6 @@ async function buildUpdatedLink(
   return {
     roleInfo,
 
-    /*
-     * Keep wagered for compatibility with any
-     * older parts of the site.
-     *
-     * It now represents lifetime RAW wager.
-     */
     payload: {
       wagered: stats.lifetimeWagered,
 
@@ -738,10 +750,6 @@ export async function POST(
       roulo_username:
         stats.rouloUsername,
 
-      /*
-       * Backwards compatible lifetime
-       * wager value.
-       */
       wagered:
         stats.lifetimeWagered,
 
@@ -893,13 +901,8 @@ export async function DELETE(
     }
 
     /*
-     * IMPORTANT:
-     *
-     * Do NOT delete the whole roulo_links row.
-     * Discord/Twitch/Kick information may live
-     * on the same row.
-     *
-     * Only remove Roulo-specific information.
+     * Do not delete the entire roulo_links row.
+     * Twitch/Kick/Discord can all live on this row.
      */
     const hasDiscord = Boolean(
       existingLink.is_in_discord ||
