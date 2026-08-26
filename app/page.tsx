@@ -4,7 +4,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
 import GiveawayAdmin from "./components/admin/giveaways/GiveawayAdmin";
-import { FaTwitch, FaDiscord, FaInstagram, FaXTwitter } from "react-icons/fa6";
+import {
+  FaTwitch,
+  FaDiscord,
+  FaInstagram,
+  FaXTwitter,
+  FaCrown,
+} from "react-icons/fa6";
 import { SiKick } from "react-icons/si";
 import { slotData, providerLogos, type SlotItem } from "./slotData";
 import { Russo_One } from "next/font/google";
@@ -799,6 +805,7 @@ const [giveawayLoading, setGiveawayLoading] = useState(true);
 const [viewerRewards, setViewerRewards] = useState<any[]>([]);
 const [viewerRewardsPending, setViewerRewardsPending] = useState(0);
 const [viewerRewardsPaid, setViewerRewardsPaid] = useState(0);
+
 const [viewerOdds, setViewerOdds] = useState({
   baseOdds: 1,
   luckOdds: 0,
@@ -807,7 +814,28 @@ const [viewerOdds, setViewerOdds] = useState({
   lossCount: 0,
   winCount: 0,
 });
+
+const [viewerProfileStats, setViewerProfileStats] = useState({
+  lifetimeWagered: 0,
+  leaderboardWagered: 0,
+  leaderboardWeightedWagered: 0,
+
+  vipRequirement: 5000,
+  amountUntilVip: 5000,
+
+  isVip: false,
+  previousLeaderboardVip: false,
+  currentLeaderboardVip: false,
+
+  hasRoulo: false,
+  hasDiscord: false,
+});
+
 const [viewerRewardsMessage, setViewerRewardsMessage] = useState("");
+const [profileActionMessage, setProfileActionMessage] = useState("");
+const [profileActionLoading, setProfileActionLoading] = useState<
+  "" | "roulo" | "discord"
+>("");
 
 const [viewerPlatform, setViewerPlatform] = useState("twitch");
 
@@ -1346,45 +1374,125 @@ const loadViewerRewards = useCallback(async () => {
       setViewerRewards([]);
       setViewerRewardsPending(0);
       setViewerRewardsPaid(0);
-      setViewerRewardsMessage("Connect Twitch or Kick to view rewards.");
+
+      setViewerOdds({
+        baseOdds: 1,
+        luckOdds: 0,
+        totalOdds: 1,
+        nextOdds: 1.1,
+        lossCount: 0,
+        winCount: 0,
+      });
+
+      setViewerProfileStats({
+        lifetimeWagered: 0,
+        leaderboardWagered: 0,
+        leaderboardWeightedWagered: 0,
+        vipRequirement: 5000,
+        amountUntilVip: 5000,
+        isVip: false,
+        previousLeaderboardVip: false,
+        currentLeaderboardVip: false,
+        hasRoulo: false,
+        hasDiscord: false,
+      });
+
+      setViewerRewardsMessage(
+        "Connect Twitch or Kick to view rewards."
+      );
+
       return;
     }
 
-    const platform = viewerPlatform === "kick" ? "kick" : "twitch";
+    const platform =
+      viewerPlatform === "kick" ? "kick" : "twitch";
 
     const res = await fetch(
       `/api/prize-portal?viewer=${encodeURIComponent(
         viewer
       )}&platform=${encodeURIComponent(platform)}`,
-      { cache: "no-store" }
+      {
+        cache: "no-store",
+      }
     );
 
     const data = await res.json();
 
     if (!res.ok || !data.ok) {
       setViewerRewards([]);
-      setViewerRewardsMessage(data.error || "Could not load rewards.");
+      setViewerRewardsMessage(
+        data.error || "Could not load rewards."
+      );
       return;
     }
 
-    setViewerRewards(Array.isArray(data.rewards) ? data.rewards : []);
-    setViewerRewardsPending(Number(data.totalPending || 0));
-    setViewerRewardsPaid(Number(data.totalPaid || 0));
+    setViewerRewards(
+      Array.isArray(data.rewards) ? data.rewards : []
+    );
+
+    setViewerRewardsPending(
+      Number(data.totalPending || 0)
+    );
+
+    setViewerRewardsPaid(
+      Number(data.totalPaid || 0)
+    );
 
     setViewerOdds({
       baseOdds: Number(data.baseOdds || 1),
       luckOdds: Number(data.luckOdds || 0),
       totalOdds: Number(data.totalOdds || 1),
-      nextOdds: Number(data.nextOdds || 1.5),
+      nextOdds: Number(data.nextOdds || 1.1),
       lossCount: Number(data.lossCount || 0),
       winCount: Number(data.winCount || 0),
     });
 
+    setViewerProfileStats({
+      lifetimeWagered: Number(
+        data.lifetimeWagered || 0
+      ),
+
+      leaderboardWagered: Number(
+        data.leaderboardWagered || 0
+      ),
+
+      leaderboardWeightedWagered: Number(
+        data.leaderboardWeightedWagered || 0
+      ),
+
+      vipRequirement: Number(
+        data.vipRequirement || 5000
+      ),
+
+      amountUntilVip: Number(
+        data.amountUntilVip || 0
+      ),
+
+      isVip: Boolean(data.isVip),
+
+      previousLeaderboardVip: Boolean(
+        data.previousLeaderboardVip
+      ),
+
+      currentLeaderboardVip: Boolean(
+        data.currentLeaderboardVip
+      ),
+
+      hasRoulo: Boolean(data.hasRoulo),
+      hasDiscord: Boolean(data.hasDiscord),
+    });
+
     setViewerRewardsMessage("");
   } catch {
-    setViewerRewardsMessage("Could not load rewards.");
+    setViewerRewardsMessage(
+      "Could not load rewards."
+    );
   }
-}, [viewerName, viewerDisplayName, viewerPlatform]);
+}, [
+  viewerName,
+  viewerDisplayName,
+  viewerPlatform,
+]);
 
 const loadRouloLink = useCallback(async () => {
   if (!viewerName || viewerName === "viewer") {
@@ -1494,6 +1602,113 @@ const handleLinkRoulo = async () => {
 
   setRouloLink(data.link);
   setRouloLinkMessage("Roulo account linked.");
+};
+
+const handleUnlinkRoulo = async () => {
+  if (
+    !confirm(
+      "Unlink your Roulo account from your profile?"
+    )
+  ) {
+    return;
+  }
+
+  try {
+    setProfileActionLoading("roulo");
+    setProfileActionMessage("Unlinking Roulo...");
+
+    const res = await fetch(
+      `/api/roulo-link?viewer=${encodeURIComponent(
+        viewerName
+      )}&platform=${encodeURIComponent(
+        viewerPlatform
+      )}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok || !data?.ok) {
+      setProfileActionMessage(
+        data?.error ||
+          "Could not unlink Roulo account."
+      );
+      return;
+    }
+
+    setRouloLink(data.link || null);
+    setRouloUsernameInput("");
+
+    await Promise.all([
+      loadRouloLink(),
+      loadViewerRewards(),
+    ]);
+
+    setProfileActionMessage(
+      "Roulo account unlinked."
+    );
+  } catch {
+    setProfileActionMessage(
+      "Could not unlink Roulo account."
+    );
+  } finally {
+    setProfileActionLoading("");
+  }
+};
+
+const handleUnlinkDiscord = async () => {
+  if (
+    !confirm(
+      "Unlink your Discord account from your profile?"
+    )
+  ) {
+    return;
+  }
+
+  try {
+    setProfileActionLoading("discord");
+    setProfileActionMessage("Unlinking Discord...");
+
+    const res = await fetch(
+      `/api/discord-link?viewer=${encodeURIComponent(
+        viewerName
+      )}&platform=${encodeURIComponent(
+        viewerPlatform
+      )}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok || !data?.ok) {
+      setProfileActionMessage(
+        data?.error ||
+          "Could not unlink Discord account."
+      );
+      return;
+    }
+
+    setDiscordLink(data.link || null);
+
+    await Promise.all([
+      loadDiscordLink(),
+      loadViewerRewards(),
+    ]);
+
+    setProfileActionMessage(
+      "Discord account unlinked."
+    );
+  } catch {
+    setProfileActionMessage(
+      "Could not unlink Discord account."
+    );
+  } finally {
+    setProfileActionLoading("");
+  }
 };
 
   const loadGiveaways = useCallback(async () => {
@@ -3314,7 +3529,7 @@ style={{
       className="group relative mt-3 inline-flex min-h-[44px] min-w-[220px] items-center justify-center overflow-hidden rounded-xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.34),rgba(0,120,255,0.24))] px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_30px_rgba(0,255,255,0.28)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)] sm:mt-4 sm:min-h-[66px] sm:min-w-[280px] sm:rounded-2xl sm:px-8 sm:py-4 sm:text-sm sm:tracking-[0.22em]"
     >
       <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
-      <span className="relative z-10">Claim Rewards On Roulo</span>
+      <span className="relative z-10">Join on code trashguy here</span>
     </a>
   </div>
 </section>
@@ -4166,424 +4381,605 @@ const rankBadgeStyle = isFirst
 )}
 
 {activeSection === "profile" && (
-  <section className="space-y-3 sm:space-y-4">
-    {/* TITLE */}
-    <div className="mx-auto max-w-5xl text-center">
+  <section className="space-y-4 sm:space-y-5">
+    <div className="mx-auto max-w-6xl text-center">
       <GlowTabTitle label="PROFILE" />
     </div>
 
     {!isTwitchConnected ? (
-      /* NOT CONNECTED */
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(0,25,32,0.96),rgba(0,0,0,0.96))] p-4 text-center shadow-[0_0_30px_rgba(0,245,255,0.10)]">
-        <div className="text-[10px] font-black uppercase tracking-[0.20em] text-cyan-200/70">
+      <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(0,25,32,0.97),rgba(0,0,0,0.98))] p-6 text-center shadow-[0_0_40px_rgba(0,245,255,0.12)]">
+        <div className="text-xs font-black uppercase tracking-[0.22em] text-cyan-200/70">
           Connect Your Account
         </div>
 
-        <div className="mt-1 text-xs text-white/45">
-          Sign in to view your profile and rewards.
+        <div className="mt-2 text-sm text-white/45">
+          Sign in to view your profile, wager stats,
+          giveaway odds and prizes.
         </div>
 
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-center">
+        <div className="mx-auto mt-5 flex max-w-md flex-col gap-2 sm:flex-row">
           <button
             onClick={handleTwitchLogin}
-            className="rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#9146FF]/30"
+            className="flex-1 rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-4 py-3 text-xs font-black text-white transition hover:bg-[#9146FF]/30"
           >
             Connect Twitch
           </button>
 
           <button
-            onClick={() => {
-              window.location.href = "/api/kick";
-            }}
-            className="rounded-xl border border-[#53FC18]/40 bg-[#53FC18]/20 px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#53FC18]/30"
+            onClick={handleKickLogin}
+            className="flex-1 rounded-xl border border-[#53FC18]/40 bg-[#53FC18]/15 px-4 py-3 text-xs font-black text-[#baff9f] transition hover:bg-[#53FC18]/25"
           >
             Connect Kick
           </button>
         </div>
       </div>
     ) : (
-      <div className="mx-auto w-full max-w-5xl space-y-2.5 sm:space-y-3">
-        {/* USER */}
-        <div className="overflow-hidden rounded-2xl border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(0,25,32,0.96),rgba(0,0,0,0.96))] p-3.5 shadow-[0_0_28px_rgba(0,245,255,0.10)] sm:p-4">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-black text-white shadow-[0_0_18px_rgba(0,0,0,0.35)] sm:h-14 sm:w-14 sm:text-lg ${
-                viewerPlatform === "kick"
-                  ? "border border-[#53FC18]/45 bg-[#53FC18]/20 shadow-[0_0_18px_rgba(83,252,24,0.12)]"
-                  : "border border-purple-300/45 bg-purple-500/25 shadow-[0_0_18px_rgba(168,85,247,0.16)]"
-              }`}
-            >
+      <div className="mx-auto w-full max-w-6xl space-y-4">
+{/* =====================================================
+    MAIN ACCOUNT
+===================================================== */}
+<div className="relative overflow-hidden rounded-3xl border border-cyan-300/40 bg-[radial-gradient(circle_at_15%_25%,rgba(0,245,255,0.13),transparent_28%),linear-gradient(135deg,rgba(0,22,27,0.99),rgba(0,0,0,0.99))] shadow-[0_0_42px_rgba(0,245,255,0.14)]">
+  <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(103,232,249,0.85),transparent)]" />
+  <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-cyan-400/[0.07] blur-3xl" />
+
+  <div className="relative p-4 sm:p-6">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200 sm:text-xs">
+        <span className="text-cyan-300">♟</span>
+        My Profile
+      </div>
+
+      <button
+        onClick={handleLogout}
+        className="rounded-lg border border-red-300/35 bg-red-500/[0.08] px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-red-200 shadow-[0_0_14px_rgba(248,113,113,0.08)] transition hover:border-red-300/60 hover:bg-red-500/15 sm:px-4 sm:text-[10px]"
+      >
+        Log Out ↪
+      </button>
+    </div>
+
+    <div className="grid gap-6 lg:grid-cols-[0.9fr_1.15fr] lg:items-stretch">
+      {/* LEFT - USER */}
+      <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+        <div className="relative shrink-0">
+          <div className="absolute -inset-1 rounded-full bg-cyan-300/20 blur-md" />
+
+          {viewerAvatar ? (
+            <img
+              src={viewerAvatar}
+              alt={viewerDisplayName || viewerName}
+              className="relative h-[92px] w-[92px] rounded-full border-2 border-cyan-300 object-cover shadow-[0_0_28px_rgba(34,211,238,0.42)] sm:h-[125px] sm:w-[125px]"
+            />
+          ) : (
+            <div className="relative flex h-[92px] w-[92px] items-center justify-center rounded-full border-2 border-cyan-300 bg-cyan-400/10 text-3xl font-black text-white shadow-[0_0_28px_rgba(34,211,238,0.42)] sm:h-[125px] sm:w-[125px]">
               {viewerDisplayName?.charAt(0)?.toUpperCase() || "T"}
             </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-lg font-black text-white sm:text-xl">
-                {viewerDisplayName || viewerName}
-              </div>
-
-              <div className="mt-1 flex min-w-0 items-center gap-2">
-                <div className="min-w-0 truncate text-xs font-bold text-white/55 sm:text-sm">
-                  @{viewerName}
-                </div>
-
-                <div
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.16em] ${
-                    viewerPlatform === "kick"
-                      ? "border border-[#53FC18]/35 bg-[#53FC18]/15 text-[#53FC18]"
-                      : "border border-purple-300/35 bg-purple-500/15 text-purple-300"
-                  }`}
-                >
-                  {viewerPlatform === "kick" ? "kick" : "twitch"}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* DISCORD */}
-        <div className="overflow-hidden rounded-xl border border-[#5865F2]/30 bg-[linear-gradient(90deg,rgba(88,101,242,0.16),rgba(0,0,0,0.90))] px-3.5 py-3 shadow-[0_0_20px_rgba(88,101,242,0.07)] sm:px-4">
-          {discordLink?.is_in_discord ? (
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-[9px] font-black uppercase tracking-[0.20em] text-[#9da5ff]">
-                  Discord
-                </div>
-
-                <div className="mt-0.5 truncate text-sm font-black text-white">
-                  {discordLink?.discord_username || "Linked"}
-                </div>
-              </div>
-
-              <div className="shrink-0 rounded-full border border-green-300/20 bg-green-400/10 px-2.5 py-1 text-[9px] font-black text-green-300">
-                ✓ LINKED
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[9px] font-black uppercase tracking-[0.20em] text-[#9da5ff]">
-                  Discord
-                </div>
-
-                <div className="mt-0.5 text-xs font-bold text-white/40">
-                  Not linked
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  (window.location.href = `/api/discord/login?viewer=${viewerName}&platform=${viewerPlatform}`)
-                }
-                className="rounded-lg border border-[#5865F2]/35 bg-[#5865F2]/15 px-3 py-1.5 text-[10px] font-black text-[#aeb4ff] transition hover:bg-[#5865F2]/25"
-              >
-                Link Discord
-              </button>
-            </div>
           )}
         </div>
 
-        {/* ROULO */}
-        <div className="overflow-hidden rounded-xl border border-cyan-300/25 bg-[linear-gradient(90deg,rgba(0,200,220,0.11),rgba(0,0,0,0.90))] px-3.5 py-3 shadow-[0_0_20px_rgba(0,245,255,0.06)] sm:px-4">
-          {rouloLink?.roulo_username ? (
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-[9px] font-black uppercase tracking-[0.20em] text-cyan-300/70">
-                  Roulo
-                </div>
-
-                <div className="mt-0.5 truncate text-sm font-black text-white">
-                  {rouloLink.roulo_username}
-                </div>
-              </div>
-
-              <div className="shrink-0 rounded-full border border-green-300/20 bg-green-400/10 px-2.5 py-1 text-[9px] font-black text-green-300">
-                ✓ LINKED
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div className="text-[9px] font-black uppercase tracking-[0.20em] text-cyan-300/70">
-                Roulo
-              </div>
-
-              <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                <input
-                  value={rouloUsernameInput}
-                  onChange={(e) => setRouloUsernameInput(e.target.value)}
-                  placeholder="Roulo username"
-                  className="min-w-0 rounded-lg border border-cyan-300/15 bg-black/70 px-3 py-2 text-xs text-white outline-none transition focus:border-cyan-300/40"
-                />
-
-                <button
-                  onClick={handleLinkRoulo}
-                  className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-4 py-2 text-[10px] font-black text-cyan-200 transition hover:bg-cyan-400/20"
-                >
-                  Link
-                </button>
-              </div>
-
-              {rouloLinkMessage && (
-                <div className="mt-2 text-[10px] text-white/50">
-                  {rouloLinkMessage}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* LEADERBOARD WAGERED + STATUS */}
-        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(0,25,32,0.95),rgba(0,0,0,0.95))] shadow-[0_0_22px_rgba(0,245,255,0.07)]">
-          <div className="border-r border-cyan-300/10 px-3 py-3.5 text-center">
-            <div className="text-[8px] font-black uppercase tracking-[0.18em] text-cyan-100/45 sm:text-[9px]">
-              Leaderboard Wagered
-            </div>
-
-            <div className="mt-1.5 text-lg font-black text-cyan-200 sm:text-xl">
-              $
-              {Number(
-                leaderboardData.find(
-                  (player) =>
-                    player.username?.toLowerCase() ===
-                      viewerName.toLowerCase() ||
-                    player.username?.toLowerCase() ===
-                      rouloLink?.roulo_username?.toLowerCase()
-                )?.wagered || 0
-              ).toLocaleString()}
-            </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-xl font-black text-white sm:text-3xl">
+            {viewerDisplayName || viewerName}
           </div>
 
-          <div className="px-3 py-3.5 text-center">
-            <div className="text-[8px] font-black uppercase tracking-[0.18em] text-white/40 sm:text-[9px]">
-              Status
-            </div>
-
+          <div className="mt-2 flex items-center gap-2">
             <div
-              className={`mt-1.5 text-lg font-black sm:text-xl ${
-                String(rouloLink?.role || "").toLowerCase() === "vip"
-                  ? "text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.30)]"
-                  : rouloLink?.roulo_username
-                  ? "text-cyan-200"
-                  : "text-white/70"
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border sm:h-9 sm:w-9 ${
+                viewerPlatform === "kick"
+                  ? "border-[#53FC18]/45 bg-[#53FC18]/10 text-[#53FC18]"
+                  : "border-[#9146FF]/50 bg-[#9146FF]/15 text-purple-300"
               }`}
             >
-              {String(rouloLink?.role || "").toLowerCase() === "vip"
-                ? "👑 VIP"
-                : rouloLink?.roulo_username
-                ? "Affiliate"
-                : "Viewer"}
+              {viewerPlatform === "kick" ? (
+                <SiKick className="text-base sm:text-lg" />
+              ) : (
+                <FaTwitch className="text-base sm:text-lg" />
+              )}
+            </div>
+
+            <div className="text-[10px] font-bold text-white/30">
+              /
+            </div>
+
+            <div className="text-xs font-bold text-white/55 sm:text-sm">
+              @{viewerName}
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <div
+              className={`inline-flex min-w-[110px] items-center justify-center gap-2 rounded-lg border px-4 py-2 text-base font-black uppercase tracking-[0.10em] sm:min-w-[140px] sm:text-xl ${
+                viewerProfileStats.isVip
+                  ? "border-cyan-300/50 bg-[linear-gradient(180deg,rgba(0,245,255,0.22),rgba(0,150,170,0.12))] text-cyan-100 shadow-[0_0_22px_rgba(0,245,255,0.18)]"
+                  : rouloLink?.roulo_username
+                  ? "border-cyan-300/30 bg-cyan-400/10 text-cyan-200"
+                  : "border-white/10 bg-white/[0.04] text-white/60"
+              }`}
+            >
+{viewerProfileStats.isVip ? (
+  <>
+    <FaCrown className="text-yellow-200 drop-shadow-[0_0_8px_rgba(253,224,71,0.55)]" />
+    VIP
+  </>
+) : rouloLink?.roulo_username ? (
+                "Affiliate"
+              ) : (
+                "Viewer"
+              )}
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.10em] sm:text-[10px]">
+            <span
+              className={`h-2 w-2 rounded-full ${
+                rouloLink?.roulo_username
+                  ? "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]"
+                  : "bg-white/20"
+              }`}
+            />
+
+            <span
+              className={
+                rouloLink?.roulo_username
+                  ? "text-green-300"
+                  : "text-white/35"
+              }
+            >
+              {rouloLink?.roulo_username
+                ? "On Code"
+                : "Not On Code"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT - ODDS + PAID */}
+      <div className="border-t border-cyan-300/10 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+        <div className="text-[10px] font-black uppercase tracking-[0.17em] text-cyan-200 sm:text-xs">
+          Giveaway Odds
+        </div>
+
+        <div className="mt-3 grid grid-cols-3 overflow-hidden rounded-xl border border-cyan-300/20 bg-black/45">
+          <div className="px-2 py-3 text-center sm:px-3 sm:py-4">
+            <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/45 sm:text-[9px]">
+              Base
+            </div>
+
+            <div className="mt-1 text-lg font-black text-white sm:text-2xl">
+              {viewerOdds.baseOdds.toFixed(2)}x
+            </div>
+          </div>
+
+          <div className="border-x border-cyan-300/10 px-2 py-3 text-center sm:px-3 sm:py-4">
+            <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/45 sm:text-[9px]">
+              Luck
+            </div>
+
+            <div className="mt-1 text-lg font-black text-green-300 sm:text-2xl">
+              +{viewerOdds.luckOdds.toFixed(2)}x
+            </div>
+          </div>
+
+          <div className="px-2 py-3 text-center sm:px-3 sm:py-4">
+            <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/45 sm:text-[9px]">
+              Total
+            </div>
+
+            <div className="mt-1 text-lg font-black text-cyan-300 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)] sm:text-2xl">
+              {viewerOdds.totalOdds.toFixed(2)}x
             </div>
           </div>
         </div>
 
-        {/* GIVEAWAY ODDS */}
-        {rouloLink && (
-          <div className="overflow-hidden rounded-xl border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(0,18,24,0.97),rgba(0,0,0,0.97))] p-3.5 shadow-[0_0_24px_rgba(0,245,255,0.08)]">
-            <div className="mb-3 text-[9px] font-black uppercase tracking-[0.20em] text-cyan-300/70">
-              Giveaway Odds
-            </div>
-
-            <div className="grid grid-cols-4 divide-x divide-cyan-300/10">
-              <div className="px-1 text-center">
-                <div className="text-[8px] font-black uppercase tracking-wide text-white/35">
-                  Base
-                </div>
-
-                <div className="mt-1.5 text-sm font-black text-white sm:text-base">
-                  {viewerOdds.baseOdds.toFixed(1)}x
-                </div>
-              </div>
-
-              <div className="px-1 text-center">
-                <div className="text-[8px] font-black uppercase tracking-wide text-white/35">
-                  Luck
-                </div>
-
-                <div className="mt-1.5 text-sm font-black text-green-300 sm:text-base">
-                  +{viewerOdds.luckOdds.toFixed(1)}x
-                </div>
-              </div>
-
-              <div className="px-1 text-center">
-                <div className="text-[8px] font-black uppercase tracking-wide text-white/35">
-                  Total
-                </div>
-
-                <div className="mt-1.5 text-sm font-black text-red-300 sm:text-base">
-                  {viewerOdds.totalOdds.toFixed(1)}x
-                </div>
-              </div>
-
-              <div className="px-1 text-center">
-                <div className="text-[8px] font-black uppercase tracking-wide text-white/35">
-                  Next Loss
-                </div>
-
-                <div className="mt-1.5 text-sm font-black text-cyan-300 sm:text-base">
-                  {viewerOdds.nextOdds.toFixed(1)}x
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* REWARD SECTIONS */}
-        {viewerRewards.length === 0 ? (
-          <div className="rounded-xl border border-white/10 bg-black/80 px-3 py-4 text-center text-xs text-white/40">
-            {viewerRewardsMessage || "No rewards yet."}
-          </div>
-        ) : (
-          <>
-            {[
-              {
-                title: "Ready to Claim",
-                items: viewerRewards.filter(
-                  (r) => !r.claimed && !r.paid
-                ),
-                empty: "No prizes to claim.",
-              },
-              {
-                title: "Waiting for Payment",
-                items: viewerRewards.filter(
-                  (r) => r.claimed && !r.paid
-                ),
-                empty: "No claimed prizes waiting.",
-              },
-              {
-                title: "Paid",
-                items: viewerRewards.filter((r) => r.paid),
-                empty: "No paid prizes yet.",
-              },
-            ].map((rewardSection) => {
-              const isReady =
-                rewardSection.title === "Ready to Claim";
-
-              const isWaiting =
-                rewardSection.title === "Waiting for Payment";
-
-              const isPaid =
-                rewardSection.title === "Paid";
-
-              return (
-                <div
-                  key={rewardSection.title}
-                  className={`overflow-hidden rounded-xl border bg-black/85 shadow-[0_0_18px_rgba(0,0,0,0.25)] ${
-                    isReady
-                      ? "border-yellow-300/20"
-                      : isWaiting
-                      ? "border-orange-300/15"
-                      : "border-green-300/15"
-                  }`}
-                >
-                  <div className="flex items-center justify-between border-b border-white/[0.06] px-3.5 py-2.5">
-                    <div
-                      className={`text-[10px] font-black uppercase tracking-[0.16em] ${
-                        isReady
-                          ? "text-yellow-100"
-                          : isWaiting
-                          ? "text-orange-100"
-                          : "text-green-100"
-                      }`}
-                    >
-                      {rewardSection.title}
-                    </div>
-
-                    <div
-                      className={`rounded-full border px-2.5 py-0.5 text-[9px] font-black ${
-                        isReady
-                          ? "border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
-                          : isWaiting
-                          ? "border-orange-300/20 bg-orange-400/10 text-orange-200"
-                          : "border-green-300/20 bg-green-400/10 text-green-200"
-                      }`}
-                    >
-                      {rewardSection.items.length}
-                    </div>
-                  </div>
-
-                  {rewardSection.items.length === 0 ? (
-                    <div className="px-3 py-3.5 text-center text-[10px] text-white/30">
-                      {rewardSection.empty}
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-white/[0.05]">
-                      {rewardSection.items.map((reward: any) => (
-                        <div
-                          key={reward.id}
-                          className="flex items-center justify-between gap-3 px-3.5 py-2.5 transition hover:bg-white/[0.02]"
-                        >
-                          <div className="min-w-0 text-left">
-                            <div className="truncate text-xs font-black text-white sm:text-sm">
-                              {reward.title || "Chat Giveaway"}
-                            </div>
-
-                            <div className="mt-0.5 text-[9px] text-white/30">
-                              {reward.created_at
-                                ? new Date(
-                                    reward.created_at
-                                  ).toLocaleString()
-                                : "Recently"}
-                            </div>
-                          </div>
-
-                          <div className="shrink-0 text-right">
-                            <div className="text-sm font-black text-cyan-200 sm:text-base">
-                              $
-                              {Number(
-                                reward.amount || 0
-                              ).toLocaleString()}
-                            </div>
-
-                            {!reward.claimed && !reward.paid ? (
-                              <button
-                                onClick={() =>
-                                  handleClaimReward(reward.id)
-                                }
-                                className="mt-1 rounded-md border border-yellow-300/30 bg-yellow-400/10 px-2.5 py-0.5 text-[9px] font-black text-yellow-200 transition hover:bg-yellow-400/20"
-                              >
-                                Claim
-                              </button>
-                            ) : reward.paid ? (
-                              <div className="mt-0.5 text-[9px] font-black text-green-300">
-                                Paid ✓
-                              </div>
-                            ) : (
-                              <div className="mt-0.5 text-[9px] font-black text-orange-200">
-                                Waiting
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </>
-        )}
-
-        {/* TOTALS */}
-        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(135deg,rgba(10,10,10,0.98),rgba(0,0,0,0.98))] shadow-[0_0_20px_rgba(0,0,0,0.30)]">
-          <div className="border-r border-white/[0.06] px-3 py-3 text-center">
-            <div className="text-[8px] font-black uppercase tracking-[0.18em] text-yellow-200/60">
-              Pending
-            </div>
-
-            <div className="mt-1 text-base font-black text-yellow-200">
-              ${viewerRewardsPending.toLocaleString()}
-            </div>
+        <div className="mt-4 flex items-center gap-4 border-t border-cyan-300/15 pt-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-cyan-300/50 bg-cyan-400/10 text-xl font-black text-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.18)] sm:h-14 sm:w-14 sm:text-2xl">
+            $
           </div>
 
-          <div className="px-3 py-3 text-center">
-            <div className="text-[8px] font-black uppercase tracking-[0.18em] text-green-300/60">
-              Paid
+          <div>
+            <div className="text-[9px] font-black uppercase tracking-[0.12em] text-white/50 sm:text-[10px]">
+              Total Paid Out
             </div>
 
-            <div className="mt-1 text-base font-black text-green-300">
+            <div className="mt-0.5 text-2xl font-black text-green-300 drop-shadow-[0_0_12px_rgba(74,222,128,0.25)] sm:text-4xl">
               ${viewerRewardsPaid.toLocaleString()}
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{/* =====================================================
+    LINKED ACCOUNTS
+===================================================== */}
+<div className="overflow-hidden rounded-2xl border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(0,17,22,0.98),rgba(0,0,0,0.99))] shadow-[0_0_28px_rgba(0,245,255,0.07)]">
+  <div className="border-b border-cyan-300/10 px-4 py-3">
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-cyan-300">🔗</span>
+
+      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200 sm:text-xs">
+        Linked Accounts
+      </div>
+    </div>
+  </div>
+
+  <div className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4">
+    {/* DISCORD */}
+    <div className="rounded-xl border border-[#5865F2]/35 bg-[linear-gradient(135deg,rgba(88,101,242,0.13),rgba(0,0,0,0.90))] p-3.5 shadow-[inset_0_0_20px_rgba(88,101,242,0.04)] sm:p-4">
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#7289da]/55 bg-[#5865F2]/25 text-2xl text-white shadow-[0_0_18px_rgba(88,101,242,0.18)] sm:h-14 sm:w-14">
+          <FaDiscord />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="text-[9px] font-black uppercase tracking-[0.12em] text-white/70">
+            Discord
+          </div>
+
+          <div className="mt-0.5 truncate text-sm font-black text-white sm:text-base">
+            {discordLink?.is_in_discord
+              ? discordLink?.discord_username || "Linked"
+              : "Not linked"}
+          </div>
+
+          {discordLink?.is_in_discord && (
+            <div className="mt-1 inline-flex rounded bg-green-400/10 px-2 py-0.5 text-[7px] font-black uppercase text-green-300">
+              Linked
+            </div>
+          )}
+        </div>
+
+        {discordLink?.is_in_discord ? (
+          <button
+            type="button"
+            disabled={profileActionLoading === "discord"}
+            onClick={handleUnlinkDiscord}
+            className="shrink-0 rounded-lg border border-red-400/50 bg-red-500/10 px-3 py-2 text-[9px] font-black uppercase tracking-[0.08em] text-red-300 shadow-[0_0_14px_rgba(248,113,113,0.08)] transition hover:border-red-300 hover:bg-red-500/20 sm:px-4 sm:text-[10px]"
+          >
+            {profileActionLoading === "discord"
+              ? "Unlinking..."
+              : "⛓ Unlink"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() =>
+              (window.location.href = `/api/discord/login?viewer=${encodeURIComponent(
+                viewerName
+              )}&platform=${encodeURIComponent(
+                viewerPlatform
+              )}`)
+            }
+            className="shrink-0 rounded-lg border border-[#5865F2]/45 bg-[#5865F2]/15 px-3 py-2 text-[9px] font-black text-[#c5c9ff] transition hover:bg-[#5865F2]/25"
+          >
+            Link
+          </button>
+        )}
+      </div>
+    </div>
+
+    {/* ROULO */}
+    <div className="rounded-xl border border-cyan-300/35 bg-[linear-gradient(135deg,rgba(0,215,235,0.10),rgba(0,0,0,0.90))] p-3.5 shadow-[inset_0_0_20px_rgba(0,245,255,0.04)] sm:p-4">
+      {rouloLink?.roulo_username ? (
+        <div className="flex items-center gap-3">
+<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-cyan-300/45 bg-black/80 p-1.5 shadow-[0_0_18px_rgba(0,245,255,0.15)] sm:h-14 sm:w-14">
+  <img
+    src="/roulo-logo.png"
+    alt="Roulo"
+    className="h-full w-full object-contain"
+  />
+</div>
+
+          <div className="min-w-0 flex-1">
+            <div className="text-[9px] font-black uppercase tracking-[0.12em] text-white/70">
+              Roulo
+            </div>
+
+            <div className="mt-0.5 truncate text-sm font-black text-white sm:text-base">
+              {rouloLink.roulo_username}
+            </div>
+
+            <div className="mt-1 inline-flex rounded bg-green-400/10 px-2 py-0.5 text-[7px] font-black uppercase text-green-300">
+              Linked
+            </div>
+          </div>
+
+          <button
+            type="button"
+            disabled={profileActionLoading === "roulo"}
+            onClick={handleUnlinkRoulo}
+            className="shrink-0 rounded-lg border border-red-400/50 bg-red-500/10 px-3 py-2 text-[9px] font-black uppercase tracking-[0.08em] text-red-300 shadow-[0_0_14px_rgba(248,113,113,0.08)] transition hover:border-red-300 hover:bg-red-500/20 sm:px-4 sm:text-[10px]"
+          >
+            {profileActionLoading === "roulo"
+              ? "Unlinking..."
+              : "⛓ Unlink"}
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3">
+<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-cyan-300/45 bg-black/80 p-1.5 shadow-[0_0_18px_rgba(0,245,255,0.15)] sm:h-14 sm:w-14">
+  <img
+    src="/roulo-logo.png"
+    alt="Roulo"
+    className="h-full w-full object-contain"
+  />
+</div>
+
+          <div className="min-w-0 flex-1">
+            <div className="text-[9px] font-black uppercase tracking-[0.12em] text-white/70">
+              Roulo
+            </div>
+
+            <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <input
+                value={rouloUsernameInput}
+                onChange={(e) =>
+                  setRouloUsernameInput(e.target.value)
+                }
+                placeholder="Roulo username"
+                className="min-w-0 rounded-lg border border-cyan-300/15 bg-black/70 px-3 py-2 text-xs text-white outline-none transition focus:border-cyan-300/45"
+              />
+
+              <button
+                onClick={handleLinkRoulo}
+                className="rounded-lg border border-cyan-300/40 bg-cyan-400/10 px-4 py-2 text-[9px] font-black text-cyan-200 transition hover:bg-cyan-400/20"
+              >
+                Link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+
+  {(profileActionMessage || rouloLinkMessage) && (
+    <div className="border-t border-white/[0.05] px-4 py-2 text-center text-[9px] font-bold text-cyan-200/60">
+      {profileActionMessage || rouloLinkMessage}
+    </div>
+  )}
+</div>
+
+        {/* =====================================================
+            WAGER STATS
+        ===================================================== */}
+        <div className="relative overflow-hidden rounded-2xl border border-cyan-300/30 bg-[radial-gradient(circle_at_top_left,rgba(0,245,255,0.07),transparent_32%),linear-gradient(135deg,rgba(0,18,23,0.99),rgba(0,0,0,0.99))] shadow-[0_0_34px_rgba(0,245,255,0.10)]">
+<div className="border-b border-cyan-300/15 px-4 py-3.5">
+<div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.20em] text-cyan-200 sm:text-xs">
+  <span>📊</span>
+  <span>Wager Stats</span>
+</div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3">
+            <div className="m-3 rounded-xl border border-cyan-300/20 bg-black/45 px-4 py-5 text-center shadow-[inset_0_0_18px_rgba(0,245,255,0.025)]">
+              <div className="text-[9px] font-black uppercase tracking-[0.16em] text-white/40">
+                Lifetime Wagered
+              </div>
+
+              <div className="mt-2 text-2xl font-black text-white">
+                $
+                {viewerProfileStats.lifetimeWagered.toLocaleString()}
+              </div>
+
+              <div className="mt-1 text-[9px] text-white/25">
+                Total wagered on code
+              </div>
+            </div>
+
+            <div className="m-3 rounded-xl border border-cyan-300/20 bg-black/45 px-4 py-5 text-center shadow-[inset_0_0_18px_rgba(0,245,255,0.025)]">
+              <div className="text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200/50">
+                LB Wagered
+              </div>
+
+              <div className="mt-2 text-2xl font-black text-cyan-200">
+                $
+                {viewerProfileStats.leaderboardWagered.toLocaleString()}
+              </div>
+
+              <div className="mt-1 text-[9px] text-white/25">
+                Regular leaderboard wager
+              </div>
+            </div>
+
+            <div className="relative m-3 rounded-xl border border-yellow-300/25 bg-[linear-gradient(135deg,rgba(250,204,21,0.05),rgba(0,0,0,0.55))] px-4 py-5 text-center shadow-[inset_0_0_18px_rgba(250,204,21,0.025)]">
+              {viewerProfileStats.isVip && (
+                <div className="absolute right-2 top-2 rounded-full border border-yellow-300/25 bg-yellow-400/10 px-2 py-0.5 text-[7px] font-black text-yellow-200">
+                  VIP ✓
+                </div>
+              )}
+
+              <div className="text-[9px] font-black uppercase tracking-[0.16em] text-yellow-200/60">
+                LB Weighted Wager
+              </div>
+
+              <div className="mt-2 text-2xl font-black text-yellow-200 drop-shadow-[0_0_10px_rgba(253,224,71,0.15)]">
+                $
+                {viewerProfileStats.leaderboardWeightedWagered.toLocaleString()}
+              </div>
+
+              <div className="mt-1 text-[9px] text-white/30">
+                VIP requirement: $
+                {viewerProfileStats.vipRequirement.toLocaleString()}
+              </div>
+            </div>
+          </div>
+
+          {rouloLink?.roulo_username && (
+            <div className="border-t border-cyan-300/10 px-4 py-3">
+              <div className="mx-auto max-w-3xl">
+                <div className="mb-1.5 flex items-center justify-between text-[8px] font-black uppercase tracking-[0.12em]">
+                  <span className="text-white/35">
+                    VIP Progress
+                  </span>
+
+                  <span
+                    className={
+                      viewerProfileStats.isVip
+                        ? "text-green-300"
+                        : "text-yellow-200"
+                    }
+                  >
+                    {viewerProfileStats.isVip
+                      ? "QUALIFIED ✓"
+                      : `$${viewerProfileStats.amountUntilVip.toLocaleString()} TO GO`}
+                  </span>
+                </div>
+
+                <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-full rounded-full bg-[linear-gradient(90deg,rgba(34,211,238,0.9),rgba(250,204,21,0.95))] shadow-[0_0_12px_rgba(34,211,238,0.25)] transition-all"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(
+                          0,
+                          (viewerProfileStats.leaderboardWeightedWagered /
+                            Math.max(
+                              1,
+                              viewerProfileStats.vipRequirement
+                            )) *
+                            100
+                        )
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* =====================================================
+            PRIZE PORTAL
+        ===================================================== */}
+        <div className="relative overflow-hidden rounded-2xl border border-cyan-300/30 bg-[radial-gradient(circle_at_top_left,rgba(0,245,255,0.06),transparent_30%),linear-gradient(135deg,rgba(0,17,22,0.99),rgba(0,0,0,0.99))] shadow-[0_0_34px_rgba(0,245,255,0.10)]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cyan-300/15 px-4 py-3.5">
+            <div>
+<div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.20em] text-cyan-200 sm:text-xs">
+  <span>🎁</span>
+  <span>Prize Portal</span>
+</div>
+            </div>
+
+            <div className="flex gap-2">
+              <div className="rounded-lg border border-yellow-300/15 bg-yellow-400/[0.06] px-3 py-1.5 text-center">
+                <div className="text-[7px] font-black uppercase text-yellow-200/45">
+                  Pending
+                </div>
+                <div className="text-xs font-black text-yellow-200">
+                  ${viewerRewardsPending.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-green-300/15 bg-green-400/[0.06] px-3 py-1.5 text-center">
+                <div className="text-[7px] font-black uppercase text-green-200/45">
+                  Paid
+                </div>
+                <div className="text-xs font-black text-green-300">
+                  ${viewerRewardsPaid.toLocaleString()}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {viewerRewards.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <div className="text-sm font-black text-white/45">
+                No prizes yet
+              </div>
+              <div className="mt-1 text-[10px] text-white/25">
+                {viewerRewardsMessage ||
+                  "Your winnings will appear here."}
+              </div>
+            </div>
+          ) : (
+            <div className="divide-y divide-white/[0.06]">
+              {viewerRewards.map((reward: any) => {
+                const isPaid = Boolean(reward.paid);
+                const isClaimed =
+                  Boolean(reward.claimed) && !isPaid;
+
+                return (
+                  <div
+                    key={reward.id}
+                    className="flex items-center justify-between gap-3 px-4 py-3 transition hover:bg-white/[0.025]"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="truncate text-xs font-black text-white sm:text-sm">
+                          {reward.title ||
+                            reward.reward_title ||
+                            "Giveaway Prize"}
+                        </div>
+
+                        <div
+                          className={`rounded-full border px-2 py-0.5 text-[7px] font-black uppercase ${
+                            isPaid
+                              ? "border-green-300/20 bg-green-400/10 text-green-300"
+                              : isClaimed
+                              ? "border-orange-300/20 bg-orange-400/10 text-orange-200"
+                              : "border-yellow-300/20 bg-yellow-400/10 text-yellow-200"
+                          }`}
+                        >
+                          {isPaid
+                            ? "Paid"
+                            : isClaimed
+                            ? "Waiting"
+                            : "Ready"}
+                        </div>
+                      </div>
+
+                      <div className="mt-1 text-[9px] text-white/30">
+                        {reward.created_at
+                          ? new Date(
+                              reward.created_at
+                            ).toLocaleString()
+                          : "Recently"}
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <div
+                        className={`text-base font-black sm:text-lg ${
+                          isPaid
+                            ? "text-green-300"
+                            : isClaimed
+                            ? "text-orange-200"
+                            : "text-cyan-200"
+                        }`}
+                      >
+                        $
+                        {Number(
+                          reward.amount || 0
+                        ).toLocaleString()}
+                      </div>
+
+                      {!reward.claimed && !reward.paid ? (
+                        <button
+                          onClick={() =>
+                            handleClaimReward(reward.id)
+                          }
+                          className="mt-1 rounded-md border border-yellow-300/30 bg-yellow-400/10 px-3 py-1 text-[8px] font-black uppercase tracking-wide text-yellow-200 transition hover:bg-yellow-400/20"
+                        >
+                          Claim Prize
+                        </button>
+                      ) : isPaid ? (
+                        <div className="mt-1 text-[8px] font-black text-green-300">
+                          PAID ✓
+                        </div>
+                      ) : (
+                        <div className="mt-1 text-[8px] font-black text-orange-200">
+                          PAYMENT PENDING
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     )}

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { syncRouloLinks } from "@/lib/roulo-sync";
 
 export const runtime = "nodejs";
 
@@ -8,6 +7,13 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
+
+const CURRENT_LB_START = "2026-08-05";
+const CURRENT_LB_END = "2026-09-05";
+
+const LIFETIME_START = "2024-01-01";
+
+const VIP_WAGER_REQUIREMENT = 5000;
 
 function normalize(value: unknown) {
   return String(value || "")
@@ -29,45 +35,296 @@ function usernameOptions(value: unknown) {
   ).filter(Boolean);
 }
 
-function getDateRange() {
-  const end = new Date();
+function getPlayerName(player: any) {
+  return normalize(
+    player?.username ||
+      player?.name ||
+      player?.display_name ||
+      player?.user_name ||
+      player?.player_name ||
+      player?.affiliate_username ||
+      player?.user?.username ||
+      player?.user?.name ||
+      ""
+  );
+}
+
+function getRawWager(player: any) {
+  return Number(
+    player?.wagered_amount ??
+      player?.wageredAmount ??
+      player?.wagered ??
+      player?.amount ??
+      0
+  );
+}
+
+function getWeightedWager(player: any) {
+  return Number(
+    player?.weighted_wagered_amount ??
+      player?.weightedWageredAmount ??
+      player?.weighted_wagered ??
+      player?.wagered_amount ??
+      player?.wageredAmount ??
+      player?.wagered ??
+      0
+  );
+}
+
+function extractAffiliates(json: any) {
+  return Array.isArray(json)
+    ? json
+    : Array.isArray(json?.affiliates)
+    ? json.affiliates
+    : Array.isArray(json?.data)
+    ? json.data
+    : Array.isArray(json?.results)
+    ? json.results
+    : Array.isArray(json?.players)
+    ? json.players
+    : Array.isArray(json?.users)
+    ? json.users
+    : Array.isArray(json?.data?.affiliates)
+    ? json.data.affiliates
+    : Array.isArray(json?.data?.results)
+    ? json.data.results
+    : [];
+}
+
+async function fetchRouloAffiliates({
+  startAt,
+  endAt,
+  weighted,
+}: {
+  startAt: string;
+  endAt: string;
+  weighted: boolean;
+}) {
+  const key = process.env.ROULO_API_KEY;
+
+  if (!key) {
+    throw new Error("Missing ROULO_API_KEY");
+  }
+
+  const url = new URL(
+    "https://api.roulobets.com/v1/external/affiliates"
+  );
+
+  url.searchParams.set("start_at", startAt);
+  url.searchParams.set("end_at", endAt);
+  url.searchParams.set("key", key);
+  url.searchParams.set(
+    "weighted",
+    weighted ? "true" : "false"
+  );
+
+  const res = await fetch(url.toString(), {
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+
+    throw new Error(
+      `Roulo API returned ${res.status}: ${text}`
+    );
+  }
+
+  const json = await res.json();
+
+  return extractAffiliates(json);
+}
+
+function findAffiliate(
+  affiliates: any[],
+  rouloUsername: string
+) {
+  const target = normalize(rouloUsername);
+
+  return (
+    affiliates.find(
+      (player: any) =>
+        getPlayerName(player) === target
+    ) || null
+  );
+}
+
+async function getRouloStats(
+  rouloUsername: string
+) {
+  const today = new Date()
+    .toISOString()
+    .slice(0, 10);
+
+  /*
+   * We intentionally fetch these separately:
+   *
+   * 1. Lifetime RAW wager
+   * 2. Current leaderboard RAW wager
+   * 3. Current leaderboard WEIGHTED wager
+   */
+  const [
+    lifetimeAffiliates,
+    leaderboardAffiliates,
+    weightedLeaderboardAffiliates,
+  ] = await Promise.all([
+    fetchRouloAffiliates({
+      startAt: LIFETIME_START,
+      endAt: today,
+      weighted: false,
+    }),
+
+    fetchRouloAffiliates({
+      startAt: CURRENT_LB_START,
+      endAt: CURRENT_LB_END,
+      weighted: false,
+    }),
+
+    fetchRouloAffiliates({
+      startAt: CURRENT_LB_START,
+      endAt: CURRENT_LB_END,
+      weighted: true,
+    }),
+  ]);
+
+  const lifetimePlayer = findAffiliate(
+    lifetimeAffiliates,
+    rouloUsername
+  );
+
+  const leaderboardPlayer = findAffiliate(
+    leaderboardAffiliates,
+    rouloUsername
+  );
+
+  const weightedPlayer = findAffiliate(
+    weightedLeaderboardAffiliates,
+    rouloUsername
+  );
+
+  /*
+   * If the username doesn't exist anywhere under
+   * the affiliate account, it isn't a valid Roulo link.
+   */
+  if (
+    !lifetimePlayer &&
+    !leaderboardPlayer &&
+    !weightedPlayer
+  ) {
+    return null;
+  }
+
+  const lifetimeWagered = lifetimePlayer
+    ? getRawWager(lifetimePlayer)
+    : 0;
+
+  const leaderboardWagered = leaderboardPlayer
+    ? getRawWager(leaderboardPlayer)
+    : 0;
+
+  const leaderboardWeightedWagered =
+    weightedPlayer
+      ? getWeightedWager(weightedPlayer)
+      : 0;
 
   return {
-    start_at: "2024-01-01",
-    end_at: end.toISOString().slice(0, 10),
+    rouloUsername: normalize(rouloUsername),
+
+    lifetimeWagered: Number.isFinite(
+      lifetimeWagered
+    )
+      ? lifetimeWagered
+      : 0,
+
+    leaderboardWagered: Number.isFinite(
+      leaderboardWagered
+    )
+      ? leaderboardWagered
+      : 0,
+
+    leaderboardWeightedWagered:
+      Number.isFinite(
+        leaderboardWeightedWagered
+      )
+        ? leaderboardWeightedWagered
+        : 0,
   };
+}
+
+async function isPreviousLeaderboardVip(
+  rouloUsername: string
+) {
+  /*
+   * The latest saved VIP snapshot represents
+   * qualification from the PREVIOUS leaderboard.
+   */
+  const { data: latestSnapshot } =
+    await supabase
+      .from("vip_snapshots")
+      .select("period_start, period_end")
+      .order("period_end", {
+        ascending: false,
+      })
+      .limit(1)
+      .maybeSingle();
+
+  if (!latestSnapshot) {
+    return false;
+  }
+
+  const { data } = await supabase
+    .from("vip_snapshots")
+    .select("id")
+    .eq(
+      "roulo_username",
+      normalize(rouloUsername)
+    )
+    .eq(
+      "period_start",
+      latestSnapshot.period_start
+    )
+    .eq(
+      "period_end",
+      latestSnapshot.period_end
+    )
+    .limit(1)
+    .maybeSingle();
+
+  return Boolean(data);
 }
 
 async function getRoleAndWeight({
   rouloUsername,
+  currentWeightedWagered,
   existingLink,
 }: {
   rouloUsername: string;
+  currentWeightedWagered: number;
   existingLink?: any;
 }) {
-  const { data: latestSnapshot } = await supabase
-    .from("vip_snapshots")
-    .select("period_start, period_end")
-    .order("period_end", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const previousLeaderboardVip =
+    await isPreviousLeaderboardVip(
+      rouloUsername
+    );
 
-  let vipSnapshot = null;
+  const currentLeaderboardVip =
+    Number(currentWeightedWagered || 0) >=
+    VIP_WAGER_REQUIREMENT;
 
-  if (latestSnapshot) {
-    const { data } = await supabase
-      .from("vip_snapshots")
-      .select("id")
-      .eq("roulo_username", rouloUsername)
-      .eq("period_start", latestSnapshot.period_start)
-      .eq("period_end", latestSnapshot.period_end)
-      .limit(1)
-      .maybeSingle();
+  /*
+   * FINAL VIP RULE:
+   *
+   * Previous leaderboard VIP
+   * OR
+   * Current leaderboard weighted wager >= $5,000
+   */
+  const isVip =
+    previousLeaderboardVip ||
+    currentLeaderboardVip;
 
-    vipSnapshot = data;
-  }
-
-  const isOnCode = Boolean(rouloUsername);
+  const isOnCode = Boolean(
+    normalize(rouloUsername)
+  );
 
   const isInDiscord = Boolean(
     existingLink?.is_in_discord ||
@@ -75,102 +332,107 @@ async function getRoleAndWeight({
       existingLink?.discord_username
   );
 
-  const isVipSnapshot = Boolean(vipSnapshot);
-
+  /*
+   * Existing giveaway weight system:
+   *
+   * Viewer  +1
+   * On code +1
+   * Discord +1
+   * VIP     +1
+   */
   const weight =
     1 +
     (isOnCode ? 1 : 0) +
     (isInDiscord ? 1 : 0) +
-    (isVipSnapshot ? 1 : 0);
+    (isVip ? 1 : 0);
 
-  const role = isVipSnapshot
+  const role = isVip
     ? "vip"
     : isOnCode
-      ? "affiliate"
-      : "viewer";
+    ? "affiliate"
+    : "viewer";
 
   return {
     role,
     weight: Number(weight.toFixed(2)),
+
+    isVip,
+    previousLeaderboardVip,
+    currentLeaderboardVip,
   };
 }
 
-async function getRouloAffiliate(rouloUsername: string) {
-  const key = process.env.ROULO_API_KEY;
+async function buildUpdatedLink(
+  existingLink: any,
+  stats: any
+) {
+  const roleInfo =
+    await getRoleAndWeight({
+      rouloUsername:
+        stats.rouloUsername,
 
-  if (!key) {
-    throw new Error("Missing ROULO_API_KEY");
-  }
+      currentWeightedWagered:
+        stats.leaderboardWeightedWagered,
 
-  const { start_at, end_at } = getDateRange();
-
-  const res = await fetch(
-    `https://api.roulobets.com/v1/external/affiliates?start_at=${start_at}&end_at=${end_at}&key=${key}`,
-    { cache: "no-store" }
-  );
-
-  if (!res.ok) {
-    throw new Error(`Roulo API returned ${res.status}`);
-  }
-
-  const json = await res.json();
-
-  const affiliates = Array.isArray(json?.affiliates)
-    ? json.affiliates
-    : Array.isArray(json?.data)
-      ? json.data
-      : [];
-
-  const match = affiliates.find((player: any) => {
-    const name = normalize(
-      player.username ||
-        player.name ||
-        player.display_name ||
-        player.user_name ||
-        ""
-    );
-
-    return name === normalize(rouloUsername);
-  });
-
-  if (!match) {
-    return null;
-  }
-
-const wagered = Number(
-  match.weighted_wagered_amount ??
-  match.weightedWageredAmount ??
-  match.weighted_wagered ??
-  0
-);
+      existingLink,
+    });
 
   return {
-    rouloUsername: normalize(rouloUsername),
-    wagered: Number.isFinite(wagered) ? wagered : 0,
+    roleInfo,
+
+    /*
+     * Keep wagered for compatibility with any
+     * older parts of the site.
+     *
+     * It now represents lifetime RAW wager.
+     */
+    payload: {
+      wagered: stats.lifetimeWagered,
+
+      role: roleInfo.role,
+      weight: roleInfo.weight,
+
+      updated_at:
+        new Date().toISOString(),
+    },
   };
 }
 
-export async function GET(req: NextRequest) {
+/* =========================================================
+   GET LINK + REFRESH STATS
+========================================================= */
+
+export async function GET(
+  req: NextRequest
+) {
   try {
     const platform =
-      req.nextUrl.searchParams.get("platform") === "kick"
+      req.nextUrl.searchParams.get(
+        "platform"
+      ) === "kick"
         ? "kick"
         : "twitch";
 
-    const legacyTwitchUsername = normalize(
-      req.nextUrl.searchParams.get("twitch") || ""
-    );
+    const legacyTwitchUsername =
+      normalize(
+        req.nextUrl.searchParams.get(
+          "twitch"
+        ) || ""
+      );
 
     const viewerUsername = normalize(
-      req.nextUrl.searchParams.get("viewer") ||
-        legacyTwitchUsername
+      req.nextUrl.searchParams.get(
+        "viewer"
+      ) || legacyTwitchUsername
     );
 
     if (!viewerUsername) {
       return NextResponse.json({
         ok: false,
         error: `Missing ${
-          platform === "kick" ? "Kick" : "Twitch"
+          platform === "kick"
+            ? "Kick"
+            : "Twitch"
         } username`,
         link: null,
       });
@@ -181,12 +443,19 @@ export async function GET(req: NextRequest) {
         ? "kick_username"
         : "twitch_username";
 
-    const viewerOptions = usernameOptions(viewerUsername);
+    const viewerOptions =
+      usernameOptions(viewerUsername);
 
-    const { data: existingLink, error } = await supabase
+    const {
+      data: existingLink,
+      error,
+    } = await supabase
       .from("roulo_links")
       .select("*")
-      .in(usernameColumn, viewerOptions)
+      .in(
+        usernameColumn,
+        viewerOptions
+      )
       .limit(1)
       .maybeSingle();
 
@@ -198,53 +467,77 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    if (!existingLink?.roulo_username) {
+    if (
+      !existingLink?.roulo_username
+    ) {
       return NextResponse.json({
         ok: true,
         viewer: viewerUsername,
         platform,
         link: existingLink || null,
+
+        stats: {
+          lifetimeWagered: 0,
+          leaderboardWagered: 0,
+          leaderboardWeightedWagered: 0,
+          vipRequirement:
+            VIP_WAGER_REQUIREMENT,
+          currentLeaderboardVip: false,
+          previousLeaderboardVip: false,
+          isVip: false,
+        },
       });
     }
 
     try {
-      const affiliate = await getRouloAffiliate(
-        existingLink.roulo_username
-      );
+      const stats =
+        await getRouloStats(
+          existingLink.roulo_username
+        );
 
-      if (!affiliate) {
+      if (!stats) {
         return NextResponse.json({
           ok: true,
           viewer: viewerUsername,
           platform,
           link: existingLink,
+
+          stats: {
+            lifetimeWagered: 0,
+            leaderboardWagered: 0,
+            leaderboardWeightedWagered: 0,
+            vipRequirement:
+              VIP_WAGER_REQUIREMENT,
+          },
+
           warning:
             "Roulo username was not found during refresh.",
         });
       }
 
-      const { role, weight } = await getRoleAndWeight({
-        rouloUsername: affiliate.rouloUsername,
+      const {
+        payload,
+        roleInfo,
+      } = await buildUpdatedLink(
         existingLink,
-      });
+        stats
+      );
 
-      const { data: updatedLink, error: updateError } =
-        await supabase
-          .from("roulo_links")
-          .update({
-            wagered: affiliate.wagered,
-            role,
-            weight,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existingLink.id)
-          .select("*")
-          .single();
+      const {
+        data: updatedLink,
+        error: updateError,
+      } = await supabase
+        .from("roulo_links")
+        .update(payload)
+        .eq("id", existingLink.id)
+        .select("*")
+        .single();
 
       if (updateError) {
         return NextResponse.json({
           ok: false,
-          error: updateError.message,
+          error:
+            updateError.message,
           link: existingLink,
         });
       }
@@ -253,7 +546,30 @@ export async function GET(req: NextRequest) {
         ok: true,
         viewer: viewerUsername,
         platform,
+
         link: updatedLink,
+
+        stats: {
+          lifetimeWagered:
+            stats.lifetimeWagered,
+
+          leaderboardWagered:
+            stats.leaderboardWagered,
+
+          leaderboardWeightedWagered:
+            stats.leaderboardWeightedWagered,
+
+          vipRequirement:
+            VIP_WAGER_REQUIREMENT,
+
+          previousLeaderboardVip:
+            roleInfo.previousLeaderboardVip,
+
+          currentLeaderboardVip:
+            roleInfo.currentLeaderboardVip,
+
+          isVip: roleInfo.isVip,
+        },
       });
     } catch (error: any) {
       return NextResponse.json({
@@ -261,6 +577,7 @@ export async function GET(req: NextRequest) {
         viewer: viewerUsername,
         platform,
         link: existingLink,
+
         warning:
           error?.message ||
           "Could not refresh Roulo stats.",
@@ -277,25 +594,34 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+/* =========================================================
+   LINK ROULO ACCOUNT
+========================================================= */
+
+export async function POST(
+  req: NextRequest
+) {
   try {
     const body = await req.json();
 
     const platform =
-      String(body?.platform || "twitch").toLowerCase() ===
-      "kick"
+      String(
+        body?.platform || "twitch"
+      ).toLowerCase() === "kick"
         ? "kick"
         : "twitch";
 
-    const twitchUsername = normalize(
-      body?.twitch_username || ""
-    );
+    const twitchUsername =
+      normalize(
+        body?.twitch_username || ""
+      );
 
-    const twitchDisplayName = String(
-      body?.twitch_display_name ||
-        twitchUsername ||
-        ""
-    ).trim();
+    const twitchDisplayName =
+      String(
+        body?.twitch_display_name ||
+          twitchUsername ||
+          ""
+      ).trim();
 
     const kickUsername = normalize(
       body?.kick_username || ""
@@ -317,15 +643,18 @@ export async function POST(req: NextRequest) {
         ? kickDisplayName
         : twitchDisplayName;
 
-    const rouloUsername = normalize(
-      body?.roulo_username || ""
-    );
+    const rouloUsername =
+      normalize(
+        body?.roulo_username || ""
+      );
 
     if (!viewerUsername) {
       return NextResponse.json({
         ok: false,
         error: `Missing ${
-          platform === "kick" ? "Kick" : "Twitch"
+          platform === "kick"
+            ? "Kick"
+            : "Twitch"
         } username`,
       });
     }
@@ -333,15 +662,17 @@ export async function POST(req: NextRequest) {
     if (!rouloUsername) {
       return NextResponse.json({
         ok: false,
-        error: "Enter your Roulo username.",
+        error:
+          "Enter your Roulo username.",
       });
     }
 
-    const affiliate = await getRouloAffiliate(
-      rouloUsername
-    );
+    const stats =
+      await getRouloStats(
+        rouloUsername
+      );
 
-    if (!affiliate) {
+    if (!stats) {
       return NextResponse.json({
         ok: false,
         error:
@@ -359,42 +690,71 @@ export async function POST(req: NextRequest) {
         ? "kick_display_name"
         : "twitch_display_name";
 
-    const viewerOptions = usernameOptions(viewerUsername);
+    const viewerOptions =
+      usernameOptions(viewerUsername);
 
-    const { data: existingLink, error: existingError } =
-      await supabase
-        .from("roulo_links")
-        .select("*")
-        .in(usernameColumn, viewerOptions)
-        .limit(1)
-        .maybeSingle();
+    const {
+      data: existingLink,
+      error: existingError,
+    } = await supabase
+      .from("roulo_links")
+      .select("*")
+      .in(
+        usernameColumn,
+        viewerOptions
+      )
+      .limit(1)
+      .maybeSingle();
 
     if (existingError) {
       return NextResponse.json({
         ok: false,
-        error: existingError.message,
+        error:
+          existingError.message,
       });
     }
 
-    const { role, weight } = await getRoleAndWeight({
-      rouloUsername: affiliate.rouloUsername,
-      existingLink,
-    });
+    const roleInfo =
+      await getRoleAndWeight({
+        rouloUsername:
+          stats.rouloUsername,
 
-    const payload: Record<string, any> = {
-      [usernameColumn]: viewerUsername,
-      [displayNameColumn]: displayName,
+        currentWeightedWagered:
+          stats.leaderboardWeightedWagered,
 
-      roulo_username: affiliate.rouloUsername,
-      wagered: affiliate.wagered,
-      role,
-      weight,
+        existingLink,
+      });
+
+    const payload: Record<
+      string,
+      any
+    > = {
+      [usernameColumn]:
+        viewerUsername,
+
+      [displayNameColumn]:
+        displayName,
+
+      roulo_username:
+        stats.rouloUsername,
+
+      /*
+       * Backwards compatible lifetime
+       * wager value.
+       */
+      wagered:
+        stats.lifetimeWagered,
+
+      role: roleInfo.role,
+      weight: roleInfo.weight,
 
       discord_id:
-        existingLink?.discord_id || null,
+        existingLink?.discord_id ||
+        null,
 
       discord_username:
-        existingLink?.discord_username || null,
+        existingLink?.discord_username ||
+        null,
 
       is_in_discord: Boolean(
         existingLink?.is_in_discord ||
@@ -402,21 +762,26 @@ export async function POST(req: NextRequest) {
           existingLink?.discord_username
       ),
 
-      updated_at: new Date().toISOString(),
+      updated_at:
+        new Date().toISOString(),
     };
 
-    const { data, error } = existingLink?.id
-      ? await supabase
-          .from("roulo_links")
-          .update(payload)
-          .eq("id", existingLink.id)
-          .select("*")
-          .single()
-      : await supabase
-          .from("roulo_links")
-          .insert(payload)
-          .select("*")
-          .single();
+    const { data, error } =
+      existingLink?.id
+        ? await supabase
+            .from("roulo_links")
+            .update(payload)
+            .eq(
+              "id",
+              existingLink.id
+            )
+            .select("*")
+            .single()
+        : await supabase
+            .from("roulo_links")
+            .insert(payload)
+            .select("*")
+            .single();
 
     if (error) {
       return NextResponse.json({
@@ -429,7 +794,30 @@ export async function POST(req: NextRequest) {
       ok: true,
       viewer: viewerUsername,
       platform,
+
       link: data,
+
+      stats: {
+        lifetimeWagered:
+          stats.lifetimeWagered,
+
+        leaderboardWagered:
+          stats.leaderboardWagered,
+
+        leaderboardWeightedWagered:
+          stats.leaderboardWeightedWagered,
+
+        vipRequirement:
+          VIP_WAGER_REQUIREMENT,
+
+        previousLeaderboardVip:
+          roleInfo.previousLeaderboardVip,
+
+        currentLeaderboardVip:
+          roleInfo.currentLeaderboardVip,
+
+        isVip: roleInfo.isVip,
+      },
     });
   } catch (error: any) {
     return NextResponse.json({
@@ -437,6 +825,127 @@ export async function POST(req: NextRequest) {
       error:
         error?.message ||
         "Could not link Roulo account.",
+    });
+  }
+}
+
+/* =========================================================
+   UNLINK ROULO ACCOUNT
+========================================================= */
+
+export async function DELETE(
+  req: NextRequest
+) {
+  try {
+    const platform =
+      req.nextUrl.searchParams.get(
+        "platform"
+      ) === "kick"
+        ? "kick"
+        : "twitch";
+
+    const viewer = normalize(
+      req.nextUrl.searchParams.get(
+        "viewer"
+      ) || ""
+    );
+
+    if (!viewer) {
+      return NextResponse.json({
+        ok: false,
+        error: "Missing viewer",
+      });
+    }
+
+    const usernameColumn =
+      platform === "kick"
+        ? "kick_username"
+        : "twitch_username";
+
+    const viewerOptions =
+      usernameOptions(viewer);
+
+    const {
+      data: existingLink,
+      error: findError,
+    } = await supabase
+      .from("roulo_links")
+      .select("*")
+      .in(
+        usernameColumn,
+        viewerOptions
+      )
+      .limit(1)
+      .maybeSingle();
+
+    if (findError) {
+      return NextResponse.json({
+        ok: false,
+        error:
+          findError.message,
+      });
+    }
+
+    if (!existingLink) {
+      return NextResponse.json({
+        ok: true,
+      });
+    }
+
+    /*
+     * IMPORTANT:
+     *
+     * Do NOT delete the whole roulo_links row.
+     * Discord/Twitch/Kick information may live
+     * on the same row.
+     *
+     * Only remove Roulo-specific information.
+     */
+    const hasDiscord = Boolean(
+      existingLink.is_in_discord ||
+        existingLink.discord_id ||
+        existingLink.discord_username
+    );
+
+    const newWeight =
+      1 + (hasDiscord ? 1 : 0);
+
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("roulo_links")
+      .update({
+        roulo_username: null,
+        wagered: 0,
+
+        role: "viewer",
+        weight: newWeight,
+
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq("id", existingLink.id)
+      .select("*")
+      .single();
+
+    if (error) {
+      return NextResponse.json({
+        ok: false,
+        error: error.message,
+      });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      link: data,
+    });
+  } catch (error: any) {
+    return NextResponse.json({
+      ok: false,
+      error:
+        error?.message ||
+        "Could not unlink Roulo account.",
     });
   }
 }
