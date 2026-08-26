@@ -1578,30 +1578,132 @@ const loadDiscordLink = useCallback(async () => {
 }, [viewerName, viewerPlatform]);
 
 const handleLinkRoulo = async () => {
-  setRouloLinkMessage("Checking Roulo account...");
+  try {
+    setRouloLinkMessage("Checking Roulo account...");
 
-  const res = await fetch("/api/roulo-link", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      platform: viewerPlatform,
-      twitch_username: viewerPlatform === "twitch" ? viewerName : "",
-      twitch_display_name: viewerPlatform === "twitch" ? viewerDisplayName : "",
-      kick_username: viewerPlatform === "kick" ? viewerName : "",
-      kick_display_name: viewerPlatform === "kick" ? viewerDisplayName : "",
-      roulo_username: rouloUsernameInput,
-    }),
-  });
+    const res = await fetch("/api/roulo-link", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        platform: viewerPlatform,
 
-  const data = await res.json();
+        twitch_username:
+          viewerPlatform === "twitch"
+            ? viewerName
+            : "",
 
-  if (!data.ok) {
-    setRouloLinkMessage(data.error || "Could not link Roulo account.");
-    return;
+        twitch_display_name:
+          viewerPlatform === "twitch"
+            ? viewerDisplayName
+            : "",
+
+        kick_username:
+          viewerPlatform === "kick"
+            ? viewerName
+            : "",
+
+        kick_display_name:
+          viewerPlatform === "kick"
+            ? viewerDisplayName
+            : "",
+
+        roulo_username:
+          rouloUsernameInput,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data?.ok) {
+      setRouloLinkMessage(
+        data?.error ||
+          "Could not link Roulo account."
+      );
+      return;
+    }
+
+    /*
+     * Immediately use the FINAL result returned
+     * by /api/roulo-link instead of waiting for
+     * the next profile refresh.
+     */
+    setRouloLink(data.link || null);
+
+    if (data?.stats) {
+      setViewerProfileStats((current) => ({
+        ...current,
+
+        lifetimeWagered: Number(
+          data.stats.lifetimeWagered || 0
+        ),
+
+        leaderboardWagered: Number(
+          data.stats.leaderboardWagered || 0
+        ),
+
+        leaderboardWeightedWagered: Number(
+          data.stats.leaderboardWeightedWagered || 0
+        ),
+
+        vipRequirement: Number(
+          data.stats.vipRequirement || 5000
+        ),
+
+        amountUntilVip: Math.max(
+          0,
+          Number(
+            data.stats.vipRequirement || 5000
+          ) -
+            Number(
+              data.stats
+                .leaderboardWeightedWagered || 0
+            )
+        ),
+
+        isVip: Boolean(
+          data.stats.isVip
+        ),
+
+        previousLeaderboardVip: Boolean(
+          data.stats.previousLeaderboardVip
+        ),
+
+        currentLeaderboardVip: Boolean(
+          data.stats.currentLeaderboardVip
+        ),
+
+        hasRoulo: true,
+      }));
+    }
+
+    setRouloUsernameInput(
+      data.link?.roulo_username ||
+        rouloUsernameInput
+    );
+
+    setRouloLinkMessage(
+      data?.stats?.isVip
+        ? "Roulo linked — VIP active ✓"
+        : "Roulo account linked."
+    );
+
+    /*
+     * Refresh rewards/odds afterward so everything
+     * else stays perfectly synced.
+     */
+    await loadViewerRewards();
+  } catch (error) {
+    console.error(
+      "Roulo link failed:",
+      error
+    );
+
+    setRouloLinkMessage(
+      "Could not link Roulo account."
+    );
   }
-
-  setRouloLink(data.link);
-  setRouloLinkMessage("Roulo account linked.");
 };
 
 const handleUnlinkRoulo = async () => {
