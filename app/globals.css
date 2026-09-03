@@ -1,29 +1,240 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --background: #050207;
+  --foreground: #f8f5ff;
 
-:root {
+  --purple: #a855f7;
+  --purple-bright: #c084fc;
+  --purple-soft: #d8b4fe;
+  --purple-dark: #581c87;
+
+  --panel: rgba(8, 3, 14, 0.58);
+  --panel-strong: rgba(8, 3, 14, 0.78);
+  --panel-border: rgba(192, 132, 252, 0.18);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --font-sans: Arial, Helvetica, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* =========================
+   BASE
+========================= */
+
+html {
+  min-height: 100%;
+  background: #050207;
 }
 
 body {
-  background: var(--background);
+  min-height: 100vh;
+  margin: 0;
+
   color: var(--foreground);
+
   font-family: Arial, Helvetica, sans-serif;
+
+  background-color: #050207;
+
+background-image:
+  linear-gradient(
+    180deg,
+    rgba(3, 1, 7, 0.08) 0%,
+    rgba(4, 1, 8, 0.16) 45%,
+    rgba(3, 1, 7, 0.28) 100%
+  ),
+  url("/trashguy-bg-hd.png");
+
+background-repeat: no-repeat;
+background-size: 100% auto;
+background-position: center top;
+background-attachment: fixed;
 }
+
+/* =========================
+   PURPLE ATMOSPHERE
+========================= */
+
+body::before {
+  content: "";
+
+  position: fixed;
+  inset: 0;
+
+  z-index: -1;
+
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle at 50% 15%,
+      rgba(168, 85, 247, 0.09),
+      transparent 40%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(10, 2, 18, 0.12),
+      transparent 25%,
+      transparent 75%,
+      rgba(10, 2, 18, 0.12)
+    );
+}
+
+/* =========================
+   TEXT SELECTION
+========================= */
+
+::selection {
+  background: rgba(168, 85, 247, 0.45);
+  color: #ffffff;
+}
+
+/* =========================
+   SCROLLBAR
+========================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(192, 132, 252, 0.8),
+    rgba(126, 34, 206, 0.8)
+  );
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(216, 180, 254, 0.95);
+}
+
+/* =========================
+   GLOBAL GLASS PANEL
+========================= */
+
+.tg-panel {
+  position: relative;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(192, 132, 252, 0.18);
+
+  border-radius: 22px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18, 7, 27, 0.64),
+      rgba(5, 2, 9, 0.52)
+    );
+
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+
+  box-shadow:
+    0 18px 55px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 0 30px rgba(168, 85, 247, 0.06);
+}
+
+.tg-panel::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(192, 132, 252, 0.055),
+      transparent 32%,
+      transparent 70%,
+      rgba(126, 34, 206, 0.035)
+    );
+}
+
+/* =========================
+   STRONG GLASS PANEL
+========================= */
+
+.tg-panel-strong {
+  position: relative;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(192, 132, 252, 0.22);
+
+  border-radius: 22px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(17, 6, 27, 0.8),
+      rgba(5, 2, 9, 0.72)
+    );
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.36),
+    0 0 34px rgba(168, 85, 247, 0.075);
+}
+
+/* =========================
+   PURPLE TEXT GLOW
+========================= */
+
+.tg-purple-text {
+  color: #d8b4fe;
+
+  text-shadow:
+    0 0 8px rgba(192, 132, 252, 0.48),
+    0 0 22px rgba(168, 85, 247, 0.25);
+}
+
+/* =========================
+   PURPLE BORDER GLOW
+========================= */
+
+.tg-purple-glow {
+  border-color: rgba(192, 132, 252, 0.32);
+
+  box-shadow:
+    0 0 22px rgba(168, 85, 247, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+/* =========================
+   FORMS
+========================= */
+
+input,
+select,
+textarea {
+  color-scheme: dark;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* =========================
+   PREDICTION MARQUEE
+========================= */
 
 @keyframes prediction-marquee {
   from {
@@ -37,8 +248,62 @@ body {
 
 .animate-prediction-marquee {
   display: flex;
+
   flex-direction: column;
+
   gap: 0.5rem;
+
   animation: prediction-marquee 22s linear infinite;
+
   will-change: transform;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 640px) {
+  body {
+    /*
+      Mobile browsers can behave badly with
+      background-attachment: fixed.
+    */
+    background-attachment: scroll;
+
+    /*
+      Keep the casino artwork prominent rather
+      than stretching the entire desktop image.
+    */
+    background-size: auto 100vh;
+
+    background-position: center top;
+  }
+
+  body::before {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(3, 1, 7, 0.14),
+        rgba(5, 2, 9, 0.28)
+      );
+  }
+
+  .tg-panel {
+    border-radius: 16px;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(15, 5, 23, 0.58),
+        rgba(4, 2, 8, 0.48)
+      );
+
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+  }
+
+  .tg-panel-strong {
+    border-radius: 16px;
+  }
+
 }

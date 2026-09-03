@@ -393,15 +393,11 @@ function Panel({
   return (
     <div
       className={[
-        "relative overflow-hidden rounded-[22px]",
-        "bg-black/28",
-        "backdrop-blur-[6px]",
-        "border border-white/[0.04]",
-        "shadow-[0_0_30px_rgba(0,0,0,0.18)]",
+        "tg-panel",
         className,
       ].join(" ")}
     >
-      <div className="relative z-10 p-4 sm:p-5">
+      <div className="relative z-10 p-3 sm:p-5">
         {children}
       </div>
     </div>
@@ -416,13 +412,26 @@ function SectionLabel({
   color?: "cyan" | "fuchsia" | "white";
 }) {
   const map = {
-    cyan: "text-[#00ffff]",
-    fuchsia: "text-[#42f5a7]",
-    white: "text-white/60",
+    cyan:
+      "text-purple-300 drop-shadow-[0_0_10px_rgba(192,132,252,0.32)]",
+
+    fuchsia:
+      "text-fuchsia-300 drop-shadow-[0_0_10px_rgba(217,70,239,0.28)]",
+
+    white:
+      "text-white/55",
   };
 
   return (
-    <div className={`text-[11px] font-black uppercase tracking-[0.34em] drop-shadow-[0_0_10px_rgba(0,245,255,0.25)] ${map[color]}`}>
+    <div
+      className={`
+        text-[8px] font-black uppercase
+        tracking-[0.26em]
+        sm:text-[11px]
+        sm:tracking-[0.34em]
+        ${map[color]}
+      `}
+    >
       {children}
     </div>
   );
@@ -434,10 +443,50 @@ function GlowTabTitle({
   label: string;
 }) {
   return (
-    <div className="mb-3 text-center">
-<h2 className="text-lg font-black uppercase tracking-[0.2em] text-cyan-300 drop-shadow-[0_0_8px_rgba(0,245,255,0.7)] sm:text-5xl">
-  {label}
-</h2>
+    <div className="mb-3 flex justify-center text-center sm:mb-5">
+      <div className="relative inline-flex items-center justify-center px-3 py-2 sm:px-6">
+
+        {/* SOFT PURPLE GLOW BEHIND TITLE */}
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-x-[12%]
+            inset-y-[20%]
+            rounded-full
+            bg-purple-600/20
+            blur-2xl
+          "
+        />
+
+        {/* TITLE */}
+        <h2
+          className="
+            relative z-10
+            bg-gradient-to-b
+            from-white
+            from-[42%]
+            via-purple-100
+            via-[52%]
+            to-purple-400
+            bg-clip-text
+            text-center
+            text-[24px]
+            font-black
+            uppercase
+            leading-none
+            tracking-[0.10em]
+            text-transparent
+            drop-shadow-[0_4px_2px_rgba(0,0,0,0.95)]
+            sm:text-[44px]
+            sm:tracking-[0.11em]
+            lg:text-[50px]
+          "
+        >
+          {label}
+        </h2>
+
+      </div>
     </div>
   );
 }
@@ -455,18 +504,22 @@ function ActionButton({
   variant?: "green" | "red" | "purple" | "gold" | "dark";
   className?: string;
 }) {
-const variants = {
-  green:
-    "border-cyan-300/35 bg-[linear-gradient(180deg,rgba(0,245,255,0.22),rgba(0,245,255,0.08))] text-cyan-100 shadow-[0_0_22px_rgba(0,245,255,0.12)] hover:border-cyan-200/60 hover:shadow-[0_0_35px_rgba(0,245,255,0.22)]",
-  red:
-    "border-red-300/30 bg-[linear-gradient(180deg,rgba(248,113,113,0.18),rgba(127,29,29,0.14))] text-red-100 hover:border-red-200/60 hover:shadow-[0_0_28px_rgba(248,113,113,0.18)]",
-  purple:
-    "border-fuchsia-300/30 bg-[linear-gradient(180deg,rgba(217,70,239,0.18),rgba(88,28,135,0.16))] text-fuchsia-100 hover:border-fuchsia-200/60 hover:shadow-[0_0_28px_rgba(217,70,239,0.20)]",
-  gold:
-    "border-yellow-300/35 bg-[linear-gradient(180deg,rgba(250,204,21,0.22),rgba(120,53,15,0.14))] text-yellow-100 hover:border-yellow-200/60 hover:shadow-[0_0_30px_rgba(250,204,21,0.22)]",
-  dark:
-    "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] text-white hover:border-white/25 hover:bg-white/[0.07]",
-};
+  const variants = {
+    green:
+      "border-purple-300/35 bg-[linear-gradient(180deg,rgba(168,85,247,0.30),rgba(88,28,135,0.18))] text-purple-100 shadow-[0_0_22px_rgba(168,85,247,0.15)] hover:border-purple-200/60 hover:bg-purple-400/20 hover:shadow-[0_0_35px_rgba(168,85,247,0.28)]",
+
+    red:
+      "border-red-300/30 bg-[linear-gradient(180deg,rgba(248,113,113,0.18),rgba(127,29,29,0.14))] text-red-100 hover:border-red-200/60 hover:shadow-[0_0_28px_rgba(248,113,113,0.18)]",
+
+    purple:
+      "border-fuchsia-300/30 bg-[linear-gradient(180deg,rgba(217,70,239,0.20),rgba(88,28,135,0.17))] text-fuchsia-100 hover:border-fuchsia-200/60 hover:shadow-[0_0_30px_rgba(217,70,239,0.20)]",
+
+    gold:
+      "border-yellow-300/35 bg-[linear-gradient(180deg,rgba(250,204,21,0.22),rgba(120,53,15,0.14))] text-yellow-100 hover:border-yellow-200/60 hover:shadow-[0_0_30px_rgba(250,204,21,0.22)]",
+
+    dark:
+      "border-purple-300/10 bg-black/35 text-white/75 hover:border-purple-300/25 hover:bg-purple-400/[0.06] hover:text-white",
+  };
 
   return (
     <button
@@ -476,16 +529,28 @@ const variants = {
       }}
       disabled={disabled}
       className={[
-"group relative min-h-[40px] overflow-hidden rounded-xl border px-3 py-2",
-"text-[11px] font-black uppercase tracking-[0.08em]",
+        "group relative min-h-[34px] overflow-hidden rounded-lg border px-2.5 py-1.5",
+        "text-[9px] font-black uppercase tracking-[0.08em]",
         "transition-all duration-200 active:scale-[0.98]",
         "disabled:cursor-not-allowed disabled:opacity-40",
+        "sm:min-h-[40px] sm:rounded-xl sm:px-3 sm:py-2 sm:text-[11px]",
         variants[variant],
         className,
       ].join(" ")}
     >
-      <span className="pointer-events-none absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
-      <span className="relative z-10">{children}</span>
+      <span
+        className="
+          pointer-events-none absolute inset-0
+          translate-x-[-120%]
+          bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent)]
+          transition-transform duration-700
+          group-hover:translate-x-[120%]
+        "
+      />
+
+      <span className="relative z-10">
+        {children}
+      </span>
     </button>
   );
 }
@@ -3576,10 +3641,10 @@ const rankedWinners = useMemo(() => {
   }));
 }, [latestWinners]);
 
-  return (
-<div className="min-h-screen bg-[#020809] text-white">
-  <div className="min-h-screen bg-[url('/trashguy-casino.png')] bg-cover bg-center bg-fixed">
-    <div className="min-h-screen bg-[linear-gradient(to_bottom,rgba(0,0,0,0.50),rgba(0,0,0,0.82)),radial-gradient(circle_at_center,rgba(0,255,255,0.10),rgba(0,0,0,0.78))]">
+return (
+<div className="min-h-screen text-white">
+  <div className="min-h-screen">
+    <div className="min-h-screen bg-[linear-gradient(to_bottom,rgba(4,1,8,0.10),rgba(4,1,8,0.28))]">
           <SiteHeader
   activeSection={activeSection}
   setActiveSection={setActiveSection}
@@ -3595,726 +3660,1837 @@ const rankedWinners = useMemo(() => {
   liveStatus={liveStatus}
 />
 
-<main className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-10">
+<main className="mx-auto max-w-[1500px] px-3 py-3 sm:px-6 sm:py-10">
 {activeSection === "home" && (
-  <section className="space-y-1 sm:space-y-3">
-<section className="relative -mx-3 overflow-hidden px-3 py-0 text-center sm:-mx-6 sm:px-6">
-  <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,245,255,0.14),transparent_58%)]" />
+  <section className="space-y-4 sm:space-y-5">
 
-  <div className="relative z-10 mx-auto max-w-5xl">
-    <img
-      src="/hero-logos.png"
-      alt="Trashguy x RouloBets"
-      className="mx-auto -mt-10 -mb-8 h-[125px] w-auto object-contain drop-shadow-[0_0_42px_rgba(0,245,255,0.38)] sm:-mt-20 sm:-mb-20 sm:h-[420px] sm:drop-shadow-[0_0_65px_rgba(0,245,255,0.45)]"
+    {/* =========================================================
+        TOP DASHBOARD
+        HERO LEFT / GIVEAWAYS RIGHT
+    ========================================================= */}
+
+<div className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
+
+  {/* =========================
+      HERO
+  ========================= */}
+
+  <div
+    className="
+      relative overflow-hidden
+      rounded-2xl
+      border border-purple-300/20
+      bg-[linear-gradient(145deg,rgba(18,7,28,0.60),rgba(4,2,8,0.38))]
+      px-4 py-5
+      text-center
+      shadow-[0_18px_55px_rgba(0,0,0,0.25),0_0_30px_rgba(168,85,247,0.07)]
+      backdrop-blur-[7px]
+      sm:rounded-3xl
+      sm:px-8
+      sm:py-8
+      lg:flex
+      lg:min-h-[470px]
+      lg:flex-col
+      lg:items-center
+      lg:justify-center
+    "
+  >
+    <div
+      className="
+        pointer-events-none
+        absolute -left-20 top-0
+        h-64 w-64
+        rounded-full
+        bg-purple-500/[0.10]
+        blur-3xl
+      "
     />
 
-    <h1
-      className={`${russo.className} mx-auto -mt-8 max-w-5xl text-center text-[clamp(0.95rem,4.8vw,4rem)] leading-[1.02] tracking-[-0.03em] bg-gradient-to-b from-white via-cyan-100 to-cyan-300 bg-clip-text text-transparent`}
-style={{
-  textShadow:
-    "0 0 8px rgba(0,245,255,0.25), 0 0 25px rgba(0,245,255,0.35), 0 0 60px rgba(0,245,255,0.18)",
-}}
-    >
-      ONE MAN’S TRASH IS ANOTHER MAN’S MAX WIN
-    </h1>
+    <div
+      className="
+        pointer-events-none
+        absolute -bottom-24 right-0
+        h-64 w-64
+        rounded-full
+        bg-fuchsia-500/[0.06]
+        blur-3xl
+      "
+    />
 
-    <p className="mx-auto mt-1 max-w-2xl text-xs font-semibold leading-5 text-white/70 sm:mt-2 sm:text-lg sm:leading-8">
-      Sign up on RouloBets under code{" "}
-      <span className="font-black text-[#8fffd0]">trashguy</span>{" "}
-      to earn monthly prizes, VIP rewards, and daily stream giveaways.
-    </p>
+    <div className="relative z-10 flex w-full flex-col items-center text-center">
 
-    <a
-      href="https://roulobets.com/?r=trashguy"
-      target="_blank"
-      rel="noreferrer"
-      className="group relative mt-3 inline-flex min-h-[44px] min-w-[220px] items-center justify-center overflow-hidden rounded-xl border border-cyan-200/60 bg-[linear-gradient(180deg,rgba(0,255,255,0.34),rgba(0,120,255,0.24))] px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_30px_rgba(0,255,255,0.28)] transition duration-300 hover:scale-[1.04] hover:border-cyan-100 hover:shadow-[0_0_70px_rgba(0,255,255,0.75)] sm:mt-4 sm:min-h-[66px] sm:min-w-[280px] sm:rounded-2xl sm:px-8 sm:py-4 sm:text-sm sm:tracking-[0.22em]"
-    >
-      <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] transition-transform duration-700 group-hover:translate-x-[120%]" />
-      <span className="relative z-10">Join on code trashguy here</span>
-    </a>
-  </div>
-</section>
+      {/* SMALL ROULO LABEL */}
 
-<div className="mx-auto mt-3 max-w-4xl px-3">
+      <div
+        className="
+          mb-2 flex items-center justify-center gap-2
+          text-[9px] font-black uppercase
+          tracking-[0.26em]
+          text-purple-300/75
+          sm:mb-3
+          sm:text-[12px]
+        "
+      >
+        <span
+          className="
+            h-2 w-2 rounded-full
+            bg-purple-300
+            shadow-[0_0_8px_rgba(192,132,252,0.9)]
+          "
+        />
 
-  <div className="mb-3 text-center">
-<div className="text-base font-black uppercase tracking-[0.18em] text-cyan-200 sm:text-xl">
-  Total Given Away
-</div>
+        TRASHGUY × ROULOBETS
+      </div>
 
-    <div className="mt-1 text-4xl font-black text-emerald-300 drop-shadow-[0_0_18px_rgba(52,211,153,0.45)] sm:text-6xl">
-      ${giveawayTotal.toLocaleString()}
+      {/* NEW TRASHGUY LOGO */}
+
+      <img
+        src="/trashguy-new-logo.png"
+        alt="TrashGuy"
+        className="
+          mx-auto
+          h-auto
+          w-full
+          max-w-[270px]
+          object-contain
+          drop-shadow-[0_0_22px_rgba(168,85,247,0.28)]
+          sm:max-w-[390px]
+          lg:max-w-[420px]
+        "
+      />
+
+      {/* DESCRIPTION */}
+
+      <p
+        className="
+          mx-auto mt-2 max-w-2xl
+          text-center
+          text-[11px] font-semibold
+          leading-[1.6]
+          text-white/65
+          sm:mt-3
+          sm:text-[16px]
+          sm:leading-7
+        "
+      >
+        Join RouloBets under code{" "}
+        <span className="font-black text-purple-200">
+          trashguy
+        </span>{" "}
+        for giveaways, VIP rewards, tournaments, bonus hunts,
+        and more.
+      </p>
+
+      {/* ROULO BUTTON */}
+
+      <a
+        href="https://roulobets.com/?r=trashguy"
+        target="_blank"
+        rel="noreferrer"
+        className="
+          group relative
+          mt-4
+          inline-flex
+          min-h-[42px]
+          items-center justify-center
+          overflow-hidden
+          rounded-xl
+          border border-purple-300/35
+          bg-[linear-gradient(180deg,rgba(168,85,247,0.32),rgba(88,28,135,0.22))]
+          px-5 py-2.5
+          text-[9px] font-black uppercase
+          tracking-[0.16em]
+          text-purple-50
+          shadow-[0_0_24px_rgba(168,85,247,0.16)]
+          transition-all duration-300
+          hover:border-purple-200/65
+          hover:bg-purple-400/25
+          hover:shadow-[0_0_38px_rgba(168,85,247,0.30)]
+          sm:mt-5
+          sm:min-h-[56px]
+          sm:px-8
+          sm:py-3
+          sm:text-[13px]
+          sm:tracking-[0.18em]
+        "
+      >
+        <span
+          className="
+            absolute inset-0
+            translate-x-[-120%]
+            bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)]
+            transition-transform duration-700
+            group-hover:translate-x-[120%]
+          "
+        />
+
+        <span className="relative z-10">
+          JOIN ON CODE TRASHGUY
+        </span>
+      </a>
     </div>
   </div>
 
-  <div className="rounded-2xl border border-cyan-300/15 bg-black/80 p-3 shadow-[0_0_20px_rgba(0,245,255,0.06)]">
-    <div className="mb-2 flex items-center justify-between">
-      <div className="text-[13px] font-black uppercase tracking-[0.22em] text-cyan-200">
-        🏆 Past Winners
-      </div>
+      {/* =========================
+          GIVEAWAY SIDE
+      ========================= */}
 
-      <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[13px] font-black text-cyan-100">
-        {giveaways.length} Logged
-      </div>
-    </div>
+      <div className="grid min-w-0 gap-4">
 
-    {giveawayLoading ? (
-      <div className="flex h-[180px] items-center justify-center text-sm text-white/45">
-        Loading winners...
-      </div>
-    ) : giveaways.length === 0 ? (
-      <div className="flex h-[180px] items-center justify-center text-sm text-white/45">
-        No winners yet.
-      </div>
-    ) : (
-      <div className="max-h-[240px] overflow-y-auto rounded-xl border border-white/10 bg-black/55">
-        <div className="divide-y divide-white/5">
-          {giveaways.map((giveaway, index) => {
-            // Prefer the saved reward/giveaway TYPE first.
-            // Some older giveaway rows use a generic title like "Giveaway",
-            // while the type still tells us exactly what the prize was.
-const giveawayLabelSource = [
-  giveaway.title,
-  giveaway.reward_title,
-  giveaway.rewardTitle,
-  giveaway.type,
-  giveaway.reward_type,
-  giveaway.rewardType,
-  giveaway.giveaway_type,
-  giveaway.giveawayType,
-  giveaway.category,
-  giveaway.source,
-  giveaway.reward?.title,
-  giveaway.reward?.type,
-]
-  .filter(Boolean)
-  .join(" ")
-  .trim()
-  .toLowerCase();
+        {/* TOTAL GIVEN AWAY */}
 
-const giveawayLabel =
-  giveawayLabelSource.includes("vip_giveaway") ||
-  giveawayLabelSource.includes("vip giveaway")
-    ? "👑 VIP Giveaway"
+        <div
+          className="
+            relative overflow-hidden
+            rounded-2xl
+            border border-purple-300/20
+            bg-[linear-gradient(135deg,rgba(16,6,24,0.66),rgba(4,2,8,0.48))]
+            px-4 py-4
+            shadow-[0_15px_45px_rgba(0,0,0,0.24),0_0_26px_rgba(168,85,247,0.06)]
+            backdrop-blur-[8px]
+            sm:px-6
+            sm:py-5
+          "
+        >
+          <div
+            className="
+              pointer-events-none
+              absolute right-0 top-0
+              h-32 w-32
+              rounded-full
+              bg-emerald-400/[0.06]
+              blur-3xl
+            "
+          />
 
-    : giveawayLabelSource.includes("slot_call") ||
-      giveawayLabelSource.includes("slot call")
-    ? "🎰 Slot Call of the Day"
-
-    : giveawayLabelSource.includes("twitter_giveaway") ||
-      giveawayLabelSource.includes("twitter giveaway")
-    ? "𝕏 Twitter Giveaway"
-
-    : giveawayLabelSource.includes("instagram_giveaway") ||
-      giveawayLabelSource.includes("instagram giveaway")
-    ? "📸 Instagram Giveaway"
-
-    : giveawayLabelSource.includes("discord_giveaway") ||
-      giveawayLabelSource.includes("discord giveaway")
-    ? "🎁 Discord Giveaway"
-
-    : giveawayLabelSource.includes("chat_giveaway") ||
-      giveawayLabelSource.includes("chat giveaway")
-    ? "💬 Chat Giveaway"
-
-    : giveawayLabelSource.includes("stream_giveaway") ||
-      giveawayLabelSource.includes("stream giveaway")
-    ? "💬 Stream Giveaway"
-
-    : giveawayLabelSource.includes("prediction")
-    ? "🎯 Predictions Winner"
-
-    : giveawayLabelSource.includes("vip_tournament") ||
-      giveawayLabelSource.includes("vip tournament")
-    ? "👑 VIP Tournament"
-
-    : "🎁 Giveaway";
-
-            return (
+          <div
+            className="
+              relative z-10
+              flex items-center justify-between gap-4
+            "
+          >
+            <div>
               <div
-                key={giveaway.id}
-                className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3"
+                className="
+                  text-[9px] font-black uppercase
+                  tracking-[0.22em]
+                  text-purple-200/65
+                  sm:text-[12px]
+                "
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-300/20 bg-cyan-400/10 text-xs font-black text-cyan-200">
-                  {index + 1}
+                💰 Total Given Away
+              </div>
+
+              <div
+                className="
+                  mt-1
+                  text-[36px] font-black
+                  leading-none
+                  text-emerald-300
+                  drop-shadow-[0_0_18px_rgba(52,211,153,0.30)]
+                  sm:text-[58px]
+                "
+              >
+                ${giveawayTotal.toLocaleString()}
+              </div>
+            </div>
+
+            <div
+              className="
+                rounded-full
+                border border-purple-300/15
+                bg-purple-400/[0.06]
+                px-3 py-1
+                text-[8px] font-black
+                uppercase tracking-[0.10em]
+                text-purple-100/70
+                sm:px-4
+                sm:py-1.5
+                sm:text-[11px]
+              "
+            >
+              {giveaways.length} Winners
+            </div>
+          </div>
+        </div>
+
+        {/* =========================
+            PAST WINNERS
+        ========================= */}
+
+        <div
+          className="
+            min-w-0
+            rounded-2xl
+            border border-purple-300/20
+            bg-[linear-gradient(180deg,rgba(12,5,18,0.76),rgba(3,2,6,0.62))]
+            p-3
+            shadow-[0_18px_50px_rgba(0,0,0,0.28),0_0_28px_rgba(168,85,247,0.06)]
+            backdrop-blur-[9px]
+            sm:p-4
+          "
+        >
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div
+              className="
+                text-[10px] font-black uppercase
+                tracking-[0.20em]
+                text-purple-200
+                sm:text-[14px]
+              "
+            >
+              🏆 Past Winners
+            </div>
+
+            <div
+              className="
+                rounded-full
+                border border-purple-300/15
+                bg-purple-400/[0.06]
+                px-2.5 py-0.5
+                text-[8px] font-black
+                text-purple-100/65
+                sm:px-3
+                sm:py-1
+                sm:text-[11px]
+              "
+            >
+              {giveaways.length} Logged
+            </div>
+          </div>
+
+          {giveawayLoading ? (
+            <div className="flex h-[220px] items-center justify-center text-sm text-white/40">
+              Loading winners...
+            </div>
+          ) : giveaways.length === 0 ? (
+            <div className="flex h-[220px] items-center justify-center text-sm text-white/40">
+              No winners yet.
+            </div>
+          ) : (
+            <div
+              className="
+                max-h-[300px]
+                overflow-y-auto
+                rounded-xl
+                border border-white/[0.06]
+                bg-black/30
+              "
+            >
+              <div className="divide-y divide-white/[0.05]">
+                {giveaways.map((giveaway, index) => {
+                  const giveawayLabelSource = [
+                    giveaway.title,
+                    giveaway.reward_title,
+                    giveaway.rewardTitle,
+                    giveaway.type,
+                    giveaway.reward_type,
+                    giveaway.rewardType,
+                    giveaway.giveaway_type,
+                    giveaway.giveawayType,
+                    giveaway.category,
+                    giveaway.source,
+                    giveaway.reward?.title,
+                    giveaway.reward?.type,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")
+                    .trim()
+                    .toLowerCase();
+
+                  const giveawayLabel =
+                    giveawayLabelSource.includes("vip_giveaway") ||
+                    giveawayLabelSource.includes("vip giveaway")
+                      ? "👑 VIP Giveaway"
+                      : giveawayLabelSource.includes("slot_call") ||
+                          giveawayLabelSource.includes("slot call")
+                        ? "🎰 Slot Call of the Day"
+                        : giveawayLabelSource.includes(
+                              "twitter_giveaway"
+                            ) ||
+                            giveawayLabelSource.includes(
+                              "twitter giveaway"
+                            )
+                          ? "𝕏 Twitter Giveaway"
+                          : giveawayLabelSource.includes(
+                                "instagram_giveaway"
+                              ) ||
+                              giveawayLabelSource.includes(
+                                "instagram giveaway"
+                              )
+                            ? "📸 Instagram Giveaway"
+                            : giveawayLabelSource.includes(
+                                  "discord_giveaway"
+                                ) ||
+                                giveawayLabelSource.includes(
+                                  "discord giveaway"
+                                )
+                              ? "🎁 Discord Giveaway"
+                              : giveawayLabelSource.includes(
+                                    "chat_giveaway"
+                                  ) ||
+                                  giveawayLabelSource.includes(
+                                    "chat giveaway"
+                                  )
+                                ? "💬 Chat Giveaway"
+                                : giveawayLabelSource.includes(
+                                      "stream_giveaway"
+                                    ) ||
+                                    giveawayLabelSource.includes(
+                                      "stream giveaway"
+                                    )
+                                  ? "💬 Stream Giveaway"
+                                  : giveawayLabelSource.includes(
+                                        "prediction"
+                                      )
+                                    ? "🎯 Predictions Winner"
+                                    : giveawayLabelSource.includes(
+                                          "vip_tournament"
+                                        ) ||
+                                        giveawayLabelSource.includes(
+                                          "vip tournament"
+                                        )
+                                      ? "👑 VIP Tournament"
+                                      : "🎁 Giveaway";
+
+                  return (
+                    <div
+                      key={giveaway.id}
+                      className="
+                        grid
+                        grid-cols-[32px_minmax(0,1fr)_auto]
+                        items-center
+                        gap-2
+                        px-2.5 py-2.5
+                        sm:grid-cols-[40px_minmax(0,1fr)_auto]
+                        sm:gap-4
+                        sm:px-4
+                        sm:py-3
+                      "
+                    >
+                      <div
+                        className="
+                          flex h-8 w-8
+                          items-center justify-center
+                          rounded-lg
+                          border border-purple-300/15
+                          bg-purple-400/[0.07]
+                          text-[10px] font-black
+                          text-purple-200
+                          sm:h-10 sm:w-10
+                          sm:text-[13px]
+                        "
+                      >
+                        {index + 1}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div
+                          className="
+                            truncate
+                            text-[11px] font-black
+                            text-white
+                            sm:text-[15px]
+                          "
+                        >
+                          {giveaway.winner_name}
+                        </div>
+
+                        <div
+                          className="
+                            mt-0.5 truncate
+                            text-[7px] font-black uppercase
+                            tracking-[0.07em]
+                            text-purple-200/55
+                            sm:text-[10px]
+                          "
+                        >
+                          {giveawayLabel}
+                        </div>
+                      </div>
+
+                      <div
+                        className="
+                          text-[11px] font-black
+                          text-emerald-300
+                          sm:text-[15px]
+                        "
+                      >
+                        $
+                        {Number(
+                          giveaway.amount || 0
+                        ).toLocaleString()}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    {/* =========================================================
+        REWARDS
+    ========================================================= */}
+
+    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+
+      {/* VIP REWARDS */}
+
+      <div
+        className="
+          rounded-2xl
+          border border-yellow-300/20
+          bg-[linear-gradient(145deg,rgba(20,13,4,0.62),rgba(6,3,8,0.52))]
+          p-3
+          text-center
+          shadow-[0_15px_45px_rgba(0,0,0,0.22)]
+          backdrop-blur-[8px]
+          sm:p-5
+        "
+      >
+        <div className="flex flex-col items-center justify-center">
+
+          <div
+            className="
+              flex h-9 w-9
+              items-center justify-center
+              rounded-lg
+              border border-yellow-300/20
+              bg-yellow-300/[0.07]
+              text-lg
+              sm:h-12 sm:w-12
+              sm:text-2xl
+            "
+          >
+            👑
+          </div>
+
+          <h3
+            className="
+              mt-2
+              text-[11px] font-black
+              text-yellow-100
+              sm:text-[18px]
+            "
+          >
+            VIP REWARDS
+          </h3>
+
+          <div
+            className="
+              mt-0.5
+              text-[6px] font-black uppercase
+              tracking-[0.08em]
+              text-yellow-200/50
+              sm:text-[10px]
+            "
+          >
+            $5K+ QUALIFICATION
+          </div>
+
+          <div
+            className="
+              mt-2
+              max-w-md
+              text-[8px] font-semibold
+              leading-[1.5]
+              text-white/55
+              sm:mt-3
+              sm:text-[12px]
+            "
+          >
+            $5k+ wagered on previous or current leaderboard
+          </div>
+
+          <div
+            className="
+              mt-2 grid gap-1
+              text-[8px] font-bold
+              text-white/75
+              sm:mt-3
+              sm:gap-1.5
+              sm:text-[12px]
+            "
+          >
+            <div>⭐ Daily VIP giveaways</div>
+            <div>⭐ Exclusive tournaments</div>
+            <div>⭐ Community hunt equity</div>
+          </div>
+        </div>
+      </div>
+
+      {/* AFFILIATE REWARDS */}
+
+      <div
+        className="
+          rounded-2xl
+          border border-purple-300/20
+          bg-[linear-gradient(145deg,rgba(18,7,27,0.64),rgba(5,2,9,0.50))]
+          p-3
+          text-center
+          shadow-[0_15px_45px_rgba(0,0,0,0.22)]
+          backdrop-blur-[8px]
+          sm:p-5
+        "
+      >
+        <div className="flex flex-col items-center justify-center">
+
+          <div
+            className="
+              flex h-9 w-9
+              items-center justify-center
+              rounded-lg
+              border border-purple-300/20
+              bg-purple-400/[0.08]
+              text-lg
+              sm:h-12 sm:w-12
+              sm:text-2xl
+            "
+          >
+            🎁
+          </div>
+
+          <h3
+            className="
+              mt-2
+              text-[11px] font-black
+              text-purple-100
+              sm:text-[18px]
+            "
+          >
+            AFFILIATE REWARDS
+          </h3>
+
+          <div
+            className="
+              mt-0.5
+              text-[6px] font-black uppercase
+              tracking-[0.08em]
+              text-purple-200/50
+              sm:text-[10px]
+            "
+          >
+            CODE TRASHGUY
+          </div>
+
+          <div
+            className="
+              mt-2
+              text-[8px] font-semibold
+              leading-[1.5]
+              text-white/55
+              sm:mt-3
+              sm:text-[12px]
+            "
+          >
+            Simply join on code{" "}
+            <span className="font-black text-purple-200">
+              trashguy
+            </span>
+          </div>
+
+          <div
+            className="
+              mt-2 grid gap-1
+              text-[8px] font-bold
+              text-white/75
+              sm:mt-3
+              sm:gap-1.5
+              sm:text-[12px]
+            "
+          >
+            <div>⭐ Stream giveaways</div>
+            <div>⭐ Slot call of the day</div>
+            <div>⭐ Bonus hunt predictions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* =========================================================
+        LIVE + COMMUNITY
+    ========================================================= */}
+
+    <div
+      className="
+        grid gap-4
+        lg:grid-cols-[minmax(0,1fr)_270px]
+      "
+    >
+
+      {/* LIVE STREAM */}
+
+      <div
+        className="
+          min-w-0
+          rounded-2xl
+          border border-purple-300/20
+          bg-[linear-gradient(180deg,rgba(12,5,18,0.68),rgba(3,2,6,0.50))]
+          p-3
+          shadow-[0_18px_50px_rgba(0,0,0,0.25)]
+          backdrop-blur-[8px]
+          sm:p-4
+        "
+      >
+        <div
+          className="
+            mb-3
+            flex items-center justify-between
+            gap-3
+          "
+        >
+          <div>
+            <SectionLabel>Live Stream</SectionLabel>
+
+            <h2
+              className="
+                mt-1
+                text-[13px] font-black
+                text-white
+                sm:text-[20px]
+              "
+            >
+              WATCH TRASHGUY LIVE
+            </h2>
+          </div>
+
+          <div
+            className={`
+              rounded-full border
+              px-2.5 py-0.5
+              text-[7px] font-black uppercase
+              tracking-[0.12em]
+              sm:px-3
+              sm:py-1
+              sm:text-[10px]
+              ${
+                liveStatus.isLive
+                  ? "border-red-400/25 bg-red-500/[0.08] text-red-200"
+                  : "border-white/[0.08] bg-black/30 text-white/35"
+              }
+            `}
+          >
+            {liveStatus.isLive ? "● LIVE" : "OFFLINE"}
+          </div>
+        </div>
+
+        <div
+          className="
+            aspect-video
+            w-full
+            overflow-hidden
+            rounded-xl
+            border border-purple-300/15
+            bg-black
+            shadow-[0_0_24px_rgba(168,85,247,0.05)]
+          "
+        >
+          {liveStatus.isLive ? (
+            <iframe
+              src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
+              height="100%"
+              width="100%"
+              allowFullScreen
+            />
+          ) : (
+            <a
+              href="https://www.twitch.tv/trashguy__"
+              target="_blank"
+              rel="noreferrer"
+              className="
+                relative flex h-full
+                items-center justify-center
+                overflow-hidden
+              "
+            >
+              <div
+                className="
+                  absolute inset-0
+                  bg-[url('/trashguy-bg.jpg')]
+                  bg-cover bg-center
+                  opacity-40
+                "
+              />
+
+              <div className="absolute inset-0 bg-black/50" />
+
+              <div className="relative z-10 text-center">
+                <div
+                  className="
+                    text-xl font-black
+                    text-white
+                    sm:text-4xl
+                  "
+                >
+                  OFFLINE
                 </div>
 
-                <div className="min-w-0">
-                  <div className="truncate font-black text-white">
-                    {giveaway.winner_name}
-                  </div>
-                  <div className="mt-0.5 truncate text-[10px] font-black uppercase tracking-[0.08em] text-cyan-200/65 sm:text-[11px]">
-                    {giveawayLabel}
-                  </div>
-                </div>
-
-                <div className="font-black text-emerald-300">
-                  ${Number(giveaway.amount || 0).toLocaleString()}
+                <div
+                  className="
+                    mt-1
+                    text-[9px]
+                    text-white/50
+                    sm:text-sm
+                  "
+                >
+                  Tap to open Twitch
                 </div>
               </div>
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* =========================
+          COMMUNITY
+      ========================= */}
+
+      <div
+        className="
+          rounded-2xl
+          border border-purple-300/20
+          bg-[linear-gradient(180deg,rgba(12,5,18,0.68),rgba(3,2,6,0.50))]
+          p-3
+          shadow-[0_18px_50px_rgba(0,0,0,0.25)]
+          backdrop-blur-[8px]
+          sm:p-4
+        "
+      >
+        <SectionLabel>Community</SectionLabel>
+
+        <h2
+          className="
+            mt-1
+            text-[13px] font-black
+            text-white
+            sm:text-[19px]
+          "
+        >
+          FOLLOW TRASHGUY
+        </h2>
+
+        <div
+          className="
+            mt-3
+            grid grid-cols-5
+            gap-1.5
+            lg:grid-cols-1
+            lg:gap-2
+          "
+        >
+          {socials.map((social) => {
+            const Icon = social.icon;
+
+            return (
+              <a
+                key={social.name}
+                href={social.href}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={social.name}
+                className="
+                  group
+                  flex min-w-0
+                  flex-col items-center justify-center
+                  rounded-xl
+                  border border-white/[0.07]
+                  bg-black/25
+                  p-2
+                  transition-all
+                  hover:border-purple-300/25
+                  hover:bg-purple-400/[0.06]
+                  lg:min-h-[62px]
+                  lg:flex-row
+                  lg:justify-start
+                  lg:gap-3
+                  lg:px-4
+                  lg:py-2
+                "
+              >
+                <Icon
+                  className={`text-lg transition-transform group-hover:scale-110 sm:text-2xl ${
+                    social.name === "Twitch"
+                      ? "text-[#9146FF]"
+                      : social.name === "Kick"
+                        ? "text-[#53FC18]"
+                        : social.name === "Discord"
+                          ? "text-[#5865F2]"
+                          : social.name === "Instagram"
+                            ? "text-[#E1306C]"
+                            : social.name === "Twitter"
+                              ? "text-white"
+                              : "text-purple-200"
+                  }`}
+                />
+
+                <div
+                  className="
+                    mt-1
+                    max-w-full truncate
+                    text-[6px] font-black uppercase
+                    tracking-[0.04em]
+                    text-white/50
+                    sm:text-[8px]
+                    lg:mt-0
+                    lg:text-[11px]
+                    lg:tracking-[0.10em]
+                  "
+                >
+                  {social.name}
+                </div>
+              </a>
             );
           })}
         </div>
       </div>
-    )}
-  </div>
-
-</div>
-
-<div className="mx-auto mt-3 max-w-5xl px-3">
-  <div className="grid gap-3 lg:grid-cols-2">
-
-    <div className="rounded-2xl border border-cyan-300/20 bg-black/80 p-3 shadow-[0_0_16px_rgba(0,245,255,0.05)]">
-      <div className="text-center text-2xl">👑</div>
-
-      <h3 className="mt-1 text-center text-lg font-black text-cyan-100 sm:text-xl">
-        VIP REWARDS
-      </h3>
-
-      <div className="mx-auto mt-2 w-fit max-w-full rounded-full border border-yellow-300/25 bg-yellow-300/[0.07] px-3 py-1 text-center">
-        <span className="text-[8px] font-black uppercase tracking-[0.12em] text-yellow-200/60 sm:text-[9px]">
-          Requirement:
-        </span>{" "}
-        <span className="text-[10px] font-black text-yellow-100 sm:text-xs">
-          $5k+ wagered on previous or current leaderboard
-        </span>
-      </div>
-
-      <div className="mt-2.5 space-y-2 text-center text-xs text-white/80 sm:text-sm">
-        <div>⭐ Daily VIP giveaways</div>
-        <div>⭐ Exclusive VIP tournaments</div>
-        <div>⭐ Community hunt equity</div>
-      </div>
     </div>
-
-    <div className="rounded-2xl border border-cyan-300/20 bg-black/80 p-3 shadow-[0_0_16px_rgba(0,245,255,0.05)]">
-      <div className="text-center text-2xl">🎁</div>
-
-      <h3 className="mt-1 text-center text-lg font-black text-cyan-100 sm:text-xl">
-        AFFILIATE REWARDS
-      </h3>
-
-      <div className="mx-auto mt-2 w-fit max-w-full rounded-full border border-cyan-300/25 bg-cyan-300/[0.07] px-3 py-1 text-center">
-        <span className="text-[8px] font-black uppercase tracking-[0.12em] text-cyan-200/60 sm:text-[9px]">
-          Requirement:
-        </span>{" "}
-        <span className="text-[10px] font-black text-cyan-100 sm:text-xs">
-          Simply join on code <span className="text-[#8fffd0]">trashguy</span>
-        </span>
-      </div>
-
-      <div className="mt-2.5 space-y-2 text-center text-xs text-white/80 sm:text-sm">
-        <div>⭐ Stream giveaway</div>
-        <div>⭐ Slot call of the day</div>
-        <div>⭐ Bonus hunt predictions</div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<section className="relative py-1 sm:py-3">
-  <div className="mx-auto grid max-w-5xl grid-cols-5 gap-1.5 sm:gap-3">
-    {socials.map((social) => {
-      const Icon = social.icon;
-
-      return (
-        <a
-          key={social.name}
-          href={social.href}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={social.name}
-          className="group flex min-h-[64px] min-w-0 flex-col items-center justify-center rounded-xl border border-white/10 bg-black/50 p-1.5 backdrop-blur-md transition hover:-translate-y-0.5 hover:border-cyan-300/35 hover:bg-cyan-400/10 sm:min-h-[100px] sm:rounded-2xl sm:p-3"
-        >
-          <Icon
-            className={`text-xl transition group-hover:scale-110 sm:text-4xl ${
-              social.name === "Twitch"
-                ? "text-[#9146FF]"
-                : social.name === "Kick"
-                ? "text-[#53FC18]"
-                : social.name === "Discord"
-                ? "text-[#5865F2]"
-                : social.name === "Instagram"
-                ? "text-[#E1306C]"
-                : social.name === "Twitter"
-                ? "text-white"
-                : "text-cyan-200"
-            }`}
-          />
-
-          <div className="mt-1 truncate text-[7px] font-black uppercase tracking-[0.08em] text-white/55 sm:mt-2 sm:text-xs sm:tracking-[0.14em]">
-            {social.name}
-          </div>
-        </a>
-      );
-    })}
-  </div>
-</section>
-
-<section className="relative mx-auto max-w-[850px] py-2 sm:py-4">
-  <div className="flex items-end justify-between gap-3">
-    <div>
-      <SectionLabel>Live Stream</SectionLabel>
-
-      <h2 className="mt-1 text-lg font-black sm:text-2xl">
-        WATCH TRASHGUY LIVE
-      </h2>
-    </div>
-  </div>
-
-  <div className="mt-3 aspect-video w-full overflow-hidden rounded-xl border border-cyan-300/20 bg-black shadow-[0_0_24px_rgba(0,245,255,0.06)] sm:rounded-2xl">
-    {liveStatus.isLive ? (
-      <iframe
-        src="https://player.twitch.tv/?channel=trashguy__&parent=localhost&parent=127.0.0.1&parent=trashguy-site.vercel.app&parent=trashguy.me"
-        height="100%"
-        width="100%"
-        allowFullScreen
-      />
-    ) : (
-      <a
-        href="https://www.twitch.tv/trashguy__"
-        target="_blank"
-        rel="noreferrer"
-        className="relative flex h-full items-center justify-center overflow-hidden"
-      >
-        <div className="absolute inset-0 bg-[url('/trashguy-casino.png')] bg-cover bg-center opacity-45" />
-        <div className="absolute inset-0 bg-black/45" />
-
-        <div className="relative z-10 text-center">
-          <div className="text-2xl font-black text-white sm:text-4xl">
-            OFFLINE
-          </div>
-
-          <div className="mt-1 text-xs text-white/50 sm:text-sm">
-            Tap to open Twitch
-          </div>
-        </div>
-      </a>
-    )}
-  </div>
-</section>
   </section>
 )}
 
 {activeSection === "leaderboard" && (
-  <section className="w-full min-w-0 max-w-full space-y-4 overflow-x-hidden sm:space-y-6">
-<div className="mx-auto max-w-5xl">
-  <GlowTabTitle label="$1,500 LEADERBOARD" />
+  <section className="w-full min-w-0 max-w-full space-y-4 overflow-x-hidden sm:space-y-5">
 
-  <div className="mt-3 flex justify-center">
-    <div className="rounded-full border border-purple-400/30 bg-purple-500/10 px-5 py-2">
-      <span className="text-sm font-black text-purple-200 sm:text-lg">
-        ⏳ Ends in {leaderboardCountdown}
-      </span>
+    {/* =========================================================
+        HEADER
+    ========================================================= */}
+
+    <div className="mx-auto max-w-[1400px] text-center">
+<div className="flex justify-center">
+  <div className="relative inline-flex items-center justify-center px-4 py-2 sm:px-6">
+
+    {/* SOFT PURPLE BACK GLOW */}
+    <div
+      className="
+        pointer-events-none
+        absolute
+        inset-x-[12%]
+        inset-y-[20%]
+        rounded-full
+        bg-purple-600/20
+        blur-2xl
+      "
+    />
+
+    {/* TITLE */}
+    <div
+      className="
+        relative z-10
+        whitespace-nowrap
+        bg-gradient-to-b
+        from-white
+        from-[42%]
+        via-purple-100
+        via-[52%]
+        to-purple-400
+        bg-clip-text
+        text-center
+        text-[28px]
+        font-black
+        uppercase
+        leading-none
+        tracking-[0.11em]
+        text-transparent
+        drop-shadow-[0_4px_2px_rgba(0,0,0,0.95)]
+        sm:text-[48px]
+        lg:text-[54px]
+      "
+    >
+      $1,500 LEADERBOARD
     </div>
+
   </div>
 </div>
 
-<div className="mx-auto w-full min-w-0 max-w-5xl space-y-1.5 overflow-x-hidden sm:space-y-2">
-      <div className="grid grid-cols-[42px_minmax(0,1fr)_88px_48px] items-center rounded-xl bg-black/55 px-2 py-2 text-[8px] font-black uppercase tracking-[0.08em] text-white/55 sm:grid-cols-[80px_1fr_180px_140px] sm:px-5 sm:text-[11px] sm:tracking-[0.16em]">
+      <div className="mt-2 flex justify-center sm:mt-3">
+        <div
+          className="
+            inline-flex items-center justify-center gap-2
+            rounded-full
+            border border-purple-300/25
+            bg-purple-400/[0.08]
+            px-3 py-1.5
+            shadow-[0_0_20px_rgba(168,85,247,0.08)]
+            backdrop-blur-md
+            sm:px-5
+            sm:py-2.5
+          "
+        >
+          <span className="text-sm sm:text-lg">
+            ⏳
+          </span>
+
+          <span
+            className="
+              text-[10px] font-black
+              uppercase
+              tracking-[0.08em]
+              text-purple-100
+              sm:text-[15px]
+            "
+          >
+            Ends in {leaderboardCountdown}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    {/* =========================================================
+        LEADERBOARD CARD
+    ========================================================= */}
+
+    <div
+      className="
+        mx-auto
+        w-full
+        max-w-[1400px]
+        overflow-hidden
+        rounded-2xl
+        border border-purple-300/20
+        bg-[linear-gradient(180deg,rgba(13,5,20,0.72),rgba(4,2,8,0.60))]
+        p-2
+        shadow-[0_18px_55px_rgba(0,0,0,0.28),0_0_30px_rgba(168,85,247,0.06)]
+        backdrop-blur-[9px]
+        sm:rounded-3xl
+        sm:p-4
+      "
+    >
+
+      {/* TABLE HEADER */}
+
+      <div
+        className="
+          grid
+          grid-cols-[44px_minmax(0,1fr)_90px_54px]
+          items-center
+          rounded-xl
+          border border-purple-300/[0.10]
+          bg-purple-400/[0.045]
+          px-2
+          py-2
+          text-[8px] font-black uppercase
+          tracking-[0.08em]
+          text-purple-100/55
+          sm:grid-cols-[90px_minmax(0,1fr)_220px_160px]
+          sm:px-5
+          sm:py-3
+          sm:text-[12px]
+          sm:tracking-[0.14em]
+        "
+      >
         <div>Rank</div>
         <div>Player</div>
         <div className="text-right">Wagered</div>
         <div className="text-right">Prize</div>
       </div>
 
-{leaderboardLoading && leaderboardData.length === 0 ? (
-  <div className="rounded-xl border border-white/10 bg-black/35 px-4 py-5 text-sm text-white/60">
-    Loading leaderboard...
-  </div>
-) : (
-  <div className="space-y-2">
-    {leaderboardData.map((player) => {
-      const prize = leaderboardPrizes[player.rank] || 0;
+      {/* =========================================================
+          PLAYERS
+      ========================================================= */}
 
-      const isFirst = player.rank === 1;
-      const isSecond = player.rank === 2;
-      const isThird = player.rank === 3;
-      const isTopThree = player.rank <= 3;
-
-const topRowStyle = isFirst
-  ? "border-yellow-300/70 bg-[linear-gradient(110deg,rgb(135,92,0),rgb(72,48,0),rgb(18,14,3))] shadow-[0_0_28px_rgba(250,204,21,0.25)]"
-  : isSecond
-  ? "border-slate-200/65 bg-[linear-gradient(110deg,rgb(95,112,132),rgb(52,64,80),rgb(14,18,25))] shadow-[0_0_26px_rgba(220,230,245,0.18)]"
-  : "border-orange-400/65 bg-[linear-gradient(110deg,rgb(130,58,14),rgb(72,31,8),rgb(18,10,4))] shadow-[0_0_26px_rgba(251,146,60,0.20)]";
-
-const rankBadgeStyle = isFirst
-  ? "border-yellow-200/70 bg-yellow-300/20 text-yellow-100 shadow-[0_0_16px_rgba(250,204,21,0.30)]"
-  : isSecond
-  ? "border-slate-100/65 bg-slate-100/15 text-white shadow-[0_0_16px_rgba(226,232,240,0.22)]"
-  : isThird
-  ? "border-orange-300/65 bg-orange-400/15 text-orange-100 shadow-[0_0_16px_rgba(251,146,60,0.24)]"
-  : "border-cyan-300/15 bg-cyan-400/[0.04] text-cyan-100/75";
-
-      const rankLabel = isFirst
-        ? "🥇"
-        : isSecond
-        ? "🥈"
-        : isThird
-        ? "🥉"
-        : `#${player.rank}`;
-
-      if (isTopThree) {
-        return (
-          <div
-            key={`${player.rank}-${player.username}`}
-            className={`grid grid-cols-[56px_minmax(0,1fr)_92px_64px] items-center rounded-2xl border px-3 py-3 sm:grid-cols-[82px_minmax(0,1fr)_180px_130px] sm:px-5 sm:py-4 ${topRowStyle}`}
-          >
-            <div className="flex justify-start">
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-xl border text-lg font-black sm:h-12 sm:w-12 sm:text-2xl ${rankBadgeStyle}`}
-              >
-                {rankLabel}
-              </div>
-            </div>
-
-            <div className="min-w-0 pl-1 sm:pl-3">
-              <div className="truncate text-sm font-black text-white sm:text-xl">
-                {player.username}
-              </div>
-
-              <div className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-white/30 sm:text-[10px]">
-                Rank #{player.rank}
-              </div>
-            </div>
-
-            <div className="text-right">
-              <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/25 sm:text-[9px]">
-                Wagered
-              </div>
-
-              <div className="mt-0.5 whitespace-nowrap text-[10px] font-black text-white sm:text-base">
-                {formatMoney(player.wagered)}
-              </div>
-            </div>
-
-            <div className="text-right">
-              <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/25 sm:text-[9px]">
-                Prize
-              </div>
-
-              <div className="mt-0.5 whitespace-nowrap text-[10px] font-black text-emerald-300 drop-shadow-[0_0_10px_rgba(110,231,183,0.30)] sm:text-base">
-                {prize > 0 ? `$${prize.toLocaleString()}` : "-"}
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      return (
+      {leaderboardLoading && leaderboardData.length === 0 ? (
         <div
-          key={`${player.rank}-${player.username}`}
-          className="grid grid-cols-[48px_minmax(0,1fr)_92px_58px] items-center border-b border-cyan-300/[0.08] bg-[#08111f]/88 px-3 py-2.5 transition hover:bg-[#0b1728] sm:grid-cols-[70px_minmax(0,1fr)_180px_120px] sm:px-5 sm:py-3"
+          className="
+            mt-2
+            rounded-xl
+            border border-white/[0.07]
+            bg-black/25
+            px-4
+            py-6
+            text-center
+            text-xs
+            text-white/45
+            sm:text-sm
+          "
         >
-          <div className="flex justify-start">
-            <div
-              className={`flex h-8 min-w-[40px] items-center justify-center rounded-full border px-2 text-[10px] font-black sm:h-9 sm:min-w-[48px] sm:text-xs ${rankBadgeStyle}`}
+          Loading leaderboard...
+        </div>
+      ) : (
+        <div className="mt-2 space-y-2 sm:mt-3 sm:space-y-2.5">
+          {leaderboardData.map((player) => {
+            const prize =
+              leaderboardPrizes[player.rank] || 0;
+
+            const isFirst = player.rank === 1;
+            const isSecond = player.rank === 2;
+            const isThird = player.rank === 3;
+            const isTopThree = player.rank <= 3;
+
+            const topRowStyle = isFirst
+              ? `
+                border-yellow-300/45
+                bg-[linear-gradient(110deg,rgba(117,76,0,0.78),rgba(58,38,3,0.70),rgba(10,6,2,0.72))]
+                shadow-[0_0_28px_rgba(250,204,21,0.12)]
+              `
+              : isSecond
+                ? `
+                  border-slate-200/35
+                  bg-[linear-gradient(110deg,rgba(92,104,122,0.70),rgba(44,52,66,0.68),rgba(9,11,16,0.74))]
+                  shadow-[0_0_26px_rgba(220,230,245,0.08)]
+                `
+                : `
+                  border-orange-400/40
+                  bg-[linear-gradient(110deg,rgba(119,52,12,0.72),rgba(60,26,7,0.68),rgba(10,6,3,0.74))]
+                  shadow-[0_0_26px_rgba(251,146,60,0.09)]
+                `;
+
+            const rankBadgeStyle = isFirst
+              ? `
+                border-yellow-200/60
+                bg-yellow-300/15
+                text-yellow-100
+                shadow-[0_0_16px_rgba(250,204,21,0.18)]
+              `
+              : isSecond
+                ? `
+                  border-slate-100/45
+                  bg-slate-100/10
+                  text-white
+                  shadow-[0_0_16px_rgba(226,232,240,0.12)]
+                `
+                : isThird
+                  ? `
+                    border-orange-300/50
+                    bg-orange-400/12
+                    text-orange-100
+                    shadow-[0_0_16px_rgba(251,146,60,0.14)]
+                  `
+                  : `
+                    border-purple-300/15
+                    bg-purple-400/[0.055]
+                    text-purple-100/80
+                  `;
+
+            const rankLabel = isFirst
+              ? "🥇"
+              : isSecond
+                ? "🥈"
+                : isThird
+                  ? "🥉"
+                  : `#${player.rank}`;
+
+            /* =====================================================
+                TOP 3
+            ===================================================== */
+
+            if (isTopThree) {
+              return (
+                <div
+                  key={`${player.rank}-${player.username}`}
+                  className={`
+                    grid
+                    grid-cols-[48px_minmax(0,1fr)_92px_60px]
+                    items-center
+                    rounded-xl
+                    border
+                    px-2.5
+                    py-2.5
+                    transition
+                    sm:grid-cols-[90px_minmax(0,1fr)_220px_160px]
+                    sm:rounded-2xl
+                    sm:px-5
+                    sm:py-4
+                    ${topRowStyle}
+                  `}
+                >
+                  {/* RANK */}
+
+                  <div className="flex justify-start">
+                    <div
+                      className={`
+                        flex h-9 w-9
+                        items-center justify-center
+                        rounded-lg
+                        border
+                        text-base font-black
+                        sm:h-14
+                        sm:w-14
+                        sm:rounded-xl
+                        sm:text-[28px]
+                        ${rankBadgeStyle}
+                      `}
+                    >
+                      {rankLabel}
+                    </div>
+                  </div>
+
+                  {/* PLAYER */}
+
+                  <div className="min-w-0 pl-1 sm:pl-3">
+                    <div
+                      className="
+                        truncate
+                        text-[12px] font-black
+                        text-white
+                        sm:text-[22px]
+                      "
+                    >
+                      {player.username}
+                    </div>
+
+                    <div
+                      className="
+                        mt-0.5
+                        text-[7px] font-bold uppercase
+                        tracking-[0.12em]
+                        text-white/35
+                        sm:text-[10px]
+                      "
+                    >
+                      Rank #{player.rank}
+                    </div>
+                  </div>
+
+                  {/* WAGERED */}
+
+                  <div className="text-right">
+                    <div
+                      className="
+                        text-[6px] font-black uppercase
+                        tracking-[0.10em]
+                        text-white/30
+                        sm:text-[9px]
+                      "
+                    >
+                      Wagered
+                    </div>
+
+                    <div
+                      className="
+                        mt-0.5
+                        whitespace-nowrap
+                        text-[10px] font-black
+                        text-white
+                        sm:text-[18px]
+                      "
+                    >
+                      {formatMoney(player.wagered)}
+                    </div>
+                  </div>
+
+                  {/* PRIZE */}
+
+                  <div className="text-right">
+                    <div
+                      className="
+                        text-[6px] font-black uppercase
+                        tracking-[0.10em]
+                        text-white/30
+                        sm:text-[9px]
+                      "
+                    >
+                      Prize
+                    </div>
+
+                    <div
+                      className="
+                        mt-0.5
+                        whitespace-nowrap
+                        text-[10px] font-black
+                        text-emerald-300
+                        drop-shadow-[0_0_10px_rgba(110,231,183,0.25)]
+                        sm:text-[18px]
+                      "
+                    >
+                      {prize > 0
+                        ? `$${prize.toLocaleString()}`
+                        : "-"}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            /* =====================================================
+                POSITIONS 4+
+            ===================================================== */
+
+            return (
+              <div
+                key={`${player.rank}-${player.username}`}
+                className="
+                  grid
+                  grid-cols-[44px_minmax(0,1fr)_92px_54px]
+                  items-center
+                  rounded-xl
+                  border border-purple-300/[0.09]
+                  bg-[linear-gradient(90deg,rgba(14,6,22,0.68),rgba(5,3,9,0.58))]
+                  px-2
+                  py-2
+                  transition-all duration-200
+                  hover:border-purple-300/20
+                  hover:bg-purple-400/[0.06]
+                  sm:grid-cols-[90px_minmax(0,1fr)_220px_160px]
+                  sm:px-5
+                  sm:py-3.5
+                "
+              >
+                {/* RANK */}
+
+                <div className="flex justify-start">
+                  <div
+                    className={`
+                      flex
+                      h-8
+                      min-w-[36px]
+                      items-center justify-center
+                      rounded-full
+                      border
+                      px-2
+                      text-[9px] font-black
+                      sm:h-10
+                      sm:min-w-[52px]
+                      sm:px-3
+                      sm:text-[13px]
+                      ${rankBadgeStyle}
+                    `}
+                  >
+                    {rankLabel}
+                  </div>
+                </div>
+
+                {/* PLAYER */}
+
+                <div className="min-w-0 pl-1 sm:pl-3">
+                  <div
+                    className="
+                      truncate
+                      text-[10px] font-black
+                      text-white
+                      sm:text-[17px]
+                    "
+                  >
+                    {player.username}
+                  </div>
+                </div>
+
+                {/* WAGERED */}
+
+                <div
+                  className="
+                    whitespace-nowrap
+                    text-right
+                    text-[9px] font-black
+                    text-white/85
+                    sm:text-[15px]
+                  "
+                >
+                  {formatMoney(player.wagered)}
+                </div>
+
+                {/* PRIZE */}
+
+                <div
+                  className="
+                    whitespace-nowrap
+                    text-right
+                    text-[9px] font-black
+                    text-emerald-300
+                    drop-shadow-[0_0_9px_rgba(110,231,183,0.20)]
+                    sm:text-[15px]
+                  "
+                >
+                  {prize > 0
+                    ? `$${prize.toLocaleString()}`
+                    : "-"}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* =========================================================
+          ADMIN VIP SNAPSHOT
+      ========================================================= */}
+
+      {adminAllowed && (
+        <div
+          className="
+            mx-auto
+            mt-4
+            w-full
+            max-w-2xl
+            rounded-xl
+            border border-yellow-300/20
+            bg-yellow-400/[0.06]
+            px-3
+            py-3
+            shadow-[0_0_18px_rgba(250,204,21,0.05)]
+            backdrop-blur-md
+            sm:mt-5
+            sm:px-4
+            sm:py-4
+          "
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div
+                className="
+                  text-[9px] font-black uppercase
+                  tracking-[0.16em]
+                  text-yellow-200
+                  sm:text-[13px]
+                "
+              >
+                👑 VIP Snapshot
+              </div>
+
+              <div
+                className="
+                  mt-1
+                  text-[8px]
+                  leading-tight
+                  text-white/45
+                  sm:text-[11px]
+                "
+              >
+                {adminMessage ||
+                  "Save $5,000+ wagered players as VIPs for the next leaderboard."}
+              </div>
+            </div>
+
+            <ActionButton
+              onClick={handleGenerateVipSnapshot}
+              variant="gold"
+              className="
+                shrink-0
+                px-2.5 py-1.5
+                text-[7px]
+                sm:px-4
+                sm:py-2
+                sm:text-[10px]
+              "
             >
-              {rankLabel}
-            </div>
-          </div>
-
-          <div className="min-w-0 pl-2 sm:pl-4">
-            <div className="truncate text-[11px] font-black text-white sm:text-base">
-              {player.username}
-            </div>
-          </div>
-
-          <div className="whitespace-nowrap text-right text-[9px] font-black text-white/85 sm:text-sm">
-            {formatMoney(player.wagered)}
-          </div>
-
-          <div className="whitespace-nowrap text-right text-[9px] font-black text-emerald-300 drop-shadow-[0_0_9px_rgba(110,231,183,0.24)] sm:text-sm">
-            {prize > 0 ? `$${prize.toLocaleString()}` : "-"}
+              Generate Snapshot
+            </ActionButton>
           </div>
         </div>
-      );
-    })}
-  </div>
-)}
-
-{adminAllowed && (
-  <div className="mx-auto mt-4 w-full max-w-xl rounded-xl border border-yellow-300/20 bg-yellow-400/[0.08] px-3 py-3 shadow-[0_0_18px_rgba(250,204,21,0.06)]">
-    <div className="flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-200 sm:text-xs">
-          👑 VIP Snapshot
-        </div>
-
-        <div className="mt-1 text-[10px] leading-tight text-white/45 sm:text-xs">
-          {adminMessage ||
-            "Save $5,000+ wagered players as VIPs for the next leaderboard."}
-        </div>
-      </div>
-
-      <ActionButton
-        onClick={handleGenerateVipSnapshot}
-        variant="gold"
-        className="shrink-0 px-3 py-2 text-[9px] sm:px-4 sm:text-[10px]"
-      >
-        Generate Snapshot
-      </ActionButton>
-    </div>
-  </div>
-)}
+      )}
     </div>
   </section>
 )}
 
 {activeSection === "hunts" && (
-  <section className="space-y-2 sm:space-y-8">
-<GlowTabTitle label="BONUS HUNTS" />
+  <section className="space-y-3 sm:space-y-5">
+    <GlowTabTitle label="BONUS HUNTS" />
 
-<div className="flex gap-2 overflow-x-auto pb-2 sm:gap-4 sm:pb-4">
-  {huntsData.map((hunt) => {
-    const huntLocalId = (hunt as any)?.localId || hunt.id;
+    {/* =========================================================
+        HUNT TABS
+    ========================================================= */}
 
-    return (
-      <button
-        key={hunt.id}
-        onClick={() => handleSelectPredictionHunt(hunt)}
-        className={`flex min-w-[118px] flex-col items-center justify-center rounded-lg border bg-black/70 p-2 text-center backdrop-blur-md transition hover:-translate-y-1 sm:min-w-[190px] sm:rounded-2xl sm:p-4 ${
-          currentPredictionHunt?.localId === huntLocalId
-            ? "border-cyan-300/45 shadow-[0_0_20px_rgba(0,245,255,0.12)]"
-            : "border-white/10 hover:border-cyan-300/25"
-        }`}
-      >
-        <div className="max-w-full truncate text-[11px] font-black text-white sm:text-sm">
-          {hunt.title || "Bonus Hunt"}
-        </div>
+    <div className="flex gap-2 overflow-x-auto pb-2 sm:gap-3 sm:pb-3">
+      {huntsData.map((hunt) => {
+        const huntLocalId = (hunt as any)?.localId || hunt.id;
+        const active = currentPredictionHunt?.localId === huntLocalId;
 
-        <div className="mt-1 grid gap-0.5 text-[9px] font-semibold text-white/60 sm:mt-3 sm:text-xs">
-          <div>Start: {formatMoney(hunt.startCost)}</div>
-          <div>Won: {formatMoney(hunt.totalWinnings)}</div>
-          <div
-            className={
-              hunt.profitLoss >= 0 ? "text-cyan-300" : "text-red-300"
-            }
+        return (
+          <button
+            key={hunt.id}
+            onClick={() => handleSelectPredictionHunt(hunt)}
+            className={`
+              flex min-w-[126px]
+              flex-col items-center justify-center
+              rounded-xl border
+              px-2.5 py-2.5
+              text-center
+              backdrop-blur-md
+              transition-all duration-200
+              hover:-translate-y-0.5
+              sm:min-w-[220px]
+              sm:rounded-2xl
+              sm:px-4
+              sm:py-4
+              ${
+                active
+                  ? `
+                    border-purple-300/35
+                    bg-[linear-gradient(145deg,rgba(168,85,247,0.16),rgba(5,2,9,0.66))]
+                    shadow-[0_0_22px_rgba(168,85,247,0.12)]
+                  `
+                  : `
+                    border-purple-300/[0.10]
+                    bg-black/35
+                    hover:border-purple-300/25
+                    hover:bg-purple-400/[0.05]
+                  `
+              }
+            `}
           >
-            P/L: {hunt.profitLoss >= 0 ? "+" : ""}
-            {formatMoney(hunt.profitLoss)}
-          </div>
-        </div>
-      </button>
-    );
-  })}
-</div>
+            <div className="max-w-full truncate text-[11px] font-black text-white sm:text-[16px]">
+              {hunt.title || "Bonus Hunt"}
+            </div>
 
-    <div className="overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 backdrop-blur-sm shadow-[0_0_24px_rgba(0,245,255,0.08)] sm:rounded-[2rem]">
+            <div className="mt-1 grid gap-0.5 text-[8px] font-semibold text-white/55 sm:mt-2.5 sm:text-[11px]">
+              <div>
+                Start:{" "}
+                <span className="font-black text-white/85">
+                  {formatMoney(hunt.startCost)}
+                </span>
+              </div>
+
+              <div>
+                Won:{" "}
+                <span className="font-black text-purple-200">
+                  {formatMoney(hunt.totalWinnings)}
+                </span>
+              </div>
+
+              <div
+                className={
+                  hunt.profitLoss >= 0
+                    ? "font-black text-emerald-300"
+                    : "font-black text-red-300"
+                }
+              >
+                P/L: {hunt.profitLoss >= 0 ? "+" : ""}
+                {formatMoney(hunt.profitLoss)}
+              </div>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+
+    {/* =========================================================
+        MAIN HUNT DASHBOARD
+    ========================================================= */}
+
+    <div
+      className="
+        overflow-hidden
+        rounded-2xl
+        border border-purple-300/20
+        bg-[linear-gradient(180deg,rgba(13,5,20,0.72),rgba(4,2,8,0.60))]
+        shadow-[0_18px_55px_rgba(0,0,0,0.28),0_0_30px_rgba(168,85,247,0.06)]
+        backdrop-blur-[9px]
+        sm:rounded-3xl
+      "
+    >
       <div className="grid lg:grid-cols-[1fr_1.05fr]">
-        <div className="border-b border-white/10 p-2.5 sm:p-6 lg:border-b-0 lg:border-r">
-          <div className="flex items-center justify-between gap-2">
+
+        {/* =====================================================
+            LEFT SIDE
+        ===================================================== */}
+
+        <div className="border-b border-purple-300/[0.10] p-3 sm:p-5 lg:border-b-0 lg:border-r">
+
+          {/* TITLE + STATUS */}
+
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <div className="flex min-w-0 items-center gap-2 text-sm font-black text-white sm:text-xl">
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(0,245,255,0.9)] sm:h-2.5 sm:w-2.5" />
-                <span className="truncate">
+              <div className="flex min-w-0 items-center gap-2">
+                <span
+                  className="
+                    h-2 w-2 shrink-0 rounded-full
+                    bg-purple-300
+                    shadow-[0_0_10px_rgba(192,132,252,0.80)]
+                    sm:h-2.5 sm:w-2.5
+                  "
+                />
+
+                <span className="truncate text-[13px] font-black text-white sm:text-[21px]">
                   {currentPredictionHunt?.title || "Latest Hunt"}
                 </span>
               </div>
             </div>
 
             <div
-              className={`shrink-0 rounded-full border px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.12em] sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em] ${
-                predictionStatus === "open"
-                  ? "border-cyan-300/30 bg-cyan-400/10 text-cyan-100"
-                  : "border-red-300/25 bg-red-400/10 text-red-200"
-              }`}
+              className={`
+                shrink-0
+                rounded-full border
+                px-2.5 py-1
+                text-[8px] font-black uppercase
+                tracking-[0.10em]
+                sm:px-4
+                sm:py-2
+                sm:text-[11px]
+                ${
+                  predictionStatus === "open"
+                    ? `
+                      border-purple-300/25
+                      bg-purple-400/[0.08]
+                      text-purple-100
+                    `
+                    : `
+                      border-red-300/25
+                      bg-red-400/[0.08]
+                      text-red-200
+                    `
+                }
+              `}
             >
               {predictionStatus === "open" ? "Open" : "Closed"}
             </div>
           </div>
 
-<div className="mt-2 space-y-2 sm:mt-3 sm:space-y-2">
+          {/* ===================================================
+              STATS
+          =================================================== */}
 
-  <div className="grid grid-cols-2 gap-2">
-    <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-      <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/35">
-        Start
-      </div>
+          <div className="mt-3 space-y-2 sm:mt-4 sm:space-y-3">
 
-      <div className="mt-1 text-2xl font-black tracking-tight text-white">
-        {formatMoney(currentPredictionHunt?.startCost || 0)}
-      </div>
-    </div>
+            {/* START / WON */}
 
-    <div className="rounded-xl border border-cyan-400/20 bg-[rgba(0,245,255,0.06)] p-3">
-      <div className="text-[9px] font-black uppercase tracking-[0.14em] text-cyan-100/45">
-        Won
-      </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div
+                className="
+                  rounded-xl
+                  border border-purple-300/[0.10]
+                  bg-black/25
+                  p-2.5
+                  sm:p-4
+                "
+              >
+                <div className="text-[7px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[10px]">
+                  Start
+                </div>
 
-      <div className="mt-1 text-2xl font-black tracking-tight text-cyan-200">
-        {formatMoney(
-          currentPredictionHunt?.stats?.totalWinnings ||
-            currentPredictionHunt?.totalWinnings ||
-            0
-        )}
-      </div>
-    </div>
-  </div>
+                <div className="mt-1 text-[17px] font-black tracking-tight text-white sm:text-[28px]">
+                  {formatMoney(currentPredictionHunt?.startCost || 0)}
+                </div>
+              </div>
 
-  <div className="grid grid-cols-3 gap-2">
-    <div className="rounded-xl border border-white/10 bg-black/30 p-2.5">
-      <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35">
-        Bonuses
-      </div>
+              <div
+                className="
+                  rounded-xl
+                  border border-purple-300/20
+                  bg-purple-400/[0.06]
+                  p-2.5
+                  sm:p-4
+                "
+              >
+                <div className="text-[7px] font-black uppercase tracking-[0.12em] text-purple-200/50 sm:text-[10px]">
+                  Won
+                </div>
 
-      <div className="mt-1 text-lg font-black text-white">
-        {currentPredictionHunt?.bonuses?.length || 0}
-      </div>
-    </div>
+                <div className="mt-1 text-[17px] font-black tracking-tight text-purple-200 sm:text-[28px]">
+                  {formatMoney(
+                    currentPredictionHunt?.stats?.totalWinnings ||
+                      currentPredictionHunt?.totalWinnings ||
+                      0
+                  )}
+                </div>
+              </div>
+            </div>
 
-    <div className="rounded-xl border border-white/10 bg-black/30 p-2.5">
-      <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35">
-        Avg X
-      </div>
+            {/* BONUSES / AVG X / REQ X */}
 
-      <div className="mt-1 text-lg font-black text-white">
-        {currentPredictionHunt?.stats?.currentAverageMultiplier
-          ? `${Number(
-              currentPredictionHunt.stats.currentAverageMultiplier
-            ).toFixed(2)}x`
-          : `${currentPredictionAvgX}x`}
-      </div>
-    </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-purple-300/[0.09] bg-black/25 p-2">
+                <div className="text-[6px] font-black uppercase tracking-[0.10em] text-white/35 sm:text-[9px]">
+                  Bonuses
+                </div>
 
-    <div className="rounded-xl border border-white/10 bg-black/30 p-2.5">
-      <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35">
-        Req X
-      </div>
+                <div className="mt-1 text-[14px] font-black text-white sm:text-[20px]">
+                  {currentPredictionHunt?.bonuses?.length || 0}
+                </div>
+              </div>
 
-      <div className="mt-1 text-lg font-black text-white">
-        {currentPredictionHunt?.stats?.averagePayoutRequired &&
-        currentPredictionHunt?.stats?.averageBetSize
-          ? `${(
-              Number(currentPredictionHunt.stats.averagePayoutRequired) /
-              Number(currentPredictionHunt.stats.averageBetSize)
-            ).toFixed(2)}x`
-          : "---"}
-      </div>
-    </div>
-  </div>
+              <div className="rounded-xl border border-purple-300/[0.09] bg-black/25 p-2">
+                <div className="text-[6px] font-black uppercase tracking-[0.10em] text-white/35 sm:text-[9px]">
+                  Avg X
+                </div>
 
-  <div className="grid grid-cols-2 gap-2">
-    <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-      <div className="text-[8px] font-black uppercase tracking-[0.14em] text-white/35">
-        Highest Win
-      </div>
+                <div className="mt-1 text-[14px] font-black text-white sm:text-[20px]">
+                  {currentPredictionHunt?.stats?.currentAverageMultiplier
+                    ? `${Number(
+                        currentPredictionHunt.stats.currentAverageMultiplier
+                      ).toFixed(2)}x`
+                    : `${currentPredictionAvgX}x`}
+                </div>
+              </div>
 
-      <div className="mt-2">
-        <div className="truncate text-sm font-black text-white">
-          {currentPredictionHunt?.bonuses?.length
-            ? [...currentPredictionHunt.bonuses].sort(
-                (a: any, b: any) =>
-                  Number(b.payout || 0) - Number(a.payout || 0)
-              )[0]?.slotName || "---"
-            : "---"}
+              <div className="rounded-xl border border-purple-300/[0.09] bg-black/25 p-2">
+                <div className="text-[6px] font-black uppercase tracking-[0.10em] text-white/35 sm:text-[9px]">
+                  Req X
+                </div>
+
+                <div className="mt-1 text-[14px] font-black text-white sm:text-[20px]">
+                  {currentPredictionHunt?.stats?.averagePayoutRequired &&
+                  currentPredictionHunt?.stats?.averageBetSize
+                    ? `${(
+                        Number(
+                          currentPredictionHunt.stats.averagePayoutRequired
+                        ) /
+                        Number(currentPredictionHunt.stats.averageBetSize)
+                      ).toFixed(2)}x`
+                    : "---"}
+                </div>
+              </div>
+            </div>
+
+            {/* HIGHEST WIN / HIGHEST X */}
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-xl border border-purple-300/[0.09] bg-black/25 p-2.5 sm:p-4">
+                <div className="text-[6px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[9px]">
+                  Highest Win
+                </div>
+
+                <div className="mt-1.5 sm:mt-2">
+                  <div className="truncate text-[10px] font-black text-white sm:text-[14px]">
+                    {currentPredictionHunt?.bonuses?.length
+                      ? [...currentPredictionHunt.bonuses].sort(
+                          (a: any, b: any) =>
+                            Number(b.payout || 0) - Number(a.payout || 0)
+                        )[0]?.slotName || "---"
+                      : "---"}
+                  </div>
+
+                  <div className="mt-1 text-[14px] font-black text-purple-200 sm:text-[20px]">
+                    {formatMoney(
+                      currentPredictionHunt?.bonuses?.length
+                        ? [...currentPredictionHunt.bonuses].sort(
+                            (a: any, b: any) =>
+                              Number(b.payout || 0) - Number(a.payout || 0)
+                          )[0]?.payout || 0
+                        : 0
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-purple-300/[0.09] bg-black/25 p-2.5 sm:p-4">
+                <div className="text-[6px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[9px]">
+                  Highest X
+                </div>
+
+                <div className="mt-1.5 sm:mt-2">
+                  <div className="truncate text-[10px] font-black text-white sm:text-[14px]">
+                    {currentPredictionHunt?.bonuses?.length
+                      ? [...currentPredictionHunt.bonuses].sort(
+                          (a: any, b: any) =>
+                            Number(b.multiplier || 0) -
+                            Number(a.multiplier || 0)
+                        )[0]?.slotName || "---"
+                      : "---"}
+                  </div>
+
+                  <div className="mt-1 text-[14px] font-black text-purple-200 sm:text-[20px]">
+                    {currentPredictionHunt?.bonuses?.length
+                      ? `${Number(
+                          [...currentPredictionHunt.bonuses].sort(
+                            (a: any, b: any) =>
+                              Number(b.multiplier || 0) -
+                              Number(a.multiplier || 0)
+                          )[0]?.multiplier || 0
+                        ).toFixed(2)}x`
+                      : "---"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-1 text-lg font-black text-cyan-300">
-          {formatMoney(
-            currentPredictionHunt?.bonuses?.length
-              ? [...currentPredictionHunt.bonuses].sort(
-                  (a: any, b: any) =>
-                    Number(b.payout || 0) - Number(a.payout || 0)
-                )[0]?.payout || 0
-              : 0
-          )}
-        </div>
-      </div>
-    </div>
+        {/* =====================================================
+            RIGHT SIDE / PREDICTIONS
+        ===================================================== */}
 
-    <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-      <div className="text-[8px] font-black uppercase tracking-[0.14em] text-white/35">
-        Highest X
-      </div>
+        <div className="p-3 sm:p-5">
 
-      <div className="mt-2">
-        <div className="truncate text-sm font-black text-white">
-          {currentPredictionHunt?.bonuses?.length
-            ? [...currentPredictionHunt.bonuses].sort(
-                (a: any, b: any) =>
-                  Number(b.multiplier || 0) - Number(a.multiplier || 0)
-              )[0]?.slotName || "---"
-            : "---"}
-        </div>
-
-        <div className="mt-1 text-lg font-black text-cyan-300">
-          {currentPredictionHunt?.bonuses?.length
-            ? `${Number(
-                [...currentPredictionHunt.bonuses].sort(
-                  (a: any, b: any) =>
-                    Number(b.multiplier || 0) - Number(a.multiplier || 0)
-                )[0]?.multiplier || 0
-              ).toFixed(2)}x`
-            : "---"}
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-</div>
-
-        {/* RIGHT SIDE */}
-        <div className="p-2.5 sm:p-4">
           <div className="text-center">
-<div className="text-xs font-black uppercase tracking-[0.14em] text-white sm:text-sm">
-  Guess the end balance
-</div>
-            <div className="mt-0.5 text-[10px] text-white/45 sm:mt-2 sm:text-xs">
+            <div className="text-[11px] font-black uppercase tracking-[0.12em] text-white sm:text-[16px]">
+              Guess the end balance
+            </div>
+
+            <div className="mt-1 text-[8px] text-white/45 sm:mt-2 sm:text-[11px]">
               Closest predictions win. One entry per person.
             </div>
 
-            <div className="mt-2 flex flex-wrap justify-center gap-1.5 sm:mt-4 sm:gap-2">
-              <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black text-cyan-100 sm:px-3 sm:py-1 sm:text-[13px]">
-                1st Closest $15
+            <div className="mt-2 flex flex-wrap justify-center gap-1.5 sm:mt-3">
+              <div
+                className="
+                  rounded-full
+                  border border-purple-300/20
+                  bg-purple-400/[0.07]
+                  px-2.5 py-1
+                  text-[8px] font-black
+                  text-purple-100
+                  sm:px-4
+                  sm:py-1.5
+                  sm:text-[11px]
+                "
+              >
+                🥇 1st Closest $15
               </div>
             </div>
           </div>
 
-<div className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-400/5 p-2.5 sm:mt-4 sm:rounded-2xl sm:p-2">
-  {isAdmin && (
-    <div className="mt-2 rounded-xl border border-cyan-300/15 bg-black/40 p-3">
-<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {/* ADMIN */}
 
+          <div
+            className="
+              mt-3
+              rounded-xl
+              border border-purple-300/[0.12]
+              bg-purple-400/[0.035]
+              p-2
+              sm:mt-4
+              sm:p-3
+            "
+          >
+            {isAdmin && (
+              <div className="rounded-xl border border-purple-300/[0.12] bg-black/30 p-2.5 sm:p-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <ActionButton
+                    onClick={handleLockPredictions}
+                    variant="purple"
+                  >
+                    Close
+                  </ActionButton>
 
-<ActionButton onClick={handleLockPredictions} variant="purple">
-  Close
-</ActionButton>
+                  <ActionButton
+                    onClick={handleCompleteHunt}
+                    variant="gold"
+                  >
+                    Complete
+                  </ActionButton>
+                </div>
 
-<ActionButton onClick={handleCompleteHunt} variant="gold">
-  Complete
-</ActionButton>
-      </div>
+                <div className="mt-2 text-center text-[8px] text-white/50 sm:text-[10px]">
+                  {adminMessage}
+                </div>
+              </div>
+            )}
 
-      <div className="mt-2 text-center text-[10px] text-white/55">
-        {adminMessage}
-      </div>
-    </div>
-  )}
-  
-            <div className="grid gap-2 sm:gap-3 md:grid-cols-3">
+            {/* WINNERS */}
+
+            <div className={`${isAdmin ? "mt-2" : ""} grid grid-cols-3 gap-1.5 sm:gap-2`}>
               {rankedWinners.length === 0 ? (
-                <div className="col-span-full py-3 text-center text-[11px] text-white/45 sm:py-4 sm:text-xs">
+                <div className="col-span-full py-3 text-center text-[9px] text-white/40 sm:text-[11px]">
                   Winners will appear when the hunt is completed.
                 </div>
               ) : (
                 rankedWinners.slice(0, 3).map((winner, index) => (
                   <div
                     key={winner.id}
-                    className="rounded-lg border border-white/10 bg-black/35 p-2.5 text-center sm:rounded-xl sm:p-4"
+                    className="
+                      rounded-lg
+                      border border-purple-300/[0.10]
+                      bg-black/25
+                      p-2
+                      text-center
+                      sm:rounded-xl
+                      sm:p-3
+                    "
                   >
-                    <div className="text-[9px] font-black uppercase text-yellow-300 sm:text-xs">
+                    <div className="text-[7px] font-black uppercase text-yellow-300 sm:text-[10px]">
                       {index === 0 ? "1st" : index === 1 ? "2nd" : "3rd"}
                     </div>
-                    <div className="mt-1 text-sm font-black text-white">
+
+                    <div className="mt-1 truncate text-[9px] font-black text-white sm:text-[12px]">
                       {winner.username}
                     </div>
-                    <div className="mt-1 text-base font-black text-cyan-200 sm:text-xl">
+
+                    <div className="mt-1 text-[11px] font-black text-purple-200 sm:text-[16px]">
                       {formatMoney(winner.guess)}
                     </div>
-                    <div className="mt-1 text-[10px] text-white/45 sm:text-xs">
+
+                    <div className="mt-1 text-[7px] text-white/40 sm:text-[9px]">
                       Off by {formatMoney(winner.distance)}
                     </div>
                   </div>
@@ -4323,595 +5499,3085 @@ const rankBadgeStyle = isFirst
             </div>
           </div>
 
-<div className="mt-2 sm:mt-3">
-  {!isTwitchConnected ? (
-    <div className="mx-auto flex max-w-sm gap-2">
-      <button
-        onClick={handleTwitchLogin}
-        className="flex-1 rounded-lg border border-[#9146FF]/40 bg-[#9146FF]/25 px-3 py-2 text-[11px] font-black text-white transition hover:bg-[#9146FF]/35 sm:text-xs"
-      >
-        Twitch
-      </button>
-      <button
-        onClick={handleKickLogin}
-        className="flex-1 rounded-lg border border-[#53FC18]/40 bg-[#53FC18]/15 px-3 py-2 text-[11px] font-black text-[#baff9f] transition hover:bg-[#53FC18]/25 sm:text-xs"
-      >
-        Kick
-      </button>
-    </div>
-  ) : (
-    <div className="mx-auto max-w-md">
-      <input
-        value={predictionInput}
-        onChange={(e) =>
-          setPredictionInput(e.target.value.replace(/[^0-9]/g, ""))
-        }
-        placeholder="Enter your end balance prediction"
-        disabled={predictionStatus !== "open"}
-        className="w-full rounded-lg border border-white/10 bg-black/55 px-3 py-2 text-center text-xs text-white outline-none transition focus:border-cyan-300/40 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm"
-      />
+          {/* LOGIN / PREDICTION ENTRY */}
 
-      <button
-        onClick={handlePredictionSubmit}
-        disabled={predictionStatus !== "open"}
-        className="mt-2 w-full rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-cyan-100 transition hover:bg-cyan-400/20 disabled:opacity-40 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-xs"
-      >
-        Save Prediction
-      </button>
+          <div className="mt-3">
+            {!isTwitchConnected ? (
+              <div className="mx-auto flex max-w-md gap-2">
+                <button
+                  onClick={handleTwitchLogin}
+                  className="
+                    flex-1
+                    rounded-lg
+                    border border-[#9146FF]/40
+                    bg-[#9146FF]/20
+                    px-3 py-2
+                    text-[9px] font-black
+                    text-white
+                    transition
+                    hover:bg-[#9146FF]/30
+                    sm:text-[11px]
+                  "
+                >
+                  Twitch
+                </button>
 
-      {predictionMessage && (
-        <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-2.5 text-center text-xs text-white/70 sm:mt-3 sm:rounded-xl sm:p-3 sm:text-sm">
-          {predictionMessage}
+                <button
+                  onClick={handleKickLogin}
+                  className="
+                    flex-1
+                    rounded-lg
+                    border border-[#53FC18]/40
+                    bg-[#53FC18]/12
+                    px-3 py-2
+                    text-[9px] font-black
+                    text-[#baff9f]
+                    transition
+                    hover:bg-[#53FC18]/20
+                    sm:text-[11px]
+                  "
+                >
+                  Kick
+                </button>
+              </div>
+            ) : (
+              <div className="mx-auto max-w-md">
+                <input
+                  value={predictionInput}
+                  onChange={(e) =>
+                    setPredictionInput(
+                      e.target.value.replace(/[^0-9]/g, "")
+                    )
+                  }
+                  placeholder="Enter your end balance prediction"
+                  disabled={predictionStatus !== "open"}
+                  className="
+                    w-full
+                    rounded-lg
+                    border border-purple-300/[0.12]
+                    bg-black/40
+                    px-3 py-2
+                    text-center
+                    text-[9px]
+                    text-white
+                    outline-none
+                    transition
+                    placeholder:text-white/25
+                    focus:border-purple-300/35
+                    disabled:opacity-40
+                    sm:rounded-xl
+                    sm:px-4
+                    sm:py-2.5
+                    sm:text-[12px]
+                  "
+                />
+
+                <button
+                  onClick={handlePredictionSubmit}
+                  disabled={predictionStatus !== "open"}
+                  className="
+                    mt-2
+                    w-full
+                    rounded-lg
+                    border border-purple-300/30
+                    bg-purple-400/[0.10]
+                    px-3 py-2
+                    text-[8px] font-black uppercase
+                    tracking-[0.10em]
+                    text-purple-100
+                    transition
+                    hover:bg-purple-400/[0.18]
+                    disabled:opacity-40
+                    sm:rounded-xl
+                    sm:px-4
+                    sm:py-2.5
+                    sm:text-[11px]
+                  "
+                >
+                  Save Prediction
+                </button>
+
+                {predictionMessage && (
+                  <div
+                    className="
+                      mt-2
+                      rounded-lg
+                      border border-purple-300/[0.10]
+                      bg-white/[0.035]
+                      p-2
+                      text-center
+                      text-[8px]
+                      text-white/65
+                      sm:mt-3
+                      sm:rounded-xl
+                      sm:p-3
+                      sm:text-[11px]
+                    "
+                  >
+                    {predictionMessage}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      )}
-    </div>
-  )}
-</div>
-</div>
-</div>
+      </div>
 
-<div className="border-t border-white/10 p-2.5 sm:p-4">
-  <div className="mb-2 flex items-center justify-between">
-    <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-200 sm:text-xs">
-      Live Guesses
+{/* =========================================================
+    LIVE GUESSES
+========================================================= */}
+
+<style>{`
+  @keyframes predictionWheelIdleScroll {
+    from {
+      transform: translateY(0);
+    }
+
+    to {
+      transform: translateY(-${
+        sortedPredictionsForTab.length * 44
+      }px);
+    }
+  }
+`}</style>
+
+<div className="border-t border-purple-300/[0.10] p-3 sm:p-4">
+  <div className="mb-2 flex items-center justify-between gap-3">
+    <div className="text-[9px] font-black uppercase tracking-[0.16em] text-purple-200 sm:text-[12px]">
+      🎯 Live Guesses
     </div>
 
-    <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[9px] font-black text-cyan-100 sm:text-xs">
+    <div
+      className="
+        rounded-full
+        border border-purple-300/20
+        bg-purple-400/[0.07]
+        px-2 py-0.5
+        text-[8px] font-black
+        text-purple-100
+        sm:px-3
+        sm:py-1
+        sm:text-[10px]
+      "
+    >
       {currentPredictionCount} Entries
     </div>
   </div>
 
-<div className="h-[230px] overflow-hidden rounded-xl border border-white/10 bg-black/65 p-2">
-  {sortedPredictionsForTab.length === 0 ? (
-    <div className="flex h-full items-center justify-center text-xs text-white/40">
-      No guesses yet.
-    </div>
-  ) : (
-    <div className="animate-prediction-marquee">
-      {[...sortedPredictionsForTab, ...sortedPredictionsForTab].map(
-        (entry, index) => (
-          <div
-            key={`${entry.id}-${index}`}
-            className="flex items-center justify-between rounded-lg border border-white/10 bg-black/40 px-3 py-2"
-          >
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="w-7 text-[10px] font-black text-cyan-300">
-                #{(index % sortedPredictionsForTab.length) + 1}
-              </div>
+  {/* VIEWER-WHEEL STYLE SCROLLER */}
+  <div
+    className="
+      relative
+      h-[220px]
+      overflow-hidden
+      rounded-xl
+      border border-purple-300/20
+      bg-black/70
+      shadow-[inset_0_0_30px_rgba(168,85,247,0.07),0_0_20px_rgba(168,85,247,0.05)]
+    "
+  >
+    {/* TOP FADE */}
+    <div
+      className="
+        pointer-events-none
+        absolute inset-x-0 top-0 z-20
+        h-16
+        bg-gradient-to-b
+        from-black
+        via-black/85
+        to-transparent
+      "
+    />
 
-              <div className="min-w-0">
-                <div className="truncate text-[13px] font-black text-white">
-                  {entry.username}
-                </div>
-                <div className="text-[9px] text-white/35">
-                  {formatTimeAgo(entry.createdAt)}
-                </div>
-              </div>
-            </div>
+    {/* BOTTOM FADE */}
+    <div
+      className="
+        pointer-events-none
+        absolute inset-x-0 bottom-0 z-20
+        h-16
+        bg-gradient-to-t
+        from-black
+        via-black/85
+        to-transparent
+      "
+    />
 
-            <div className="rounded-lg border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[13px] font-black text-cyan-200">
-              {formatMoney(entry.guess)}
-            </div>
-          </div>
-        )
-      )}
-    </div>
-  )}
-</div>
-</div>
+    {/* CENTER SELECTOR */}
+    <div
+      className="
+        pointer-events-none
+        absolute inset-x-2 top-1/2 z-30
+        h-11
+        -translate-y-1/2
+        rounded-lg
+        border border-purple-300/45
+        bg-purple-400/[0.10]
+        shadow-[0_0_24px_rgba(168,85,247,0.16)]
+      "
+    />
 
-{/* BONUS LIST */}
-<div className="border-t border-white/10 p-2.5 sm:p-4">
-  <div className="mb-2 flex items-center justify-between">
-    <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-200 sm:text-xs">
-      Slots in this Hunt
-    </div>
+    {/* LEFT ARROW */}
+    <div
+      className="
+        pointer-events-none
+        absolute left-0 top-1/2 z-40
+        -translate-y-1/2
+        border-y-[8px]
+        border-l-[12px]
+        border-y-transparent
+        border-l-purple-300
+      "
+    />
 
-    <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[9px] font-black text-cyan-100 sm:text-xs">
-      {currentPredictionHunt?.bonuses?.length || 0} Slots
-    </div>
-  </div>
+    {/* RIGHT ARROW */}
+    <div
+      className="
+        pointer-events-none
+        absolute right-0 top-1/2 z-40
+        -translate-y-1/2
+        border-y-[8px]
+        border-r-[12px]
+        border-y-transparent
+        border-r-purple-300
+      "
+    />
 
-  <div className="max-h-[360px] overflow-y-auto rounded-xl border border-white/10 bg-black/45 sm:max-h-[480px]">
-    {!currentPredictionHunt?.bonuses?.length ? (
-      <div className="flex h-[90px] items-center justify-center text-xs text-white/40">
-        No bonuses in this hunt yet.
+    {sortedPredictionsForTab.length === 0 ? (
+      <div className="flex h-full items-center justify-center text-[9px] font-semibold text-white/35 sm:text-[11px]">
+        No guesses yet.
       </div>
     ) : (
-<div className="space-y-2">
-  {currentPredictionHunt.bonuses.map((bonus: any, index: number) => (
-    <div
-      key={bonus.id || index}
-      className="rounded-xl border border-white/10 bg-black/35 px-3 py-2"
-    >
-      <div className="flex items-center gap-2">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-cyan-300/25 bg-cyan-400/10 text-[11px] font-black text-cyan-200">
-          {index + 1}
-        </div>
+      <div
+        style={{
+animation: `predictionWheelIdleScroll ${Math.max(
+  sortedPredictionsForTab.length * 1.2,
+  3
+)}s linear infinite`,
+          willChange: "transform",
+        }}
+      >
+        {Array.from({ length: 12 }, () => sortedPredictionsForTab)
+          .flat()
+          .map((entry, index) => {
+            const predictionIndex =
+              index % sortedPredictionsForTab.length;
 
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[13px] font-black text-white sm:text-sm">
-            {bonus.slotName}
-          </div>
+            return (
+              <div
+                key={`prediction-idle-${entry.id}-${index}`}
+                className="
+                  grid
+                  h-[44px]
+                  grid-cols-[auto_minmax(0,1fr)_auto]
+                  items-center
+                  gap-3
+                  border-b border-white/[0.05]
+                  px-3
+                "
+              >
+                {/* RANK */}
+                <div className="w-7 text-[8px] font-black text-purple-300/70 sm:text-[10px]">
+                  #{predictionIndex + 1}
+                </div>
 
-          <div className="mt-1 flex items-center justify-between gap-2 text-[11px] font-bold sm:text-xs">
-            <span className="text-white/60">
-              Bet{" "}
-              <span className="text-white">
-                {formatMoney(Number(bonus.betSize || 0))}
-              </span>
-            </span>
+                {/* VIEWER */}
+                <div className="min-w-0">
+                  <div className="truncate text-[10px] font-black text-white sm:text-[12px]">
+                    {entry.username}
+                  </div>
 
-            <span className="text-white/80">
-              {Number(bonus.multiplier || 0).toFixed(2)}x
-            </span>
+                  <div className="text-[7px] text-white/30 sm:text-[9px]">
+                    {formatTimeAgo(entry.createdAt)}
+                  </div>
+                </div>
 
-            <span className="text-cyan-300">
-              {formatMoney(Number(bonus.payout || 0))}
-            </span>
-          </div>
-        </div>
+                {/* GUESS */}
+                <div
+                  className="
+                    whitespace-nowrap
+                    rounded-lg
+                    border border-purple-300/15
+                    bg-purple-400/[0.06]
+                    px-2.5 py-1
+                    text-[10px]
+                    font-black
+                    text-purple-200
+                    sm:text-[12px]
+                  "
+                >
+                  {formatMoney(entry.guess)}
+                </div>
+              </div>
+            );
+          })}
       </div>
-    </div>
-  ))}
-</div>
     )}
   </div>
 </div>
+
+      {/* =========================================================
+          BONUS LIST
+      ========================================================= */}
+
+      <div className="border-t border-purple-300/[0.10] p-3 sm:p-4">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <div className="text-[9px] font-black uppercase tracking-[0.16em] text-purple-200 sm:text-[12px]">
+            🎰 Slots in this Hunt
+          </div>
+
+          <div
+            className="
+              rounded-full
+              border border-purple-300/20
+              bg-purple-400/[0.07]
+              px-2 py-0.5
+              text-[8px] font-black
+              text-purple-100
+              sm:px-3
+              sm:py-1
+              sm:text-[10px]
+            "
+          >
+            {currentPredictionHunt?.bonuses?.length || 0} Slots
+          </div>
+        </div>
+
+        <div
+          className="
+            max-h-[340px]
+            overflow-y-auto
+            rounded-xl
+            border border-purple-300/[0.10]
+            bg-black/25
+            sm:max-h-[480px]
+          "
+        >
+          {!currentPredictionHunt?.bonuses?.length ? (
+            <div className="flex h-[90px] items-center justify-center text-[9px] text-white/40 sm:text-[11px]">
+              No bonuses in this hunt yet.
+            </div>
+          ) : (
+            <div className="space-y-1.5 p-1.5 sm:space-y-2 sm:p-2">
+              {currentPredictionHunt.bonuses.map(
+                (bonus: any, index: number) => (
+                  <div
+                    key={bonus.id || index}
+                    className="
+                      rounded-xl
+                      border border-purple-300/[0.08]
+                      bg-black/25
+                      px-2.5 py-2
+                      transition
+                      hover:border-purple-300/18
+                      hover:bg-purple-400/[0.04]
+                      sm:px-3
+                      sm:py-2.5
+                    "
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="
+                          flex h-7 w-7 shrink-0
+                          items-center justify-center
+                          rounded-lg
+                          border border-purple-300/20
+                          bg-purple-400/[0.08]
+                          text-[9px] font-black
+                          text-purple-200
+                          sm:h-8
+                          sm:w-8
+                          sm:text-[11px]
+                        "
+                      >
+                        {index + 1}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[10px] font-black text-white sm:text-[13px]">
+                          {bonus.slotName}
+                        </div>
+
+                        <div className="mt-1 flex items-center justify-between gap-2 text-[8px] font-bold sm:text-[10px]">
+                          <span className="text-white/55">
+                            Bet{" "}
+                            <span className="text-white">
+                              {formatMoney(Number(bonus.betSize || 0))}
+                            </span>
+                          </span>
+
+                          <span className="text-white/75">
+                            {Number(bonus.multiplier || 0).toFixed(2)}x
+                          </span>
+
+                          <span className="text-purple-200">
+                            {formatMoney(Number(bonus.payout || 0))}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+)}
+
+{activeSection === "slotwheel" && (
+  <section className="space-y-3 sm:space-y-5">
+    {/* TITLE */}
+    <div className="mx-auto max-w-5xl text-center">
+      <GlowTabTitle label="SLOT CALL OF THE DAY" />
+    </div>
+
+    {/* IDLE SCROLL ANIMATION */}
+    <style>{`
+      @keyframes viewerWheelIdleScroll {
+        from {
+          transform: translateY(0);
+        }
+
+        to {
+          transform: translateY(-${slotCalls.length * SLOT_WHEEL_ITEM_HEIGHT}px);
+        }
+      }
+    `}</style>
+
+    {/* =========================================================
+        MAIN VIEWER WHEEL
+    ========================================================= */}
+
+    <div
+      className="
+        mx-auto max-w-5xl
+        rounded-2xl
+        border border-purple-300/20
+        bg-[linear-gradient(180deg,rgba(13,5,20,0.76),rgba(4,2,8,0.66))]
+        p-3
+        shadow-[0_18px_55px_rgba(0,0,0,0.28),0_0_30px_rgba(168,85,247,0.07)]
+        backdrop-blur-[9px]
+        sm:rounded-3xl
+        sm:p-5
+      "
+    >
+      {/* HEADER */}
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[8px] font-black uppercase tracking-[0.20em] text-purple-200/50 sm:text-[11px]">
+            Live Viewer Wheel
+          </div>
+
+          <div className="mt-0.5 text-[13px] font-black text-white sm:mt-1 sm:text-[19px]">
+            Slot Calls
+          </div>
+        </div>
+
+        <div
+          className="
+            rounded-full
+            border border-purple-300/20
+            bg-purple-400/[0.08]
+            px-2.5 py-1
+            text-[8px] font-black
+            text-purple-100
+            sm:px-4
+            sm:py-1.5
+            sm:text-[11px]
+          "
+        >
+          {slotCalls.length} entries
+        </div>
+      </div>
+
+      {/* =========================================================
+          WHEEL
+      ========================================================= */}
+
+      <div
+        className="
+          relative
+          mx-auto mt-3
+          overflow-hidden
+          rounded-xl
+          border border-purple-300/25
+          bg-black/75
+          shadow-[inset_0_0_30px_rgba(168,85,247,0.07),0_0_24px_rgba(168,85,247,0.07)]
+        "
+        style={{
+          height: `${SLOT_WHEEL_VIEWPORT_HEIGHT}px`,
+        }}
+      >
+        {/* TOP FADE */}
+        <div
+          className="
+            pointer-events-none
+            absolute inset-x-0 top-0 z-20
+            h-16
+            bg-gradient-to-b
+            from-black
+            via-black/85
+            to-transparent
+          "
+        />
+
+        {/* BOTTOM FADE */}
+        <div
+          className="
+            pointer-events-none
+            absolute inset-x-0 bottom-0 z-20
+            h-16
+            bg-gradient-to-t
+            from-black
+            via-black/85
+            to-transparent
+          "
+        />
+
+        {/* CENTER SELECTOR */}
+        <div
+          className="
+            pointer-events-none
+            absolute inset-x-2 top-1/2 z-30
+            h-11
+            -translate-y-1/2
+            rounded-lg
+            border border-purple-300/45
+            bg-purple-400/[0.10]
+            shadow-[0_0_26px_rgba(168,85,247,0.16)]
+          "
+        />
+
+        {/* LEFT ARROW */}
+        <div
+          className="
+            pointer-events-none
+            absolute left-0 top-1/2 z-40
+            -translate-y-1/2
+            border-y-[8px]
+            border-l-[12px]
+            border-y-transparent
+            border-l-purple-300
+          "
+        />
+
+        {/* RIGHT ARROW */}
+        <div
+          className="
+            pointer-events-none
+            absolute right-0 top-1/2 z-40
+            -translate-y-1/2
+            border-y-[8px]
+            border-r-[12px]
+            border-y-transparent
+            border-r-purple-300
+          "
+        />
+
+        {/* =====================================================
+            WHEEL CONTENT
+        ===================================================== */}
+
+        {slotCalls.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-[10px] font-semibold text-white/35 sm:text-sm">
+            No entries yet
+          </div>
+        ) : isSlotWheelSpinning ? (
+          /* ACTUAL SPIN */
+          <div
+            className="transition-transform duration-[4200ms] ease-[cubic-bezier(0.12,0.72,0.08,1)]"
+            style={{
+              transform: `translateY(-${slotWheelRotation}px)`,
+            }}
+          >
+            {slotWheelLoop.map((call, index) => (
+              <div
+                key={`spin-${call.id || call.username}-${call.slotName}-${index}`}
+                className="
+                  grid
+                  grid-cols-[minmax(0,1fr)_minmax(0,1fr)]
+                  items-center
+                  gap-3
+                  border-b border-white/[0.05]
+                  px-3
+                "
+                style={{
+                  height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
+                }}
+              >
+                <div className="truncate text-[10px] font-black text-white sm:text-[12px]">
+                  {call.username}
+                </div>
+
+                <div className="truncate text-right text-[10px] font-black text-purple-200 sm:text-[12px]">
+                  {call.slotName}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : pickedSlotCall ? (
+          /* LOCKED WINNER */
+          <div>
+            {slotWheelRestingRows.map(
+              ({ call, isCenter, rowKey }) => (
+                <div
+                  key={rowKey}
+                  className={`
+                    grid
+                    grid-cols-[minmax(0,1fr)_minmax(0,1fr)]
+                    items-center
+                    gap-3
+                    border-b border-white/[0.05]
+                    px-3
+                    ${
+                      isCenter
+                        ? `
+                          bg-purple-400/[0.10]
+                          opacity-100
+                        `
+                        : `
+                          opacity-45
+                        `
+                    }
+                  `}
+                  style={{
+                    height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
+                  }}
+                >
+                  <div className="truncate text-[10px] font-black text-white sm:text-[12px]">
+                    {call.username}
+                  </div>
+
+                  <div className="truncate text-right text-[10px] font-black text-purple-200 sm:text-[12px]">
+                    {call.slotName}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        ) : (
+          /* SLOW CONTINUOUS IDLE SCROLL */
+          <div
+            style={{
+              animation: `viewerWheelIdleScroll ${Math.max(
+                slotCalls.length * 2.5,
+                8
+              )}s linear infinite`,
+              willChange: "transform",
+            }}
+          >
+            {slotWheelLoop.map((call, index) => (
+              <div
+                key={`idle-main-${call.id || call.username}-${call.slotName}-${index}`}
+                className="
+                  grid
+                  grid-cols-[minmax(0,1fr)_minmax(0,1fr)]
+                  items-center
+                  gap-3
+                  border-b border-white/[0.05]
+                  px-3
+                "
+                style={{
+                  height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
+                }}
+              >
+                <div className="truncate text-[10px] font-black text-white sm:text-[12px]">
+                  {call.username}
+                </div>
+
+                <div className="truncate text-right text-[10px] font-black text-purple-200 sm:text-[12px]">
+                  {call.slotName}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* =========================================================
+          TOP WINNER
+      ========================================================= */}
+
+      <div
+        className="
+          mx-auto mt-3 max-w-5xl
+          overflow-hidden
+          rounded-xl
+          border border-yellow-300/25
+          bg-[linear-gradient(135deg,rgba(120,85,0,0.24),rgba(8,4,12,0.72))]
+          p-2.5
+          shadow-[0_0_24px_rgba(250,204,21,0.07)]
+          backdrop-blur-md
+          sm:mt-4
+          sm:rounded-2xl
+          sm:p-4
+        "
+      >
+        {topSlotCallWinner ? (
+          <div className="grid grid-cols-[auto_minmax(0,0.8fr)_minmax(0,1fr)_auto] items-center gap-2 sm:gap-4">
+            <div className="text-[16px] sm:text-2xl">
+              👑
+            </div>
+
+            <div className="min-w-0">
+              <div className="text-[7px] font-black uppercase tracking-[0.16em] text-yellow-200/55 sm:text-[10px]">
+                Top Winner
+              </div>
+
+              <div className="truncate text-[10px] font-black text-white sm:text-sm">
+                {topSlotCallWinner.username}
+              </div>
+            </div>
+
+            <div className="min-w-0 truncate text-right text-[8px] text-white/50 sm:text-xs">
+              {topSlotCallWinner.slotName}
+            </div>
+
+            <div className="whitespace-nowrap text-right text-[10px] font-black text-yellow-300 sm:text-base">
+              $
+              {topSlotCallWinner.payout.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="py-2 text-center text-[9px] text-white/35 sm:text-xs">
+            No top winner yet.
+          </div>
+        )}
+      </div>
+
+      {/* STATUS */}
+      <div className="mt-3 flex items-center justify-center gap-4 text-[8px] font-black uppercase tracking-[0.14em] sm:text-[11px]">
+        <div className="text-white/40">
+          Entries{" "}
+          <span
+            className="
+              ml-1
+              rounded-full
+              border border-purple-300/20
+              bg-purple-400/[0.08]
+              px-2 py-1
+              text-purple-100
+            "
+          >
+            {slotCalls.length}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-emerald-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_7px_rgba(110,231,183,1)]" />
+          Live
+        </div>
+      </div>
+    </div>
+
+    {/* =========================================================
+        ENTRIES
+    ========================================================= */}
+
+    <div
+      className="
+        mx-auto max-w-5xl
+        overflow-hidden
+        rounded-2xl
+        border border-purple-300/15
+        bg-[linear-gradient(180deg,rgba(10,4,16,0.68),rgba(3,1,6,0.58))]
+        shadow-[0_14px_40px_rgba(0,0,0,0.22),0_0_24px_rgba(168,85,247,0.05)]
+        backdrop-blur-[8px]
+      "
+    >
+      <div className="flex items-center justify-between border-b border-purple-300/[0.08] px-3 py-2.5 sm:px-4 sm:py-3">
+        <div className="text-[11px] font-black uppercase tracking-[0.12em] text-white sm:text-[15px]">
+          Entries
+        </div>
+
+        <div
+          className="
+            rounded-full
+            border border-purple-300/20
+            bg-purple-400/[0.08]
+            px-2.5 py-1
+            text-[8px] font-black
+            text-purple-100
+            sm:text-[11px]
+          "
+        >
+          {slotCalls.length}
+        </div>
+      </div>
+
+      <div className="max-h-[360px] overflow-y-auto p-2 sm:p-3">
+        {slotCalls.length === 0 ? (
+          <div className="py-6 text-center text-[9px] text-white/35 sm:text-sm">
+            No entries yet.
+          </div>
+        ) : (
+          <div className="grid gap-1">
+            {slotCalls.map((call, index) => (
+              <div
+                key={`${call.id}-${index}`}
+                className="
+                  grid
+                  grid-cols-[28px_minmax(0,0.9fr)_minmax(0,1.1fr)]
+                  items-center
+                  gap-2
+                  rounded-lg
+                  border border-purple-300/[0.07]
+                  bg-black/20
+                  px-2.5 py-2
+                  transition
+                  hover:border-purple-300/15
+                  hover:bg-purple-400/[0.035]
+                  sm:grid-cols-[40px_minmax(0,1fr)_minmax(0,1.3fr)]
+                  sm:px-3
+                "
+              >
+                <div className="truncate text-[8px] font-black text-purple-300/55 sm:text-[10px]">
+                  {index + 1}.
+                </div>
+
+                <div className="truncate text-[10px] font-black text-white sm:text-xs">
+                  {call.username}
+                </div>
+
+                <div className="truncate text-right text-[9px] text-white/50 sm:text-xs">
+                  {call.slotName}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+
+    {/* =========================================================
+        ROLLED / PAYOUT
+    ========================================================= */}
+
+    <div
+      className="
+        mx-auto max-w-5xl
+        overflow-hidden
+        rounded-2xl
+        border border-purple-300/15
+        bg-[linear-gradient(180deg,rgba(10,4,16,0.68),rgba(3,1,6,0.58))]
+        shadow-[0_14px_40px_rgba(0,0,0,0.22),0_0_24px_rgba(168,85,247,0.05)]
+        backdrop-blur-[8px]
+      "
+    >
+      <div className="flex items-center justify-between border-b border-purple-300/[0.08] px-3 py-2.5 sm:px-4 sm:py-3">
+        <div className="text-[11px] font-black uppercase tracking-[0.12em] text-white sm:text-[15px]">
+          Rolled / Payout
+        </div>
+
+        <div
+          className="
+            rounded-full
+            border border-purple-300/20
+            bg-purple-400/[0.08]
+            px-2.5 py-1
+            text-[8px] font-black
+            text-purple-100
+            sm:text-[11px]
+          "
+        >
+          {slotCallResults.length}
+        </div>
+      </div>
+
+      <div className="max-h-[360px] overflow-y-auto p-2 sm:p-3">
+        {slotCallResults.length === 0 ? (
+          <div className="py-6 text-center text-[9px] text-white/35 sm:text-sm">
+            No rolled slots yet.
+          </div>
+        ) : (
+          <div className="grid gap-1">
+            {slotCallResults.map((result, index) => (
+              <div
+                key={`${result.id}-${index}`}
+                className="
+                  grid
+                  grid-cols-[24px_minmax(0,0.75fr)_minmax(0,1fr)_70px]
+                  items-center
+                  gap-2
+                  rounded-lg
+                  border border-purple-300/[0.07]
+                  bg-black/20
+                  px-2 py-2
+                  transition
+                  hover:border-purple-300/15
+                  hover:bg-purple-400/[0.035]
+                  sm:grid-cols-[40px_minmax(0,0.9fr)_minmax(0,1.3fr)_100px]
+                  sm:px-3
+                "
+              >
+                <div className="truncate text-[8px] font-black text-purple-300/55 sm:text-[10px]">
+                  {index + 1}.
+                </div>
+
+                <div className="truncate text-[9px] font-black text-white sm:text-xs">
+                  {result.username}
+                </div>
+
+                <div className="truncate text-[9px] text-white/50 sm:text-xs">
+                  {result.slotName}
+                </div>
+
+                <div className="truncate text-right text-[9px] font-black text-emerald-300 sm:text-xs">
+                  $
+                  {result.payout.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+)}
+
+{activeSection === "tournaments" && (
+  <section className="space-y-3 sm:space-y-4">
+    {/* =========================================================
+        TITLE
+    ========================================================= */}
+
+    <div className="mx-auto max-w-7xl text-center">
+      <GlowTabTitle label="TOURNAMENTS" />
+    </div>
+
+    {/* =========================================================
+        SHARED TOURNAMENT CARD
+        BRACKET + SNAKE USE THE SAME EXACT SHELL
+    ========================================================= */}
+
+    <div
+      className="
+        mx-auto max-w-7xl
+        overflow-hidden
+        rounded-2xl
+        border border-purple-300/20
+        bg-[linear-gradient(180deg,rgba(13,5,20,0.74),rgba(4,2,8,0.62))]
+        shadow-[0_18px_55px_rgba(0,0,0,0.28),0_0_28px_rgba(168,85,247,0.06)]
+        backdrop-blur-[9px]
+        sm:rounded-3xl
+      "
+    >
+      {/* =====================================================
+          SHARED HEADER
+      ===================================================== */}
+
+      <div
+        className="
+          border-b border-purple-300/[0.09]
+          px-4 py-3
+          sm:px-6
+          sm:py-4
+        "
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[9px] font-black uppercase tracking-[0.18em] text-purple-200/45 sm:text-[11px]">
+              {tournamentView === "bracket"
+                ? "Live Tournament"
+                : "Team Tournament"}
+            </div>
+
+            <div className="mt-0.5 truncate text-[15px] font-black text-white sm:text-[21px]">
+              {tournamentView === "bracket"
+                ? bracket.title || "Tournament Bracket"
+                : "Snake Draft"}
+            </div>
+          </div>
+
+          <div
+            className="
+              shrink-0
+              rounded-full
+              border border-purple-300/20
+              bg-purple-400/[0.08]
+              px-3 py-1
+              text-[8px] font-black uppercase
+              tracking-[0.10em]
+              text-purple-100
+              sm:px-4
+              sm:py-1.5
+              sm:text-[10px]
+            "
+          >
+            {tournamentView === "bracket"
+              ? "Live Bracket"
+              : "Team Slot Draft"}
+          </div>
+        </div>
+
+        {/* VIEW SWITCHER */}
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setTournamentView("bracket")}
+            className={`
+              rounded-lg
+              border
+              px-3 py-2
+              text-[9px]
+              font-black
+              uppercase
+              tracking-[0.12em]
+              transition
+              sm:rounded-xl
+              sm:py-2.5
+              sm:text-[11px]
+              ${
+                tournamentView === "bracket"
+                  ? `
+                    border-purple-300/35
+                    bg-purple-400/[0.12]
+                    text-purple-100
+                    shadow-[0_0_16px_rgba(168,85,247,0.08)]
+                  `
+                  : `
+                    border-purple-300/[0.08]
+                    bg-black/25
+                    text-white/40
+                    hover:border-purple-300/18
+                    hover:text-white
+                  `
+              }
+            `}
+          >
+            Bracket
+          </button>
+
+          <button
+            onClick={() => setTournamentView("snake")}
+            className={`
+              rounded-lg
+              border
+              px-3 py-2
+              text-[9px]
+              font-black
+              uppercase
+              tracking-[0.12em]
+              transition
+              sm:rounded-xl
+              sm:py-2.5
+              sm:text-[11px]
+              ${
+                tournamentView === "snake"
+                  ? `
+                    border-purple-300/35
+                    bg-purple-400/[0.12]
+                    text-purple-100
+                    shadow-[0_0_16px_rgba(168,85,247,0.08)]
+                  `
+                  : `
+                    border-purple-300/[0.08]
+                    bg-black/25
+                    text-white/40
+                    hover:border-purple-300/18
+                    hover:text-white
+                  `
+              }
+            `}
+          >
+            Snake Draft
+          </button>
+        </div>
+      </div>
+
+      {/* =========================================================
+          SHARED CONTENT AREA
+      ========================================================= */}
+
+      <div className="p-3 sm:p-5">
+        {/* =====================================================
+            BRACKET VIEW
+        ===================================================== */}
+
+        {tournamentView === "bracket" && (
+          <>
+            {bracketLoading ? (
+              <div className="flex min-h-[360px] items-center justify-center text-[11px] text-white/45 sm:text-sm">
+                Loading bracket...
+              </div>
+            ) : (
+              <div
+                className="
+                  cursor-grab
+                  overflow-x-auto
+                  overflow-y-hidden
+                  active:cursor-grabbing
+                "
+                onMouseDown={(e) => {
+                  const slider = e.currentTarget;
+                  const startX = e.pageX - slider.offsetLeft;
+                  const scrollLeft = slider.scrollLeft;
+
+                  const onMouseMove = (moveEvent: MouseEvent) => {
+                    const x = moveEvent.pageX - slider.offsetLeft;
+                    const walk = (x - startX) * 1.4;
+
+                    slider.scrollLeft = scrollLeft - walk;
+                  };
+
+                  const onMouseUp = () => {
+                    document.removeEventListener(
+                      "mousemove",
+                      onMouseMove
+                    );
+
+                    document.removeEventListener(
+                      "mouseup",
+                      onMouseUp
+                    );
+                  };
+
+                  document.addEventListener(
+                    "mousemove",
+                    onMouseMove
+                  );
+
+                  document.addEventListener(
+                    "mouseup",
+                    onMouseUp
+                  );
+                }}
+              >
+                <div
+                  className="
+                    flex
+                    min-w-[850px]
+                    items-start
+                    gap-3
+                    pb-2
+                    sm:min-w-[1180px]
+                    sm:gap-4
+                  "
+                >
+                  {bracket.rounds.map((round, roundIndex) => {
+                    const topPadding =
+                      roundIndex === 0
+                        ? "pt-0"
+                        : roundIndex === 1
+                        ? "pt-6"
+                        : roundIndex === 2
+                        ? "pt-12"
+                        : "pt-16";
+
+                    return (
+                      <div
+                        key={round.id}
+                        className={`
+                          w-[210px]
+                          shrink-0
+                          sm:w-[285px]
+                          ${topPadding}
+                        `}
+                      >
+                        {/* ROUND NAME */}
+
+                        <div className="mb-2.5 text-center">
+                          <div
+                            className="
+                              inline-flex
+                              max-w-full
+                              rounded-full
+                              border border-purple-300/20
+                              bg-purple-400/[0.08]
+                              px-3 py-1.5
+                              text-[9px]
+                              font-black
+                              uppercase
+                              tracking-[0.12em]
+                              text-purple-200
+                              sm:text-[11px]
+                            "
+                          >
+                            <span className="truncate">
+                              {round.name}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* MATCHES */}
+
+                        <div
+                          className={`space-y-2 ${
+                            roundIndex === 0
+                              ? ""
+                              : roundIndex === 1
+                              ? "pt-3"
+                              : roundIndex === 2
+                              ? "pt-6"
+                              : "pt-9"
+                          }`}
+                        >
+                          {round.matches.map((match) => {
+                            const isWinner1 =
+                              match.winner &&
+                              match.winner === match.player1;
+
+                            const isWinner2 =
+                              match.winner &&
+                              match.winner === match.player2;
+
+                            return (
+                              <div
+                                key={match.id}
+                                className="
+                                  rounded-xl
+                                  border border-purple-300/[0.10]
+                                  bg-black/30
+                                  p-2
+                                  shadow-[0_6px_18px_rgba(0,0,0,0.15)]
+                                  sm:p-2.5
+                                "
+                              >
+                                {/* PLAYER 1 */}
+
+                                <div
+                                  className={`
+                                    rounded-lg
+                                    border
+                                    px-3 py-2.5
+                                    text-[11px]
+                                    font-black
+                                    sm:text-[14px]
+                                    ${
+                                      isWinner1
+                                        ? `
+                                          border-purple-300/35
+                                          bg-purple-400/[0.12]
+                                          text-white
+                                          shadow-[0_0_12px_rgba(168,85,247,0.06)]
+                                        `
+                                        : `
+                                          border-white/[0.08]
+                                          bg-white/[0.03]
+                                          text-white/75
+                                        `
+                                    }
+                                  `}
+                                >
+                                  <div className="truncate">
+                                    {match.player1 || ""}
+                                  </div>
+
+                                  {match.player1Amount && (
+                                    <div className="mt-1 text-[10px] font-black text-yellow-300 sm:text-[12px]">
+                                      ${match.player1Amount}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* VS */}
+
+                                <div className="py-1 text-center text-[7px] font-black uppercase tracking-[0.14em] text-white/25 sm:text-[8px]">
+                                  vs
+                                </div>
+
+                                {/* PLAYER 2 */}
+
+                                <div
+                                  className={`
+                                    rounded-lg
+                                    border
+                                    px-3 py-2.5
+                                    text-[11px]
+                                    font-black
+                                    sm:text-[14px]
+                                    ${
+                                      isWinner2
+                                        ? `
+                                          border-purple-300/35
+                                          bg-purple-400/[0.12]
+                                          text-white
+                                          shadow-[0_0_12px_rgba(168,85,247,0.06)]
+                                        `
+                                        : `
+                                          border-white/[0.08]
+                                          bg-white/[0.03]
+                                          text-white/75
+                                        `
+                                    }
+                                  `}
+                                >
+                                  <div className="truncate">
+                                    {match.player2 || ""}
+                                  </div>
+
+                                  {match.player2Amount && (
+                                    <div className="mt-1 text-[10px] font-black text-yellow-300 sm:text-[12px]">
+                                      ${match.player2Amount}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* WINNER */}
+
+                                <div
+                                  className="
+                                    mt-1.5
+                                    truncate
+                                    text-center
+                                    text-[8px]
+                                    font-black
+                                    uppercase
+                                    tracking-[0.12em]
+                                    text-white/35
+                                    sm:text-[9px]
+                                  "
+                                >
+                                  {match.winner
+                                    ? `Winner: ${match.winner}`
+                                    : "No winner"}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* =====================================================
+            SNAKE DRAFT VIEW
+        ===================================================== */}
+
+        {tournamentView === "snake" && (
+          <>
+            {snakeCaptains.length === 0 ? (
+              <div
+                className="
+                  flex min-h-[360px]
+                  items-center justify-center
+                  rounded-xl
+                  border border-purple-300/[0.10]
+                  bg-black/25
+                  p-6
+                  text-center
+                  text-[11px]
+                  text-white/40
+                  sm:text-sm
+                "
+              >
+                No snake draft has been created yet.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* =================================================
+                    TEAMS
+                ================================================= */}
+
+                <div
+                  className="
+                    grid
+                    grid-cols-2
+                    gap-3
+                    md:grid-cols-3
+                    xl:grid-cols-4
+                  "
+                >
+                  {snakeCaptains.map((captain) => (
+                    <div
+                      key={captain}
+                      className={`
+                        rounded-xl
+                        border
+                        p-3
+                        sm:p-4
+                        ${getSnakeTeamStyle(captain)}
+                      `}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="truncate text-[13px] font-black text-white sm:text-[16px]">
+                            {captain}
+                          </div>
+
+                          <div className="mt-0.5 text-[11px] font-black text-yellow-300 sm:text-[13px]">
+                            $
+                            {getSnakeTeamTotal(
+                              captain
+                            ).toLocaleString()}
+                          </div>
+                        </div>
+
+                        <div
+                          className="
+                            shrink-0
+                            rounded-full
+                            border border-white/[0.10]
+                            bg-black/30
+                            px-2.5 py-1
+                            text-[8px]
+                            font-black
+                            text-white/50
+                            sm:text-[9px]
+                          "
+                        >
+                          {(snakeTeams[captain] || []).length}
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 border-t border-white/[0.08] pt-2">
+                        <div className="text-[7px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[8px]">
+                          Players
+                        </div>
+
+                        <div className="mt-1.5 space-y-1">
+                          {(snakeTeams[captain] || []).length === 0 ? (
+                            <div className="text-[9px] text-white/30 sm:text-[10px]">
+                              Waiting for picks...
+                            </div>
+                          ) : (
+                            snakeTeams[captain].map(
+                              (player, index) => (
+                                <div
+                                  key={player}
+                                  className="
+                                    truncate
+                                    text-[10px]
+                                    font-semibold
+                                    text-white/70
+                                    sm:text-[12px]
+                                  "
+                                >
+                                  {index + 1}. {player}
+                                </div>
+                              )
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* =================================================
+                    SLOT CALL BOARD
+                ================================================= */}
+
+                {snakeSlotOrder.length > 0 && (
+                  <div>
+                    <div className="mb-2.5 flex items-center justify-between gap-2">
+                      <div className="text-[10px] font-black uppercase tracking-[0.16em] text-purple-200 sm:text-[12px]">
+                        Slot Call Board
+                      </div>
+
+                      <div
+                        className="
+                          rounded-full
+                          border border-purple-300/20
+                          bg-purple-400/[0.07]
+                          px-2.5 py-1
+                          text-[8px] font-black
+                          text-purple-100
+                          sm:text-[10px]
+                        "
+                      >
+                        {snakeSlotOrder.length} Slots
+                      </div>
+                    </div>
+
+                    <div
+                      className="
+                        grid
+                        grid-cols-2
+                        gap-2
+                        md:grid-cols-3
+                        lg:grid-cols-4
+                        xl:grid-cols-5
+                      "
+                    >
+                      {snakeSlotOrder.map((name, index) => {
+                        const key = `${name}-${index}`;
+                        const teamCaptain =
+                          getSnakeTeamForName(name);
+
+                        const hit = snakeSlotHit[key];
+
+                        return (
+                          <div
+                            key={key}
+                            className={`
+                              rounded-xl
+                              border
+                              p-2.5
+                              transition
+                              sm:p-3
+                              ${getSnakeTeamStyle(teamCaptain)}
+                              ${
+                                hit
+                                  ? `
+                                    ring-1
+                                    ring-purple-300/60
+                                    shadow-[0_0_18px_rgba(168,85,247,0.12)]
+                                  `
+                                  : ""
+                              }
+                            `}
+                          >
+                            {/* SLOT HEADER */}
+
+                            <div className="flex items-center gap-2">
+                              <div className="shrink-0 text-[9px] font-black text-purple-300 sm:text-[10px]">
+                                #{index + 1}
+                              </div>
+
+                              <div className="truncate text-[11px] font-black text-white sm:text-[13px]">
+                                {name}
+                              </div>
+                            </div>
+
+                            <div className="mt-1 truncate text-[7px] font-bold uppercase tracking-[0.10em] text-white/35 sm:text-[8px]">
+                              Team {teamCaptain}
+                            </div>
+
+                            {/* CALL */}
+
+                            <div
+                              className="
+                                mt-2
+                                min-h-[32px]
+                                truncate
+                                rounded-lg
+                                border border-white/[0.08]
+                                bg-black/35
+                                px-2.5 py-2
+                                text-[10px]
+                                font-black
+                                text-white
+                                sm:text-[12px]
+                              "
+                            >
+                              {snakeSlotCalls[key] || "Waiting..."}
+                            </div>
+
+                            {/* PAYOUT */}
+
+                            <div
+                              className="
+                                mt-1.5
+                                rounded-lg
+                                border border-yellow-300/[0.12]
+                                bg-black/30
+                                px-2.5 py-1.5
+                                text-[10px]
+                                font-black
+                                text-yellow-300
+                                sm:text-[12px]
+                              "
+                            >
+                              {snakeSlotAmounts[key]
+                                ? `$${Number(
+                                    snakeSlotAmounts[key]
+                                  ).toLocaleString()}`
+                                : "$0"}
+                            </div>
+
+                            {/* STATUS */}
+
+                            <div
+                              className={`
+                                mt-1.5
+                                rounded-lg
+                                border
+                                px-2 py-1.5
+                                text-center
+                                text-[7px]
+                                font-black
+                                uppercase
+                                tracking-[0.08em]
+                                sm:text-[8px]
+                                ${
+                                  hit
+                                    ? `
+                                      border-purple-300/30
+                                      bg-purple-400/[0.10]
+                                      text-purple-100
+                                    `
+                                    : `
+                                      border-white/[0.08]
+                                      bg-black/25
+                                      text-white/35
+                                    `
+                                }
+                              `}
+                            >
+                              {hit
+                                ? "Spun Into ✓"
+                                : "Not Spun Yet"}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  </section>
+)}
+
+{activeSection === "slotpicker" && (
+  <section className="space-y-3 sm:space-y-4">
+    {/* =========================================================
+        TITLE
+    ========================================================= */}
+
+    <div className="mx-auto max-w-7xl text-center">
+      <GlowTabTitle label="SLOT PICKER" />
+    </div>
+
+    {/* =========================================================
+        PROVIDERS
+    ========================================================= */}
+
+    <div
+      className="
+        mx-auto max-w-7xl
+        overflow-hidden
+        rounded-2xl
+        border border-purple-300/20
+        bg-[linear-gradient(180deg,rgba(13,5,20,0.72),rgba(4,2,8,0.62))]
+        shadow-[0_18px_50px_rgba(0,0,0,0.25),0_0_26px_rgba(168,85,247,0.06)]
+        backdrop-blur-[9px]
+      "
+    >
+      {/* HEADER */}
+
+      <div className="flex items-center justify-between gap-3 border-b border-purple-300/[0.08] px-3 py-2.5 sm:px-5 sm:py-3.5">
+        <div>
+          <div className="text-[9px] font-black uppercase tracking-[0.18em] text-purple-200/60 sm:text-[12px]">
+            Providers
+          </div>
+
+          <div className="mt-0.5 text-[9px] font-bold text-white/40 sm:text-[11px]">
+            Select any combination
+          </div>
+        </div>
+
+        <div
+          className="
+            rounded-full
+            border border-purple-300/20
+            bg-purple-400/[0.07]
+            px-2.5 py-1
+            text-[8px] font-black uppercase
+            tracking-[0.08em]
+            text-purple-100
+            sm:px-3
+            sm:text-[10px]
+          "
+        >
+          {filteredSlots.length} Slots
+        </div>
+      </div>
+
+      {/* PROVIDER GRID */}
+
+      <div className="p-2.5 sm:p-3.5">
+        <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 sm:gap-2.5">
+          {slotProviders.map((provider) => {
+            const active = selectedProviders.includes(provider);
+            const logo = providerLogos[provider];
+
+            const providerSlotCount = slotData.filter(
+              (slot) => slot.provider === provider
+            ).length;
+
+            return (
+              <button
+                key={provider}
+                onClick={() => toggleSlotProvider(provider)}
+                disabled={isPickingSlot}
+                className={`
+                  group
+                  relative
+                  flex
+                  min-h-[46px]
+                  items-center
+                  gap-2
+                  overflow-hidden
+                  rounded-lg
+                  border
+                  px-2 py-1.5
+                  text-left
+                  transition-all
+                  duration-200
+                  sm:min-h-[58px]
+                  sm:px-3
+                  sm:py-2
+                  ${
+                    active
+                      ? `
+                        border-purple-300/35
+                        bg-purple-400/[0.10]
+                        text-white
+                        shadow-[0_0_14px_rgba(168,85,247,0.08)]
+                      `
+                      : `
+                        border-white/[0.07]
+                        bg-black/30
+                        text-white/50
+                        hover:border-purple-300/18
+                        hover:bg-purple-400/[0.035]
+                        hover:text-white/80
+                      `
+                  }
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                `}
+              >
+                {/* LOGO */}
+
+                <div
+                  className={`
+                    flex
+                    h-8 w-8
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-md
+                    border
+                    bg-black/45
+                    sm:h-11
+                    sm:w-11
+                    ${
+                      active
+                        ? "border-purple-300/25"
+                        : "border-white/[0.08]"
+                    }
+                  `}
+                >
+                  {logo ? (
+                    <img
+                      src={logo}
+                      alt={provider}
+                      className={`
+                        h-6 w-6
+                        object-contain
+                        sm:h-8
+                        sm:w-8
+                        ${
+                          active
+                            ? "opacity-100"
+                            : "opacity-50"
+                        }
+                      `}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <span className="text-[10px] font-black text-purple-200">
+                      {provider.charAt(0)}
+                    </span>
+                  )}
+                </div>
+
+                {/* TEXT */}
+
+                <div className="min-w-0">
+                  <div className="truncate text-[9px] font-black leading-tight text-white sm:text-[13px]">
+                    {provider}
+                  </div>
+
+                  <div className="mt-0.5 text-[8px] leading-none text-white/35 sm:text-[10px]">
+                    {providerSlotCount}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* PROVIDER STATUS / RESET */}
+
+        <div className="mt-2.5 flex items-center justify-between border-t border-purple-300/[0.07] pt-2.5">
+          <span className="text-[8px] font-black uppercase tracking-[0.10em] text-white/50 sm:text-[10px]">
+            {selectedProviders.length === 0
+              ? "All providers active"
+              : `${selectedProviders.length} selected`}
+          </span>
+
+          <button
+            onClick={() => {
+              setSelectedProviders([]);
+              setPickedSlot(null);
+              setSlotPickerClawIndex(null);
+              setSlotPickerClawDropping(false);
+              setSlotPickerWinnerRevealed(false);
+            }}
+            disabled={isPickingSlot}
+            className="
+              rounded-full
+              border border-purple-300/[0.12]
+              bg-black/30
+              px-3 py-1
+              text-[8px]
+              font-black
+              uppercase
+              tracking-[0.08em]
+              text-white/60
+              transition
+              hover:border-purple-300/25
+              hover:bg-purple-400/[0.05]
+              hover:text-purple-100
+              disabled:opacity-40
+              sm:text-[10px]
+            "
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* =========================================================
+        SLOT PICKER MACHINE
+    ========================================================= */}
+
+    <div
+      className="
+        mx-auto max-w-7xl
+        overflow-hidden
+        rounded-2xl
+        border border-purple-300/20
+        bg-[linear-gradient(180deg,rgba(13,5,20,0.78),rgba(3,1,7,0.68))]
+        shadow-[0_18px_55px_rgba(0,0,0,0.28),0_0_30px_rgba(168,85,247,0.07)]
+        backdrop-blur-[9px]
+      "
+    >
+      {/* MACHINE HEADER */}
+
+      <div className="flex items-center justify-between gap-3 border-b border-purple-300/[0.08] px-3 py-2.5 sm:px-5 sm:py-3.5">
+        <div>
+          <div className="text-[8px] font-black uppercase tracking-[0.20em] text-purple-200/50 sm:text-[10px]">
+            Random Slot Machine
+          </div>
+
+          <div className="mt-0.5 text-[13px] font-black tracking-[0.06em] text-white sm:text-[18px]">
+            {isPickingSlot
+              ? slotPickerClawDropping
+                ? "GRABBING..."
+                : slotPickerClawIndex !== null
+                ? "LOCKED ON..."
+                : "SPINNING..."
+              : slotPickerWinnerRevealed
+              ? "WINNER SELECTED"
+              : "READY"}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.08em] text-white/45 sm:text-[10px]">
+          <span
+            className={`h-2 w-2 rounded-full ${
+              isPickingSlot
+                ? "animate-pulse bg-yellow-300 shadow-[0_0_7px_rgba(253,224,71,1)]"
+                : "bg-emerald-300 shadow-[0_0_7px_rgba(110,231,183,1)]"
+            }`}
+          />
+
+          {filteredSlots.length} eligible
+        </div>
+      </div>
+
+      {/* =========================================================
+          MACHINE BODY
+      ========================================================= */}
+
+      <div className="p-2.5 sm:p-4">
+        <div
+          className="
+            relative
+            overflow-hidden
+            rounded-xl
+            border border-purple-300/[0.12]
+            bg-black/75
+            shadow-[inset_0_0_40px_rgba(168,85,247,0.045)]
+            [--slot-gap:8px]
+            sm:[--slot-gap:10px]
+          "
+        >
+          {/* =====================================================
+              CLAW RAIL
+          ===================================================== */}
+
+          <div
+            className="
+              relative
+              h-[70px]
+              border-b border-purple-300/[0.06]
+              bg-[linear-gradient(180deg,rgba(168,85,247,0.035),transparent)]
+              sm:h-[82px]
+            "
+          >
+            {/* TOP RAIL */}
+
+            <div
+              className="
+                absolute
+                left-[4%]
+                right-[4%]
+                top-3
+                h-[3px]
+                rounded-full
+                border border-purple-300/20
+                bg-black/70
+                sm:top-4
+              "
+            />
+
+            {/* CLAW */}
+
+            <div
+              className="
+                absolute
+                top-1.5
+                z-30
+                transition-[left]
+                duration-500
+                ease-in-out
+                sm:top-2
+              "
+              style={{
+                left:
+                  slotPickerClawIndex === null
+                    ? "50%"
+                    : `calc(${slotPickerClawIndex} * (((100% - (4 * var(--slot-gap))) / 5) + var(--slot-gap)) + (((100% - (4 * var(--slot-gap))) / 5) / 2))`,
+                transform: "translateX(-50%)",
+              }}
+            >
+              {/* CLAW HEAD */}
+
+              <div
+                className="
+                  mx-auto
+                  h-5 w-8
+                  rounded
+                  border border-purple-300/40
+                  bg-[#12091a]
+                  shadow-[0_0_12px_rgba(168,85,247,0.18)]
+                  sm:h-6
+                  sm:w-10
+                "
+              >
+                <div className="mx-auto mt-1 h-1 w-4 rounded-full bg-purple-300/65 sm:w-5" />
+              </div>
+
+              {/* CABLE */}
+
+              <div
+                className={`mx-auto w-[2px] bg-purple-200/65 transition-all duration-500 ${
+                  slotPickerClawDropping
+                    ? "h-[145px] sm:h-[185px]"
+                    : "h-[13px] sm:h-[16px]"
+                }`}
+              />
+
+              {/* CLAW ARMS */}
+
+              <div className="relative mx-auto h-5 w-9 sm:h-6 sm:w-10">
+                <div
+                  className={`absolute left-1 top-0 h-5 w-[2px] origin-top rounded bg-purple-200/75 transition-transform duration-300 ${
+                    slotPickerClawDropping
+                      ? "rotate-[16deg]"
+                      : "rotate-[28deg]"
+                  }`}
+                />
+
+                <div
+                  className={`absolute right-1 top-0 h-5 w-[2px] origin-top rounded bg-purple-200/75 transition-transform duration-300 ${
+                    slotPickerClawDropping
+                      ? "-rotate-[16deg]"
+                      : "-rotate-[28deg]"
+                  }`}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* =====================================================
+              BELT VIEWPORT
+              EXACTLY 5 FULL SLOT CARDS
+          ===================================================== */}
+
+          <div className="relative overflow-hidden px-2 py-3 sm:px-2.5 sm:py-3.5">
+            {/* EDGE FADES */}
+
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-5 bg-gradient-to-r from-black to-transparent" />
+
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-5 bg-gradient-to-l from-black to-transparent" />
+
+            {/* BELT */}
+
+            <div
+              className="flex gap-[var(--slot-gap)]"
+              style={{
+                transform: slotPickerSliding
+                  ? "translateX(calc(-1 * ((((100% - (4 * var(--slot-gap))) / 5)) + var(--slot-gap))))"
+                  : "translateX(0)",
+                transition: slotPickerSliding
+                  ? `transform ${slotPickerTransitionMs}ms cubic-bezier(0.22, 0.61, 0.36, 1)`
+                  : "none",
+              }}
+            >
+              {slotPickerBelt.map((slot, index) => {
+                const visibleIndex = index;
+
+                const isWinner =
+                  slotPickerWinnerRevealed &&
+                  slotPickerClawIndex === visibleIndex &&
+                  visibleIndex < 5;
+
+                return (
+                  <div
+                    key={`${slot.provider}-${slot.name}-${index}`}
+                    className={`
+                      relative
+                      shrink-0
+                      overflow-hidden
+                      rounded-lg
+                      border
+                      bg-black
+                      transition-all
+                      duration-500
+                      ${
+                        isWinner
+                          ? `
+                            -translate-y-4
+                            scale-[1.045]
+                            border-emerald-300
+                            shadow-[0_0_28px_rgba(110,231,183,0.50)]
+                          `
+                          : `
+                            border-purple-300/[0.10]
+                          `
+                      }
+                    `}
+                    style={{
+                      flexBasis:
+                        "calc((100% - (4 * var(--slot-gap))) / 5)",
+                    }}
+                  >
+                    {/* SLOT IMAGE */}
+
+                    <div className="aspect-[4/5] overflow-hidden bg-[#060606]">
+                      {slot.image ? (
+                        <img
+                          src={slot.image}
+                          alt={slot.name}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display =
+                              "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-lg opacity-30">
+                          🎰
+                        </div>
+                      )}
+                    </div>
+
+                    {/* SLOT INFO */}
+
+                    <div
+                      className="
+                        border-t border-purple-300/[0.06]
+                        bg-black/80
+                        px-1.5 py-1.5
+                        text-center
+                      "
+                    >
+                      <div className="truncate text-[8px] font-black text-white sm:text-[11px]">
+                        {slot.name}
+                      </div>
+
+                      <div className="mt-0.5 truncate text-[7px] font-bold uppercase text-purple-200/45 sm:text-[9px]">
+                        {slot.provider}
+                      </div>
+                    </div>
+
+                    {/* WINNER BADGE */}
+
+                    {isWinner && (
+                      <div
+                        className="
+                          absolute
+                          left-1/2
+                          top-1
+                          -translate-x-1/2
+                          rounded-full
+                          border border-emerald-200/50
+                          bg-black/90
+                          px-1.5 py-0.5
+                          text-[7px]
+                          font-black
+                          uppercase
+                          tracking-[0.08em]
+                          text-emerald-200
+                          sm:text-[9px]
+                        "
+                      >
+                        Winner
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* BELT TRACK */}
+
+            <div
+              className="
+                mt-1.5
+                h-1.5
+                rounded-full
+                border border-purple-300/[0.10]
+                bg-[repeating-linear-gradient(90deg,#100716_0px,#100716_12px,#281034_12px,#281034_15px)]
+              "
+            />
+          </div>
+        </div>
+
+        {/* =========================================================
+            SELECTED SLOT
+        ========================================================= */}
+
+        {pickedSlot && slotPickerWinnerRevealed && (
+          <div
+            className="
+              mt-2
+              flex
+              items-center
+              justify-center
+              gap-2
+              rounded-lg
+              border border-emerald-300/15
+              bg-emerald-300/[0.035]
+              px-3 py-2
+              text-center
+            "
+          >
+            <span className="text-[8px] font-black uppercase tracking-[0.12em] text-emerald-200/60 sm:text-[10px]">
+              Selected
+            </span>
+
+            <span className="truncate text-[10px] font-black text-[#9fffd7] sm:text-[14px]">
+              {pickedSlot.name}
+            </span>
+
+            <span className="hidden text-[8px] font-bold uppercase text-white/40 sm:inline sm:text-[9px]">
+              {pickedSlot.provider}
+            </span>
+          </div>
+        )}
+
+        {/* =========================================================
+            SPIN BUTTON
+        ========================================================= */}
+
+        <button
+          onClick={pickRandomSlot}
+          disabled={
+            isPickingSlot ||
+            filteredSlots.length === 0
+          }
+          className={`
+            mt-2.5
+            w-full
+            rounded-lg
+            border
+            px-4 py-2.5
+            text-[11px]
+            font-black
+            uppercase
+            tracking-[0.14em]
+            transition-all
+            duration-200
+            sm:rounded-xl
+            sm:py-3
+            sm:text-[15px]
+            ${
+              isPickingSlot
+                ? `
+                  cursor-wait
+                  border-purple-300/20
+                  bg-purple-400/[0.06]
+                  text-purple-100/45
+                `
+                : `
+                  border-purple-300/40
+                  bg-[linear-gradient(180deg,rgba(168,85,247,0.24),rgba(88,28,135,0.18))]
+                  text-purple-50
+                  shadow-[0_0_20px_rgba(168,85,247,0.10)]
+                  hover:border-purple-200/60
+                  hover:bg-purple-400/[0.18]
+                `
+            }
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          `}
+        >
+          {isPickingSlot ? "SPINNING..." : "SPIN"}
+        </button>
+      </div>
     </div>
   </section>
 )}
 
 {activeSection === "profile" && (
-  <section className="space-y-4 sm:space-y-5">
-    <div className="mx-auto max-w-6xl text-center">
+  <section className="space-y-3 sm:space-y-4">
+    {/* =========================================================
+        TITLE
+    ========================================================= */}
+
+    <div className="mx-auto max-w-7xl text-center">
       <GlowTabTitle label="PROFILE" />
     </div>
 
     {!isTwitchConnected ? (
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(0,25,32,0.97),rgba(0,0,0,0.98))] p-6 text-center shadow-[0_0_40px_rgba(0,245,255,0.12)]">
-        <div className="text-xs font-black uppercase tracking-[0.22em] text-cyan-200/70">
+      /* =======================================================
+          NOT CONNECTED
+      ======================================================= */
+
+      <div
+        className="
+          mx-auto max-w-5xl
+          overflow-hidden
+          rounded-2xl
+          border border-purple-300/20
+          bg-[linear-gradient(135deg,rgba(13,5,20,0.78),rgba(3,1,7,0.70))]
+          p-4
+          text-center
+          shadow-[0_18px_55px_rgba(0,0,0,0.28),0_0_30px_rgba(168,85,247,0.07)]
+          backdrop-blur-[9px]
+          sm:rounded-3xl
+          sm:p-6
+        "
+      >
+        <div className="text-[9px] font-black uppercase tracking-[0.18em] text-purple-200/65 sm:text-[12px]">
           Connect Your Account
         </div>
 
-        <div className="mt-2 text-sm text-white/45">
-          Sign in to view your profile, wager stats,
-          giveaway odds and prizes.
+        <div className="mt-1.5 text-[10px] text-white/45 sm:mt-2 sm:text-[13px]">
+          Sign in to view your profile, wager stats, giveaway odds and prizes.
         </div>
 
-        <div className="mx-auto mt-5 flex max-w-md flex-col gap-2 sm:flex-row">
+        <div className="mx-auto mt-3 flex max-w-md gap-2 sm:mt-5">
           <button
             onClick={handleTwitchLogin}
-            className="flex-1 rounded-xl border border-[#9146FF]/40 bg-[#9146FF]/20 px-4 py-3 text-xs font-black text-white transition hover:bg-[#9146FF]/30"
+            className="
+              flex-1
+              rounded-lg
+              border border-[#9146FF]/40
+              bg-[#9146FF]/20
+              px-3 py-2
+              text-[9px] font-black
+              text-white
+              transition
+              hover:bg-[#9146FF]/30
+              sm:rounded-xl
+              sm:px-4
+              sm:py-3
+              sm:text-[12px]
+            "
           >
             Connect Twitch
           </button>
 
           <button
             onClick={handleKickLogin}
-            className="flex-1 rounded-xl border border-[#53FC18]/40 bg-[#53FC18]/15 px-4 py-3 text-xs font-black text-[#baff9f] transition hover:bg-[#53FC18]/25"
+            className="
+              flex-1
+              rounded-lg
+              border border-[#53FC18]/40
+              bg-[#53FC18]/15
+              px-3 py-2
+              text-[9px] font-black
+              text-[#baff9f]
+              transition
+              hover:bg-[#53FC18]/25
+              sm:rounded-xl
+              sm:px-4
+              sm:py-3
+              sm:text-[12px]
+            "
           >
             Connect Kick
           </button>
         </div>
       </div>
     ) : (
-      <div className="mx-auto w-full max-w-6xl space-y-4">
-{/* =====================================================
-    MAIN ACCOUNT
-===================================================== */}
-<div className="relative overflow-hidden rounded-3xl border border-cyan-300/40 bg-[radial-gradient(circle_at_15%_25%,rgba(0,245,255,0.13),transparent_28%),linear-gradient(135deg,rgba(0,22,27,0.99),rgba(0,0,0,0.99))] shadow-[0_0_42px_rgba(0,245,255,0.14)]">
-  <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(103,232,249,0.85),transparent)]" />
-  <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-cyan-400/[0.07] blur-3xl" />
+      <div className="mx-auto w-full max-w-7xl space-y-3 sm:space-y-4">
+        {/* =====================================================
+            MAIN ACCOUNT CARD
+        ===================================================== */}
 
-  <div className="relative p-4 sm:p-6">
-    <div className="mb-4 flex items-center justify-between">
-      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200 sm:text-xs">
-        <span className="text-cyan-300">♟</span>
-        My Profile
-      </div>
+        <div
+          className="
+            relative
+            overflow-hidden
+            rounded-2xl
+            border border-purple-300/25
+            bg-[radial-gradient(circle_at_15%_25%,rgba(168,85,247,0.10),transparent_30%),linear-gradient(135deg,rgba(13,5,20,0.80),rgba(3,1,7,0.72))]
+            shadow-[0_18px_55px_rgba(0,0,0,0.28),0_0_32px_rgba(168,85,247,0.07)]
+            backdrop-blur-[9px]
+            sm:rounded-3xl
+          "
+        >
+          {/* TOP GLOW LINE */}
 
-      <button
-        onClick={handleLogout}
-        className="rounded-lg border border-red-300/35 bg-red-500/[0.08] px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-red-200 shadow-[0_0_14px_rgba(248,113,113,0.08)] transition hover:border-red-300/60 hover:bg-red-500/15 sm:px-4 sm:text-[10px]"
-      >
-        Log Out ↪
-      </button>
-    </div>
+          <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(192,132,252,0.65),transparent)]" />
 
-    <div className="grid gap-6 lg:grid-cols-[0.9fr_1.15fr] lg:items-stretch">
-      {/* LEFT - USER */}
-      <div className="flex min-w-0 items-center gap-4 sm:gap-5">
-        <div className="relative shrink-0">
-          <div className="absolute -inset-1 rounded-full bg-cyan-300/20 blur-md" />
+          <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-purple-500/[0.06] blur-3xl" />
 
-          {viewerAvatar ? (
-            <img
-              src={viewerAvatar}
-              alt={viewerDisplayName || viewerName}
-              className="relative h-[92px] w-[92px] rounded-full border-2 border-cyan-300 object-cover shadow-[0_0_28px_rgba(34,211,238,0.42)] sm:h-[125px] sm:w-[125px]"
-            />
-          ) : (
-            <div className="relative flex h-[92px] w-[92px] items-center justify-center rounded-full border-2 border-cyan-300 bg-cyan-400/10 text-3xl font-black text-white shadow-[0_0_28px_rgba(34,211,238,0.42)] sm:h-[125px] sm:w-[125px]">
-              {viewerDisplayName?.charAt(0)?.toUpperCase() || "T"}
-            </div>
-          )}
-        </div>
+          <div className="relative p-3 sm:p-5">
+            {/* HEADER */}
 
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-xl font-black text-white sm:text-3xl">
-            {viewerDisplayName || viewerName}
-          </div>
-
-          <div className="mt-2 flex items-center gap-2">
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-lg border sm:h-9 sm:w-9 ${
-                viewerPlatform === "kick"
-                  ? "border-[#53FC18]/45 bg-[#53FC18]/10 text-[#53FC18]"
-                  : "border-[#9146FF]/50 bg-[#9146FF]/15 text-purple-300"
-              }`}
-            >
-              {viewerPlatform === "kick" ? (
-                <SiKick className="text-base sm:text-lg" />
-              ) : (
-                <FaTwitch className="text-base sm:text-lg" />
-              )}
-            </div>
-
-            <div className="text-[10px] font-bold text-white/30">
-              /
-            </div>
-
-            <div className="text-xs font-bold text-white/55 sm:text-sm">
-              @{viewerName}
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <div
-              className={`inline-flex min-w-[110px] items-center justify-center gap-2 rounded-lg border px-4 py-2 text-base font-black uppercase tracking-[0.10em] sm:min-w-[140px] sm:text-xl ${
-                viewerProfileStats.isVip
-                  ? "border-cyan-300/50 bg-[linear-gradient(180deg,rgba(0,245,255,0.22),rgba(0,150,170,0.12))] text-cyan-100 shadow-[0_0_22px_rgba(0,245,255,0.18)]"
-                  : rouloLink?.roulo_username
-                  ? "border-cyan-300/30 bg-cyan-400/10 text-cyan-200"
-                  : "border-white/10 bg-white/[0.04] text-white/60"
-              }`}
-            >
-{viewerProfileStats.isVip ? (
-  <>
-    <FaCrown className="text-yellow-200 drop-shadow-[0_0_8px_rgba(253,224,71,0.55)]" />
-    VIP
-  </>
-) : rouloLink?.roulo_username ? (
-                "Affiliate"
-              ) : (
-                "Viewer"
-              )}
-            </div>
-          </div>
-
-          <div className="mt-3 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.10em] sm:text-[10px]">
-            <span
-              className={`h-2 w-2 rounded-full ${
-                rouloLink?.roulo_username
-                  ? "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]"
-                  : "bg-white/20"
-              }`}
-            />
-
-            <span
-              className={
-                rouloLink?.roulo_username
-                  ? "text-green-300"
-                  : "text-white/35"
-              }
-            >
-              {rouloLink?.roulo_username
-                ? "On Code"
-                : "Not On Code"}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* RIGHT - ODDS + PAID */}
-      <div className="border-t border-cyan-300/10 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-        <div className="text-[10px] font-black uppercase tracking-[0.17em] text-cyan-200 sm:text-xs">
-          Giveaway Odds
-        </div>
-
-        <div className="mt-3 grid grid-cols-3 overflow-hidden rounded-xl border border-cyan-300/20 bg-black/45">
-          <div className="px-2 py-3 text-center sm:px-3 sm:py-4">
-            <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/45 sm:text-[9px]">
-              Base
-            </div>
-
-            <div className="mt-1 text-lg font-black text-white sm:text-2xl">
-              {viewerOdds.baseOdds.toFixed(2)}x
-            </div>
-          </div>
-
-          <div className="border-x border-cyan-300/10 px-2 py-3 text-center sm:px-3 sm:py-4">
-            <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/45 sm:text-[9px]">
-              Luck
-            </div>
-
-            <div className="mt-1 text-lg font-black text-green-300 sm:text-2xl">
-              +{viewerOdds.luckOdds.toFixed(2)}x
-            </div>
-          </div>
-
-          <div className="px-2 py-3 text-center sm:px-3 sm:py-4">
-            <div className="text-[8px] font-black uppercase tracking-[0.12em] text-white/45 sm:text-[9px]">
-              Total
-            </div>
-
-            <div className="mt-1 text-lg font-black text-cyan-300 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)] sm:text-2xl">
-              {viewerOdds.totalOdds.toFixed(2)}x
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 flex items-center gap-4 border-t border-cyan-300/15 pt-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-cyan-300/50 bg-cyan-400/10 text-xl font-black text-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.18)] sm:h-14 sm:w-14 sm:text-2xl">
-            $
-          </div>
-
-          <div>
-            <div className="text-[9px] font-black uppercase tracking-[0.12em] text-white/50 sm:text-[10px]">
-              Total Paid Out
-            </div>
-
-            <div className="mt-0.5 text-2xl font-black text-green-300 drop-shadow-[0_0_12px_rgba(74,222,128,0.25)] sm:text-4xl">
-              ${viewerRewardsPaid.toLocaleString()}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-{/* =====================================================
-    LINKED ACCOUNTS
-===================================================== */}
-<div className="overflow-hidden rounded-2xl border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(0,17,22,0.98),rgba(0,0,0,0.99))] shadow-[0_0_28px_rgba(0,245,255,0.07)]">
-  <div className="border-b border-cyan-300/10 px-4 py-3">
-    <div className="flex items-center gap-2">
-      <span className="text-sm text-cyan-300">🔗</span>
-
-      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200 sm:text-xs">
-        Linked Accounts
-      </div>
-    </div>
-  </div>
-
-  <div className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4">
-    {/* DISCORD */}
-    <div className="rounded-xl border border-[#5865F2]/35 bg-[linear-gradient(135deg,rgba(88,101,242,0.13),rgba(0,0,0,0.90))] p-3.5 shadow-[inset_0_0_20px_rgba(88,101,242,0.04)] sm:p-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#7289da]/55 bg-[#5865F2]/25 text-2xl text-white shadow-[0_0_18px_rgba(88,101,242,0.18)] sm:h-14 sm:w-14">
-          <FaDiscord />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="text-[9px] font-black uppercase tracking-[0.12em] text-white/70">
-            Discord
-          </div>
-
-          <div className="mt-0.5 truncate text-sm font-black text-white sm:text-base">
-            {discordLink?.is_in_discord
-              ? discordLink?.discord_username || "Linked"
-              : "Not linked"}
-          </div>
-
-          {discordLink?.is_in_discord && (
-            <div className="mt-1 inline-flex rounded bg-green-400/10 px-2 py-0.5 text-[7px] font-black uppercase text-green-300">
-              Linked
-            </div>
-          )}
-        </div>
-
-        {discordLink?.is_in_discord ? (
-          <button
-            type="button"
-            disabled={profileActionLoading === "discord"}
-            onClick={handleUnlinkDiscord}
-            className="shrink-0 rounded-lg border border-red-400/50 bg-red-500/10 px-3 py-2 text-[9px] font-black uppercase tracking-[0.08em] text-red-300 shadow-[0_0_14px_rgba(248,113,113,0.08)] transition hover:border-red-300 hover:bg-red-500/20 sm:px-4 sm:text-[10px]"
-          >
-            {profileActionLoading === "discord"
-              ? "Unlinking..."
-              : "⛓ Unlink"}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() =>
-              (window.location.href = `/api/discord/login?viewer=${encodeURIComponent(
-                viewerName
-              )}&platform=${encodeURIComponent(
-                viewerPlatform
-              )}`)
-            }
-            className="shrink-0 rounded-lg border border-[#5865F2]/45 bg-[#5865F2]/15 px-3 py-2 text-[9px] font-black text-[#c5c9ff] transition hover:bg-[#5865F2]/25"
-          >
-            Link
-          </button>
-        )}
-      </div>
-    </div>
-
-    {/* ROULO */}
-    <div className="rounded-xl border border-cyan-300/35 bg-[linear-gradient(135deg,rgba(0,215,235,0.10),rgba(0,0,0,0.90))] p-3.5 shadow-[inset_0_0_20px_rgba(0,245,255,0.04)] sm:p-4">
-      {rouloLink?.roulo_username ? (
-        <div className="flex items-center gap-3">
-<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-cyan-300/45 bg-black/80 p-1.5 shadow-[0_0_18px_rgba(0,245,255,0.15)] sm:h-14 sm:w-14">
-  <img
-    src="/roulo-logo.png"
-    alt="Roulo"
-    className="h-full w-full object-contain"
-  />
-</div>
-
-          <div className="min-w-0 flex-1">
-            <div className="text-[9px] font-black uppercase tracking-[0.12em] text-white/70">
-              Roulo
-            </div>
-
-            <div className="mt-0.5 truncate text-sm font-black text-white sm:text-base">
-              {rouloLink.roulo_username}
-            </div>
-
-            <div className="mt-1 inline-flex rounded bg-green-400/10 px-2 py-0.5 text-[7px] font-black uppercase text-green-300">
-              Linked
-            </div>
-          </div>
-
-          <button
-            type="button"
-            disabled={profileActionLoading === "roulo"}
-            onClick={handleUnlinkRoulo}
-            className="shrink-0 rounded-lg border border-red-400/50 bg-red-500/10 px-3 py-2 text-[9px] font-black uppercase tracking-[0.08em] text-red-300 shadow-[0_0_14px_rgba(248,113,113,0.08)] transition hover:border-red-300 hover:bg-red-500/20 sm:px-4 sm:text-[10px]"
-          >
-            {profileActionLoading === "roulo"
-              ? "Unlinking..."
-              : "⛓ Unlink"}
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-3">
-<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-cyan-300/45 bg-black/80 p-1.5 shadow-[0_0_18px_rgba(0,245,255,0.15)] sm:h-14 sm:w-14">
-  <img
-    src="/roulo-logo.png"
-    alt="Roulo"
-    className="h-full w-full object-contain"
-  />
-</div>
-
-          <div className="min-w-0 flex-1">
-            <div className="text-[9px] font-black uppercase tracking-[0.12em] text-white/70">
-              Roulo
-            </div>
-
-            <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-              <input
-                value={rouloUsernameInput}
-                onChange={(e) =>
-                  setRouloUsernameInput(e.target.value)
-                }
-                placeholder="Roulo username"
-                className="min-w-0 rounded-lg border border-cyan-300/15 bg-black/70 px-3 py-2 text-xs text-white outline-none transition focus:border-cyan-300/45"
-              />
+            <div className="mb-3 flex items-center justify-between sm:mb-4">
+              <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[0.15em] text-purple-200 sm:gap-2 sm:text-[11px]">
+                <span>👤</span>
+                My Profile
+              </div>
 
               <button
-                onClick={handleLinkRoulo}
-                className="rounded-lg border border-cyan-300/40 bg-cyan-400/10 px-4 py-2 text-[9px] font-black text-cyan-200 transition hover:bg-cyan-400/20"
+                onClick={handleLogout}
+                className="
+                  rounded-md
+                  border border-red-300/35
+                  bg-red-500/[0.08]
+                  px-2.5 py-1.5
+                  text-[7px]
+                  font-black
+                  uppercase
+                  tracking-[0.08em]
+                  text-red-200
+                  transition
+                  hover:border-red-300/60
+                  hover:bg-red-500/15
+                  sm:rounded-lg
+                  sm:px-4
+                  sm:py-2
+                  sm:text-[9px]
+                "
               >
-                Link
+                Log Out ↪
               </button>
+            </div>
+
+            <div className="grid gap-3 sm:gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
+              {/* =================================================
+                  LEFT - USER
+              ================================================= */}
+
+              <div className="flex min-w-0 items-center gap-3 sm:gap-5">
+                {/* AVATAR */}
+
+                <div className="relative shrink-0">
+                  <div className="absolute -inset-1 rounded-full bg-purple-400/20 blur-md" />
+
+                  {viewerAvatar ? (
+                    <img
+                      src={viewerAvatar}
+                      alt={viewerDisplayName || viewerName}
+                      className="
+                        relative
+                        h-[72px] w-[72px]
+                        rounded-full
+                        border-2 border-purple-300
+                        object-cover
+                        shadow-[0_0_22px_rgba(168,85,247,0.32)]
+                        sm:h-[120px]
+                        sm:w-[120px]
+                        sm:shadow-[0_0_28px_rgba(168,85,247,0.34)]
+                      "
+                    />
+                  ) : (
+                    <div
+                      className="
+                        relative
+                        flex
+                        h-[72px] w-[72px]
+                        items-center
+                        justify-center
+                        rounded-full
+                        border-2 border-purple-300
+                        bg-purple-400/10
+                        text-xl
+                        font-black
+                        text-white
+                        shadow-[0_0_22px_rgba(168,85,247,0.32)]
+                        sm:h-[120px]
+                        sm:w-[120px]
+                        sm:text-3xl
+                      "
+                    >
+                      {viewerDisplayName?.charAt(0)?.toUpperCase() || "T"}
+                    </div>
+                  )}
+                </div>
+
+                {/* USER DETAILS */}
+
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[17px] font-black text-white sm:text-[30px]">
+                    {viewerDisplayName || viewerName}
+                  </div>
+
+                  {/* PLATFORM */}
+
+                  <div className="mt-1 flex items-center gap-1.5 sm:mt-2 sm:gap-2">
+                    <div
+                      className={`flex h-6 w-6 items-center justify-center rounded-md border sm:h-9 sm:w-9 sm:rounded-lg ${
+                        viewerPlatform === "kick"
+                          ? "border-[#53FC18]/45 bg-[#53FC18]/10 text-[#53FC18]"
+                          : "border-[#9146FF]/50 bg-[#9146FF]/15 text-purple-300"
+                      }`}
+                    >
+                      {viewerPlatform === "kick" ? (
+                        <SiKick className="text-xs sm:text-lg" />
+                      ) : (
+                        <FaTwitch className="text-xs sm:text-lg" />
+                      )}
+                    </div>
+
+                    <div className="text-[8px] font-bold text-white/25 sm:text-[10px]">
+                      /
+                    </div>
+
+                    <div className="truncate text-[9px] font-bold text-white/55 sm:text-[13px]">
+                      @{viewerName}
+                    </div>
+                  </div>
+
+                  {/* ROLE */}
+
+                  <div className="mt-2 sm:mt-3">
+                    <div
+                      className={`inline-flex min-w-[86px] items-center justify-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.07em] sm:min-w-[135px] sm:gap-2 sm:rounded-lg sm:px-4 sm:py-2 sm:text-[16px] ${
+                        viewerProfileStats.isVip
+                          ? "border-yellow-300/45 bg-[linear-gradient(180deg,rgba(250,204,21,0.14),rgba(168,85,247,0.08))] text-yellow-100 shadow-[0_0_18px_rgba(250,204,21,0.08)]"
+                          : rouloLink?.roulo_username
+                          ? "border-purple-300/30 bg-purple-400/[0.10] text-purple-100"
+                          : "border-white/10 bg-white/[0.04] text-white/60"
+                      }`}
+                    >
+                      {viewerProfileStats.isVip ? (
+                        <>
+                          <FaCrown className="text-[10px] text-yellow-200 drop-shadow-[0_0_6px_rgba(253,224,71,0.55)] sm:text-base" />
+                          VIP
+                        </>
+                      ) : rouloLink?.roulo_username ? (
+                        "Affiliate"
+                      ) : (
+                        "Viewer"
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CODE STATUS */}
+
+                  <div className="mt-1.5 flex items-center gap-1.5 text-[7px] font-black uppercase tracking-[0.08em] sm:mt-2.5 sm:gap-2 sm:text-[9px]">
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full sm:h-2 sm:w-2 ${
+                        rouloLink?.roulo_username
+                          ? "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]"
+                          : "bg-white/20"
+                      }`}
+                    />
+
+                    <span
+                      className={
+                        rouloLink?.roulo_username
+                          ? "text-green-300"
+                          : "text-white/35"
+                      }
+                    >
+                      {rouloLink?.roulo_username
+                        ? "On Code"
+                        : "Not On Code"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* =================================================
+                  RIGHT - GIVEAWAY ODDS / PAID
+              ================================================= */}
+
+              <div className="border-t border-purple-300/[0.10] pt-3 sm:pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <div className="text-[8px] font-black uppercase tracking-[0.14em] text-purple-200 sm:text-[11px]">
+                  Giveaway Odds
+                </div>
+
+                {/* ODDS */}
+
+                <div
+                  className="
+                    mt-2
+                    grid grid-cols-3
+                    overflow-hidden
+                    rounded-lg
+                    border border-purple-300/15
+                    bg-black/30
+                    sm:mt-3
+                    sm:rounded-xl
+                  "
+                >
+                  {/* BASE */}
+
+                  <div className="px-1 py-2 text-center sm:px-3 sm:py-3.5">
+                    <div className="text-[6px] font-black uppercase tracking-[0.10em] text-white/40 sm:text-[8px]">
+                      Base
+                    </div>
+
+                    <div className="mt-0.5 text-[14px] font-black text-white sm:mt-1 sm:text-[22px]">
+                      {viewerOdds.baseOdds.toFixed(2)}x
+                    </div>
+                  </div>
+
+                  {/* LUCK */}
+
+                  <div className="border-x border-purple-300/[0.09] px-1 py-2 text-center sm:px-3 sm:py-3.5">
+                    <div className="text-[6px] font-black uppercase tracking-[0.10em] text-white/40 sm:text-[8px]">
+                      Luck
+                    </div>
+
+                    <div className="mt-0.5 text-[14px] font-black text-green-300 sm:mt-1 sm:text-[22px]">
+                      +{viewerOdds.luckOdds.toFixed(2)}x
+                    </div>
+                  </div>
+
+                  {/* TOTAL */}
+
+                  <div className="px-1 py-2 text-center sm:px-3 sm:py-3.5">
+                    <div className="text-[6px] font-black uppercase tracking-[0.10em] text-white/40 sm:text-[8px]">
+                      Total
+                    </div>
+
+                    <div className="mt-0.5 text-[14px] font-black text-purple-200 drop-shadow-[0_0_8px_rgba(192,132,252,0.30)] sm:mt-1 sm:text-[22px]">
+                      {viewerOdds.totalOdds.toFixed(2)}x
+                    </div>
+                  </div>
+                </div>
+
+                {/* TOTAL PAID */}
+
+                <div className="mt-2.5 flex items-center gap-2.5 border-t border-purple-300/[0.10] pt-2.5 sm:mt-3.5 sm:gap-4 sm:pt-3.5">
+                  <div
+                    className="
+                      flex
+                      h-8 w-8
+                      shrink-0
+                      items-center
+                      justify-center
+                      rounded-full
+                      border border-purple-300/35
+                      bg-purple-400/[0.08]
+                      text-sm
+                      font-black
+                      text-purple-200
+                      shadow-[0_0_12px_rgba(168,85,247,0.10)]
+                      sm:h-12
+                      sm:w-12
+                      sm:text-xl
+                    "
+                  >
+                    $
+                  </div>
+
+                  <div>
+                    <div className="text-[7px] font-black uppercase tracking-[0.10em] text-white/45 sm:text-[9px]">
+                      Total Paid Out
+                    </div>
+
+                    <div className="mt-0.5 text-[20px] font-black text-green-300 drop-shadow-[0_0_10px_rgba(74,222,128,0.20)] sm:text-[32px]">
+                      ${viewerRewardsPaid.toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  </div>
 
-  {(profileActionMessage || rouloLinkMessage) && (
-    <div className="border-t border-white/[0.05] px-4 py-2 text-center text-[9px] font-bold text-cyan-200/60">
-      {profileActionMessage || rouloLinkMessage}
-    </div>
-  )}
-</div>
+        {/* =====================================================
+            LINKED ACCOUNTS
+        ===================================================== */}
+
+        <div
+          className="
+            overflow-hidden
+            rounded-xl
+            border border-purple-300/20
+            bg-[linear-gradient(135deg,rgba(11,4,17,0.72),rgba(3,1,7,0.64))]
+            shadow-[0_14px_40px_rgba(0,0,0,0.22),0_0_24px_rgba(168,85,247,0.05)]
+            backdrop-blur-[8px]
+            sm:rounded-2xl
+          "
+        >
+          {/* HEADER */}
+
+          <div className="border-b border-purple-300/[0.09] px-3 py-2 sm:px-4 sm:py-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[10px] sm:text-sm">
+                🔗
+              </span>
+
+              <div className="text-[8px] font-black uppercase tracking-[0.15em] text-purple-200 sm:text-[11px]">
+                Linked Accounts
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-2 p-2 sm:grid-cols-2 sm:gap-3 sm:p-3">
+            {/* =================================================
+                DISCORD
+            ================================================= */}
+
+            <div
+              className="
+                rounded-lg
+                border border-[#5865F2]/30
+                bg-[linear-gradient(135deg,rgba(88,101,242,0.11),rgba(5,2,9,0.55))]
+                p-2.5
+                sm:rounded-xl
+                sm:p-3.5
+              "
+            >
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div
+                  className="
+                    flex
+                    h-9 w-9
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-full
+                    border border-[#7289da]/50
+                    bg-[#5865F2]/20
+                    text-base
+                    text-white
+                    shadow-[0_0_14px_rgba(88,101,242,0.12)]
+                    sm:h-12
+                    sm:w-12
+                    sm:text-xl
+                  "
+                >
+                  <FaDiscord />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="text-[7px] font-black uppercase tracking-[0.10em] text-white/65 sm:text-[9px]">
+                    Discord
+                  </div>
+
+                  <div className="mt-0.5 truncate text-[11px] font-black text-white sm:text-[14px]">
+                    {discordLink?.is_in_discord
+                      ? discordLink?.discord_username || "Linked"
+                      : "Not linked"}
+                  </div>
+
+                  {discordLink?.is_in_discord && (
+                    <div className="mt-0.5 inline-flex rounded bg-green-400/10 px-1.5 py-0.5 text-[6px] font-black uppercase text-green-300 sm:mt-1 sm:px-2 sm:text-[7px]">
+                      Linked
+                    </div>
+                  )}
+                </div>
+
+                {discordLink?.is_in_discord ? (
+                  <button
+                    type="button"
+                    disabled={profileActionLoading === "discord"}
+                    onClick={handleUnlinkDiscord}
+                    className="
+                      shrink-0
+                      rounded-md
+                      border border-red-400/45
+                      bg-red-500/10
+                      px-2 py-1.5
+                      text-[7px]
+                      font-black
+                      uppercase
+                      tracking-[0.05em]
+                      text-red-300
+                      transition
+                      hover:border-red-300
+                      hover:bg-red-500/20
+                      sm:rounded-lg
+                      sm:px-3
+                      sm:py-2
+                      sm:text-[9px]
+                    "
+                  >
+                    {profileActionLoading === "discord"
+                      ? "..."
+                      : "⛓ Unlink"}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      (window.location.href = `/api/discord/login?viewer=${encodeURIComponent(
+                        viewerName
+                      )}&platform=${encodeURIComponent(
+                        viewerPlatform
+                      )}`)
+                    }
+                    className="
+                      shrink-0
+                      rounded-md
+                      border border-[#5865F2]/45
+                      bg-[#5865F2]/15
+                      px-2 py-1.5
+                      text-[7px]
+                      font-black
+                      text-[#c5c9ff]
+                      transition
+                      hover:bg-[#5865F2]/25
+                      sm:rounded-lg
+                      sm:px-3
+                      sm:py-2
+                      sm:text-[9px]
+                    "
+                  >
+                    Link
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* =================================================
+                ROULO
+            ================================================= */}
+
+            <div
+              className="
+                rounded-lg
+                border border-purple-300/20
+                bg-[linear-gradient(135deg,rgba(168,85,247,0.08),rgba(5,2,9,0.55))]
+                p-2.5
+                sm:rounded-xl
+                sm:p-3.5
+              "
+            >
+              {rouloLink?.roulo_username ? (
+                /* LINKED ROULO */
+
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div
+                    className="
+                      flex
+                      h-9 w-9
+                      shrink-0
+                      items-center
+                      justify-center
+                      overflow-hidden
+                      rounded-full
+                      border border-purple-300/30
+                      bg-black/60
+                      p-1
+                      shadow-[0_0_14px_rgba(168,85,247,0.10)]
+                      sm:h-12
+                      sm:w-12
+                      sm:p-1.5
+                    "
+                  >
+                    <img
+                      src="/roulo-logo.png"
+                      alt="Roulo"
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[7px] font-black uppercase tracking-[0.10em] text-white/65 sm:text-[9px]">
+                      Roulo
+                    </div>
+
+                    <div className="mt-0.5 truncate text-[11px] font-black text-white sm:text-[14px]">
+                      {rouloLink.roulo_username}
+                    </div>
+
+                    <div className="mt-0.5 inline-flex rounded bg-green-400/10 px-1.5 py-0.5 text-[6px] font-black uppercase text-green-300 sm:mt-1 sm:px-2 sm:text-[7px]">
+                      Linked
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={profileActionLoading === "roulo"}
+                    onClick={handleUnlinkRoulo}
+                    className="
+                      shrink-0
+                      rounded-md
+                      border border-red-400/45
+                      bg-red-500/10
+                      px-2 py-1.5
+                      text-[7px]
+                      font-black
+                      uppercase
+                      tracking-[0.05em]
+                      text-red-300
+                      transition
+                      hover:border-red-300
+                      hover:bg-red-500/20
+                      sm:rounded-lg
+                      sm:px-3
+                      sm:py-2
+                      sm:text-[9px]
+                    "
+                  >
+                    {profileActionLoading === "roulo"
+                      ? "..."
+                      : "⛓ Unlink"}
+                  </button>
+                </div>
+              ) : (
+                /* NOT LINKED ROULO */
+
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div
+                    className="
+                      flex
+                      h-9 w-9
+                      shrink-0
+                      items-center
+                      justify-center
+                      overflow-hidden
+                      rounded-full
+                      border border-purple-300/30
+                      bg-black/60
+                      p-1
+                      shadow-[0_0_14px_rgba(168,85,247,0.10)]
+                      sm:h-12
+                      sm:w-12
+                      sm:p-1.5
+                    "
+                  >
+                    <img
+                      src="/roulo-logo.png"
+                      alt="Roulo"
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[7px] font-black uppercase tracking-[0.10em] text-white/65 sm:text-[9px]">
+                      Roulo
+                    </div>
+
+                    <div className="mt-1 grid grid-cols-[minmax(0,1fr)_auto] gap-1.5 sm:mt-2 sm:gap-2">
+                      <input
+                        value={rouloUsernameInput}
+                        onChange={(e) =>
+                          setRouloUsernameInput(e.target.value)
+                        }
+                        placeholder="Roulo username"
+                        className="
+                          min-w-0
+                          rounded-md
+                          border border-purple-300/[0.12]
+                          bg-black/45
+                          px-2 py-1.5
+                          text-[8px]
+                          text-white
+                          outline-none
+                          transition
+                          placeholder:text-white/25
+                          focus:border-purple-300/40
+                          sm:rounded-lg
+                          sm:px-3
+                          sm:py-2
+                          sm:text-[11px]
+                        "
+                      />
+
+                      <button
+                        onClick={handleLinkRoulo}
+                        className="
+                          rounded-md
+                          border border-purple-300/35
+                          bg-purple-400/[0.10]
+                          px-2.5 py-1.5
+                          text-[7px]
+                          font-black
+                          text-purple-100
+                          transition
+                          hover:bg-purple-400/[0.18]
+                          sm:rounded-lg
+                          sm:px-4
+                          sm:py-2
+                          sm:text-[9px]
+                        "
+                      >
+                        Link
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {(profileActionMessage || rouloLinkMessage) && (
+            <div className="border-t border-purple-300/[0.07] px-3 py-1.5 text-center text-[7px] font-bold text-purple-200/55 sm:px-4 sm:py-2 sm:text-[9px]">
+              {profileActionMessage || rouloLinkMessage}
+            </div>
+          )}
+        </div>
 
         {/* =====================================================
             WAGER STATS
         ===================================================== */}
-        <div className="relative overflow-hidden rounded-2xl border border-cyan-300/30 bg-[radial-gradient(circle_at_top_left,rgba(0,245,255,0.07),transparent_32%),linear-gradient(135deg,rgba(0,18,23,0.99),rgba(0,0,0,0.99))] shadow-[0_0_34px_rgba(0,245,255,0.10)]">
-<div className="border-b border-cyan-300/15 px-4 py-3.5">
-<div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.20em] text-cyan-200 sm:text-xs">
-  <span>📊</span>
-  <span>Wager Stats</span>
-</div>
+
+        <div
+          className="
+            relative
+            overflow-hidden
+            rounded-xl
+            border border-purple-300/20
+            bg-[radial-gradient(circle_at_top_left,rgba(168,85,247,0.06),transparent_32%),linear-gradient(135deg,rgba(11,4,17,0.72),rgba(3,1,7,0.64))]
+            shadow-[0_14px_40px_rgba(0,0,0,0.22),0_0_24px_rgba(168,85,247,0.05)]
+            backdrop-blur-[8px]
+            sm:rounded-2xl
+          "
+        >
+          {/* HEADER */}
+
+          <div className="border-b border-purple-300/[0.09] px-3 py-2 sm:px-4 sm:py-3">
+            <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[0.15em] text-purple-200 sm:gap-2 sm:text-[11px]">
+              <span>📊</span>
+              <span>Wager Stats</span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3">
-            <div className="m-3 rounded-xl border border-cyan-300/20 bg-black/45 px-4 py-5 text-center shadow-[inset_0_0_18px_rgba(0,245,255,0.025)]">
-              <div className="text-[9px] font-black uppercase tracking-[0.16em] text-white/40">
+          {/* STATS */}
+
+          <div className="grid grid-cols-3 gap-1.5 p-1.5 sm:gap-3 sm:p-3">
+            {/* LIFETIME */}
+
+            <div
+              className="
+                rounded-lg
+                border border-purple-300/[0.10]
+                bg-black/28
+                px-1.5 py-2.5
+                text-center
+                sm:rounded-xl
+                sm:px-4
+                sm:py-4
+              "
+            >
+              <div className="text-[6px] font-black uppercase leading-tight tracking-[0.08em] text-white/40 sm:text-[8px]">
                 Lifetime Wagered
               </div>
 
-              <div className="mt-2 text-2xl font-black text-white">
+              <div className="mt-1 text-[12px] font-black leading-none text-white sm:mt-2 sm:text-[22px]">
                 $
                 {viewerProfileStats.lifetimeWagered.toLocaleString()}
               </div>
 
-              <div className="mt-1 text-[9px] text-white/25">
+              <div className="mt-1 hidden text-[8px] text-white/25 sm:block">
                 Total wagered on code
               </div>
             </div>
 
-            <div className="m-3 rounded-xl border border-cyan-300/20 bg-black/45 px-4 py-5 text-center shadow-[inset_0_0_18px_rgba(0,245,255,0.025)]">
-              <div className="text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200/50">
+            {/* LEADERBOARD RAW */}
+
+            <div
+              className="
+                rounded-lg
+                border border-purple-300/[0.10]
+                bg-purple-400/[0.035]
+                px-1.5 py-2.5
+                text-center
+                sm:rounded-xl
+                sm:px-4
+                sm:py-4
+              "
+            >
+              <div className="text-[6px] font-black uppercase leading-tight tracking-[0.08em] text-purple-200/55 sm:text-[8px]">
                 LB Wagered
               </div>
 
-              <div className="mt-2 text-2xl font-black text-cyan-200">
+              <div className="mt-1 text-[12px] font-black leading-none text-purple-200 sm:mt-2 sm:text-[22px]">
                 $
                 {viewerProfileStats.leaderboardWagered.toLocaleString()}
               </div>
 
-              <div className="mt-1 text-[9px] text-white/25">
+              <div className="mt-1 hidden text-[8px] text-white/25 sm:block">
                 Regular leaderboard wager
               </div>
             </div>
 
-            <div className="relative m-3 rounded-xl border border-yellow-300/25 bg-[linear-gradient(135deg,rgba(250,204,21,0.05),rgba(0,0,0,0.55))] px-4 py-5 text-center shadow-[inset_0_0_18px_rgba(250,204,21,0.025)]">
+            {/* LEADERBOARD WEIGHTED */}
+
+            <div
+              className="
+                relative
+                rounded-lg
+                border border-yellow-300/20
+                bg-[linear-gradient(135deg,rgba(250,204,21,0.045),rgba(0,0,0,0.35))]
+                px-1.5 py-2.5
+                text-center
+                sm:rounded-xl
+                sm:px-4
+                sm:py-4
+              "
+            >
               {viewerProfileStats.isVip && (
-                <div className="absolute right-2 top-2 rounded-full border border-yellow-300/25 bg-yellow-400/10 px-2 py-0.5 text-[7px] font-black text-yellow-200">
+                <div className="absolute right-1 top-1 rounded-full border border-yellow-300/25 bg-yellow-400/10 px-1 py-0.5 text-[5px] font-black text-yellow-200 sm:right-2 sm:top-2 sm:px-2 sm:text-[7px]">
                   VIP ✓
                 </div>
               )}
 
-              <div className="text-[9px] font-black uppercase tracking-[0.16em] text-yellow-200/60">
-                LB Weighted Wager
+              <div className="pr-3 text-[6px] font-black uppercase leading-tight tracking-[0.08em] text-yellow-200/60 sm:pr-0 sm:text-[8px]">
+                LB Weighted
               </div>
 
-              <div className="mt-2 text-2xl font-black text-yellow-200 drop-shadow-[0_0_10px_rgba(253,224,71,0.15)]">
+              <div className="mt-1 text-[12px] font-black leading-none text-yellow-200 sm:mt-2 sm:text-[22px]">
                 $
                 {viewerProfileStats.leaderboardWeightedWagered.toLocaleString()}
               </div>
 
-              <div className="mt-1 text-[9px] text-white/30">
+              <div className="mt-1 hidden text-[8px] text-white/30 sm:block">
                 VIP requirement: $
                 {viewerProfileStats.vipRequirement.toLocaleString()}
               </div>
             </div>
           </div>
 
+          {/* =====================================================
+              VIP PROGRESS
+          ===================================================== */}
+
           {rouloLink?.roulo_username && (
-            <div className="border-t border-cyan-300/10 px-4 py-3">
-              <div className="mx-auto max-w-3xl">
-                <div className="mb-1.5 flex items-center justify-between text-[8px] font-black uppercase tracking-[0.12em]">
+            <div className="border-t border-purple-300/[0.08] px-3 py-2 sm:px-4 sm:py-3">
+              <div className="mx-auto max-w-4xl">
+                <div className="mb-1 flex items-center justify-between text-[6px] font-black uppercase tracking-[0.10em] sm:mb-1.5 sm:text-[8px]">
                   <span className="text-white/35">
                     VIP Progress
                   </span>
@@ -4929,9 +8595,15 @@ const rankBadgeStyle = isFirst
                   </span>
                 </div>
 
-                <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06] sm:h-2">
                   <div
-                    className="h-full rounded-full bg-[linear-gradient(90deg,rgba(34,211,238,0.9),rgba(250,204,21,0.95))] shadow-[0_0_12px_rgba(34,211,238,0.25)] transition-all"
+                    className="
+                      h-full
+                      rounded-full
+                      bg-[linear-gradient(90deg,rgba(168,85,247,0.95),rgba(250,204,21,0.95))]
+                      shadow-[0_0_10px_rgba(168,85,247,0.16)]
+                      transition-all
+                    "
                     style={{
                       width: `${Math.min(
                         100,
@@ -4956,68 +8628,103 @@ const rankBadgeStyle = isFirst
         {/* =====================================================
             PRIZE PORTAL
         ===================================================== */}
-        <div className="relative overflow-hidden rounded-2xl border border-cyan-300/30 bg-[radial-gradient(circle_at_top_left,rgba(0,245,255,0.06),transparent_30%),linear-gradient(135deg,rgba(0,17,22,0.99),rgba(0,0,0,0.99))] shadow-[0_0_34px_rgba(0,245,255,0.10)]">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cyan-300/15 px-4 py-3.5">
-            <div>
-<div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.20em] text-cyan-200 sm:text-xs">
-  <span>🎁</span>
-  <span>Prize Portal</span>
-</div>
+
+        <div
+          className="
+            relative
+            overflow-hidden
+            rounded-xl
+            border border-purple-300/20
+            bg-[radial-gradient(circle_at_top_left,rgba(168,85,247,0.055),transparent_30%),linear-gradient(135deg,rgba(11,4,17,0.72),rgba(3,1,7,0.64))]
+            shadow-[0_14px_40px_rgba(0,0,0,0.22),0_0_24px_rgba(168,85,247,0.05)]
+            backdrop-blur-[8px]
+            sm:rounded-2xl
+          "
+        >
+          {/* HEADER */}
+
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-purple-300/[0.09] px-3 py-2 sm:gap-3 sm:px-4 sm:py-3">
+            <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[0.15em] text-purple-200 sm:gap-2 sm:text-[11px]">
+              <span>🎁</span>
+              <span>Prize Portal</span>
             </div>
 
-            <div className="flex gap-2">
-              <div className="rounded-lg border border-yellow-300/15 bg-yellow-400/[0.06] px-3 py-1.5 text-center">
-                <div className="text-[7px] font-black uppercase text-yellow-200/45">
+            {/* TOTALS */}
+
+            <div className="flex gap-1.5 sm:gap-2">
+              <div className="rounded-md border border-yellow-300/15 bg-yellow-400/[0.06] px-2 py-1 text-center sm:rounded-lg sm:px-3 sm:py-1.5">
+                <div className="text-[5px] font-black uppercase text-yellow-200/45 sm:text-[7px]">
                   Pending
                 </div>
-                <div className="text-xs font-black text-yellow-200">
+
+                <div className="text-[9px] font-black text-yellow-200 sm:text-[11px]">
                   ${viewerRewardsPending.toLocaleString()}
                 </div>
               </div>
 
-              <div className="rounded-lg border border-green-300/15 bg-green-400/[0.06] px-3 py-1.5 text-center">
-                <div className="text-[7px] font-black uppercase text-green-200/45">
+              <div className="rounded-md border border-green-300/15 bg-green-400/[0.06] px-2 py-1 text-center sm:rounded-lg sm:px-3 sm:py-1.5">
+                <div className="text-[5px] font-black uppercase text-green-200/45 sm:text-[7px]">
                   Paid
                 </div>
-                <div className="text-xs font-black text-green-300">
+
+                <div className="text-[9px] font-black text-green-300 sm:text-[11px]">
                   ${viewerRewardsPaid.toLocaleString()}
                 </div>
               </div>
             </div>
           </div>
 
+          {/* =====================================================
+              PRIZES
+          ===================================================== */}
+
           {viewerRewards.length === 0 ? (
-            <div className="px-4 py-8 text-center">
-              <div className="text-sm font-black text-white/45">
+            <div className="px-3 py-4 text-center sm:px-4 sm:py-7">
+              <div className="text-[10px] font-black text-white/45 sm:text-[13px]">
                 No prizes yet
               </div>
-              <div className="mt-1 text-[10px] text-white/25">
+
+              <div className="mt-1 text-[7px] text-white/25 sm:text-[9px]">
                 {viewerRewardsMessage ||
                   "Your winnings will appear here."}
               </div>
             </div>
           ) : (
-            <div className="divide-y divide-white/[0.06]">
+            <div className="divide-y divide-purple-300/[0.06]">
               {viewerRewards.map((reward: any) => {
                 const isPaid = Boolean(reward.paid);
+
                 const isClaimed =
                   Boolean(reward.claimed) && !isPaid;
 
                 return (
                   <div
                     key={reward.id}
-                    className="flex items-center justify-between gap-3 px-4 py-3 transition hover:bg-white/[0.025]"
+                    className="
+                      flex
+                      items-center
+                      justify-between
+                      gap-2
+                      px-3 py-2
+                      transition
+                      hover:bg-purple-400/[0.025]
+                      sm:gap-3
+                      sm:px-4
+                      sm:py-2.5
+                    "
                   >
+                    {/* LEFT */}
+
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="truncate text-xs font-black text-white sm:text-sm">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <div className="truncate text-[10px] font-black text-white sm:text-[13px]">
                           {reward.title ||
                             reward.reward_title ||
                             "Giveaway Prize"}
                         </div>
 
                         <div
-                          className={`rounded-full border px-2 py-0.5 text-[7px] font-black uppercase ${
+                          className={`rounded-full border px-1.5 py-0.5 text-[5px] font-black uppercase sm:px-2 sm:text-[7px] ${
                             isPaid
                               ? "border-green-300/20 bg-green-400/10 text-green-300"
                               : isClaimed
@@ -5033,7 +8740,7 @@ const rankBadgeStyle = isFirst
                         </div>
                       </div>
 
-                      <div className="mt-1 text-[9px] text-white/30">
+                      <div className="mt-0.5 text-[6px] text-white/30 sm:mt-1 sm:text-[8px]">
                         {reward.created_at
                           ? new Date(
                               reward.created_at
@@ -5042,14 +8749,16 @@ const rankBadgeStyle = isFirst
                       </div>
                     </div>
 
+                    {/* RIGHT */}
+
                     <div className="shrink-0 text-right">
                       <div
-                        className={`text-base font-black sm:text-lg ${
+                        className={`text-[12px] font-black sm:text-[17px] ${
                           isPaid
                             ? "text-green-300"
                             : isClaimed
                             ? "text-orange-200"
-                            : "text-cyan-200"
+                            : "text-purple-200"
                         }`}
                       >
                         $
@@ -5063,17 +8772,35 @@ const rankBadgeStyle = isFirst
                           onClick={() =>
                             handleClaimReward(reward.id)
                           }
-                          className="mt-1 rounded-md border border-yellow-300/30 bg-yellow-400/10 px-3 py-1 text-[8px] font-black uppercase tracking-wide text-yellow-200 transition hover:bg-yellow-400/20"
+                          className="
+                            mt-0.5
+                            rounded
+                            border border-yellow-300/30
+                            bg-yellow-400/10
+                            px-2 py-0.5
+                            text-[6px]
+                            font-black
+                            uppercase
+                            tracking-wide
+                            text-yellow-200
+                            transition
+                            hover:bg-yellow-400/20
+                            sm:mt-1
+                            sm:rounded-md
+                            sm:px-3
+                            sm:py-1
+                            sm:text-[8px]
+                          "
                         >
-                          Claim Prize
+                          Claim
                         </button>
                       ) : isPaid ? (
-                        <div className="mt-1 text-[8px] font-black text-green-300">
+                        <div className="mt-0.5 text-[6px] font-black text-green-300 sm:mt-1 sm:text-[8px]">
                           PAID ✓
                         </div>
                       ) : (
-                        <div className="mt-1 text-[8px] font-black text-orange-200">
-                          PAYMENT PENDING
+                        <div className="mt-0.5 text-[6px] font-black text-orange-200 sm:mt-1 sm:text-[8px]">
+                          PENDING
                         </div>
                       )}
                     </div>
@@ -5088,894 +8815,21 @@ const rankBadgeStyle = isFirst
   </section>
 )}
 
-{activeSection === "slotwheel" && (
-  <section className="space-y-4 sm:space-y-6">
-    {/* TITLE */}
-    <div className="mx-auto max-w-5xl text-center">
-      <GlowTabTitle label="SLOT CALL OF THE DAY" />
-    </div>
-
-    {/* IDLE SCROLL ANIMATION */}
-    <style>{`
-      @keyframes viewerWheelIdleScroll {
-        from {
-          transform: translateY(0);
-        }
-
-        to {
-          transform: translateY(-${slotCalls.length * SLOT_WHEEL_ITEM_HEIGHT}px);
-        }
-      }
-    `}</style>
-
-    {/* MAIN WHEEL CARD */}
-    <div className="mx-auto max-w-5xl rounded-2xl border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,18,24,0.96),rgba(0,0,0,0.98))] p-3 shadow-[0_0_35px_rgba(0,245,255,0.12)] sm:rounded-[1.5rem] sm:p-5">
-      {/* HEADER */}
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-200/60 sm:text-xs">
-            Live Viewer Wheel
-          </div>
-
-          <div className="mt-1 text-sm font-black text-white sm:text-lg">
-            Slot Calls
-          </div>
-        </div>
-
-        <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[10px] font-black text-cyan-100 sm:text-xs">
-          {slotCalls.length} entries
-        </div>
-      </div>
-
-      {/* WHEEL */}
-      <div
-        className="relative mx-auto mt-3 overflow-hidden rounded-xl border border-cyan-300/30 bg-black/90 shadow-[inset_0_0_30px_rgba(0,245,255,0.08),0_0_24px_rgba(0,245,255,0.10)]"
-        style={{
-          height: `${SLOT_WHEEL_VIEWPORT_HEIGHT}px`,
-        }}
-      >
-        {/* TOP FADE */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-16 bg-gradient-to-b from-black via-black/85 to-transparent" />
-
-        {/* BOTTOM FADE */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-16 bg-gradient-to-t from-black via-black/85 to-transparent" />
-
-        {/* CENTER SELECTOR */}
-        <div className="pointer-events-none absolute inset-x-2 top-1/2 z-30 h-11 -translate-y-1/2 rounded-lg border border-cyan-200/50 bg-cyan-400/12 shadow-[0_0_26px_rgba(0,245,255,0.22)]" />
-
-        {/* LEFT ARROW */}
-        <div className="pointer-events-none absolute left-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-l-[12px] border-y-transparent border-l-cyan-300" />
-
-        {/* RIGHT ARROW */}
-        <div className="pointer-events-none absolute right-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-r-[12px] border-y-transparent border-r-cyan-300" />
-
-        {/* WHEEL CONTENT */}
-        {slotCalls.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-xs font-semibold text-white/35 sm:text-sm">
-            No entries yet
-          </div>
-        ) : isSlotWheelSpinning ? (
-          /* ACTUAL SPIN */
-          <div
-            className="transition-transform duration-[4200ms] ease-[cubic-bezier(0.12,0.72,0.08,1)]"
-            style={{
-              transform: `translateY(-${slotWheelRotation}px)`,
-            }}
-          >
-            {slotWheelLoop.map((call, index) => (
-              <div
-                key={`spin-${call.id || call.username}-${call.slotName}-${index}`}
-                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3"
-                style={{
-                  height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
-                }}
-              >
-                <div className="truncate text-[11px] font-black text-white sm:text-xs">
-                  {call.username}
-                </div>
-
-                <div className="truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
-                  {call.slotName}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : pickedSlotCall ? (
-          /* LOCKED WINNER */
-          <div>
-            {slotWheelRestingRows.map(
-              ({ call, isCenter, rowKey }) => (
-                <div
-                  key={rowKey}
-                  className={`grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3 ${
-                    isCenter
-                      ? "bg-cyan-400/12 opacity-100"
-                      : "opacity-50"
-                  }`}
-                  style={{
-                    height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
-                  }}
-                >
-                  <div className="truncate text-[11px] font-black text-white sm:text-xs">
-                    {call.username}
-                  </div>
-
-                  <div className="truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
-                    {call.slotName}
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-        ) : (
-          /* SLOW CONTINUOUS IDLE SCROLL */
-          <div
-            style={{
-              animation: `viewerWheelIdleScroll ${Math.max(
-                slotCalls.length * 2.5,
-                8
-              )}s linear infinite`,
-              willChange: "transform",
-            }}
-          >
-            {slotWheelLoop.map((call, index) => (
-              <div
-                key={`idle-main-${call.id || call.username}-${call.slotName}-${index}`}
-                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3"
-                style={{
-                  height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
-                }}
-              >
-                <div className="truncate text-[11px] font-black text-white sm:text-xs">
-                  {call.username}
-                </div>
-
-                <div className="truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
-                  {call.slotName}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* TOP WINNER */}
-      <div className="mx-auto mt-3 max-w-5xl overflow-hidden rounded-2xl border border-yellow-300/25 bg-[linear-gradient(135deg,rgba(120,85,0,0.28),rgba(0,0,0,0.92))] p-3 shadow-[0_0_28px_rgba(250,204,21,0.10)] sm:mt-4 sm:p-4">
-        {topSlotCallWinner ? (
-          <div className="grid grid-cols-[auto_minmax(0,0.8fr)_minmax(0,1fr)_auto] items-center gap-2 sm:gap-4">
-            <div className="text-lg sm:text-2xl">
-              👑
-            </div>
-
-            <div className="min-w-0">
-              <div className="text-[8px] font-black uppercase tracking-[0.18em] text-yellow-200/60 sm:text-[10px]">
-                Top Winner
-              </div>
-
-              <div className="truncate text-[10px] font-black text-white sm:text-sm">
-                {topSlotCallWinner.username}
-              </div>
-            </div>
-
-            <div className="min-w-0 truncate text-right text-[9px] text-white/55 sm:text-xs">
-              {topSlotCallWinner.slotName}
-            </div>
-
-            <div className="whitespace-nowrap text-right text-[11px] font-black text-yellow-300 sm:text-base">
-              $
-              {topSlotCallWinner.payout.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="py-2 text-center text-xs text-white/35">
-            No top winner yet.
-          </div>
-        )}
-      </div>
-
-      {/* STATUS */}
-      <div className="mt-3 flex items-center justify-center gap-4 text-[10px] font-black uppercase tracking-[0.14em] sm:text-xs">
-        <div className="text-white/45">
-          Entries{" "}
-          <span className="ml-1 rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-1 text-cyan-100">
-            {slotCalls.length}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 text-emerald-300">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_7px_rgba(110,231,183,1)]" />
-          Live
-        </div>
-      </div>
-    </div>
-
-    {/* ENTRIES */}
-    <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-cyan-300/15 bg-black/80 shadow-[0_0_24px_rgba(0,245,255,0.08)]">
-      <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-3 sm:px-4">
-        <div className="text-sm font-black uppercase tracking-[0.12em] text-white sm:text-base">
-          Entries
-        </div>
-
-        <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-black text-cyan-100 sm:text-xs">
-          {slotCalls.length}
-        </div>
-      </div>
-
-      <div className="max-h-[360px] overflow-y-auto p-2 sm:p-3">
-        {slotCalls.length === 0 ? (
-          <div className="py-6 text-center text-xs text-white/35 sm:text-sm">
-            No entries yet.
-          </div>
-        ) : (
-          <div className="grid gap-1">
-            {slotCalls.map((call, index) => (
-              <div
-                key={`${call.id}-${index}`}
-                className="grid grid-cols-[28px_minmax(0,0.9fr)_minmax(0,1.1fr)] items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.025] px-2.5 py-2 sm:grid-cols-[40px_minmax(0,1fr)_minmax(0,1.3fr)] sm:px-3"
-              >
-                <div className="truncate text-[9px] font-black text-cyan-300/55 sm:text-[10px]">
-                  {index + 1}.
-                </div>
-
-                <div className="truncate text-[10px] font-black text-white sm:text-xs">
-                  {call.username}
-                </div>
-
-                <div className="truncate text-right text-[10px] text-white/55 sm:text-xs">
-                  {call.slotName}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-
-    {/* ROLLED / PAYOUT */}
-    <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-cyan-300/15 bg-black/80 shadow-[0_0_24px_rgba(0,245,255,0.08)]">
-      <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-3 sm:px-4">
-        <div className="text-sm font-black uppercase tracking-[0.12em] text-white sm:text-base">
-          Rolled / Payout
-        </div>
-
-        <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-black text-cyan-100 sm:text-xs">
-          {slotCallResults.length}
-        </div>
-      </div>
-
-      <div className="max-h-[360px] overflow-y-auto p-2 sm:p-3">
-        {slotCallResults.length === 0 ? (
-          <div className="py-6 text-center text-xs text-white/35 sm:text-sm">
-            No rolled slots yet.
-          </div>
-        ) : (
-          <div className="grid gap-1">
-            {slotCallResults.map((result, index) => (
-              <div
-                key={`${result.id}-${index}`}
-                className="grid grid-cols-[24px_minmax(0,0.75fr)_minmax(0,1fr)_70px] items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.025] px-2 py-2 sm:grid-cols-[40px_minmax(0,0.9fr)_minmax(0,1.3fr)_100px] sm:px-3"
-              >
-                <div className="truncate text-[8px] font-black text-cyan-300/55 sm:text-[10px]">
-                  {index + 1}.
-                </div>
-
-                <div className="truncate text-[9px] font-black text-white sm:text-xs">
-                  {result.username}
-                </div>
-
-                <div className="truncate text-[9px] text-white/55 sm:text-xs">
-                  {result.slotName}
-                </div>
-
-                <div className="truncate text-right text-[9px] font-black text-emerald-300 sm:text-xs">
-                  $
-                  {result.payout.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  </section>
-)}
-
-{activeSection === "tournaments" && (
-  <section className="space-y-4 sm:space-y-5">
-<div className="mx-auto max-w-7xl text-center">
-  <GlowTabTitle label="TOURNAMENTS" />
-
-  <div className="mt-2 text-sm font-black uppercase tracking-[0.18em] text-cyan-200/80 sm:text-base">
-    {tournamentView === "bracket"
-      ? bracket.title || "Tournament Bracket"
-      : "Snake Draft"}
-  </div>
-
-      <div className="mt-3 inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-1.5 text-xs font-black text-cyan-100">
-        {tournamentView === "bracket" ? "Live Bracket" : "Team Slot Draft"}
-      </div>
-
-      <div className="mx-auto mt-4 grid max-w-md grid-cols-2 gap-2">
-        <button
-          onClick={() => setTournamentView("bracket")}
-          className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-[0.16em] transition ${
-            tournamentView === "bracket"
-              ? "border-cyan-300/40 bg-cyan-400/20 text-cyan-100"
-              : "border-white/10 bg-black/70 text-white/45 hover:text-white"
-          }`}
-        >
-          Bracket
-        </button>
-
-        <button
-          onClick={() => setTournamentView("snake")}
-          className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-[0.16em] transition ${
-            tournamentView === "snake"
-              ? "border-cyan-300/40 bg-cyan-400/20 text-cyan-100"
-              : "border-white/10 bg-black/70 text-white/45 hover:text-white"
-          }`}
-        >
-          Snake Draft
-        </button>
-      </div>
-    </div>
-
-    {tournamentView === "bracket" && (
-      <>
-        {bracketLoading ? (
-          <div className="text-center text-sm text-white/55">
-            Loading bracket...
-          </div>
-        ) : (
-          <div className="mx-auto max-w-7xl">
-            <div
-              className="cursor-grab overflow-x-auto active:cursor-grabbing"
-              onMouseDown={(e) => {
-                const slider = e.currentTarget;
-                const startX = e.pageX - slider.offsetLeft;
-                const scrollLeft = slider.scrollLeft;
-
-                const onMouseMove = (moveEvent: MouseEvent) => {
-                  const x = moveEvent.pageX - slider.offsetLeft;
-                  const walk = (x - startX) * 1.4;
-                  slider.scrollLeft = scrollLeft - walk;
-                };
-
-                const onMouseUp = () => {
-                  document.removeEventListener("mousemove", onMouseMove);
-                  document.removeEventListener("mouseup", onMouseUp);
-                };
-
-                document.addEventListener("mousemove", onMouseMove);
-                document.addEventListener("mouseup", onMouseUp);
-              }}
-            >
-              <div className="flex min-w-[760px] items-start gap-4 pb-2 sm:min-w-[1050px] sm:gap-5">
-                {bracket.rounds.map((round, roundIndex) => {
-                  const topPadding =
-                    roundIndex === 0
-                      ? "pt-0"
-                      : roundIndex === 1
-                      ? "pt-8"
-                      : roundIndex === 2
-                      ? "pt-16"
-                      : "pt-24";
-
-                  return (
-                    <div
-                      key={round.id}
-                      className={`w-[190px] shrink-0 sm:w-[260px] ${topPadding}`}
-                    >
-                      <div className="mb-3 text-center">
-                        <div className="inline-flex max-w-full rounded-full border border-cyan-300/15 bg-black/85 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200 sm:text-[10px]">
-                          <span className="truncate">{round.name}</span>
-                        </div>
-                      </div>
-
-                      <div
-                        className={`space-y-2 ${
-                          roundIndex === 0
-                            ? ""
-                            : roundIndex === 1
-                            ? "pt-4"
-                            : roundIndex === 2
-                            ? "pt-10"
-                            : "pt-16"
-                        }`}
-                      >
-                        {round.matches.map((match) => {
-                          const isWinner1 =
-                            match.winner && match.winner === match.player1;
-                          const isWinner2 =
-                            match.winner && match.winner === match.player2;
-
-                          return (
-                            <div
-                              key={match.id}
-                              className="rounded-xl border border-white/10 bg-black/90 p-2.5 shadow-[0_0_12px_rgba(0,0,0,0.25)] sm:p-3"
-                            >
-                              <div
-                                className={`rounded-xl border px-3 py-3 text-sm font-black sm:text-base ${
-                                  isWinner1
-                                    ? "border-cyan-300/35 bg-cyan-400/10 text-white"
-                                    : "border-white/10 bg-white/[0.03] text-white/75"
-                                }`}
-                              >
-                                <div className="truncate">
-                                  {match.player1 || ""}
-                                </div>
-
-                                {match.player1Amount && (
-                                  <div className="mt-1 text-xs font-black text-[#f5c451] sm:text-sm">
-                                    ${match.player1Amount}
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="py-1 text-center text-[8px] font-black uppercase tracking-[0.18em] text-white/25">
-                                vs
-                              </div>
-
-                              <div
-                                className={`rounded-xl border px-3 py-3 text-sm font-black sm:text-base ${
-                                  isWinner2
-                                    ? "border-cyan-300/35 bg-cyan-400/10 text-white"
-                                    : "border-white/10 bg-white/[0.03] text-white/75"
-                                }`}
-                              >
-                                <div className="truncate">
-                                  {match.player2 || ""}
-                                </div>
-
-                                {match.player2Amount && (
-                                  <div className="mt-1 text-xs font-black text-[#f5c451] sm:text-sm">
-                                    ${match.player2Amount}
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="mt-2 truncate text-center text-[8px] font-black uppercase tracking-[0.18em] text-white/35">
-                                {match.winner
-                                  ? `Winner: ${match.winner}`
-                                  : "No winner"}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-      </>
-    )}
-
-    {tournamentView === "snake" && (
-      <div className="mx-auto max-w-7xl rounded-2xl border border-cyan-300/15 bg-black/85 p-4 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6">
-        <div className="text-center">
-        </div>
-
-        {snakeCaptains.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-white/10 bg-black/70 p-8 text-center text-sm text-white/45">
-            No snake draft has been created yet.
-          </div>
-        ) : (
-          <>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {snakeCaptains.map((captain) => (
-                <div
-                  key={captain}
-                  className={`rounded-2xl border p-4 ${getSnakeTeamStyle(
-                    captain
-                  )}`}
-                >
-                  <div className="text-lg font-black text-white">
-                    {captain}
-                  </div>
-
-                  <div className="mt-1 text-sm font-black text-[#f5c451]">
-                    Total: ${getSnakeTeamTotal(captain).toLocaleString()}
-                  </div>
-
-                  <div className="mt-3 text-[10px] uppercase tracking-[0.18em] text-white/40">
-                    Players
-                  </div>
-
-                  <div className="mt-2 space-y-1">
-                    {(snakeTeams[captain] || []).length === 0 ? (
-                      <div className="text-sm text-white/35">
-                        Waiting for picks...
-                      </div>
-                    ) : (
-                      snakeTeams[captain].map((player, index) => (
-                        <div
-                          key={player}
-                          className="text-sm font-semibold text-white/75"
-                        >
-                          {index + 1}. {player}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {snakeSlotOrder.length > 0 && (
-              <div className="mt-6">
-                <div className="mb-3 text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">
-                  Slot Call Board
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                  {snakeSlotOrder.map((name, index) => {
-                    const key = `${name}-${index}`;
-                    const teamCaptain = getSnakeTeamForName(name);
-                    const hit = snakeSlotHit[key];
-
-                    return (
-                      <div
-                        key={key}
-                        className={`rounded-xl border p-3 transition ${getSnakeTeamStyle(
-                          teamCaptain
-                        )} ${
-                          hit
-                            ? "ring-2 ring-cyan-300 shadow-[0_0_24px_rgba(0,245,255,0.20)]"
-                            : ""
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="text-xs font-black text-cyan-300">
-                            #{index + 1}
-                          </div>
-
-                          <div className="truncate text-sm font-black text-white">
-                            {name}
-                          </div>
-                        </div>
-
-                        <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">
-                          Team {teamCaptain}
-                        </div>
-
-                        <div className="mt-3 min-h-[38px] rounded-lg border border-white/10 bg-black/80 px-3 py-2 text-sm font-black text-white">
-                          {snakeSlotCalls[key] || "Waiting..."}
-                        </div>
-
-                        <div className="mt-2 rounded-lg border border-white/10 bg-black/80 px-3 py-2 text-sm font-black text-[#f5c451]">
-                          {snakeSlotAmounts[key]
-                            ? `$${Number(
-                                snakeSlotAmounts[key]
-                              ).toLocaleString()}`
-                            : "$0"}
-                        </div>
-
-                        <div
-                          className={`mt-2 rounded-lg border px-3 py-2 text-center text-xs font-black uppercase tracking-[0.14em] ${
-                            hit
-                              ? "border-cyan-300/40 bg-cyan-400/20 text-cyan-100"
-                              : "border-white/10 bg-black/60 text-white/35"
-                          }`}
-                        >
-                          {hit ? "Spun Into ✅" : "Not spun yet"}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    )}
-  </section>
-)}
-
-{activeSection === "slotpicker" && (
-  <section className="space-y-2 sm:space-y-3">
-    <div className="mx-auto max-w-6xl text-center">
-      <GlowTabTitle label="SLOT PICKER" />
-    </div>
-
-    {/* COMPACT PROVIDERS */}
-    <div className="mx-auto max-w-6xl overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm">
-      <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] px-4 py-3 sm:px-5 sm:py-3.5">
-        <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200/75 sm:text-[13px]">
-            Providers
-          </div>
-          <div className="text-[10px] font-bold text-white/45 sm:text-[12px]">
-            Select any combination
-          </div>
-        </div>
-
-        <div className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.06] px-3 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-cyan-100/80 sm:text-[11px]">
-          {filteredSlots.length} Slots
-        </div>
-      </div>
-
-      <div className="p-2.5 sm:p-3.5">
-        <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 sm:gap-2.5">
-          {slotProviders.map((provider) => {
-            const active = selectedProviders.includes(provider);
-            const logo = providerLogos[provider];
-            const providerSlotCount = slotData.filter(
-              (slot) => slot.provider === provider
-            ).length;
-
-            return (
-              <button
-                key={provider}
-                onClick={() => toggleSlotProvider(provider)}
-                disabled={isPickingSlot}
-                className={`group relative flex min-h-[46px] items-center gap-2 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition-all duration-200 sm:min-h-[56px] sm:px-3 sm:py-2 ${
-                  active
-                    ? "border-cyan-300/45 bg-cyan-400/[0.10] text-white shadow-[0_0_9px_rgba(0,245,255,0.10)]"
-                    : "border-white/[0.07] bg-black/70 text-white/50 hover:border-cyan-300/20 hover:text-white/80"
-                } disabled:cursor-not-allowed disabled:opacity-50`}
-              >
-                <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-black/75 sm:h-11 sm:w-11 ${
-                    active ? "border-cyan-300/25" : "border-white/10"
-                  }`}
-                >
-                  {logo ? (
-                    <img
-                      src={logo}
-                      alt={provider}
-                      className={`h-6 w-6 object-contain sm:h-8 sm:w-8 ${
-                        active ? "opacity-100" : "opacity-50"
-                      }`}
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <span className="text-[10px] font-black text-cyan-200">
-                      {provider.charAt(0)}
-                    </span>
-                  )}
-                </div>
-
-                <div className="min-w-0">
-                  <div className="truncate text-[9px] font-black leading-tight sm:text-[13px]">
-                    {provider}
-                  </div>
-                  <div className="mt-0.5 text-[8px] leading-none text-white/40 sm:text-[10px]">
-                    {providerSlotCount}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-2.5 flex items-center justify-between border-t border-white/[0.05] pt-2.5">
-          <span className="text-[9px] font-black uppercase tracking-[0.1em] text-white/55 sm:text-[11px]">
-            {selectedProviders.length === 0
-              ? "All providers active"
-              : `${selectedProviders.length} selected`}
-          </span>
-
-          <button
-            onClick={() => {
-              setSelectedProviders([]);
-              setPickedSlot(null);
-              setSlotPickerClawIndex(null);
-              setSlotPickerClawDropping(false);
-              setSlotPickerWinnerRevealed(false);
-            }}
-            disabled={isPickingSlot}
-            className="rounded-full border border-white/10 bg-black/60 px-3 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white/65 transition hover:border-cyan-300/25 hover:text-cyan-100 disabled:opacity-40 sm:text-[11px]"
-          >
-            Reset
-          </button>
-        </div>
-      </div>
-    </div>
-
-    {/* COMPACT CLAW MACHINE */}
-    <div className="mx-auto max-w-6xl overflow-hidden rounded-xl border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(0,18,22,0.97),rgba(0,0,0,0.99))] shadow-[0_0_30px_rgba(0,245,255,0.10)]">
-      <div className="flex items-center justify-between border-b border-cyan-300/10 px-4 py-3 sm:px-5 sm:py-4">
-        <div>
-          <div className="text-[9px] font-black uppercase tracking-[0.24em] text-cyan-200/65 sm:text-[11px]">
-            Random Slot Machine
-          </div>
-          <div className="mt-1 text-sm font-black tracking-[0.08em] text-white sm:text-lg">
-            {isPickingSlot
-              ? slotPickerClawDropping
-                ? "GRABBING..."
-                : slotPickerClawIndex !== null
-                ? "LOCKED ON..."
-                : "SPINNING..."
-              : slotPickerWinnerRevealed
-              ? "WINNER SELECTED"
-              : "READY"}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.1em] text-white/50 sm:text-[11px]">
-          <span
-            className={`h-2 w-2 rounded-full ${
-              isPickingSlot
-                ? "animate-pulse bg-yellow-300 shadow-[0_0_7px_rgba(253,224,71,1)]"
-                : "bg-emerald-300 shadow-[0_0_7px_rgba(110,231,183,1)]"
-            }`}
-          />
-          {filteredSlots.length} eligible
-        </div>
-      </div>
-
-      <div className="p-2.5 sm:p-4">
-        <div className="relative overflow-hidden rounded-lg border border-cyan-300/15 bg-black/95 shadow-[inset_0_0_40px_rgba(0,245,255,0.04)] [--slot-gap:8px] sm:[--slot-gap:10px]">
-          {/* CLAW RAIL */}
-          <div className="relative h-[70px] border-b border-white/[0.05] bg-[linear-gradient(180deg,rgba(0,245,255,0.035),transparent)] sm:h-[82px]">
-            <div className="absolute left-[4%] right-[4%] top-3 h-[3px] rounded-full border border-cyan-300/20 bg-black/80 sm:top-4" />
-
-            <div
-              className="absolute top-1.5 z-30 transition-[left] duration-500 ease-in-out sm:top-2"
-              style={{
-                left:
-                  slotPickerClawIndex === null
-                    ? "50%"
-                    : `calc(${slotPickerClawIndex} * (((100% - (4 * var(--slot-gap))) / 5) + var(--slot-gap)) + (((100% - (4 * var(--slot-gap))) / 5) / 2))`,
-                transform: "translateX(-50%)",
-              }}
-            >
-              <div className="mx-auto h-5 w-8 rounded border border-cyan-200/40 bg-[#071619] shadow-[0_0_10px_rgba(0,245,255,0.20)] sm:h-6 sm:w-10">
-                <div className="mx-auto mt-1 h-1 w-4 rounded-full bg-cyan-300/65 sm:w-5" />
-              </div>
-
-              <div
-                className={`mx-auto w-[2px] bg-cyan-100/65 transition-all duration-500 ${
-                  slotPickerClawDropping ? "h-[145px] sm:h-[185px]" : "h-[13px] sm:h-[16px]"
-                }`}
-              />
-
-              <div className="relative mx-auto h-5 w-9 sm:h-6 sm:w-10">
-                <div
-                  className={`absolute left-1 top-0 h-5 w-[2px] origin-top rounded bg-cyan-100/75 transition-transform duration-300 ${
-                    slotPickerClawDropping ? "rotate-[16deg]" : "rotate-[28deg]"
-                  }`}
-                />
-                <div
-                  className={`absolute right-1 top-0 h-5 w-[2px] origin-top rounded bg-cyan-100/75 transition-transform duration-300 ${
-                    slotPickerClawDropping ? "-rotate-[16deg]" : "-rotate-[28deg]"
-                  }`}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* BELT VIEWPORT - exactly 5 full cards visible, 6th stays off screen */}
-          <div className="relative overflow-hidden px-2 py-3 sm:px-2.5 sm:py-3.5">
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-5 bg-gradient-to-r from-black to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-5 bg-gradient-to-l from-black to-transparent" />
-
-            <div
-              className="flex gap-[var(--slot-gap)]"
-              style={{
-                transform: slotPickerSliding
-                  ? "translateX(calc(-1 * ((((100% - (4 * var(--slot-gap))) / 5)) + var(--slot-gap))))"
-                  : "translateX(0)",
-                transition: slotPickerSliding
-                  ? `transform ${slotPickerTransitionMs}ms cubic-bezier(0.22, 0.61, 0.36, 1)`
-                  : "none",
-              }}
-            >
-              {slotPickerBelt.map((slot, index) => {
-                const visibleIndex = index;
-                const isWinner =
-                  slotPickerWinnerRevealed &&
-                  slotPickerClawIndex === visibleIndex &&
-                  visibleIndex < 5;
-
-                return (
-                  <div
-                    key={`${slot.provider}-${slot.name}-${index}`}
-                    className={`relative shrink-0 overflow-hidden rounded-lg border bg-black transition-all duration-500 ${
-                      isWinner
-                        ? "-translate-y-4 scale-[1.045] border-emerald-300 shadow-[0_0_28px_rgba(110,231,183,0.58)]"
-                        : "border-white/10"
-                    }`}
-                    style={{
-                      flexBasis: "calc((100% - (4 * var(--slot-gap))) / 5)",
-                    }}
-                  >
-                    <div className="aspect-[4/5] overflow-hidden bg-[#060606]">
-                      {slot.image ? (
-                        <img
-                          src={slot.image}
-                          alt={slot.name}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-lg opacity-30">
-                          🎰
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="border-t border-white/[0.05] bg-black/95 px-1.5 py-1.5 text-center">
-                      <div className="truncate text-[8px] font-black text-white sm:text-[11px]">
-                        {slot.name}
-                      </div>
-                      <div className="mt-0.5 truncate text-[7px] font-bold uppercase text-cyan-100/45 sm:text-[9px]">
-                        {slot.provider}
-                      </div>
-                    </div>
-
-                    {isWinner && (
-                      <div className="absolute left-1/2 top-1 -translate-x-1/2 rounded-full border border-emerald-200/50 bg-black/90 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-[0.08em] text-emerald-200 sm:text-[9px]">
-                        Winner
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-1.5 h-1.5 rounded-full border border-cyan-300/10 bg-[repeating-linear-gradient(90deg,#071315_0px,#071315_12px,#0d2a2f_12px,#0d2a2f_15px)]" />
-          </div>
-        </div>
-
-        {pickedSlot && slotPickerWinnerRevealed && (
-          <div className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-emerald-300/15 bg-emerald-300/[0.035] px-3 py-2 text-center">
-            <span className="text-[9px] font-black uppercase tracking-[0.14em] text-emerald-200/60 sm:text-[11px]">
-              Selected
-            </span>
-            <span className="truncate text-[11px] font-black text-[#9fffd7] sm:text-[14px]">
-              {pickedSlot.name}
-            </span>
-            <span className="hidden text-[9px] font-bold uppercase text-white/45 sm:inline">
-              {pickedSlot.provider}
-            </span>
-          </div>
-        )}
-
-        <button
-          onClick={pickRandomSlot}
-          disabled={isPickingSlot || filteredSlots.length === 0}
-          className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm font-black uppercase tracking-[0.16em] transition-all duration-200 sm:py-3.5 sm:text-base ${
-            isPickingSlot
-              ? "cursor-wait border-cyan-300/20 bg-cyan-400/[0.07] text-cyan-100/50"
-              : "border-cyan-300/45 bg-[linear-gradient(180deg,rgba(0,245,255,0.23),rgba(0,110,130,0.16))] text-[#baffdf] shadow-[0_0_20px_rgba(0,245,255,0.12)] hover:border-cyan-200/70 hover:bg-cyan-400/20"
-          } disabled:cursor-not-allowed disabled:opacity-50`}
-        >
-          {isPickingSlot ? "SPINNING..." : "SPIN"}
-        </button>
-      </div>
-    </div>
-  </section>
-)}
-
 {activeSection === "admin" && adminAllowed && (
-  <section className="mx-auto grid w-full min-w-0 max-w-6xl gap-2 overflow-x-hidden px-0 sm:gap-3 [&_input]:max-w-full [&_select]:max-w-full [&_textarea]:max-w-full">
+  <section className="mx-auto grid w-full min-w-0 max-w-7xl gap-2 overflow-x-hidden px-0 sm:gap-3 [&_input]:max-w-full [&_select]:max-w-full [&_textarea]:max-w-full">
     <div>
       <div className="min-w-0 px-1 text-center">
         <GlowTabTitle label="ADMIN CONTROL CENTER" />
       </div>
 
-      <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_24px_rgba(0,245,255,0.08)] backdrop-blur-sm sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
-        <div className="rounded-xl border border-cyan-300/15 bg-cyan-400/5 px-3 py-2 text-[11px] font-semibold leading-5 text-cyan-100/75 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
+      <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-purple-300/15 bg-black/85 p-2.5 shadow-[0_0_24px_rgba(168,85,247,0.08)] backdrop-blur-sm sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
+        <div className="rounded-xl border border-purple-300/15 bg-purple-400/5 px-3 py-2 text-[11px] font-semibold leading-5 text-purple-100/75 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
           {viewerDisplayName} control center is active.
         </div>
       </div>
 
-      <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/70 p-1.5 sm:mt-4">
+      {/* ADMIN NAVIGATION */}
+      <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-purple-300/15 bg-black/70 p-1.5 shadow-[0_0_18px_rgba(168,85,247,0.06)] backdrop-blur-sm sm:mt-4">
         <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5">
           {[
             { id: "giveaway", label: "Giveaways" },
@@ -6002,8 +8856,8 @@ const rankBadgeStyle = isFirst
                 }
                 className={`min-w-0 whitespace-normal break-words rounded-lg border px-1.5 py-2 text-[9px] font-black uppercase leading-tight tracking-[0.04em] transition sm:px-3 sm:text-xs sm:tracking-[0.08em] ${
                   active
-                    ? "border-cyan-300/40 bg-cyan-400/15 text-cyan-100 shadow-[0_0_16px_rgba(0,245,255,0.12)]"
-                    : "border-white/10 bg-white/[0.03] text-white/55 hover:border-cyan-300/20 hover:text-white"
+                    ? "border-purple-300/40 bg-purple-400/15 text-purple-100 shadow-[0_0_16px_rgba(168,85,247,0.18)]"
+                    : "border-white/10 bg-white/[0.03] text-white/55 hover:border-purple-300/20 hover:bg-purple-400/[0.06] hover:text-white"
                 }`}
               >
                 {tab.label}
@@ -6013,353 +8867,406 @@ const rankBadgeStyle = isFirst
         </div>
       </div>
 
-      <div className="mt-2 grid w-full min-w-0 max-w-full gap-2 overflow-x-hidden sm:mt-3 sm:gap-3">
+<div className="mt-2 grid w-full min-w-0 max-w-full gap-2 overflow-x-hidden sm:mt-3 sm:gap-3">
+  {/* GIVEAWAY ADMIN */}
+  <details
+    open={activeAdminTab === "giveaway"}
+    className={`${
+      activeAdminTab === "giveaway" ? "block" : "hidden"
+    } min-w-0 overflow-hidden rounded-xl border border-purple-300/30 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.12),rgba(0,0,0,0.88)_45%)] p-2 shadow-[0_0_28px_rgba(168,85,247,0.14)] backdrop-blur-sm sm:p-4`}
+  >
+    <summary className="hidden">Giveaway System</summary>
+
+    <div className="rounded-xl border border-purple-300/10 bg-purple-500/[0.025] p-1">
+      <GiveawayAdmin isAdmin={isAdmin} />
+    </div>
+  </details>
+
+        {/* PRIZE PORTAL ADMIN */}
         <details
-          open={activeAdminTab === "giveaway"}
-          className={`${activeAdminTab === "giveaway" ? "block" : "hidden"} min-w-0 rounded-xl border border-cyan-300/15 bg-black/85 p-2 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
+          open={activeAdminTab === "prizePortal"}
+          className={`${
+            activeAdminTab === "prizePortal" ? "block" : "hidden"
+          } min-w-0 max-w-full overflow-hidden rounded-xl border border-purple-300/15 bg-black/85 p-3 shadow-[0_0_20px_rgba(168,85,247,0.07)] backdrop-blur-sm sm:p-4`}
         >
-          <summary className="hidden">Giveaway System</summary>
-          <GiveawayAdmin isAdmin={isAdmin} />
-        </details>
+          <summary className="hidden">Prize Portal Manager</summary>
 
-<details
-  open={activeAdminTab === "prizePortal"}
-  className={`${activeAdminTab === "prizePortal" ? "block" : "hidden"} min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
->
-  <summary className="hidden">Prize Portal Manager</summary>
+          <div className="mt-4 grid gap-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <SectionLabel>Prize Claims</SectionLabel>
 
-  <div className="mt-4 grid gap-4">
-    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-      <div>
-        <SectionLabel>Prize Claims</SectionLabel>
-        <h2 className="mt-2 text-xl font-black tracking-wide sm:text-3xl">
-          CLAIMED PRIZES
-        </h2>
-        <div className="mt-1 text-xs text-white/45 sm:text-sm">
-          Pay claimed prizes and view paid history.
-        </div>
-      </div>
+                <h2 className="mt-2 text-xl font-black tracking-wide text-white sm:text-3xl">
+                  CLAIMED PRIZES
+                </h2>
 
-      <ActionButton onClick={loadAdminRewards} variant="dark" className="w-full md:w-auto">
-        Refresh
-      </ActionButton>
-    </div>
-
-    <input
-      value={adminRewardsSearch}
-      onChange={(e) => setAdminRewardsSearch(e.target.value)}
-      placeholder="Search username, platform, title..."
-      className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none"
-    />
-
-    {adminRewardsMessage && (
-      <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-white/70">
-        {adminRewardsMessage}
-      </div>
-    )}
-
-    {/* MANUAL DISCORD GIVEAWAY */}
-<div className="rounded-xl border border-cyan-300/15 bg-black/45 p-3">
-  <div className="mb-3 flex items-center justify-between">
-    <div>
-      <div className="text-xs font-black uppercase tracking-[0.16em] text-cyan-200">
-        GIVEAWAYS
-      </div>
-      <div className="mt-1 text-xs text-white/40">
-        Manually add a prize to someone’s Prize Portal.
-      </div>
-    </div>
-  </div>
-
-  <div className="grid gap-2 sm:grid-cols-[120px_1fr_120px_1fr_auto]">
-    <select
-      value={manualRewardPlatform}
-      onChange={(e) =>
-        setManualRewardPlatform(e.target.value as "twitch" | "kick")
-      }
-      className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-black text-white outline-none"
-    >
-      <option value="twitch">Twitch</option>
-      <option value="kick">Kick</option>
-    </select>
-
-    <input
-      value={manualRewardUsername}
-      onChange={(e) => setManualRewardUsername(e.target.value)}
-      placeholder="username"
-      className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs text-white outline-none"
-    />
-
-    <input
-      value={manualRewardAmount}
-      onChange={(e) => setManualRewardAmount(e.target.value)}
-      placeholder="$ amount"
-      type="number"
-      className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs text-white outline-none"
-    />
-
-<select
-  value={manualRewardType}
-  onChange={(e) => setManualRewardType(e.target.value)}
-  className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-black text-white outline-none"
->
-  <option value="discord_giveaway">
-    🎁 Discord Giveaway
-  </option>
-
-  <option value="twitter_giveaway">
-    𝕏 Twitter Giveaway
-  </option>
-
-  <option value="instagram_giveaway">
-    📸 Instagram Giveaway
-  </option>
-
-  <option value="slot_call">
-    🎰 Slot Call of the Day
-  </option>
-
-  <option value="prediction">
-    🎯 Predictions Winner
-  </option>
-
-  <option value="vip_tournament">
-    👑 VIP Tournament
-  </option>
-</select>
-
-    <ActionButton
-      onClick={handleCreateManualReward}
-      variant="green"
-      className="min-h-[36px] px-4 text-[10px]"
-    >
-      Add Prize
-    </ActionButton>
-  </div>
-</div>
-
-{/* UNCLAIMED REWARDS */}
-<div className="overflow-hidden rounded-xl border border-yellow-300/20 bg-black/45">
-  <div className="flex items-center justify-between border-b border-yellow-300/10 px-3 py-2">
-    <div className="text-xs font-black uppercase tracking-[0.16em] text-yellow-200">
-      Unclaimed Rewards
-    </div>
-
-    <div className="rounded-full border border-yellow-300/20 bg-yellow-400/10 px-2 py-0.5 text-[10px] font-black text-yellow-200">
-      {
-        filteredAdminRewards.filter(
-          (reward) => !reward.claimed && !reward.paid
-        ).length
-      }
-    </div>
-  </div>
-
-  {filteredAdminRewards.filter(
-    (reward) => !reward.claimed && !reward.paid
-  ).length === 0 ? (
-    <div className="p-4 text-center text-xs text-white/40">
-      No unclaimed rewards.
-    </div>
-  ) : (
-    <div className="divide-y divide-white/5">
-      {filteredAdminRewards
-        .filter((reward) => !reward.claimed && !reward.paid)
-        .map((reward) => (
-          <div
-            key={reward.id}
-            className="flex items-start justify-between gap-4 px-3 py-2.5"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <div className="truncate text-sm font-black text-white">
-                  {reward.display_name ||
-                    reward.twitch_username ||
-                    reward.kick_username}
+                <div className="mt-1 text-xs text-white/45 sm:text-sm">
+                  Pay claimed prizes and view paid history.
                 </div>
-
-                <div
-                  className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${
-                    reward.platform === "kick"
-                      ? "border-green-300/25 bg-green-400/10 text-green-200"
-                      : "border-purple-300/25 bg-purple-400/10 text-purple-200"
-                  }`}
-                >
-                  {reward.platform === "kick" ? "Kick" : "Twitch"}
-                </div>
-              </div>
-
-              <div className="mt-1 text-[10px] text-white/40">
-                Roulo: {reward.roulo_username || "Not linked"}
-              </div>
-
-              <div className="mt-1 text-[10px] text-white/35">
-                {reward.title || "Prize"} •{" "}
-                {reward.created_at
-                  ? new Date(reward.created_at).toLocaleString()
-                  : "Recently"}
-              </div>
-            </div>
-
-            <div className="flex shrink-0 flex-col items-end gap-2">
-              <div className="text-base font-black text-cyan-200">
-                ${Number(reward.amount || 0).toLocaleString()}
               </div>
 
               <ActionButton
-                onClick={() => handleAdminDeleteReward(reward.id)}
-                variant="red"
-                className="h-8 px-3 text-[9px]"
+                onClick={loadAdminRewards}
+                variant="dark"
+                className="w-full md:w-auto"
               >
-                Delete
+                Refresh
               </ActionButton>
             </div>
-          </div>
-        ))}
-    </div>
-  )}
-</div>
 
-    {/* CLAIMED / UNPAID */}
-    <div className="overflow-hidden rounded-xl border border-orange-300/20 bg-black/45">
-      <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
-        <div className="text-xs font-black uppercase tracking-[0.16em] text-orange-200">
-          Claimed / Unpaid
-        </div>
-        <div className="rounded-full border border-orange-300/20 bg-orange-400/10 px-2 py-0.5 text-[10px] font-black text-orange-200">
-          {filteredAdminRewards.filter((r) => r.claimed && !r.paid).length}
-        </div>
-      </div>
+            <input
+              value={adminRewardsSearch}
+              onChange={(e) => setAdminRewardsSearch(e.target.value)}
+              placeholder="Search username, platform, title..."
+              className="w-full rounded-xl border border-purple-300/15 bg-black/50 px-3 py-2 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-purple-300/40 focus:shadow-[0_0_14px_rgba(168,85,247,0.10)]"
+            />
 
-      {filteredAdminRewards.filter((r) => r.claimed && !r.paid).length === 0 ? (
-        <div className="p-4 text-center text-xs text-white/40">
-          No claimed prizes waiting for payment.
-        </div>
-      ) : (
-<div className="divide-y divide-white/5">
-  {filteredAdminRewards
-    .filter((reward) => reward.claimed && !reward.paid)
-    .map((reward) => (
-      <div
-        key={reward.id}
-        className="flex items-start justify-between gap-4 p-3"
-      >
-        {/* LEFT SIDE */}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <div className="truncate text-sm font-black text-white">
-              {reward.display_name ||
-                reward.twitch_username ||
-                reward.kick_username}
-            </div>
+            {adminRewardsMessage && (
+              <div className="rounded-xl border border-purple-300/15 bg-purple-400/[0.06] p-3 text-xs text-purple-100/80">
+                {adminRewardsMessage}
+              </div>
+            )}
 
-            <div
-              className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${
-                reward.platform === "kick"
-                  ? "border-green-300/25 bg-green-400/10 text-green-200"
-                  : "border-purple-300/25 bg-purple-400/10 text-purple-200"
-              }`}
-            >
-              {reward.platform === "kick" ? "Kick" : "Twitch"}
-            </div>
-          </div>
-
-          <div className="mt-1 text-[11px] text-white/45">
-            Roulo: {reward.roulo_username || "Not linked"}
-          </div>
-
-          <div className="mt-1 text-[10px] text-white/35">
-            {reward.title || "Chat Giveaway"} •{" "}
-            {reward.claimed_at
-              ? new Date(reward.claimed_at).toLocaleString()
-              : "Just claimed"}
-          </div>
-        </div>
-
-        {/* RIGHT SIDE */}
-        <div className="flex flex-col items-end justify-between">
-          <div className="text-base font-black text-cyan-200">
-            ${Number(reward.amount || 0).toLocaleString()}
-          </div>
-
-<div className="mt-2 flex items-center gap-2">
-  <ActionButton
-    onClick={() => handleAdminMarkRewardPaid(reward.id)}
-    variant="green"
-    className="h-8 px-4 text-[9px]"
-  >
-    Mark Paid
-  </ActionButton>
-
-  <ActionButton
-    onClick={() => handleAdminDeleteReward(reward.id)}
-    variant="red"
-    className="h-8 px-3 text-[9px]"
-  >
-    Delete
-  </ActionButton>
-</div>
-        </div>
-      </div>
-    ))}
-</div>
-      )}
-    </div>
-
-    {/* PAID HISTORY */}
-    <div className="overflow-hidden rounded-xl border border-cyan-300/15 bg-black/35">
-      <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
-        <div className="text-xs font-black uppercase tracking-[0.16em] text-cyan-200">
-          Paid History
-        </div>
-        <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-black text-cyan-200">
-          {filteredAdminRewards.filter((r) => r.paid).length}
-        </div>
-      </div>
-
-      {filteredAdminRewards.filter((r) => r.paid).length === 0 ? (
-        <div className="p-4 text-center text-xs text-white/40">
-          No paid prizes yet.
-        </div>
-      ) : (
-        <div className="max-h-[420px] divide-y divide-white/5 overflow-y-auto">
-          {filteredAdminRewards
-            .filter((reward) => reward.paid)
-            .map((reward) => (
-              <div key={reward.id} className="flex items-center justify-between gap-3 p-3">
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-black text-white">
-                    {reward.display_name || reward.twitch_username || reward.kick_username}
+            {/* MANUAL REWARD */}
+            <div className="rounded-xl border border-purple-300/15 bg-black/45 p-3 shadow-[0_0_16px_rgba(168,85,247,0.04)]">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-black uppercase tracking-[0.16em] text-purple-200">
+                    GIVEAWAYS
                   </div>
-                  <div className="mt-1 text-[11px] text-white/40">
-                    {reward.title || "Chat Giveaway"} •{" "}
-                    {reward.paid_at
-                      ? new Date(reward.paid_at).toLocaleString()
-                      : "Paid"}
-                  </div>
-                </div>
 
-                <div className="shrink-0 text-right">
-                  <div className="text-sm font-black text-cyan-200">
-                    ${Number(reward.amount || 0).toLocaleString()}
+                  <div className="mt-1 text-xs text-white/40">
+                    Manually add a prize to someone&apos;s Prize Portal.
                   </div>
-                  <button
-                    onClick={() => handleAdminMarkRewardPending(reward.id)}
-                    className="mt-1 text-[10px] font-black text-white/40 hover:text-white"
-                  >
-                    Undo
-                  </button>
                 </div>
               </div>
-            ))}
-        </div>
-      )}
-    </div>
-  </div>
-</details>
 
+              <div className="grid gap-2 sm:grid-cols-[120px_1fr_120px_1fr_auto]">
+                <select
+                  value={manualRewardPlatform}
+                  onChange={(e) =>
+                    setManualRewardPlatform(
+                      e.target.value as "twitch" | "kick"
+                    )
+                  }
+                  className="rounded-lg border border-purple-300/15 bg-black/60 px-3 py-2 text-xs font-black text-white outline-none focus:border-purple-300/40"
+                >
+                  <option value="twitch">Twitch</option>
+                  <option value="kick">Kick</option>
+                </select>
+
+                <input
+                  value={manualRewardUsername}
+                  onChange={(e) => setManualRewardUsername(e.target.value)}
+                  placeholder="username"
+                  className="rounded-lg border border-purple-300/15 bg-black/60 px-3 py-2 text-xs text-white outline-none placeholder:text-white/25 focus:border-purple-300/40"
+                />
+
+                <input
+                  value={manualRewardAmount}
+                  onChange={(e) => setManualRewardAmount(e.target.value)}
+                  placeholder="$ amount"
+                  type="number"
+                  className="rounded-lg border border-purple-300/15 bg-black/60 px-3 py-2 text-xs text-white outline-none placeholder:text-white/25 focus:border-purple-300/40"
+                />
+
+                <select
+                  value={manualRewardType}
+                  onChange={(e) => setManualRewardType(e.target.value)}
+                  className="rounded-lg border border-purple-300/15 bg-black/60 px-3 py-2 text-xs font-black text-white outline-none focus:border-purple-300/40"
+                >
+                  <option value="discord_giveaway">
+                    🎁 Discord Giveaway
+                  </option>
+
+                  <option value="twitter_giveaway">
+                    𝕏 Twitter Giveaway
+                  </option>
+
+                  <option value="instagram_giveaway">
+                    📸 Instagram Giveaway
+                  </option>
+
+                  <option value="slot_call">
+                    🎰 Slot Call of the Day
+                  </option>
+
+                  <option value="prediction">
+                    🎯 Predictions Winner
+                  </option>
+
+                  <option value="vip_tournament">
+                    👑 VIP Tournament
+                  </option>
+                </select>
+
+                <ActionButton
+                  onClick={handleCreateManualReward}
+                  variant="green"
+                  className="min-h-[36px] px-4 text-[10px]"
+                >
+                  Add Prize
+                </ActionButton>
+              </div>
+            </div>
+
+            {/* UNCLAIMED REWARDS */}
+            <div className="overflow-hidden rounded-xl border border-yellow-300/20 bg-black/45">
+              <div className="flex items-center justify-between border-b border-yellow-300/10 px-3 py-2">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-yellow-200">
+                  Unclaimed Rewards
+                </div>
+
+                <div className="rounded-full border border-yellow-300/20 bg-yellow-400/10 px-2 py-0.5 text-[10px] font-black text-yellow-200">
+                  {
+                    filteredAdminRewards.filter(
+                      (reward) => !reward.claimed && !reward.paid
+                    ).length
+                  }
+                </div>
+              </div>
+
+              {filteredAdminRewards.filter(
+                (reward) => !reward.claimed && !reward.paid
+              ).length === 0 ? (
+                <div className="p-4 text-center text-xs text-white/40">
+                  No unclaimed rewards.
+                </div>
+              ) : (
+                <div className="divide-y divide-white/5">
+                  {filteredAdminRewards
+                    .filter((reward) => !reward.claimed && !reward.paid)
+                    .map((reward) => (
+                      <div
+                        key={reward.id}
+                        className="flex items-start justify-between gap-4 px-3 py-2.5"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="truncate text-sm font-black text-white">
+                              {reward.display_name ||
+                                reward.twitch_username ||
+                                reward.kick_username}
+                            </div>
+
+                            <div
+                              className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${
+                                reward.platform === "kick"
+                                  ? "border-green-300/25 bg-green-400/10 text-green-200"
+                                  : "border-purple-300/25 bg-purple-400/10 text-purple-200"
+                              }`}
+                            >
+                              {reward.platform === "kick"
+                                ? "Kick"
+                                : "Twitch"}
+                            </div>
+                          </div>
+
+                          <div className="mt-1 text-[10px] text-white/40">
+                            Roulo: {reward.roulo_username || "Not linked"}
+                          </div>
+
+                          <div className="mt-1 text-[10px] text-white/35">
+                            {reward.title || "Prize"} •{" "}
+                            {reward.created_at
+                              ? new Date(
+                                  reward.created_at
+                                ).toLocaleString()
+                              : "Recently"}
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 flex-col items-end gap-2">
+                          <div className="text-base font-black text-purple-200">
+                            ${Number(reward.amount || 0).toLocaleString()}
+                          </div>
+
+                          <ActionButton
+                            onClick={() =>
+                              handleAdminDeleteReward(reward.id)
+                            }
+                            variant="red"
+                            className="h-8 px-3 text-[9px]"
+                          >
+                            Delete
+                          </ActionButton>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {/* CLAIMED / UNPAID */}
+            <div className="overflow-hidden rounded-xl border border-orange-300/20 bg-black/45">
+              <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-orange-200">
+                  Claimed / Unpaid
+                </div>
+
+                <div className="rounded-full border border-orange-300/20 bg-orange-400/10 px-2 py-0.5 text-[10px] font-black text-orange-200">
+                  {
+                    filteredAdminRewards.filter(
+                      (r) => r.claimed && !r.paid
+                    ).length
+                  }
+                </div>
+              </div>
+
+              {filteredAdminRewards.filter(
+                (r) => r.claimed && !r.paid
+              ).length === 0 ? (
+                <div className="p-4 text-center text-xs text-white/40">
+                  No claimed prizes waiting for payment.
+                </div>
+              ) : (
+                <div className="divide-y divide-white/5">
+                  {filteredAdminRewards
+                    .filter((reward) => reward.claimed && !reward.paid)
+                    .map((reward) => (
+                      <div
+                        key={reward.id}
+                        className="flex items-start justify-between gap-4 p-3"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="truncate text-sm font-black text-white">
+                              {reward.display_name ||
+                                reward.twitch_username ||
+                                reward.kick_username}
+                            </div>
+
+                            <div
+                              className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${
+                                reward.platform === "kick"
+                                  ? "border-green-300/25 bg-green-400/10 text-green-200"
+                                  : "border-purple-300/25 bg-purple-400/10 text-purple-200"
+                              }`}
+                            >
+                              {reward.platform === "kick"
+                                ? "Kick"
+                                : "Twitch"}
+                            </div>
+                          </div>
+
+                          <div className="mt-1 text-[11px] text-white/45">
+                            Roulo: {reward.roulo_username || "Not linked"}
+                          </div>
+
+                          <div className="mt-1 text-[10px] text-white/35">
+                            {reward.title || "Chat Giveaway"} •{" "}
+                            {reward.claimed_at
+                              ? new Date(
+                                  reward.claimed_at
+                                ).toLocaleString()
+                              : "Just claimed"}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end justify-between">
+                          <div className="text-base font-black text-purple-200">
+                            ${Number(reward.amount || 0).toLocaleString()}
+                          </div>
+
+                          <div className="mt-2 flex items-center gap-2">
+                            <ActionButton
+                              onClick={() =>
+                                handleAdminMarkRewardPaid(reward.id)
+                              }
+                              variant="green"
+                              className="h-8 px-4 text-[9px]"
+                            >
+                              Mark Paid
+                            </ActionButton>
+
+                            <ActionButton
+                              onClick={() =>
+                                handleAdminDeleteReward(reward.id)
+                              }
+                              variant="red"
+                              className="h-8 px-3 text-[9px]"
+                            >
+                              Delete
+                            </ActionButton>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {/* PAID HISTORY */}
+            <div className="overflow-hidden rounded-xl border border-purple-300/15 bg-black/35">
+              <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-purple-200">
+                  Paid History
+                </div>
+
+                <div className="rounded-full border border-purple-300/20 bg-purple-400/10 px-2 py-0.5 text-[10px] font-black text-purple-200">
+                  {filteredAdminRewards.filter((r) => r.paid).length}
+                </div>
+              </div>
+
+              {filteredAdminRewards.filter((r) => r.paid).length ===
+              0 ? (
+                <div className="p-4 text-center text-xs text-white/40">
+                  No paid prizes yet.
+                </div>
+              ) : (
+                <div className="max-h-[420px] divide-y divide-white/5 overflow-y-auto">
+                  {filteredAdminRewards
+                    .filter((reward) => reward.paid)
+                    .map((reward) => (
+                      <div
+                        key={reward.id}
+                        className="flex items-center justify-between gap-3 p-3"
+                      >
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-black text-white">
+                            {reward.display_name ||
+                              reward.twitch_username ||
+                              reward.kick_username}
+                          </div>
+
+                          <div className="mt-1 text-[11px] text-white/40">
+                            {reward.title || "Chat Giveaway"} •{" "}
+                            {reward.paid_at
+                              ? new Date(
+                                  reward.paid_at
+                                ).toLocaleString()
+                              : "Paid"}
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <div className="text-sm font-black text-purple-200">
+                            ${Number(reward.amount || 0).toLocaleString()}
+                          </div>
+
+                          <button
+                            onClick={() =>
+                              handleAdminMarkRewardPending(reward.id)
+                            }
+                            className="mt-1 text-[10px] font-black text-white/40 transition hover:text-purple-200"
+                          >
+                            Undo
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </details>
+
+        {/* TOURNAMENT EDITOR */}
         <details
           open={activeAdminTab === "tournament"}
-          className={`${activeAdminTab === "tournament" ? "block" : "hidden"} min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-3`}
+          className={`${
+            activeAdminTab === "tournament" ? "block" : "hidden"
+          } min-w-0 max-w-full overflow-hidden rounded-xl border border-purple-300/15 bg-black/85 p-2.5 shadow-[0_0_20px_rgba(168,85,247,0.07)] backdrop-blur-sm sm:p-3`}
         >
           <summary className="hidden">Tournament Editor</summary>
 
@@ -6367,6 +9274,7 @@ const rankBadgeStyle = isFirst
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <SectionLabel>Tournament</SectionLabel>
+
                 <h2 className="mt-1 text-lg font-black tracking-wide text-white sm:text-xl">
                   EDIT BRACKET
                 </h2>
@@ -6377,12 +9285,15 @@ const rankBadgeStyle = isFirst
                   <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
                     Title
                   </span>
+
                   <input
                     value={bracket.title}
-                    onChange={(e) => updateBracketTitle(e.target.value)}
+                    onChange={(e) =>
+                      updateBracketTitle(e.target.value)
+                    }
                     disabled={!isAdmin}
                     placeholder="Tournament title"
-                    className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-black/45 px-2.5 text-xs text-white outline-none focus:border-cyan-300/35 disabled:opacity-40"
+                    className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-black/45 px-2.5 text-xs text-white outline-none transition focus:border-purple-300/35 disabled:opacity-40"
                   />
                 </label>
 
@@ -6390,14 +9301,22 @@ const rankBadgeStyle = isFirst
                   <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
                     Teams
                   </span>
+
                   <select
                     value={generatorTeamCount}
-                    onChange={(e) => setGeneratorTeamCount(e.target.value)}
+                    onChange={(e) =>
+                      setGeneratorTeamCount(e.target.value)
+                    }
                     disabled={!isAdmin}
-                    className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-black/45 px-2 text-xs text-white outline-none disabled:opacity-40"
+                    className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-black/45 px-2 text-xs text-white outline-none transition focus:border-purple-300/35 disabled:opacity-40"
                   >
-                    {Array.from({ length: 15 }, (_, index) => index + 2).map((count) => (
-                      <option key={count} value={count}>{count}</option>
+                    {Array.from(
+                      { length: 15 },
+                      (_, index) => index + 2
+                    ).map((count) => (
+                      <option key={count} value={count}>
+                        {count}
+                      </option>
                     ))}
                   </select>
                 </label>
@@ -6413,22 +9332,28 @@ const rankBadgeStyle = isFirst
               </div>
             </div>
 
-            <div className="max-h-[560px] overflow-y-auto rounded-xl border border-white/8 bg-black/35 p-2">
+            <div className="max-h-[560px] overflow-y-auto rounded-xl border border-purple-300/10 bg-black/35 p-2">
               <div className="grid gap-2 xl:grid-cols-2">
                 {bracket.rounds.map((round) => (
                   <div
                     key={round.id}
-                    className="rounded-lg border border-white/10 bg-white/[0.025] p-2"
+                    className="rounded-lg border border-purple-300/10 bg-white/[0.025] p-2"
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <div className="text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200">
+                      <div className="text-[9px] font-black uppercase tracking-[0.16em] text-purple-200">
                         {round.name}
                       </div>
+
                       <input
                         value={round.name}
-                        onChange={(e) => updateRoundName(round.id, e.target.value)}
+                        onChange={(e) =>
+                          updateRoundName(
+                            round.id,
+                            e.target.value
+                          )
+                        }
                         disabled={!isAdmin}
-                        className="h-7 w-[130px] rounded-md border border-white/10 bg-black/45 px-2 text-[10px] text-white outline-none focus:border-cyan-300/35 disabled:opacity-40"
+                        className="h-7 w-[130px] rounded-md border border-white/10 bg-black/45 px-2 text-[10px] text-white outline-none transition focus:border-purple-300/35 disabled:opacity-40"
                       />
                     </div>
 
@@ -6442,37 +9367,89 @@ const rankBadgeStyle = isFirst
                             <span className="text-[9px] font-black uppercase tracking-[0.14em] text-white/35">
                               {match.id.toUpperCase()}
                             </span>
-                            <span className="max-w-[150px] truncate text-[9px] text-cyan-200/70">
-                              {match.winner ? `Winner: ${match.winner}` : "No winner"}
+
+                            <span className="max-w-[150px] truncate text-[9px] text-purple-200/70">
+                              {match.winner
+                                ? `Winner: ${match.winner}`
+                                : "No winner"}
                             </span>
                           </div>
 
                           <div className="grid grid-cols-[1fr_72px] gap-1.5 sm:grid-cols-[1fr_80px_1fr_80px]">
                             <input
                               value={match.player1}
-                              onChange={(e) => updateMatchField(round.id, match.id, "player1", e.target.value)}
-                              disabled={!isAdmin || match.player1 === "BYE"}
+                              onChange={(e) =>
+                                updateMatchField(
+                                  round.id,
+                                  match.id,
+                                  "player1",
+                                  e.target.value
+                                )
+                              }
+                              disabled={
+                                !isAdmin ||
+                                match.player1 === "BYE"
+                              }
                               placeholder="Player 1"
-                              className="h-8 min-w-0 rounded-md border border-white/10 bg-black/45 px-2 text-[11px] text-white outline-none focus:border-cyan-300/35 disabled:opacity-40"
+                              className="h-8 min-w-0 rounded-md border border-white/10 bg-black/45 px-2 text-[11px] text-white outline-none transition focus:border-purple-300/35 disabled:opacity-40"
                             />
+
                             <input
                               value={match.player1Amount || ""}
-                              onChange={(e) => updateMatchField(round.id, match.id, "player1Amount", e.target.value.replace(/[^0-9.]/g, ""))}
-                              disabled={!isAdmin || match.player1 === "BYE"}
+                              onChange={(e) =>
+                                updateMatchField(
+                                  round.id,
+                                  match.id,
+                                  "player1Amount",
+                                  e.target.value.replace(
+                                    /[^0-9.]/g,
+                                    ""
+                                  )
+                                )
+                              }
+                              disabled={
+                                !isAdmin ||
+                                match.player1 === "BYE"
+                              }
                               placeholder="$"
                               className="h-8 rounded-md border border-white/10 bg-black/30 px-2 text-[11px] text-white outline-none focus:border-yellow-300/35 disabled:opacity-40"
                             />
+
                             <input
                               value={match.player2}
-                              onChange={(e) => updateMatchField(round.id, match.id, "player2", e.target.value)}
-                              disabled={!isAdmin || match.player2 === "BYE"}
+                              onChange={(e) =>
+                                updateMatchField(
+                                  round.id,
+                                  match.id,
+                                  "player2",
+                                  e.target.value
+                                )
+                              }
+                              disabled={
+                                !isAdmin ||
+                                match.player2 === "BYE"
+                              }
                               placeholder="Player 2"
-                              className="h-8 min-w-0 rounded-md border border-white/10 bg-black/45 px-2 text-[11px] text-white outline-none focus:border-cyan-300/35 disabled:opacity-40"
+                              className="h-8 min-w-0 rounded-md border border-white/10 bg-black/45 px-2 text-[11px] text-white outline-none transition focus:border-purple-300/35 disabled:opacity-40"
                             />
+
                             <input
                               value={match.player2Amount || ""}
-                              onChange={(e) => updateMatchField(round.id, match.id, "player2Amount", e.target.value.replace(/[^0-9.]/g, ""))}
-                              disabled={!isAdmin || match.player2 === "BYE"}
+                              onChange={(e) =>
+                                updateMatchField(
+                                  round.id,
+                                  match.id,
+                                  "player2Amount",
+                                  e.target.value.replace(
+                                    /[^0-9.]/g,
+                                    ""
+                                  )
+                                )
+                              }
+                              disabled={
+                                !isAdmin ||
+                                match.player2 === "BYE"
+                              }
                               placeholder="$"
                               className="h-8 rounded-md border border-white/10 bg-black/30 px-2 text-[11px] text-white outline-none focus:border-yellow-300/35 disabled:opacity-40"
                             />
@@ -6480,23 +9457,58 @@ const rankBadgeStyle = isFirst
 
                           <div className="mt-1.5 grid grid-cols-3 gap-1">
                             <ActionButton
-                              onClick={() => selectMatchWinner(round.id, match.id, match.player1)}
-                              disabled={!isAdmin || !match.player1.trim() || match.player1 === "BYE"}
-                              variant={match.winner === match.player1 ? "green" : "dark"}
+                              onClick={() =>
+                                selectMatchWinner(
+                                  round.id,
+                                  match.id,
+                                  match.player1
+                                )
+                              }
+                              disabled={
+                                !isAdmin ||
+                                !match.player1.trim() ||
+                                match.player1 === "BYE"
+                              }
+                              variant={
+                                match.winner === match.player1
+                                  ? "green"
+                                  : "dark"
+                              }
                               className="min-h-[28px] px-1.5 py-1 text-[8px]"
                             >
                               Pick 1
                             </ActionButton>
+
                             <ActionButton
-                              onClick={() => selectMatchWinner(round.id, match.id, match.player2)}
-                              disabled={!isAdmin || !match.player2.trim() || match.player2 === "BYE"}
-                              variant={match.winner === match.player2 ? "green" : "dark"}
+                              onClick={() =>
+                                selectMatchWinner(
+                                  round.id,
+                                  match.id,
+                                  match.player2
+                                )
+                              }
+                              disabled={
+                                !isAdmin ||
+                                !match.player2.trim() ||
+                                match.player2 === "BYE"
+                              }
+                              variant={
+                                match.winner === match.player2
+                                  ? "green"
+                                  : "dark"
+                              }
                               className="min-h-[28px] px-1.5 py-1 text-[8px]"
                             >
                               Pick 2
                             </ActionButton>
+
                             <ActionButton
-                              onClick={() => clearMatchWinner(round.id, match.id)}
+                              onClick={() =>
+                                clearMatchWinner(
+                                  round.id,
+                                  match.id
+                                )
+                              }
                               disabled={!isAdmin}
                               variant="red"
                               className="min-h-[28px] px-1.5 py-1 text-[8px]"
@@ -6513,879 +9525,1090 @@ const rankBadgeStyle = isFirst
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <ActionButton onClick={saveBracket} disabled={!isAdmin} variant="green" className="min-h-[34px] px-4 py-1.5 text-[9px]">
+              <ActionButton
+                onClick={saveBracket}
+                disabled={!isAdmin}
+                variant="green"
+                className="min-h-[34px] px-4 py-1.5 text-[9px]"
+              >
                 Save
               </ActionButton>
-              <ActionButton onClick={resetBracket} disabled={!isAdmin} variant="red" className="min-h-[34px] px-4 py-1.5 text-[9px]">
+
+              <ActionButton
+                onClick={resetBracket}
+                disabled={!isAdmin}
+                variant="red"
+                className="min-h-[34px] px-4 py-1.5 text-[9px]"
+              >
                 Reset
               </ActionButton>
-              <div className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[10px] text-white/60">
-                {bracketMessage || "Generate, edit, pick winners, then save."}
+
+              <div className="min-w-0 flex-1 rounded-lg border border-purple-300/10 bg-white/[0.03] px-3 py-2 text-[10px] text-white/60">
+                {bracketMessage ||
+                  "Generate, edit, pick winners, then save."}
               </div>
             </div>
           </div>
         </details>
+
         <details
           open={activeAdminTab === "snakeDraft"}
-          className={`${activeAdminTab === "snakeDraft" ? "block" : "hidden"} min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 p-3 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-4`}
+          className={`${
+            activeAdminTab === "snakeDraft" ? "block" : "hidden"
+          } min-w-0 max-w-full overflow-hidden rounded-xl border border-purple-300/15 bg-black/85 p-3 shadow-[0_0_20px_rgba(168,85,247,0.07)] backdrop-blur-sm sm:p-4`}
         >
-  <summary className="hidden">Snake Draft</summary>
+          <summary className="hidden">Snake Draft</summary>
 
-  <div className="mt-4 grid gap-4">
-    <div className="grid gap-3 sm:grid-cols-[180px_1fr_1fr]">
-      <div>
-        <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
-          Captains
-        </div>
-        <input
-          value={snakeCaptainCount}
-          onChange={(e) => setSnakeCaptainCount(e.target.value.replace(/[^0-9]/g, ""))}
-          className="mt-2 w-full rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-white outline-none"
-        />
-      </div>
+          <div className="mt-4 grid gap-4">
+            <div className="grid gap-3 sm:grid-cols-[180px_1fr_1fr]">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
+                  Captains
+                </div>
 
-      <div>
-        <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
-          Captain Names
-        </div>
-<textarea
-  value={snakeCaptainsText}
-  onChange={(e) => setSnakeCaptainsText(e.target.value)}
-  rows={5}
-          className="mt-2 w-full rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-white outline-none"
-        />
-      </div>
-
-      <div>
-        <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
-          Player Pool
-        </div>
-<textarea
-  value={snakePlayersText}
-  onChange={(e) => setSnakePlayersText(e.target.value)}
-  rows={5}
-          className="mt-2 w-full rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-white outline-none"
-        />
-      </div>
-    </div>
-
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-<ActionButton onClick={handleSetupSnakeDraft} variant="green">
-  Start Snake Draft
-</ActionButton>
-
-<ActionButton onClick={saveSnakeDraft} variant="purple">
-  Save Draft
-</ActionButton>
-
-<ActionButton onClick={loadSnakeDraft} variant="dark">
-  Load Draft
-</ActionButton>
-
-<ActionButton onClick={handleResetSnakeDraft} variant="red">
-  Reset
-</ActionButton>
-</div>
-
-    {snakeMessage && (
-      <div className="rounded-xl border border-cyan-300/15 bg-cyan-400/10 p-3 text-sm text-cyan-100">
-        {snakeMessage}
-      </div>
-    )}
-
-    {snakePickOrder.length > 0 && (
-      <div className="rounded-2xl border border-cyan-300/15 bg-black/80 p-4">
-        <div className="text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">
-          Current Pick
-        </div>
-
-        <div className="mt-2 text-2xl font-black text-white">
-          {snakePickOrder[snakeCurrentPickIndex] || "Draft Complete"}
-        </div>
-
-        <div className="mt-1 text-sm text-white/45">
-          Pick {Math.min(snakeCurrentPickIndex + 1, snakePickOrder.length)} of{" "}
-          {snakePickOrder.length}
-        </div>
-      </div>
-    )}
-
-    <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
-      <div className="rounded-2xl border border-white/10 bg-black/80 p-4">
-        <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
-          Available Players
-        </div>
-
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {snakePlayers.length === 0 ? (
-            <div className="col-span-full text-sm text-white/35">
-              No players available.
-            </div>
-          ) : (
-            snakePlayers.map((player) => (
-              <button
-                key={player}
-                onClick={() => handleSnakePickPlayer(player)}
-                className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-left text-sm font-black text-white transition hover:border-cyan-300/30 hover:bg-cyan-400/10"
-              >
-                {player}
-              </button>
-            ))
-          )}
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-white/10 bg-black/80 p-4">
-        <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
-          Teams
-        </div>
-
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {snakeCaptains.map((captain) => (
-            <div
-              key={captain}
-              className="rounded-xl border border-cyan-300/15 bg-black/70 p-3"
-            >
-              <div className="text-base font-black text-cyan-200">
-                {captain}
+                <input
+                  value={snakeCaptainCount}
+                  onChange={(e) =>
+                    setSnakeCaptainCount(
+                      e.target.value.replace(/[^0-9]/g, "")
+                    )
+                  }
+                  className="mt-2 w-full rounded-xl border border-purple-300/15 bg-black/60 px-3 py-2 text-white outline-none transition focus:border-purple-300/40"
+                />
               </div>
-              <div className="mt-1 text-sm font-black text-[#f5c451]">
-  Total: ${getSnakeTeamTotal(captain).toLocaleString()}
-</div>
 
-              <div className="mt-2 space-y-1">
-                {(snakeTeams[captain] || []).length === 0 ? (
-                  <div className="text-xs text-white/35">No picks yet.</div>
-                ) : (
-                  snakeTeams[captain].map((player, index) => (
-                    <div key={player} className="text-sm text-white/80">
-                      {index + 1}. {player}
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
+                  Captain Names
+                </div>
+
+                <textarea
+                  value={snakeCaptainsText}
+                  onChange={(e) =>
+                    setSnakeCaptainsText(e.target.value)
+                  }
+                  rows={5}
+                  className="mt-2 w-full rounded-xl border border-purple-300/15 bg-black/60 px-3 py-2 text-white outline-none transition focus:border-purple-300/40"
+                />
+              </div>
+
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
+                  Player Pool
+                </div>
+
+                <textarea
+                  value={snakePlayersText}
+                  onChange={(e) =>
+                    setSnakePlayersText(e.target.value)
+                  }
+                  rows={5}
+                  className="mt-2 w-full rounded-xl border border-purple-300/15 bg-black/60 px-3 py-2 text-white outline-none transition focus:border-purple-300/40"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <ActionButton
+                onClick={handleSetupSnakeDraft}
+                variant="green"
+              >
+                Start Snake Draft
+              </ActionButton>
+
+              <ActionButton
+                onClick={saveSnakeDraft}
+                variant="purple"
+              >
+                Save Draft
+              </ActionButton>
+
+              <ActionButton
+                onClick={loadSnakeDraft}
+                variant="dark"
+              >
+                Load Draft
+              </ActionButton>
+
+              <ActionButton
+                onClick={handleResetSnakeDraft}
+                variant="red"
+              >
+                Reset
+              </ActionButton>
+            </div>
+
+            {snakeMessage && (
+              <div className="rounded-xl border border-purple-300/15 bg-purple-400/10 p-3 text-sm text-purple-100">
+                {snakeMessage}
+              </div>
+            )}
+
+            {snakePickOrder.length > 0 && (
+              <div className="rounded-2xl border border-purple-300/15 bg-black/70 p-4 shadow-[0_0_20px_rgba(168,85,247,0.05)]">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-purple-300/80">
+                  Current Pick
+                </div>
+
+                <div className="mt-2 text-2xl font-black text-white">
+                  {snakePickOrder[snakeCurrentPickIndex] ||
+                    "Draft Complete"}
+                </div>
+
+                <div className="mt-1 text-sm text-white/45">
+                  Pick{" "}
+                  {Math.min(
+                    snakeCurrentPickIndex + 1,
+                    snakePickOrder.length
+                  )}{" "}
+                  of {snakePickOrder.length}
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
+              {/* AVAILABLE PLAYERS */}
+
+              <div className="rounded-2xl border border-purple-300/15 bg-black/70 p-4">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
+                  Available Players
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {snakePlayers.length === 0 ? (
+                    <div className="col-span-full text-sm text-white/35">
+                      No players available.
                     </div>
-                  ))
+                  ) : (
+                    snakePlayers.map((player) => (
+                      <button
+                        key={player}
+                        onClick={() =>
+                          handleSnakePickPlayer(player)
+                        }
+                        className="rounded-xl border border-purple-300/10 bg-white/[0.04] p-3 text-left text-sm font-black text-white transition hover:border-purple-300/30 hover:bg-purple-400/10"
+                      >
+                        {player}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* TEAMS */}
+
+              <div className="rounded-2xl border border-purple-300/15 bg-black/70 p-4">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
+                  Teams
+                </div>
+
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {snakeCaptains.map((captain) => (
+                    <div
+                      key={captain}
+                      className="rounded-xl border border-purple-300/15 bg-black/60 p-3"
+                    >
+                      <div className="text-base font-black text-purple-200">
+                        {captain}
+                      </div>
+
+                      <div className="mt-1 text-sm font-black text-[#f5c451]">
+                        Total: $
+                        {getSnakeTeamTotal(
+                          captain
+                        ).toLocaleString()}
+                      </div>
+
+                      <div className="mt-2 space-y-1">
+                        {(snakeTeams[captain] || []).length ===
+                        0 ? (
+                          <div className="text-xs text-white/35">
+                            No picks yet.
+                          </div>
+                        ) : (
+                          snakeTeams[captain].map(
+                            (player, index) => (
+                              <div
+                                key={player}
+                                className="text-sm text-white/80"
+                              >
+                                {index + 1}. {player}
+                              </div>
+                            )
+                          )
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* SLOT CALL DRAFT */}
+
+              <div className="col-span-full rounded-2xl border border-purple-300/15 bg-black/70 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
+                      Slot Call Draft
+                    </div>
+
+                    <div className="mt-1 text-sm text-white/45">
+                      Builds a snake order from captains and
+                      drafted players.
+                    </div>
+                  </div>
+
+                  <div className="flex items-end gap-3">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
+                        Slot Rounds
+                      </div>
+
+                      <input
+                        value={snakeSlotRounds}
+                        onChange={(e) =>
+                          setSnakeSlotRounds(
+                            e.target.value.replace(
+                              /[^0-9]/g,
+                              ""
+                            )
+                          )
+                        }
+                        className="mt-2 w-24 rounded-xl border border-purple-300/15 bg-black/60 px-3 py-2 text-white outline-none transition focus:border-purple-300/40"
+                      />
+                    </div>
+
+                    <ActionButton
+                      onClick={buildSnakeSlotOrder}
+                      variant="purple"
+                    >
+                      Build Slot Order
+                    </ActionButton>
+                  </div>
+                </div>
+
+                {snakeSlotOrder.length > 0 && (
+                  <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                    {snakeSlotOrder.map((name, index) => {
+                      const key = `${name}-${index}`;
+                      const teamCaptain =
+                        getSnakeTeamForName(name);
+                      const hit = snakeSlotHit[key];
+
+                      return (
+                        <div
+                          key={key}
+                          className={`rounded-xl border p-3 transition ${
+                            getSnakeTeamStyle(teamCaptain)
+                          } ${
+                            hit
+                              ? "ring-2 ring-purple-300 shadow-[0_0_24px_rgba(168,85,247,0.20)]"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="text-xs font-black text-purple-300">
+                              #{index + 1}
+                            </div>
+
+                            <div className="truncate text-base font-black text-white">
+                              {name}
+                            </div>
+                          </div>
+
+                          <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">
+                            Team {teamCaptain}
+                          </div>
+
+                          <input
+                            value={snakeSlotCalls[key] || ""}
+                            onChange={(e) =>
+                              setSnakeSlotCalls(
+                                (current) => ({
+                                  ...current,
+                                  [key]: e.target.value,
+                                })
+                              )
+                            }
+                            placeholder="Slot call"
+                            className="mt-3 w-full rounded-lg border border-purple-300/15 bg-black/70 px-3 py-2 text-sm text-white outline-none transition focus:border-purple-300/35"
+                          />
+
+                          <input
+                            value={
+                              snakeSlotAmounts[key] || ""
+                            }
+                            onChange={(e) =>
+                              setSnakeSlotAmounts(
+                                (current) => ({
+                                  ...current,
+                                  [key]: e.target.value.replace(
+                                    /[^0-9.]/g,
+                                    ""
+                                  ),
+                                })
+                              )
+                            }
+                            placeholder="Paid amount"
+                            className="mt-2 w-full rounded-lg border border-purple-300/15 bg-black/70 px-3 py-2 text-sm text-white outline-none transition focus:border-purple-300/35"
+                          />
+
+                          <button
+                            onClick={() =>
+                              setSnakeSlotHit(
+                                (current) => ({
+                                  ...current,
+                                  [key]: !current[key],
+                                })
+                              )
+                            }
+                            className={`mt-2 w-full rounded-lg border px-3 py-2 text-xs font-black uppercase tracking-[0.14em] transition ${
+                              hit
+                                ? "border-purple-300/40 bg-purple-400/20 text-purple-100"
+                                : "border-white/10 bg-black/60 text-white/45 hover:border-purple-300/20 hover:text-white"
+                            }`}
+                          >
+                            {hit
+                              ? "Spun Into ✅"
+                              : "Mark Spun Into"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-      <div className="col-span-full rounded-2xl border border-white/10 bg-black/80 p-4">
-<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-  <div>
-    <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
-      Slot Call Draft
-    </div>
-
-    <div className="mt-1 text-sm text-white/45">
-      Builds a snake order from captains and drafted players.
-    </div>
-  </div>
-
-  <div className="flex items-end gap-3">
-    <div>
-      <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
-        Slot Rounds
-      </div>
-
-      <input
-        value={snakeSlotRounds}
-        onChange={(e) =>
-          setSnakeSlotRounds(
-            e.target.value.replace(/[^0-9]/g, "")
-          )
-        }
-        className="mt-2 w-24 rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-white outline-none"
-      />
-    </div>
-
-    <ActionButton onClick={buildSnakeSlotOrder} variant="purple">
-      Build Slot Order
-    </ActionButton>
-  </div>
-</div>
-
-  {snakeSlotOrder.length > 0 && (
-<div className="mt-4 grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-  {snakeSlotOrder.map((name, index) => {
-    const key = `${name}-${index}`;
-    const teamCaptain = getSnakeTeamForName(name);
-    const hit = snakeSlotHit[key];
-
-    return (
-      <div
-        key={key}
-        className={`rounded-xl border p-3 transition ${
-          getSnakeTeamStyle(teamCaptain)
-        } ${hit ? "ring-2 ring-cyan-300 shadow-[0_0_24px_rgba(0,245,255,0.20)]" : ""}`}
-      >
-        <div className="flex items-center gap-2">
-          <div className="text-xs font-black text-cyan-300">
-            #{index + 1}
           </div>
+        </details>
 
-          <div className="truncate text-base font-black text-white">
-            {name}
-          </div>
-        </div>
+        {/* =====================================================
+            SLOT CALL WHEEL
+        ===================================================== */}
 
-        <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">
-          Team {teamCaptain}
-        </div>
-
-        <input
-          value={snakeSlotCalls[key] || ""}
-          onChange={(e) =>
-            setSnakeSlotCalls((current) => ({
-              ...current,
-              [key]: e.target.value,
-            }))
-          }
-          placeholder="Slot call"
-          className="mt-3 w-full rounded-lg border border-white/10 bg-black/80 px-3 py-2 text-sm text-white outline-none focus:border-cyan-300/35"
-        />
-
-        <input
-          value={snakeSlotAmounts[key] || ""}
-          onChange={(e) =>
-            setSnakeSlotAmounts((current) => ({
-              ...current,
-              [key]: e.target.value.replace(/[^0-9.]/g, ""),
-            }))
-          }
-          placeholder="Paid amount"
-          className="mt-2 w-full rounded-lg border border-white/10 bg-black/80 px-3 py-2 text-sm text-white outline-none focus:border-cyan-300/35"
-        />
-
-        <button
-          onClick={() =>
-            setSnakeSlotHit((current) => ({
-              ...current,
-              [key]: !current[key],
-            }))
-          }
-          className={`mt-2 w-full rounded-lg border px-3 py-2 text-xs font-black uppercase tracking-[0.14em] transition ${
-            hit
-              ? "border-cyan-300/40 bg-cyan-400/20 text-cyan-100"
-              : "border-white/10 bg-black/60 text-white/45 hover:text-white"
-          }`}
+        <details
+          open={activeAdminTab === "slotWheel"}
+          className={`${
+            activeAdminTab === "slotWheel"
+              ? "block"
+              : "hidden"
+          } min-w-0 max-w-full overflow-hidden rounded-xl border border-purple-300/15 bg-black/85 p-2.5 shadow-[0_0_20px_rgba(168,85,247,0.07)] backdrop-blur-sm sm:p-3`}
         >
-          {hit ? "Spun Into ✅" : "Mark Spun Into"}
-        </button>
-      </div>
-    );
-  })}
-</div>
-  )}
-</div>
-  </div>
-  </div>
-</details>
+          <summary className="hidden">
+            Slot Call Wheel
+          </summary>
 
-<details
-  open={activeAdminTab === "slotWheel"}
-  className={`${
-    activeAdminTab === "slotWheel" ? "block" : "hidden"
-  } min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-300/15 bg-black/85 p-2.5 shadow-[0_0_20px_rgba(0,245,255,0.07)] backdrop-blur-sm sm:p-3`}
->
-  <summary className="hidden">Slot Call Wheel</summary>
+          {/* SAME SMOOTH IDLE SCROLL AS VIEWER WHEEL */}
 
-  {/* SAME SMOOTH IDLE SCROLL AS VIEWER WHEEL */}
-  <style>{`
-    @keyframes adminWheelIdleScroll {
-      from {
-        transform: translateY(0);
-      }
-
-      to {
-        transform: translateY(-${slotCalls.length * SLOT_WHEEL_ITEM_HEIGHT}px);
-      }
-    }
-  `}</style>
-
-  <div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-    {/* LEFT SIDE */}
-    <div className="rounded-xl border border-cyan-300/25 bg-[linear-gradient(180deg,rgba(0,245,255,0.07),rgba(0,0,0,0.94))] p-3 shadow-[0_0_28px_rgba(0,245,255,0.10)]">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <SectionLabel>Slot Call Wheel</SectionLabel>
-
-          <div className="mt-1 text-lg font-black uppercase tracking-[0.08em] text-cyan-100 sm:text-xl">
-            Pick A Winner
-          </div>
-        </div>
-
-        <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[10px] font-black text-cyan-100">
-          {slotCalls.length} entries
-        </div>
-      </div>
-
-      {/* WHEEL */}
-      <div
-        className="relative mx-auto mt-3 overflow-hidden rounded-xl border border-cyan-300/25 bg-black/90 shadow-[inset_0_0_24px_rgba(0,245,255,0.08)]"
-        style={{
-          height: `${SLOT_WHEEL_VIEWPORT_HEIGHT}px`,
-        }}
-      >
-        {/* TOP FADE */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-16 bg-gradient-to-b from-black via-black/85 to-transparent" />
-
-        {/* BOTTOM FADE */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-16 bg-gradient-to-t from-black via-black/85 to-transparent" />
-
-        {/* CENTER SELECTOR */}
-        <div className="pointer-events-none absolute inset-x-2 top-1/2 z-30 h-11 -translate-y-1/2 rounded-lg border border-cyan-200/50 bg-cyan-400/12 shadow-[0_0_26px_rgba(0,245,255,0.22)]" />
-
-        {/* LEFT ARROW */}
-        <div className="pointer-events-none absolute left-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-l-[12px] border-y-transparent border-l-cyan-300" />
-
-        {/* RIGHT ARROW */}
-        <div className="pointer-events-none absolute right-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-r-[12px] border-y-transparent border-r-cyan-300" />
-
-        {/* WHEEL CONTENT */}
-        {slotCalls.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-xs font-semibold text-white/40">
-            Waiting for slot calls...
-          </div>
-        ) : isSlotWheelSpinning ? (
-          /* ACTUAL SPIN */
-          <div
-            className="transition-transform duration-[4200ms] ease-[cubic-bezier(0.12,0.72,0.08,1)]"
-            style={{
-              transform: `translateY(-${slotWheelRotation}px)`,
-            }}
-          >
-            {slotWheelLoop.map((call, index) => (
-              <div
-                key={`admin-spin-${call.id || call.username}-${call.slotName}-${index}`}
-                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3"
-                style={{
-                  height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
-                }}
-              >
-                <div className="truncate text-[11px] font-black text-white sm:text-xs">
-                  {call.username}
-                </div>
-
-                <div className="truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
-                  {call.slotName}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : pickedSlotCall ? (
-          /* LOCKED WINNER */
-          <div>
-            {slotWheelRestingRows.map(
-              ({ call, isCenter, rowKey }) => (
-                <div
-                  key={rowKey}
-                  className={`grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3 ${
-                    isCenter
-                      ? "bg-cyan-400/12 opacity-100"
-                      : "opacity-55"
-                  }`}
-                  style={{
-                    height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
-                  }}
-                >
-                  <div className="truncate text-[11px] font-black text-white sm:text-xs">
-                    {call.username}
-                  </div>
-
-                  <div className="truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
-                    {call.slotName}
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-        ) : (
-          /* SMOOTH CONTINUOUS IDLE SCROLL */
-          <div
-            style={{
-              animation: `adminWheelIdleScroll ${Math.max(
-                slotCalls.length * 2.5,
-                8
-              )}s linear infinite`,
-              willChange: "transform",
-            }}
-          >
-            {slotWheelLoop.map((call, index) => (
-              <div
-                key={`admin-idle-${call.id || call.username}-${call.slotName}-${index}`}
-                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3"
-                style={{
-                  height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
-                }}
-              >
-                <div className="truncate text-[11px] font-black text-white sm:text-xs">
-                  {call.username}
-                </div>
-
-                <div className="truncate text-right text-[11px] font-black text-cyan-100 sm:text-xs">
-                  {call.slotName}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* CONTROLS */}
-      <div className="mt-3 grid grid-cols-[1fr_auto_auto] gap-2">
-        <ActionButton
-          onClick={handleSpinSlotWheel}
-          disabled={
-            isSlotWheelSpinning ||
-            Boolean(pickedSlotCall) ||
-            slotCalls.length === 0
-          }
-          variant="green"
-          className="min-h-[38px] text-[10px]"
-        >
-          {isSlotWheelSpinning ? "Spinning..." : "Spin Wheel"}
-        </ActionButton>
-
-        <ActionButton
-          onClick={handleShuffleSlotWheel}
-          disabled={
-            slotCalls.length <= 1 ||
-            isSlotWheelSpinning ||
-            Boolean(pickedSlotCall)
-          }
-          variant="purple"
-          className="min-h-[38px] px-3 text-[9px]"
-        >
-          Shuffle
-        </ActionButton>
-
-        <ActionButton
-          onClick={handleRemovePickedSlot}
-          disabled={!pickedSlotCall || isSlotWheelSpinning}
-          variant="red"
-          className="min-h-[38px] px-3 text-[9px]"
-        >
-          Remove Winner
-        </ActionButton>
-      </div>
-
-      {/* WINNER / PAYOUT */}
-      <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
-        {pickedSlotCall ? (
-          <>
-            <div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300/70">
-              Winner
-            </div>
-
-            <div className="mt-1 truncate text-xl font-black text-cyan-200 drop-shadow-[0_0_12px_rgba(0,245,255,0.65)] sm:text-2xl">
-              {pickedSlotCall.slotName}
-            </div>
-
-            <div className="mt-0.5 truncate text-[11px] text-white/45">
-              called by {pickedSlotCall.username}
-            </div>
-
-            <div className="mx-auto mt-4 max-w-sm">
-              <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
-                Payout
-              </div>
-
-              <div className="mt-2 flex items-center gap-2">
-                <div className="flex min-w-0 flex-1 items-center rounded-lg border border-cyan-300/15 bg-black/60 px-3">
-                  <span className="mr-1 text-sm font-black text-cyan-200/60">
-                    $
-                  </span>
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={slotPayoutInput}
-                    onChange={(e) =>
-                      setSlotPayoutInput(e.target.value)
-                    }
-                    placeholder="0.00"
-                    className="min-w-0 flex-1 bg-transparent py-2 text-sm font-black text-white outline-none placeholder:text-white/20"
-                  />
-                </div>
-
-                <ActionButton
-                  onClick={async () => {
-                    const payout = Number(slotPayoutInput);
-
-                    if (
-                      !Number.isFinite(payout) ||
-                      payout < 0
-                    ) {
-                      alert("Enter a valid payout amount.");
-                      return;
-                    }
-
-                    const res = await fetch(
-                      "/api/slot-calls",
-                      {
-                        method: "POST",
-                        headers: {
-                          "Content-Type":
-                            "application/json",
-                        },
-                        body: JSON.stringify({
-                          action: "saveResult",
-                          username:
-                            pickedSlotCall.username,
-                          slotName:
-                            pickedSlotCall.slotName,
-                          payout,
-                        }),
-                      }
-                    );
-
-                    const data = await res.json();
-
-                    if (!res.ok || !data.ok) {
-                      alert(
-                        data.error ||
-                          "Failed to save payout."
-                      );
-                      return;
-                    }
-
-                    setSlotPayoutInput("");
-
-                    await loadSlotCalls();
-
-                    alert("Rolled slot saved.");
-                  }}
-                  variant="green"
-                  className="min-h-[36px] shrink-0 px-3 text-[9px]"
-                >
-                  Save Payout
-                </ActionButton>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex h-[48px] items-center justify-center text-xs font-semibold text-white/40">
-            {slotCalls.length === 0
-              ? "No entries yet."
-              : "Ready to spin."}
-          </div>
-        )}
-      </div>
-    </div>
-
-    {/* RIGHT SIDE */}
-    <div className="space-y-3">
-      {/* LIVE CALLS */}
-      <div className="rounded-xl border border-white/10 bg-black/75 p-3">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
-              Live Calls
-            </div>
-
-            <div className="mt-0.5 text-[11px] text-white/35">
-              Names update automatically from chat.
-            </div>
-          </div>
-
-          <ActionButton
-            onClick={async () => {
-              if (
-                !confirm(
-                  "Clear every slot call from the wheel?"
-                )
-              )
-                return;
-
-              const res = await fetch(
-                "/api/slot-calls?clearAll=true",
-                {
-                  method: "DELETE",
-                }
-              );
-
-              const data = await res.json();
-
-              if (!res.ok || !data.ok) {
-                alert(
-                  data.error ||
-                    "Failed to clear slot calls."
-                );
-                return;
+          <style>{`
+            @keyframes adminWheelIdleScroll {
+              from {
+                transform: translateY(0);
               }
 
-              setSlotCalls([]);
-              setPickedSlotCall(null);
-              setSlotWheelRotation(0);
-              slotWheelWinnersThisCycleRef.current.clear();
-            }}
-            disabled={
-              slotCalls.length === 0 ||
-              isSlotWheelSpinning
+              to {
+                transform: translateY(-${
+                  slotCalls.length *
+                  SLOT_WHEEL_ITEM_HEIGHT
+                }px);
+              }
             }
-            variant="red"
-            className="min-h-[32px] px-3 py-1 text-[8px]"
-          >
-            Clear All
-          </ActionButton>
-        </div>
+          `}</style>
 
-        <div className="mt-3 max-h-[354px] overflow-y-auto rounded-lg border border-white/8 bg-black/50 p-2">
-          {slotCalls.length === 0 ? (
-            <div className="p-5 text-center text-xs text-white/35">
-              No slot calls yet.
-            </div>
-          ) : (
-            <div className="grid gap-1.5">
-              {slotCalls.map((call, index) => (
-                <div
-                  key={`${call.id || call.username}-${call.slotName}-${index}`}
-                  className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-white/8 bg-white/[0.025] px-2 py-1.5"
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+            {/* LEFT SIDE */}
+
+            <div className="rounded-xl border border-purple-300/25 bg-[linear-gradient(180deg,rgba(168,85,247,0.07),rgba(0,0,0,0.94))] p-3 shadow-[0_0_28px_rgba(168,85,247,0.10)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <SectionLabel>
+                    Slot Call Wheel
+                  </SectionLabel>
+
+                  <div className="mt-1 text-lg font-black uppercase tracking-[0.08em] text-purple-100 sm:text-xl">
+                    Pick A Winner
+                  </div>
+                </div>
+
+                <div className="rounded-full border border-purple-300/20 bg-purple-400/10 px-3 py-1 text-[10px] font-black text-purple-100">
+                  {slotCalls.length} entries
+                </div>
+              </div>
+
+              {/* WHEEL */}
+
+              <div
+                className="relative mx-auto mt-3 overflow-hidden rounded-xl border border-purple-300/25 bg-black/90 shadow-[inset_0_0_24px_rgba(168,85,247,0.08)]"
+                style={{
+                  height: `${SLOT_WHEEL_VIEWPORT_HEIGHT}px`,
+                }}
+              >
+                {/* TOP FADE */}
+
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-16 bg-gradient-to-b from-black via-black/85 to-transparent" />
+
+                {/* BOTTOM FADE */}
+
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-16 bg-gradient-to-t from-black via-black/85 to-transparent" />
+
+                {/* CENTER SELECTOR */}
+
+                <div className="pointer-events-none absolute inset-x-2 top-1/2 z-30 h-11 -translate-y-1/2 rounded-lg border border-purple-200/50 bg-purple-400/12 shadow-[0_0_26px_rgba(168,85,247,0.22)]" />
+
+                {/* LEFT ARROW */}
+
+                <div className="pointer-events-none absolute left-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-l-[12px] border-y-transparent border-l-purple-300" />
+
+                {/* RIGHT ARROW */}
+
+                <div className="pointer-events-none absolute right-0 top-1/2 z-40 -translate-y-1/2 border-y-[8px] border-r-[12px] border-y-transparent border-r-purple-300" />
+
+                {/* WHEEL CONTENT */}
+
+                {slotCalls.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-xs font-semibold text-white/40">
+                    Waiting for slot calls...
+                  </div>
+                ) : isSlotWheelSpinning ? (
+                  /* ACTUAL SPIN */
+
+                  <div
+                    className="transition-transform duration-[4200ms] ease-[cubic-bezier(0.12,0.72,0.08,1)]"
+                    style={{
+                      transform: `translateY(-${slotWheelRotation}px)`,
+                    }}
+                  >
+                    {slotWheelLoop.map(
+                      (call, index) => (
+                        <div
+                          key={`admin-spin-${
+                            call.id ||
+                            call.username
+                          }-${call.slotName}-${index}`}
+                          className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3"
+                          style={{
+                            height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
+                          }}
+                        >
+                          <div className="truncate text-[11px] font-black text-white sm:text-xs">
+                            {call.username}
+                          </div>
+
+                          <div className="truncate text-right text-[11px] font-black text-purple-100 sm:text-xs">
+                            {call.slotName}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                ) : pickedSlotCall ? (
+                  /* LOCKED WINNER */
+
+                  <div>
+                    {slotWheelRestingRows.map(
+                      ({
+                        call,
+                        isCenter,
+                        rowKey,
+                      }) => (
+                        <div
+                          key={rowKey}
+                          className={`grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3 ${
+                            isCenter
+                              ? "bg-purple-400/12 opacity-100"
+                              : "opacity-55"
+                          }`}
+                          style={{
+                            height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
+                          }}
+                        >
+                          <div className="truncate text-[11px] font-black text-white sm:text-xs">
+                            {call.username}
+                          </div>
+
+                          <div className="truncate text-right text-[11px] font-black text-purple-100 sm:text-xs">
+                            {call.slotName}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                ) : (
+                  /* SMOOTH CONTINUOUS IDLE SCROLL */
+
+                  <div
+                    style={{
+                      animation: `adminWheelIdleScroll ${Math.max(
+                        slotCalls.length * 2.5,
+                        8
+                      )}s linear infinite`,
+                      willChange: "transform",
+                    }}
+                  >
+                    {slotWheelLoop.map(
+                      (call, index) => (
+                        <div
+                          key={`admin-idle-${
+                            call.id ||
+                            call.username
+                          }-${call.slotName}-${index}`}
+                          className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-3"
+                          style={{
+                            height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
+                          }}
+                        >
+                          <div className="truncate text-[11px] font-black text-white sm:text-xs">
+                            {call.username}
+                          </div>
+
+                          <div className="truncate text-right text-[11px] font-black text-purple-100 sm:text-xs">
+                            {call.slotName}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* CONTROLS */}
+
+              <div className="mt-3 grid grid-cols-[1fr_auto_auto] gap-2">
+                <ActionButton
+                  onClick={handleSpinSlotWheel}
+                  disabled={
+                    isSlotWheelSpinning ||
+                    Boolean(pickedSlotCall) ||
+                    slotCalls.length === 0
+                  }
+                  variant="green"
+                  className="min-h-[38px] text-[10px]"
                 >
-                  <div className="text-[9px] font-black text-cyan-300/60">
-                    {index + 1}
-                  </div>
+                  {isSlotWheelSpinning
+                    ? "Spinning..."
+                    : "Spin Wheel"}
+                </ActionButton>
 
-                  <div className="min-w-0">
-                    <div className="truncate text-[11px] font-black text-white">
-                      {call.slotName}
+                <ActionButton
+                  onClick={handleShuffleSlotWheel}
+                  disabled={
+                    slotCalls.length <= 1 ||
+                    isSlotWheelSpinning ||
+                    Boolean(pickedSlotCall)
+                  }
+                  variant="purple"
+                  className="min-h-[38px] px-3 text-[9px]"
+                >
+                  Shuffle
+                </ActionButton>
+
+                <ActionButton
+                  onClick={handleRemovePickedSlot}
+                  disabled={
+                    !pickedSlotCall ||
+                    isSlotWheelSpinning
+                  }
+                  variant="red"
+                  className="min-h-[38px] px-3 text-[9px]"
+                >
+                  Remove Winner
+                </ActionButton>
+              </div>
+
+              {/* WINNER / PAYOUT */}
+
+              <div className="mt-3 rounded-xl border border-purple-300/10 bg-white/[0.03] p-3 text-center">
+                {pickedSlotCall ? (
+                  <>
+                    <div className="text-[9px] font-black uppercase tracking-[0.18em] text-purple-300/70">
+                      Winner
                     </div>
 
-                    <div className="truncate text-[9px] text-white/35">
-                      {call.username}
+                    <div className="mt-1 truncate text-xl font-black text-purple-200 drop-shadow-[0_0_12px_rgba(168,85,247,0.65)] sm:text-2xl">
+                      {pickedSlotCall.slotName}
+                    </div>
+
+                    <div className="mt-0.5 truncate text-[11px] text-white/45">
+                      called by{" "}
+                      {pickedSlotCall.username}
+                    </div>
+
+                    <div className="mx-auto mt-4 max-w-sm">
+                      <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
+                        Payout
+                      </div>
+
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="flex min-w-0 flex-1 items-center rounded-lg border border-purple-300/15 bg-black/60 px-3">
+                          <span className="mr-1 text-sm font-black text-purple-200/60">
+                            $
+                          </span>
+
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={slotPayoutInput}
+                            onChange={(e) =>
+                              setSlotPayoutInput(
+                                e.target.value
+                              )
+                            }
+                            placeholder="0.00"
+                            className="min-w-0 flex-1 bg-transparent py-2 text-sm font-black text-white outline-none placeholder:text-white/20"
+                          />
+                        </div>
+
+                        <ActionButton
+                          onClick={async () => {
+                            const payout = Number(
+                              slotPayoutInput
+                            );
+
+                            if (
+                              !Number.isFinite(payout) ||
+                              payout < 0
+                            ) {
+                              alert(
+                                "Enter a valid payout amount."
+                              );
+                              return;
+                            }
+
+                            const res = await fetch(
+                              "/api/slot-calls",
+                              {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type":
+                                    "application/json",
+                                },
+                                body: JSON.stringify({
+                                  action:
+                                    "saveResult",
+                                  username:
+                                    pickedSlotCall.username,
+                                  slotName:
+                                    pickedSlotCall.slotName,
+                                  payout,
+                                }),
+                              }
+                            );
+
+                            const data =
+                              await res.json();
+
+                            if (!res.ok || !data.ok) {
+                              alert(
+                                data.error ||
+                                  "Failed to save payout."
+                              );
+                              return;
+                            }
+
+                            setSlotPayoutInput("");
+
+                            await loadSlotCalls();
+
+                            alert(
+                              "Rolled slot saved."
+                            );
+                          }}
+                          variant="green"
+                          className="min-h-[36px] shrink-0 px-3 text-[9px]"
+                        >
+                          Save Payout
+                        </ActionButton>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex h-[48px] items-center justify-center text-xs font-semibold text-white/40">
+                    {slotCalls.length === 0
+                      ? "No entries yet."
+                      : "Ready to spin."}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT SIDE */}
+
+            <div className="space-y-3">
+              {/* LIVE CALLS */}
+
+              <div className="rounded-xl border border-purple-300/10 bg-black/70 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+                      Live Calls
+                    </div>
+
+                    <div className="mt-0.5 text-[11px] text-white/35">
+                      Names update automatically from
+                      chat.
                     </div>
                   </div>
 
-                  <button
+                  <ActionButton
                     onClick={async () => {
-                      if (call.id) {
-                        await fetch(
-                          `/api/slot-calls?id=${call.id}`,
-                          {
-                            method: "DELETE",
-                          }
+                      if (
+                        !confirm(
+                          "Clear every slot call from the wheel?"
+                        )
+                      )
+                        return;
+
+                      const res = await fetch(
+                        "/api/slot-calls?clearAll=true",
+                        {
+                          method: "DELETE",
+                        }
+                      );
+
+                      const data =
+                        await res.json();
+
+                      if (!res.ok || !data.ok) {
+                        alert(
+                          data.error ||
+                            "Failed to clear slot calls."
                         );
+                        return;
                       }
 
-                      setSlotCalls((current) =>
-                        current.filter(
-                          (item) => item.id !== call.id
+                      setSlotCalls([]);
+                      setPickedSlotCall(null);
+                      setSlotWheelRotation(0);
+                      slotWheelWinnersThisCycleRef.current.clear();
+                    }}
+                    disabled={
+                      slotCalls.length === 0 ||
+                      isSlotWheelSpinning
+                    }
+                    variant="red"
+                    className="min-h-[32px] px-3 py-1 text-[8px]"
+                  >
+                    Clear All
+                  </ActionButton>
+                </div>
+
+                <div className="mt-3 max-h-[354px] overflow-y-auto rounded-lg border border-purple-300/10 bg-black/50 p-2">
+                  {slotCalls.length === 0 ? (
+                    <div className="p-5 text-center text-xs text-white/35">
+                      No slot calls yet.
+                    </div>
+                  ) : (
+                    <div className="grid gap-1.5">
+                      {slotCalls.map(
+                        (call, index) => (
+                          <div
+                            key={`${
+                              call.id ||
+                              call.username
+                            }-${
+                              call.slotName
+                            }-${index}`}
+                            className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-purple-300/10 bg-white/[0.025] px-2 py-1.5"
+                          >
+                            <div className="text-[9px] font-black text-purple-300/60">
+                              {index + 1}
+                            </div>
+
+                            <div className="min-w-0">
+                              <div className="truncate text-[11px] font-black text-white">
+                                {call.slotName}
+                              </div>
+
+                              <div className="truncate text-[9px] text-white/35">
+                                {call.username}
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={async () => {
+                                if (call.id) {
+                                  await fetch(
+                                    `/api/slot-calls?id=${call.id}`,
+                                    {
+                                      method:
+                                        "DELETE",
+                                    }
+                                  );
+                                }
+
+                                setSlotCalls(
+                                  (current) =>
+                                    current.filter(
+                                      (item) =>
+                                        item.id !==
+                                        call.id
+                                    )
+                                );
+
+                                await loadSlotCalls();
+                              }}
+                              disabled={
+                                isSlotWheelSpinning
+                              }
+                              className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20 disabled:opacity-40"
+                            >
+                              Remove
+                            </button>
+                          </div>
                         )
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ROLLED RESULTS */}
+
+              <div className="rounded-xl border border-purple-300/10 bg-black/70 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+                      Rolled Results
+                    </div>
+
+                    <div className="mt-0.5 text-[11px] text-white/35">
+                      Remove old rolled winners and
+                      payouts.
+                    </div>
+                  </div>
+
+                  <ActionButton
+                    onClick={async () => {
+                      if (
+                        !confirm(
+                          "Clear all rolled winners and payouts?"
+                        )
+                      )
+                        return;
+
+                      const res = await fetch(
+                        "/api/slot-calls?clearResults=true",
+                        {
+                          method: "DELETE",
+                        }
                       );
+
+                      const data =
+                        await res.json();
+
+                      if (!res.ok || !data.ok) {
+                        alert(
+                          data.error ||
+                            "Failed to clear rolled results."
+                        );
+                        return;
+                      }
+
+                      setSlotCallResults([]);
 
                       await loadSlotCalls();
                     }}
-                    disabled={isSlotWheelSpinning}
-                    className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20 disabled:opacity-40"
+                    disabled={
+                      slotCallResults.length === 0
+                    }
+                    variant="red"
+                    className="min-h-[32px] px-3 py-1 text-[8px]"
                   >
-                    Remove
-                  </button>
+                    Clear All
+                  </ActionButton>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* ROLLED RESULTS */}
-      <div className="rounded-xl border border-white/10 bg-black/75 p-3">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
-              Rolled Results
-            </div>
-
-            <div className="mt-0.5 text-[11px] text-white/35">
-              Remove old rolled winners and payouts.
-            </div>
-          </div>
-
-          <ActionButton
-            onClick={async () => {
-              if (
-                !confirm(
-                  "Clear all rolled winners and payouts?"
-                )
-              )
-                return;
-
-              const res = await fetch(
-                "/api/slot-calls?clearResults=true",
-                {
-                  method: "DELETE",
-                }
-              );
-
-              const data = await res.json();
-
-              if (!res.ok || !data.ok) {
-                alert(
-                  data.error ||
-                    "Failed to clear rolled results."
-                );
-                return;
-              }
-
-              setSlotCallResults([]);
-              await loadSlotCalls();
-            }}
-            disabled={slotCallResults.length === 0}
-            variant="red"
-            className="min-h-[32px] px-3 py-1 text-[8px]"
-          >
-            Clear All
-          </ActionButton>
-        </div>
-
-        <div className="mt-3 max-h-[300px] overflow-y-auto rounded-lg border border-white/8 bg-black/50 p-2">
-          {slotCallResults.length === 0 ? (
-            <div className="p-5 text-center text-xs text-white/35">
-              No rolled results yet.
-            </div>
-          ) : (
-            <div className="grid gap-1.5">
-              {slotCallResults.map(
-                (result, index) => (
-                  <div
-                    key={result.id}
-                    className="grid grid-cols-[24px_minmax(0,0.8fr)_minmax(0,1fr)_70px_auto] items-center gap-2 rounded-lg border border-white/8 bg-white/[0.025] px-2 py-1.5"
-                  >
-                    <div className="text-[8px] font-black text-cyan-300/60">
-                      {index + 1}
+                <div className="mt-3 max-h-[300px] overflow-y-auto rounded-lg border border-purple-300/10 bg-black/50 p-2">
+                  {slotCallResults.length === 0 ? (
+                    <div className="p-5 text-center text-xs text-white/35">
+                      No rolled results yet.
                     </div>
+                  ) : (
+                    <div className="grid gap-1.5">
+                      {slotCallResults.map(
+                        (result, index) => (
+                          <div
+                            key={result.id}
+                            className="grid grid-cols-[24px_minmax(0,0.8fr)_minmax(0,1fr)_70px_auto] items-center gap-2 rounded-lg border border-purple-300/10 bg-white/[0.025] px-2 py-1.5"
+                          >
+                            <div className="text-[8px] font-black text-purple-300/60">
+                              {index + 1}
+                            </div>
 
-                    <div className="truncate text-[9px] font-black text-white">
-                      {result.username}
-                    </div>
+                            <div className="truncate text-[9px] font-black text-white">
+                              {result.username}
+                            </div>
 
-                    <div className="truncate text-[9px] text-white/45">
-                      {result.slotName}
-                    </div>
+                            <div className="truncate text-[9px] text-white/45">
+                              {result.slotName}
+                            </div>
 
-                    <div className="truncate text-right text-[9px] font-black text-emerald-300">
-                      $
-                      {result.payout.toLocaleString(
-                        "en-US",
-                        {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }
+                            <div className="truncate text-right text-[9px] font-black text-emerald-300">
+                              $
+                              {result.payout.toLocaleString(
+                                "en-US",
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }
+                              )}
+                            </div>
+
+                            <button
+                              onClick={async () => {
+                                const res =
+                                  await fetch(
+                                    `/api/slot-calls?resultId=${result.id}`,
+                                    {
+                                      method:
+                                        "DELETE",
+                                    }
+                                  );
+
+                                const data =
+                                  await res.json();
+
+                                if (
+                                  !res.ok ||
+                                  !data.ok
+                                ) {
+                                  alert(
+                                    data.error ||
+                                      "Failed to remove rolled result."
+                                  );
+                                  return;
+                                }
+
+                                setSlotCallResults(
+                                  (current) =>
+                                    current.filter(
+                                      (item) =>
+                                        item.id !==
+                                        result.id
+                                    )
+                                );
+
+                                await loadSlotCalls();
+                              }}
+                              className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )
                       )}
                     </div>
-
-                    <button
-                      onClick={async () => {
-                        const res = await fetch(
-                          `/api/slot-calls?resultId=${result.id}`,
-                          {
-                            method: "DELETE",
-                          }
-                        );
-
-                        const data =
-                          await res.json();
-
-                        if (!res.ok || !data.ok) {
-                          alert(
-                            data.error ||
-                              "Failed to remove rolled result."
-                          );
-                          return;
-                        }
-
-                        setSlotCallResults(
-                          (current) =>
-                            current.filter(
-                              (item) =>
-                                item.id !== result.id
-                            )
-                        );
-
-                        await loadSlotCalls();
-                      }}
-                      className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )
-              )}
+                  )}
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  </div>
-</details>
+          </div>
+        </details>
       </div>
     </div>
   </section>
 )}
           </main>
 
-<footer className="relative mt-24 border-t border-white/10 bg-black/35 backdrop-blur-xl">
-  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,245,255,0.08),transparent_70%)]" />
+<footer
+  className="
+    relative
+    mt-10
+    border-t border-purple-300/[0.10]
+    bg-black/45
+    backdrop-blur-xl
+    sm:mt-14
+  "
+>
+  {/* PURPLE AMBIENT GLOW */}
+  <div
+    className="
+      pointer-events-none
+      absolute inset-0
+      bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.07),transparent_68%)]
+    "
+  />
 
-  <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center gap-6 px-6 py-10 text-center">
-    
-<div className="flex items-center gap-4 sm:gap-5">
-  <a
-    href="https://twitch.tv/trashguy__"
-    target="_blank"
-    rel="noreferrer"
-    aria-label="Twitch"
-    className="transition hover:scale-110"
+  <div
+    className="
+      relative z-10
+      mx-auto
+      flex max-w-7xl
+      flex-col
+      items-center
+      gap-4
+      px-4 py-6
+      text-center
+      sm:gap-5
+      sm:px-6
+      sm:py-8
+    "
   >
-    <FaTwitch className="text-2xl text-[#9146FF] sm:text-3xl md:text-4xl" />
-  </a>
+    {/* SOCIALS */}
 
-  <a
-    href="https://kick.com/trashguy"
-    target="_blank"
-    rel="noreferrer"
-    aria-label="Kick"
-    className="transition hover:scale-110"
-  >
-    <SiKick className="text-2xl text-[#53FC18] sm:text-3xl md:text-4xl" />
-  </a>
+    <div className="flex items-center gap-4 sm:gap-5">
+      <a
+        href="https://twitch.tv/trashguy__"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Twitch"
+        className="transition duration-200 hover:scale-110"
+      >
+        <FaTwitch className="text-xl text-[#9146FF] sm:text-2xl md:text-3xl" />
+      </a>
 
-  <a
-    href="https://discord.gg/EqjwXzkDMK"
-    target="_blank"
-    rel="noreferrer"
-    aria-label="Discord"
-    className="transition hover:scale-110"
-  >
-    <FaDiscord className="text-2xl text-[#5865F2] sm:text-3xl md:text-4xl" />
-  </a>
+      <a
+        href="https://kick.com/trashguy"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Kick"
+        className="transition duration-200 hover:scale-110"
+      >
+        <SiKick className="text-xl text-[#53FC18] sm:text-2xl md:text-3xl" />
+      </a>
 
-  <a
-    href="https://instagram.com/trashguy__"
-    target="_blank"
-    rel="noreferrer"
-    aria-label="Instagram"
-    className="transition hover:scale-110"
-  >
-    <FaInstagram className="text-2xl text-[#E1306C] sm:text-3xl md:text-4xl" />
-  </a>
+      <a
+        href="https://discord.gg/EqjwXzkDMK"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Discord"
+        className="transition duration-200 hover:scale-110"
+      >
+        <FaDiscord className="text-xl text-[#5865F2] sm:text-2xl md:text-3xl" />
+      </a>
 
-  <a
-    href="https://x.com/trashguy__"
-    target="_blank"
-    rel="noreferrer"
-    aria-label="Twitter"
-    className="transition hover:scale-110"
-  >
-    <FaXTwitter className="text-2xl text-white sm:text-3xl md:text-4xl" />
-  </a>
-</div>
+      <a
+        href="https://instagram.com/trashguy__"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Instagram"
+        className="transition duration-200 hover:scale-110"
+      >
+        <FaInstagram className="text-xl text-[#E1306C] sm:text-2xl md:text-3xl" />
+      </a>
 
-    <div className="max-w-2xl text-sm leading-7 text-white/45">
-      Gamble responsibly. 18+ only.
-      Only gamble with what you can afford to lose.
+      <a
+        href="https://x.com/trashguy__"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Twitter"
+        className="transition duration-200 hover:scale-110"
+      >
+        <FaXTwitter className="text-xl text-white sm:text-2xl md:text-3xl" />
+      </a>
     </div>
 
-    <div className="text-xs uppercase tracking-[0.22em] text-white/25">
+    {/* RESPONSIBLE GAMBLING */}
+
+    <div className="max-w-2xl text-[10px] leading-5 text-white/40 sm:text-xs sm:leading-6">
+      Gamble responsibly. 18+ only. Only gamble with what you can afford to
+      lose.
+    </div>
+
+    {/* COPYRIGHT */}
+
+    <div className="text-[8px] uppercase tracking-[0.20em] text-white/20 sm:text-[10px]">
       © 2026 Trashguy • All Rights Reserved
     </div>
   </div>
