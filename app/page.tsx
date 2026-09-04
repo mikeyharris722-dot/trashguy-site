@@ -4409,7 +4409,7 @@ return (
               <div
                 className="
                   absolute inset-0
-                  bg-[url('/trashguy-bg.jpg')]
+                  bg-[url('/trashguy-new-bg.png')]
                   bg-cover bg-center
                   opacity-40
                 "
