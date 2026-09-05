@@ -8,8 +8,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
 
-const CURRENT_LB_START = "2026-08-05";
-const CURRENT_LB_END = "2026-09-05";
+const CURRENT_LB_START = "2026-09-05";
+const CURRENT_LB_END = "2026-10-05";
 
 const LIFETIME_START = "2024-01-01";
 
