@@ -1052,7 +1052,7 @@ const currentPredictionAvgX =
     : "0.00";
 
     const leaderboardCountdown = useMemo(() => {
-  const end = new Date("2026-09-04T19:00:00-04:00").getTime();
+  const end = new Date("2026-10-04T19:00:00-04:00").getTime();
   const diff = end - countdownTick;
 
   if (diff <= 0) return "Ended";
