@@ -64,9 +64,9 @@ const fallbackLeaderboard = [
 const leaderboardTotal = 1500;
 
 const leaderboardPrizes: Record<number, number> = {
-  1: 450,
+  1: 400,
   2: 350,
-  3: 250,
+  3: 300,
   4: 200,
   5: 150,
   6: 100,
