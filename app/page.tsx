@@ -10,6 +10,10 @@ import {
   FaInstagram,
   FaXTwitter,
   FaCrown,
+  FaGift,
+  FaTicket,
+  FaBolt,
+  FaStar,
 } from "react-icons/fa6";
 import { SiKick } from "react-icons/si";
 import { slotData, providerLogos, type SlotItem } from "./slotData";
@@ -722,6 +726,8 @@ const DEFAULT_TRASH_CLAW_PRIZES = [
 ];
 
 const [trashClawPrizes, setTrashClawPrizes] = useState<string[]>(DEFAULT_TRASH_CLAW_PRIZES);
+const [savedTrashClawPrizes, setSavedTrashClawPrizes] = useState<string[]>(DEFAULT_TRASH_CLAW_PRIZES);
+const [trashClawSaveStatus, setTrashClawSaveStatus] = useState<"idle" | "saved">("idle");
 const [trashClawCards, setTrashClawCards] = useState<string[]>([]);
 const [trashClawReel, setTrashClawReel] = useState<string[]>([]);
 const [trashClawReelOffset, setTrashClawReelOffset] = useState(0);
@@ -1416,18 +1422,34 @@ useEffect(() => {
   try {
     const parsed = JSON.parse(saved);
     if (Array.isArray(parsed) && parsed.length === 10) {
-      setTrashClawPrizes(parsed.map((item) => String(item ?? "")));
+      const normalized = parsed.map((item) => String(item ?? ""));
+      setTrashClawPrizes(normalized);
+      setSavedTrashClawPrizes(normalized);
     }
   } catch {}
 }, []);
 
-useEffect(() => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem("trash_claw_prizes", JSON.stringify(trashClawPrizes));
-}, [trashClawPrizes]);
+const saveTrashClawPrizes = () => {
+  const normalized = trashClawPrizes.map((prize) => prize.trim());
+  setTrashClawPrizes(normalized);
+  setSavedTrashClawPrizes(normalized);
+  if (typeof window !== "undefined") {
+    localStorage.setItem("trash_claw_prizes", JSON.stringify(normalized));
+  }
+  setTrashClawSaveStatus("saved");
+  window.setTimeout(() => setTrashClawSaveStatus("idle"), 1800);
+};
+
+const trashClawHasUnsavedChanges =
+  JSON.stringify(trashClawPrizes) !== JSON.stringify(savedTrashClawPrizes);
 
 const getTrashClawPool = () =>
-  trashClawPrizes.map((prize) => prize.trim()).filter(Boolean);
+  savedTrashClawPrizes.map((prize) => prize.trim()).filter(Boolean);
+
+const getTrashClawCardIcon = (index: number) => {
+  const icons = [FaGift, FaTicket, FaBolt, FaStar];
+  return icons[index % icons.length];
+};
 
 const buildTrashClawFinalists = (pool: string[], count = 5) => {
   const shuffled = [...pool];
@@ -9477,27 +9499,30 @@ onClick={() => {
         <div className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-300/60 sm:text-[10px]">Giveaway Bonus Picker</div>
         <h2 className="mt-1 text-xl font-black tracking-[0.08em] text-white sm:text-3xl">TRASH CLAW</h2>
         <p className="mt-1 max-w-2xl text-[10px] leading-4 text-white/45 sm:text-xs">
-          Edit the 10 possible extras below, then run the claw after a giveaway winner earns a Trash Claw grab.
+          Edit your 10 possible extras, press Save 10 Options, then run the claw after a giveaway winner earns a Trash Claw grab.
         </p>
       </div>
       <button
         type="button"
-        disabled={isRunningTrashClaw}
-        onClick={() => {
-          setTrashClawPrizes(DEFAULT_TRASH_CLAW_PRIZES);
-          setTrashClawWinner(null);
-          setTrashClawPhase("idle");
-        }}
-        className="mt-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[9px] font-black uppercase tracking-wider text-white/55 transition hover:border-purple-300/30 hover:text-white disabled:opacity-40 sm:mt-0"
+        disabled={isRunningTrashClaw || !trashClawHasUnsavedChanges}
+        onClick={saveTrashClawPrizes}
+        className={`mt-2 rounded-lg border px-4 py-2 text-[9px] font-black uppercase tracking-[0.12em] transition sm:mt-0 sm:text-[10px] ${
+          trashClawHasUnsavedChanges
+            ? "border-purple-300/45 bg-purple-500/15 text-purple-100 shadow-[0_0_18px_rgba(168,85,247,0.14)] hover:border-purple-200/70 hover:bg-purple-500/25"
+            : "border-white/10 bg-white/[0.03] text-white/30"
+        } disabled:cursor-not-allowed`}
       >
-        Reset Defaults
+        {trashClawSaveStatus === "saved" ? "SAVED ✓" : trashClawHasUnsavedChanges ? "SAVE 10 OPTIONS" : "OPTIONS SAVED"}
       </button>
     </div>
 
     <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-5 sm:gap-2">
       {trashClawPrizes.map((prize, index) => (
-        <label key={index} className="min-w-0 rounded-lg border border-purple-300/10 bg-black/35 p-2">
-          <span className="mb-1 block text-[7px] font-black uppercase tracking-wider text-purple-200/45 sm:text-[8px]">Prize {index + 1}</span>
+        <label key={index} className="group min-w-0 rounded-xl border border-purple-300/15 bg-[linear-gradient(145deg,rgba(168,85,247,0.08),rgba(0,0,0,0.5))] p-2 transition hover:border-purple-300/30">
+          <span className="mb-1.5 flex items-center justify-between text-[7px] font-black uppercase tracking-wider text-purple-200/45 sm:text-[8px]">
+            <span>Option {index + 1}</span>
+            <span className="rounded-full border border-purple-300/15 bg-purple-500/10 px-1.5 py-0.5 text-purple-200/55">#{String(index + 1).padStart(2, "0")}</span>
+          </span>
           <input
             value={prize}
             disabled={isRunningTrashClaw}
@@ -9539,8 +9564,10 @@ onClick={() => {
               </div>
 
               {trashClawWinner && (trashClawPhase === "lifting" || trashClawPhase === "revealed") && (
-                <div className="absolute left-1/2 top-[27px] z-20 flex h-[70px] w-[62px] -translate-x-1/2 items-center justify-center rounded-lg border border-purple-200/60 bg-[linear-gradient(145deg,rgba(168,85,247,0.28),rgba(0,0,0,0.95))] px-1.5 text-center text-[7px] font-black uppercase leading-tight text-white shadow-[0_0_24px_rgba(168,85,247,0.38)] sm:h-[90px] sm:w-[80px] sm:text-[9px] lg:h-[100px] lg:w-[92px] lg:text-[10px]">
-                  {trashClawWinner}
+                <div className="absolute left-1/2 top-[27px] z-20 flex h-[70px] w-[62px] -translate-x-1/2 flex-col items-center justify-center overflow-hidden rounded-xl border border-purple-200/60 bg-[radial-gradient(circle_at_top,rgba(216,180,254,0.26),transparent_42%),linear-gradient(145deg,#281036,#070309)] px-1.5 text-center text-white shadow-[0_0_28px_rgba(168,85,247,0.42)] sm:h-[90px] sm:w-[80px] lg:h-[100px] lg:w-[92px]">
+                  <FaGift className="mb-1 text-[13px] text-purple-200 sm:text-[17px]" />
+                  <div className="text-[6px] font-black uppercase leading-tight sm:text-[8px] lg:text-[9px]">{trashClawWinner}</div>
+                  <div className="mt-1 text-[5px] font-black uppercase tracking-[0.16em] text-purple-300/45 sm:text-[6px]">TRASH CLAW</div>
                 </div>
               )}
             </div>
@@ -9557,13 +9584,21 @@ onClick={() => {
                   transitionTimingFunction: "cubic-bezier(0.12,0.78,0.16,1)",
                 }}
               >
-                {trashClawReel.map((prize, index) => (
-                  <div key={`${prize}-${index}`} className="w-1/5 min-w-[20%] shrink-0 px-[3px] sm:px-[5px] lg:px-2">
-                    <div className="flex aspect-[4/5] items-center justify-center rounded-lg border border-purple-300/15 bg-[linear-gradient(145deg,rgba(168,85,247,0.16),rgba(0,0,0,0.92))] px-1 text-center text-[7px] font-black uppercase leading-tight text-white sm:text-[9px] lg:text-[11px]">
-                      {prize}
+                {trashClawReel.map((prize, index) => {
+                  const PrizeIcon = getTrashClawCardIcon(index);
+                  return (
+                    <div key={`${prize}-${index}`} className="w-1/5 min-w-[20%] shrink-0 px-[3px] sm:px-[5px] lg:px-2">
+                      <div className="relative flex aspect-[4/5] flex-col items-center justify-center overflow-hidden rounded-xl border border-purple-300/20 bg-[radial-gradient(circle_at_50%_12%,rgba(216,180,254,0.20),transparent_38%),linear-gradient(155deg,#24102f,#09040d_62%,#030104)] px-1.5 text-center text-white shadow-[inset_0_0_22px_rgba(168,85,247,0.05)]">
+                        <div className="absolute left-1.5 top-1.5 rounded-full border border-purple-300/15 bg-black/35 px-1.5 py-0.5 text-[5px] font-black tracking-wider text-purple-200/45 sm:text-[6px]">#{String((index % 10) + 1).padStart(2, "0")}</div>
+                        <div className="mb-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-purple-300/25 bg-purple-500/10 shadow-[0_0_14px_rgba(168,85,247,0.16)] sm:h-9 sm:w-9 lg:h-10 lg:w-10">
+                          <PrizeIcon className="text-[12px] text-purple-200 sm:text-[15px] lg:text-[17px]" />
+                        </div>
+                        <div className="text-[7px] font-black uppercase leading-tight sm:text-[9px] lg:text-[11px]">{prize}</div>
+                        <div className="mt-1.5 text-[5px] font-black uppercase tracking-[0.16em] text-purple-300/35 sm:text-[6px]">TRASH CLAW</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="flex w-full items-end">
@@ -9572,8 +9607,20 @@ onClick={() => {
                   const lifted = isWinner && (trashClawPhase === "lifting" || trashClawPhase === "revealed");
                   return (
                     <div key={`${prize}-${index}`} className={`w-1/5 min-w-0 px-[3px] transition duration-200 sm:px-[5px] lg:px-2 ${lifted ? "opacity-0" : "opacity-100"} ${isWinner && ["targeting","opening","dropping","grabbing"].includes(trashClawPhase) ? "scale-[1.025]" : "scale-100"}`}>
-                      <div className={`flex aspect-[4/5] items-center justify-center rounded-lg border bg-[linear-gradient(145deg,rgba(168,85,247,0.16),rgba(0,0,0,0.92))] px-1 text-center text-[7px] font-black uppercase leading-tight text-white sm:text-[9px] lg:text-[11px] ${isWinner ? "border-purple-200/45 shadow-[0_0_18px_rgba(168,85,247,0.2)]" : "border-purple-300/15"}`}>
-                        {prize}
+                      <div className={`relative flex aspect-[4/5] flex-col items-center justify-center overflow-hidden rounded-xl border bg-[radial-gradient(circle_at_50%_12%,rgba(216,180,254,0.20),transparent_38%),linear-gradient(155deg,#24102f,#09040d_62%,#030104)] px-1.5 text-center text-white ${isWinner ? "border-purple-200/50 shadow-[0_0_22px_rgba(168,85,247,0.24)]" : "border-purple-300/20"}`}>
+                        {(() => {
+                          const PrizeIcon = getTrashClawCardIcon(index);
+                          return (
+                            <>
+                              <div className="absolute left-1.5 top-1.5 rounded-full border border-purple-300/15 bg-black/35 px-1.5 py-0.5 text-[5px] font-black tracking-wider text-purple-200/45 sm:text-[6px]">#{String(index + 1).padStart(2, "0")}</div>
+                              <div className="mb-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-purple-300/25 bg-purple-500/10 shadow-[0_0_14px_rgba(168,85,247,0.16)] sm:h-9 sm:w-9 lg:h-10 lg:w-10">
+                                <PrizeIcon className="text-[12px] text-purple-200 sm:text-[15px] lg:text-[17px]" />
+                              </div>
+                              <div className="text-[7px] font-black uppercase leading-tight sm:text-[9px] lg:text-[11px]">{prize}</div>
+                              <div className="mt-1.5 text-[5px] font-black uppercase tracking-[0.16em] text-purple-300/35 sm:text-[6px]">TRASH CLAW</div>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   );
