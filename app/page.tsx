@@ -695,6 +695,44 @@ const [slotPickerClawX, setSlotPickerClawX] = useState(50);
 const lastPickedRef = useRef<string | null>(null);
 const slotWheelWinnersThisCycleRef = useRef<Set<string>>(new Set());
 
+// =========================================================
+// TRASH CLAW — admin giveaway prize picker
+// =========================================================
+type TrashClawPhase =
+  | "idle"
+  | "spinning"
+  | "targeting"
+  | "opening"
+  | "dropping"
+  | "grabbing"
+  | "lifting"
+  | "revealed";
+
+const DEFAULT_TRASH_CLAW_PRIZES = [
+  "$5 BONUS",
+  "$10 BONUS",
+  "2X GIVEAWAY",
+  "EXTRA GIVEAWAY",
+  "VIP FOR A DAY",
+  "PICK MY NEXT SLOT",
+  "MYSTERY PRIZE",
+  "REROLL",
+  "$15 BONUS",
+  "JACKPOT",
+];
+
+const [trashClawPrizes, setTrashClawPrizes] = useState<string[]>(DEFAULT_TRASH_CLAW_PRIZES);
+const [trashClawCards, setTrashClawCards] = useState<string[]>([]);
+const [trashClawReel, setTrashClawReel] = useState<string[]>([]);
+const [trashClawReelOffset, setTrashClawReelOffset] = useState(0);
+const [trashClawReelDuration, setTrashClawReelDuration] = useState(0);
+const [trashClawWinnerIndex, setTrashClawWinnerIndex] = useState<number | null>(null);
+const [trashClawWinner, setTrashClawWinner] = useState<string | null>(null);
+const [trashClawPhase, setTrashClawPhase] = useState<TrashClawPhase>("idle");
+const [trashClawX, setTrashClawX] = useState(50);
+const [isRunningTrashClaw, setIsRunningTrashClaw] = useState(false);
+const trashClawLastWinnerRef = useRef<string | null>(null);
+
   const [viewerName, setViewerName] = useState("viewer");
   const [viewerDisplayName, setViewerDisplayName] = useState("viewer");
   const [viewerAvatar, setViewerAvatar] = useState("");
@@ -943,7 +981,7 @@ const [manualRewardAmount, setManualRewardAmount] = useState("");
 const [manualRewardType, setManualRewardType] = useState("discord_giveaway");
 
 const [activeAdminTab, setActiveAdminTab] = useState<
-  "giveaway" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel"
+  "giveaway" | "trashClaw" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel"
 >(() => {
   if (typeof window === "undefined") return "giveaway";
 
@@ -951,6 +989,7 @@ const [activeAdminTab, setActiveAdminTab] = useState<
 
   if (
     saved === "giveaway" ||
+    saved === "trashClaw" ||
     saved === "prizePortal" ||
     saved === "tournament" ||
     saved === "snakeDraft" ||
@@ -1367,6 +1406,126 @@ const pickRandomSlot = async () => {
   await sleep(220);
 
   setIsPickingSlot(false);
+};
+
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  const saved = localStorage.getItem("trash_claw_prizes");
+  if (!saved) return;
+  try {
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && parsed.length === 10) {
+      setTrashClawPrizes(parsed.map((item) => String(item ?? "")));
+    }
+  } catch {}
+}, []);
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("trash_claw_prizes", JSON.stringify(trashClawPrizes));
+}, [trashClawPrizes]);
+
+const getTrashClawPool = () =>
+  trashClawPrizes.map((prize) => prize.trim()).filter(Boolean);
+
+const buildTrashClawFinalists = (pool: string[], count = 5) => {
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = getSlotPickerRandomIndex(i + 1);
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+};
+
+const runTrashClaw = async () => {
+  if (isRunningTrashClaw) return;
+  const pool = getTrashClawPool();
+  if (!pool.length) return;
+
+  const sleep = (ms: number) =>
+    new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+
+  const finalCards = buildTrashClawFinalists(pool, 5);
+  let winnerIndex = getSlotPickerRandomIndex(finalCards.length);
+
+  if (finalCards.length > 1 && finalCards[winnerIndex] === trashClawLastWinnerRef.current) {
+    const alternatives = finalCards
+      .map((prize, index) => ({ prize, index }))
+      .filter(({ prize }) => prize !== trashClawLastWinnerRef.current);
+    if (alternatives.length) {
+      winnerIndex = alternatives[getSlotPickerRandomIndex(alternatives.length)].index;
+    }
+  }
+
+  const winner = finalCards[winnerIndex];
+  trashClawLastWinnerRef.current = winner;
+  const isDesktop = typeof window !== "undefined" && window.innerWidth >= 1024;
+  const targetX = isDesktop
+    ? 10 + ((winnerIndex + 0.5) / finalCards.length) * 80
+    : ((winnerIndex + 0.5) / finalCards.length) * 100;
+
+  const leadCount = isDesktop ? 10 : 18;
+  const lead = Array.from({ length: leadCount }, () => pool[getSlotPickerRandomIndex(pool.length)]);
+  const reel = [...lead, ...finalCards];
+
+  setIsRunningTrashClaw(true);
+  setTrashClawWinner(null);
+  setTrashClawWinnerIndex(null);
+  setTrashClawX(50);
+  setTrashClawPhase("spinning");
+  setTrashClawReel(reel);
+  setTrashClawReelOffset(0);
+  setTrashClawReelDuration(0);
+
+  const spinSound = new Audio("/spin.mp3");
+  spinSound.loop = true;
+  spinSound.volume = 0.16;
+  spinSound.playbackRate = 1.15;
+  spinSound.play().catch(() => {});
+
+  await new Promise<void>((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  );
+
+  const reelDuration = isDesktop ? 1200 : 1650;
+  setTrashClawReelDuration(reelDuration);
+  setTrashClawReelOffset(leadCount);
+  await sleep(reelDuration + 40);
+
+  setTrashClawCards(finalCards);
+  setTrashClawReel([]);
+  setTrashClawReelOffset(0);
+  setTrashClawReelDuration(0);
+  await sleep(80);
+
+  setTrashClawX(16); await sleep(160);
+  setTrashClawX(84); await sleep(270);
+  setTrashClawX(30); await sleep(230);
+  setTrashClawX(70); await sleep(200);
+
+  setTrashClawPhase("targeting");
+  setTrashClawX(targetX < 50 ? Math.min(targetX + 10, 88) : Math.max(targetX - 10, 12));
+  await sleep(190);
+  setTrashClawX(targetX);
+  spinSound.playbackRate = 0.8;
+  await sleep(260);
+  spinSound.pause();
+  spinSound.currentTime = 0;
+  setTrashClawWinnerIndex(winnerIndex);
+
+  setTrashClawPhase("opening"); await sleep(160);
+  setTrashClawPhase("dropping"); await sleep(320);
+  setTrashClawPhase("grabbing");
+  const clickSound = new Audio("/click.mp3");
+  clickSound.volume = 0.45;
+  clickSound.play().catch(() => {});
+  await sleep(210);
+
+  setTrashClawWinner(winner);
+  setTrashClawPhase("lifting"); await sleep(580);
+  setTrashClawPhase("revealed"); await sleep(200);
+  setIsRunningTrashClaw(false);
 };
 
 useEffect(() => {
@@ -9249,9 +9408,10 @@ onClick={() => {
 
       {/* ADMIN NAVIGATION */}
       <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-purple-300/15 bg-black/70 p-1.5 shadow-[0_0_18px_rgba(168,85,247,0.06)] backdrop-blur-sm sm:mt-4">
-        <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6">
           {[
             { id: "giveaway", label: "Giveaways" },
+            { id: "trashClaw", label: "Trash Claw" },
             { id: "prizePortal", label: "Prize Portal" },
             { id: "tournament", label: "Tournaments" },
             { id: "snakeDraft", label: "Snake Drafts" },
@@ -9267,6 +9427,7 @@ onClick={() => {
                   setActiveAdminTab(
                     tab.id as
                       | "giveaway"
+                      | "trashClaw"
                       | "prizePortal"
                       | "tournament"
                       | "snakeDraft"
@@ -9298,6 +9459,153 @@ onClick={() => {
 
     <div className="rounded-xl border border-purple-300/10 bg-purple-500/[0.025] p-1">
       <GiveawayAdmin isAdmin={isAdmin} />
+    </div>
+  </details>
+
+
+  {/* TRASH CLAW ADMIN */}
+  <details
+    open={activeAdminTab === "trashClaw"}
+    className={`${
+      activeAdminTab === "trashClaw" ? "block" : "hidden"
+    } min-w-0 overflow-hidden rounded-xl border border-purple-300/25 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.13),rgba(0,0,0,0.92)_48%)] p-2.5 shadow-[0_0_28px_rgba(168,85,247,0.12)] sm:p-4`}
+  >
+    <summary className="hidden">Trash Claw</summary>
+
+    <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <div className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-300/60 sm:text-[10px]">Giveaway Bonus Picker</div>
+        <h2 className="mt-1 text-xl font-black tracking-[0.08em] text-white sm:text-3xl">TRASH CLAW</h2>
+        <p className="mt-1 max-w-2xl text-[10px] leading-4 text-white/45 sm:text-xs">
+          Edit the 10 possible extras below, then run the claw after a giveaway winner earns a Trash Claw grab.
+        </p>
+      </div>
+      <button
+        type="button"
+        disabled={isRunningTrashClaw}
+        onClick={() => {
+          setTrashClawPrizes(DEFAULT_TRASH_CLAW_PRIZES);
+          setTrashClawWinner(null);
+          setTrashClawPhase("idle");
+        }}
+        className="mt-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[9px] font-black uppercase tracking-wider text-white/55 transition hover:border-purple-300/30 hover:text-white disabled:opacity-40 sm:mt-0"
+      >
+        Reset Defaults
+      </button>
+    </div>
+
+    <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-5 sm:gap-2">
+      {trashClawPrizes.map((prize, index) => (
+        <label key={index} className="min-w-0 rounded-lg border border-purple-300/10 bg-black/35 p-2">
+          <span className="mb-1 block text-[7px] font-black uppercase tracking-wider text-purple-200/45 sm:text-[8px]">Prize {index + 1}</span>
+          <input
+            value={prize}
+            disabled={isRunningTrashClaw}
+            onChange={(e) => {
+              const next = [...trashClawPrizes];
+              next[index] = e.target.value;
+              setTrashClawPrizes(next);
+            }}
+            className="w-full rounded-md border border-white/10 bg-black/55 px-2 py-1.5 text-[9px] font-bold text-white outline-none transition placeholder:text-white/20 focus:border-purple-300/40 sm:text-[10px]"
+            placeholder={`Prize ${index + 1}`}
+          />
+        </label>
+      ))}
+    </div>
+
+    <div className="mt-3 overflow-hidden rounded-xl border border-purple-300/15 bg-[linear-gradient(180deg,#09040e,#030104)]">
+      <div className="flex items-center justify-between border-b border-purple-300/10 px-3 py-2 sm:px-4">
+        <div className="text-[10px] font-black tracking-[0.12em] text-white sm:text-sm">TRASHGUY TRASH CLAW</div>
+        <div className="text-[8px] font-black uppercase tracking-wider text-purple-200/50 sm:text-[9px]">
+          {trashClawPhase === "spinning" ? "MIXING PRIZES..." : trashClawPhase === "targeting" ? "TARGETING..." : trashClawPhase === "opening" ? "TARGET LOCKED" : trashClawPhase === "dropping" ? "DROPPING..." : trashClawPhase === "grabbing" ? "GRABBED!" : trashClawPhase === "lifting" ? "PULLING IT OUT..." : trashClawPhase === "revealed" ? "WINNER" : `${getTrashClawPool().length} PRIZES`}
+        </div>
+      </div>
+
+      <div className="p-2.5 sm:p-4">
+        <div className="relative h-[250px] overflow-hidden rounded-xl border border-purple-300/10 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.13),transparent_45%),#050207] sm:h-[320px] lg:h-[350px]">
+          <div className="absolute left-[5%] right-[5%] top-5 z-30 h-[6px] rounded-full border border-purple-300/25 bg-[linear-gradient(180deg,#31183e,#100716)]" />
+
+          <div
+            className={`absolute top-[13px] z-50 w-[58px] transition-[left] sm:w-[66px] lg:w-[70px] ${trashClawPhase === "spinning" ? "duration-200 ease-in-out" : "duration-300 ease-out"}`}
+            style={{ left: `${trashClawX}%`, transform: "translateX(-50%)" }}
+          >
+            <div className="relative z-20 mx-auto h-5 w-9 rounded-md border border-purple-300/40 bg-[linear-gradient(180deg,#341742,#14091b)] shadow-[0_0_13px_rgba(168,85,247,0.2)] sm:h-6 sm:w-10" />
+            <div className={`relative z-10 mx-auto w-[2px] bg-[linear-gradient(180deg,#e9d5ff,#9333ea)] transition-[height] ease-[cubic-bezier(0.22,1,0.36,1)] ${trashClawPhase === "dropping" || trashClawPhase === "grabbing" ? "h-[84px] duration-300 sm:h-[112px] lg:h-[124px]" : "h-[20px] duration-500 sm:h-[24px]"}`} />
+            <div className="relative mx-auto">
+              <div className="relative z-30 mx-auto h-5 w-8 rounded-b-lg border border-purple-300/50 bg-[linear-gradient(180deg,#351842,#15091b)] sm:h-6 sm:w-9" />
+              <div className="relative z-40 mx-auto h-10 w-[52px] sm:w-[60px]">
+                <div className={`absolute left-[8px] top-0 h-8 w-[3px] origin-top rounded-full bg-[linear-gradient(180deg,#e9d5ff,#9333ea)] transition-transform duration-200 sm:left-[10px] ${trashClawPhase === "opening" || trashClawPhase === "dropping" ? "rotate-[35deg]" : trashClawPhase === "grabbing" || trashClawPhase === "lifting" || trashClawPhase === "revealed" ? "rotate-[10deg]" : "rotate-[24deg]"}`} />
+                <div className={`absolute right-[8px] top-0 h-8 w-[3px] origin-top rounded-full bg-[linear-gradient(180deg,#e9d5ff,#9333ea)] transition-transform duration-200 sm:right-[10px] ${trashClawPhase === "opening" || trashClawPhase === "dropping" ? "-rotate-[35deg]" : trashClawPhase === "grabbing" || trashClawPhase === "lifting" || trashClawPhase === "revealed" ? "-rotate-[10deg]" : "-rotate-[24deg]"}`} />
+              </div>
+
+              {trashClawWinner && (trashClawPhase === "lifting" || trashClawPhase === "revealed") && (
+                <div className="absolute left-1/2 top-[27px] z-20 flex h-[70px] w-[62px] -translate-x-1/2 items-center justify-center rounded-lg border border-purple-200/60 bg-[linear-gradient(145deg,rgba(168,85,247,0.28),rgba(0,0,0,0.95))] px-1.5 text-center text-[7px] font-black uppercase leading-tight text-white shadow-[0_0_24px_rgba(168,85,247,0.38)] sm:h-[90px] sm:w-[80px] sm:text-[9px] lg:h-[100px] lg:w-[92px] lg:text-[10px]">
+                  {trashClawWinner}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="absolute bottom-[54px] left-[3%] right-[3%] z-20 overflow-hidden sm:bottom-[66px] sm:left-[6%] sm:right-[6%] lg:bottom-[72px] lg:left-[10%] lg:right-[10%]">
+            {trashClawReel.length > 0 ? (
+              <div
+                className="flex w-full will-change-transform [backface-visibility:hidden]"
+                style={{
+                  transform: `translate3d(-${trashClawReelOffset * 20}%,0,0)`,
+                  transitionProperty: "transform",
+                  transitionDuration: `${trashClawReelDuration}ms`,
+                  transitionTimingFunction: "cubic-bezier(0.12,0.78,0.16,1)",
+                }}
+              >
+                {trashClawReel.map((prize, index) => (
+                  <div key={`${prize}-${index}`} className="w-1/5 min-w-[20%] shrink-0 px-[3px] sm:px-[5px] lg:px-2">
+                    <div className="flex aspect-[4/5] items-center justify-center rounded-lg border border-purple-300/15 bg-[linear-gradient(145deg,rgba(168,85,247,0.16),rgba(0,0,0,0.92))] px-1 text-center text-[7px] font-black uppercase leading-tight text-white sm:text-[9px] lg:text-[11px]">
+                      {prize}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex w-full items-end">
+                {(trashClawCards.length ? trashClawCards : buildTrashClawFinalists(getTrashClawPool(), 5)).map((prize, index) => {
+                  const isWinner = trashClawWinnerIndex === index;
+                  const lifted = isWinner && (trashClawPhase === "lifting" || trashClawPhase === "revealed");
+                  return (
+                    <div key={`${prize}-${index}`} className={`w-1/5 min-w-0 px-[3px] transition duration-200 sm:px-[5px] lg:px-2 ${lifted ? "opacity-0" : "opacity-100"} ${isWinner && ["targeting","opening","dropping","grabbing"].includes(trashClawPhase) ? "scale-[1.025]" : "scale-100"}`}>
+                      <div className={`flex aspect-[4/5] items-center justify-center rounded-lg border bg-[linear-gradient(145deg,rgba(168,85,247,0.16),rgba(0,0,0,0.92))] px-1 text-center text-[7px] font-black uppercase leading-tight text-white sm:text-[9px] lg:text-[11px] ${isWinner ? "border-purple-200/45 shadow-[0_0_18px_rgba(168,85,247,0.2)]" : "border-purple-300/15"}`}>
+                        {prize}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="pointer-events-none absolute bottom-0 left-[2%] right-[2%] z-30 h-[70px] sm:left-[5%] sm:right-[5%] sm:h-[82px] lg:left-[8%] lg:right-[8%] lg:h-[88px]">
+            <div className="absolute left-0 right-0 top-0 h-4 rounded-t-lg border border-purple-300/25 bg-[linear-gradient(180deg,#371944,#170a1e)]" />
+            <div className="absolute bottom-0 left-[2%] right-[2%] top-[12px] flex items-center justify-center rounded-b-xl border-x border-b border-purple-300/20 bg-[linear-gradient(180deg,#1c0d24,#09040d)] sm:top-[16px]">
+              <div className="rounded-md border border-purple-300/20 bg-black/40 px-4 py-1 text-[9px] font-black tracking-[0.22em] text-purple-100/65 sm:text-[11px] lg:text-[13px]">TRASHGUY</div>
+            </div>
+          </div>
+        </div>
+
+        {trashClawWinner && trashClawPhase === "revealed" && (
+          <div className="mt-2.5 rounded-xl border border-purple-300/20 bg-purple-400/[0.06] px-3 py-2.5 text-center">
+            <div className="text-[8px] font-black uppercase tracking-[0.16em] text-purple-200/50">Trash Claw Grabbed</div>
+            <div className="mt-1 text-sm font-black text-purple-100 sm:text-lg">{trashClawWinner}</div>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={runTrashClaw}
+          disabled={isRunningTrashClaw || getTrashClawPool().length === 0}
+          className="mt-2.5 w-full rounded-xl border border-purple-300/40 bg-[linear-gradient(180deg,rgba(168,85,247,0.25),rgba(88,28,135,0.2))] px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.15em] text-purple-50 shadow-[0_0_20px_rgba(168,85,247,0.1)] transition hover:border-purple-200/60 hover:bg-purple-400/[0.18] disabled:cursor-not-allowed disabled:opacity-40 sm:py-3 sm:text-[14px]"
+        >
+          {isRunningTrashClaw ? "GRABBING..." : "RUN TRASH CLAW"}
+        </button>
+      </div>
     </div>
   </details>
 
