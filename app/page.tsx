@@ -1251,27 +1251,9 @@ const pickRandomSlot = async () => {
   );
   const reel = [...leadCards, ...finalCards];
 
-  // Preload the artwork before movement starts. This prevents the blank-card
-  // flashes that happened when image src values were being replaced rapidly.
-  if (typeof window !== "undefined") {
-    await Promise.all(
-      reel.map(
-        (slot) =>
-          new Promise<void>((resolve) => {
-            if (!slot.image) {
-              resolve();
-              return;
-            }
-
-            const image = new Image();
-            image.onload = () => resolve();
-            image.onerror = () => resolve();
-            image.src = slot.image;
-          })
-      )
-    );
-  }
-
+  // Respond to the click IMMEDIATELY. Do not block the UI waiting for slot
+  // artwork to preload — that was causing the several-second "dead button"
+  // feeling before anything happened.
   setIsPickingSlot(true);
   setPickedSlot(null);
   setSlotPickerWinnerIndex(null);
@@ -1280,6 +1262,16 @@ const pickRandomSlot = async () => {
   setSlotPickerReel(reel);
   setSlotPickerReelOffset(0);
   setSlotPickerReelDuration(0);
+
+  // Best-effort warmup only. Images load in parallel while React renders the
+  // reel, but slow artwork can NEVER hold up the animation.
+  if (typeof window !== "undefined") {
+    reel.forEach((slot) => {
+      if (!slot.image) return;
+      const image = new Image();
+      image.src = slot.image;
+    });
+  }
 
   const spinSound = new Audio("/spin.mp3");
   spinSound.loop = true;
