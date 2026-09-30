@@ -1245,7 +1245,13 @@ const pickRandomSlot = async () => {
 
   // Build one continuous track. The final five are literally the last five
   // cards on the track, so the animation always lands on the real finalists.
-  const randomCardCount = 30;
+  // Desktop has a much larger composited reel, so keep fewer moving cards
+  // there. The cards are still sampled from the ENTIRE eligible pool.
+  // Mobile keeps the longer reel that already performs perfectly.
+  const isDesktopPicker =
+    typeof window !== "undefined" && window.innerWidth >= 1024;
+  const randomCardCount = isDesktopPicker ? 16 : 30;
+
   const leadCards = Array.from({ length: randomCardCount }, () =>
     getRandomSlotFromPool(filteredSlots)
   );
@@ -1287,7 +1293,9 @@ const pickRandomSlot = async () => {
     )
   );
 
-  const reelDuration = 2100;
+  // Keep desktop quick while reducing the amount of oversized artwork the
+  // browser has to composite. Mobile timing is intentionally unchanged.
+  const reelDuration = isDesktopPicker ? 1650 : 2100;
   setSlotPickerReelDuration(reelDuration);
   setSlotPickerReelOffset(randomCardCount);
 
@@ -7805,7 +7813,7 @@ onClick={() => {
 >
   {slotPickerReel.length > 0 ? (
     <div
-      className="flex w-full will-change-transform"
+      className="flex w-full will-change-transform [backface-visibility:hidden] [transform-style:preserve-3d]"
       style={{
         transform: `translate3d(-${slotPickerReelOffset * 20}%, 0, 0)`,
         transitionProperty: "transform",
@@ -7825,7 +7833,8 @@ onClick={() => {
                   src={slot.image}
                   alt={slot.name}
                   draggable={false}
-                  className="h-full w-full select-none object-cover"
+                  className="h-full w-full select-none object-cover [backface-visibility:hidden]"
+                  decoding="async"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-lg text-purple-200/30">
