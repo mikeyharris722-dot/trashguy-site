@@ -1216,56 +1216,54 @@ const pickRandomSlot = async () => {
     );
 
   // =========================================================
-  // BUILD THE VISIBLE MACHINE
+  // CHOOSE 5 RANDOM FINALISTS FROM ALL ELIGIBLE SLOTS
   // =========================================================
 
-  let visibleCards =
-    slotPickerCards.length > 0
-      ? [...slotPickerCards]
-      : buildSlotPickerCards(filteredSlots);
-
-  if (!visibleCards.length) return;
-
-  // =========================================================
-  // PICK WINNER FROM THE VISIBLE CARDS
-  //
-  // This guarantees the claw is actually grabbing something
-  // the viewer has been looking at.
-  // =========================================================
-
-  let winnerIndex = getSlotPickerRandomIndex(
-    visibleCards.length
+  const finalCards = buildSlotPickerCards(
+    filteredSlots,
+    5
   );
 
+  if (!finalCards.length) return;
+
+  // =========================================================
+  // CHOOSE WINNER FROM THOSE 5
+  // =========================================================
+
+  let winnerIndex =
+    getSlotPickerRandomIndex(finalCards.length);
+
   if (
-    visibleCards.length > 1 &&
-    visibleCards[winnerIndex].name === lastPickedRef.current
+    finalCards.length > 1 &&
+    finalCards[winnerIndex].name ===
+      lastPickedRef.current
   ) {
-    const availableIndexes = visibleCards
+    const otherIndexes = finalCards
       .map((_, index) => index)
       .filter(
         (index) =>
-          visibleCards[index].name !==
+          finalCards[index].name !==
           lastPickedRef.current
       );
 
-    if (availableIndexes.length) {
+    if (otherIndexes.length) {
       winnerIndex =
-        availableIndexes[
+        otherIndexes[
           getSlotPickerRandomIndex(
-            availableIndexes.length
+            otherIndexes.length
           )
         ];
     }
   }
 
-  const winner = visibleCards[winnerIndex];
+  const winner = finalCards[winnerIndex];
 
   lastPickedRef.current = winner.name;
 
-  // Exact horizontal center of the winning card.
   const targetX =
-    ((winnerIndex + 0.5) / visibleCards.length) * 100;
+    ((winnerIndex + 0.5) /
+      finalCards.length) *
+    100;
 
   // =========================================================
   // START
@@ -1285,10 +1283,50 @@ const pickRandomSlot = async () => {
   spinSound.play().catch(() => {});
 
   // =========================================================
-  // CLAW SEARCH
+  // RAPIDLY CYCLE THROUGH RANDOM SETS
   //
-  // Cards DO NOT move.
-  // Only the claw moves.
+  // Short and quick.
+  // We aren't sliding the entire machine anymore.
+  // =========================================================
+
+  for (let cycle = 0; cycle < 8; cycle++) {
+    setSlotPickerCards(
+      buildSlotPickerCards(
+        filteredSlots,
+        5
+      )
+    );
+
+    await sleep(75);
+  }
+
+  // =========================================================
+  // SLOW DOWN
+  // =========================================================
+
+  for (let cycle = 0; cycle < 4; cycle++) {
+    setSlotPickerCards(
+      buildSlotPickerCards(
+        filteredSlots,
+        5
+      )
+    );
+
+    await sleep(
+      110 + cycle * 55
+    );
+  }
+
+  // =========================================================
+  // LAND ON THE FINAL FIVE
+  // =========================================================
+
+  setSlotPickerCards(finalCards);
+
+  await sleep(220);
+
+  // =========================================================
+  // NOW START CLAW SEARCH
   // =========================================================
 
   setSlotPickerClawX(15);
@@ -1304,7 +1342,7 @@ const pickRandomSlot = async () => {
   await sleep(240);
 
   // =========================================================
-  // SLOW DOWN TOWARD WINNER
+  // SLOW CLAW TOWARD WINNER
   // =========================================================
 
   setSlotPickerPhase("targeting");
@@ -1317,7 +1355,6 @@ const pickRandomSlot = async () => {
 
   await sleep(220);
 
-  // Exact winner position.
   setSlotPickerClawX(targetX);
 
   spinSound.playbackRate = 0.8;
@@ -1327,11 +1364,12 @@ const pickRandomSlot = async () => {
   spinSound.pause();
   spinSound.currentTime = 0;
 
-  // Winner is now officially targeted.
-  setSlotPickerWinnerIndex(winnerIndex);
+  setSlotPickerWinnerIndex(
+    winnerIndex
+  );
 
   // =========================================================
-  // OPEN CLAW
+  // OPEN
   // =========================================================
 
   setSlotPickerPhase("opening");
@@ -1339,7 +1377,7 @@ const pickRandomSlot = async () => {
   await sleep(180);
 
   // =========================================================
-  // SHORT DROP
+  // DROP
   // =========================================================
 
   setSlotPickerPhase("dropping");
@@ -1347,12 +1385,13 @@ const pickRandomSlot = async () => {
   await sleep(340);
 
   // =========================================================
-  // CLAMP
+  // GRAB
   // =========================================================
 
   setSlotPickerPhase("grabbing");
 
-  const clickSound = new Audio("/click.mp3");
+  const clickSound =
+    new Audio("/click.mp3");
 
   clickSound.volume = 0.5;
   clickSound.play().catch(() => {});
@@ -1360,7 +1399,7 @@ const pickRandomSlot = async () => {
   await sleep(220);
 
   // =========================================================
-  // ATTACH CARD + LIFT
+  // LIFT
   // =========================================================
 
   setPickedSlot(winner);
