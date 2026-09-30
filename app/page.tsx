@@ -669,9 +669,9 @@ const [isPickingSlot, setIsPickingSlot] = useState(false);
 
 type SlotPickerPhase =
   | "idle"
-  | "shuffle"
-  | "locking"
+  | "scanning"
   | "targeting"
+  | "opening"
   | "dropping"
   | "grabbing"
   | "lifting"
@@ -681,8 +681,13 @@ const [slotPickerPhase, setSlotPickerPhase] =
   useState<SlotPickerPhase>("idle");
 
 const [slotPickerCards, setSlotPickerCards] = useState<SlotItem[]>([]);
+
 const [slotPickerWinnerIndex, setSlotPickerWinnerIndex] =
   useState<number | null>(null);
+
+// Where the claw currently is.
+// This is a percentage across the machine.
+const [slotPickerClawX, setSlotPickerClawX] = useState(50);
 
 const lastPickedRef = useRef<string | null>(null);
 const slotWheelWinnersThisCycleRef = useRef<Set<string>>(new Set());
@@ -1113,6 +1118,28 @@ const biggestGiveaway = useMemo(() => {
   )[0];
 }, [giveaways]);
 
+const buildSlotPickerCards = (
+  pool: SlotItem[],
+  count = 5
+): SlotItem[] => {
+  if (!pool.length) return [];
+
+  const cardCount = Math.min(count, pool.length);
+
+  const shuffled = [...pool];
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = getSlotPickerRandomIndex(i + 1);
+
+    [shuffled[i], shuffled[j]] = [
+      shuffled[j],
+      shuffled[i],
+    ];
+  }
+
+  return shuffled.slice(0, cardCount);
+};
+
 const slotProviders = useMemo(() => {
   return Array.from(new Set(slotData.map((slot) => slot.provider)));
 }, []);
@@ -1165,20 +1192,18 @@ useEffect(() => {
     setSlotPickerCards([]);
     setPickedSlot(null);
     setSlotPickerWinnerIndex(null);
+    setSlotPickerClawX(50);
     setSlotPickerPhase("idle");
     return;
   }
 
-  const cardCount = Math.min(5, filteredSlots.length);
-
-  const cards = Array.from(
-    { length: cardCount },
-    () => getRandomSlotFromPool(filteredSlots)
+  setSlotPickerCards(
+    buildSlotPickerCards(filteredSlots)
   );
 
-  setSlotPickerCards(cards);
   setPickedSlot(null);
   setSlotPickerWinnerIndex(null);
+  setSlotPickerClawX(50);
   setSlotPickerPhase("idle");
 }, [selectedProviders]);
 
@@ -1186,51 +1211,61 @@ const pickRandomSlot = async () => {
   if (!filteredSlots.length || isPickingSlot) return;
 
   const sleep = (ms: number) =>
-    new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+    new Promise<void>((resolve) =>
+      window.setTimeout(resolve, ms)
+    );
 
   // =========================================================
-  // CHOOSE WINNER ONCE
+  // BUILD THE VISIBLE MACHINE
   // =========================================================
 
-  let winner: SlotItem;
+  let visibleCards =
+    slotPickerCards.length > 0
+      ? [...slotPickerCards]
+      : buildSlotPickerCards(filteredSlots);
 
-  do {
-    winner = getRandomSlotFromPool(filteredSlots);
-  } while (
-    filteredSlots.length > 1 &&
-    winner.name === lastPickedRef.current
+  if (!visibleCards.length) return;
+
+  // =========================================================
+  // PICK WINNER FROM THE VISIBLE CARDS
+  //
+  // This guarantees the claw is actually grabbing something
+  // the viewer has been looking at.
+  // =========================================================
+
+  let winnerIndex = getSlotPickerRandomIndex(
+    visibleCards.length
   );
+
+  if (
+    visibleCards.length > 1 &&
+    visibleCards[winnerIndex].name === lastPickedRef.current
+  ) {
+    const availableIndexes = visibleCards
+      .map((_, index) => index)
+      .filter(
+        (index) =>
+          visibleCards[index].name !==
+          lastPickedRef.current
+      );
+
+    if (availableIndexes.length) {
+      winnerIndex =
+        availableIndexes[
+          getSlotPickerRandomIndex(
+            availableIndexes.length
+          )
+        ];
+    }
+  }
+
+  const winner = visibleCards[winnerIndex];
 
   lastPickedRef.current = winner.name;
 
-  // =========================================================
-  // BUILD THE FIVE CARDS WE'LL ACTUALLY SHOW
-  // =========================================================
-
-  const cardCount = Math.min(5, filteredSlots.length);
-  const winnerIndex = getSlotPickerRandomIndex(cardCount);
-
-  const otherSlots = filteredSlots.filter(
-    (slot) =>
-      !(
-        slot.name === winner.name &&
-        slot.provider === winner.provider
-      )
-  );
-
-  const finalCards: SlotItem[] = [];
-
-  for (let index = 0; index < cardCount; index++) {
-    if (index === winnerIndex) {
-      finalCards.push(winner);
-      continue;
-    }
-
-    const source =
-      otherSlots.length > 0 ? otherSlots : filteredSlots;
-
-    finalCards.push(getRandomSlotFromPool(source));
-  }
+  // Exact horizontal center of the winning card.
+  const targetX =
+    ((winnerIndex + 0.5) / visibleCards.length) * 100;
 
   // =========================================================
   // START
@@ -1239,89 +1274,99 @@ const pickRandomSlot = async () => {
   setIsPickingSlot(true);
   setPickedSlot(null);
   setSlotPickerWinnerIndex(null);
-  setSlotPickerPhase("shuffle");
+  setSlotPickerPhase("scanning");
 
   const spinSound = new Audio("/spin.mp3");
-  spinSound.volume = 0.22;
-  spinSound.playbackRate = 1.2;
+
   spinSound.loop = true;
+  spinSound.volume = 0.18;
+  spinSound.playbackRate = 1.25;
 
   spinSound.play().catch(() => {});
 
   // =========================================================
-  // FAST SHUFFLE
+  // CLAW SEARCH
   //
-  // Only 5 visual refreshes.
-  // Old picker did ~30 full animation cycles.
+  // Cards DO NOT move.
+  // Only the claw moves.
   // =========================================================
 
-  for (let cycle = 0; cycle < 5; cycle++) {
-    const shuffledCards = Array.from(
-      { length: cardCount },
-      () => getRandomSlotFromPool(filteredSlots)
-    );
-
-    setSlotPickerCards(shuffledCards);
-
-    await sleep(110 + cycle * 25);
-  }
-
-  // =========================================================
-  // DECELERATE / LOCK FINAL CARDS
-  // =========================================================
-
-  setSlotPickerPhase("locking");
-
+  setSlotPickerClawX(15);
   await sleep(180);
 
-  setSlotPickerCards(finalCards);
+  setSlotPickerClawX(84);
+  await sleep(330);
 
-  spinSound.playbackRate = 0.85;
+  setSlotPickerClawX(28);
+  await sleep(280);
+
+  setSlotPickerClawX(72);
+  await sleep(240);
+
+  // =========================================================
+  // SLOW DOWN TOWARD WINNER
+  // =========================================================
+
+  setSlotPickerPhase("targeting");
+
+  setSlotPickerClawX(
+    targetX < 50
+      ? Math.min(targetX + 12, 88)
+      : Math.max(targetX - 12, 12)
+  );
+
+  await sleep(220);
+
+  // Exact winner position.
+  setSlotPickerClawX(targetX);
+
+  spinSound.playbackRate = 0.8;
 
   await sleep(300);
 
   spinSound.pause();
   spinSound.currentTime = 0;
 
-  // =========================================================
-  // CLAW TARGETS WINNER
-  // =========================================================
-
+  // Winner is now officially targeted.
   setSlotPickerWinnerIndex(winnerIndex);
-  setSlotPickerPhase("targeting");
-
-  await sleep(350);
 
   // =========================================================
-  // OPEN + DROP
+  // OPEN CLAW
+  // =========================================================
+
+  setSlotPickerPhase("opening");
+
+  await sleep(180);
+
+  // =========================================================
+  // SHORT DROP
   // =========================================================
 
   setSlotPickerPhase("dropping");
 
-  await sleep(400);
+  await sleep(340);
 
   // =========================================================
-  // GRAB
+  // CLAMP
   // =========================================================
 
   setSlotPickerPhase("grabbing");
 
   const clickSound = new Audio("/click.mp3");
+
   clickSound.volume = 0.5;
   clickSound.play().catch(() => {});
 
-  await sleep(250);
+  await sleep(220);
 
   // =========================================================
-  // LIFT
-  //
-  // New JSX will attach the winning card to the claw here.
+  // ATTACH CARD + LIFT
   // =========================================================
 
   setPickedSlot(winner);
   setSlotPickerPhase("lifting");
 
-  await sleep(650);
+  await sleep(620);
 
   // =========================================================
   // REVEAL
@@ -1329,7 +1374,7 @@ const pickRandomSlot = async () => {
 
   setSlotPickerPhase("revealed");
 
-  await sleep(250);
+  await sleep(220);
 
   setIsPickingSlot(false);
 };
@@ -7380,6 +7425,7 @@ onClick={() => {
   setSelectedProviders([]);
   setPickedSlot(null);
   setSlotPickerWinnerIndex(null);
+  setSlotPickerClawX(50);
   setSlotPickerPhase("idle");
 }}
             disabled={isPickingSlot}
@@ -7408,7 +7454,7 @@ onClick={() => {
     </div>
 
 {/* =========================================================
-    TRASHGUY TRASH GRABBER
+    TRASHGUY TRASH GRABBER V2
 ========================================================= */}
 
 <div
@@ -7417,21 +7463,19 @@ onClick={() => {
     overflow-hidden
     rounded-2xl
     border border-purple-300/20
-    bg-[linear-gradient(180deg,rgba(16,7,24,0.92),rgba(4,2,8,0.96))]
-    shadow-[0_22px_70px_rgba(0,0,0,0.42),0_0_38px_rgba(168,85,247,0.09)]
+    bg-[linear-gradient(180deg,rgba(15,7,22,0.94),rgba(4,2,7,0.97))]
+    shadow-[0_18px_55px_rgba(0,0,0,0.38),0_0_28px_rgba(168,85,247,0.07)]
   "
 >
-  {/* =====================================================
-      MACHINE HEADER
-  ===================================================== */}
+  {/* HEADER */}
 
-  <div className="flex items-center justify-between gap-3 border-b border-purple-300/[0.10] px-3 py-2.5 sm:px-5 sm:py-3.5">
+  <div className="flex items-center justify-between gap-3 border-b border-purple-300/[0.09] px-3 py-2.5 sm:px-5 sm:py-3">
     <div>
-      <div className="text-[8px] font-black uppercase tracking-[0.24em] text-purple-300/55 sm:text-[10px]">
+      <div className="text-[8px] font-black uppercase tracking-[0.22em] text-purple-300/50 sm:text-[9px]">
         Trashguy
       </div>
 
-      <div className="mt-0.5 text-[14px] font-black tracking-[0.08em] text-white sm:text-[20px]">
+      <div className="mt-0.5 text-[13px] font-black tracking-[0.08em] text-white sm:text-[18px]">
         TRASH GRABBER
       </div>
     </div>
@@ -7440,274 +7484,371 @@ onClick={() => {
       <span
         className={`h-2 w-2 rounded-full ${
           isPickingSlot
-            ? "animate-pulse bg-purple-300 shadow-[0_0_10px_rgba(216,180,254,0.9)]"
-            : "bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.75)]"
+            ? "animate-pulse bg-purple-300 shadow-[0_0_9px_rgba(216,180,254,0.9)]"
+            : "bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.75)]"
         }`}
       />
 
-      <span className="text-[8px] font-black uppercase tracking-[0.10em] text-white/45 sm:text-[10px]">
-        {slotPickerPhase === "shuffle"
-          ? "Rummaging..."
-          : slotPickerPhase === "locking"
-          ? "Found something..."
+      <span className="text-[8px] font-black uppercase tracking-[0.08em] text-white/45 sm:text-[10px]">
+        {slotPickerPhase === "scanning"
+          ? "SEARCHING..."
           : slotPickerPhase === "targeting"
-          ? "Target locked"
+          ? "LOCKING ON..."
+          : slotPickerPhase === "opening"
+          ? "TARGET LOCKED"
           : slotPickerPhase === "dropping"
-          ? "Dropping claw..."
+          ? "DROPPING..."
           : slotPickerPhase === "grabbing"
-          ? "Got it!"
+          ? "GRABBED!"
           : slotPickerPhase === "lifting"
-          ? "Pulling it out..."
+          ? "PULLING IT OUT..."
           : slotPickerPhase === "revealed"
-          ? "Winner"
-          : `${filteredSlots.length} slots`}
+          ? "WINNER"
+          : `${filteredSlots.length} ELIGIBLE`}
       </span>
     </div>
   </div>
 
-  {/* =====================================================
-      MACHINE WINDOW
-  ===================================================== */}
-
   <div className="p-2.5 sm:p-4">
+
+    {/* =====================================================
+        MACHINE WINDOW
+
+        MOBILE: compact
+        DESKTOP: wider + shorter
+    ===================================================== */}
+
     <div
       className="
         relative
-        h-[310px]
+        h-[285px]
         overflow-hidden
         rounded-xl
-        border border-purple-300/[0.14]
-        bg-[radial-gradient(circle_at_50%_20%,rgba(168,85,247,0.11),transparent_42%),linear-gradient(180deg,#08040d_0%,#050207_60%,#020103_100%)]
-        shadow-[inset_0_0_55px_rgba(168,85,247,0.055)]
-        sm:h-[430px]
+        border border-purple-300/[0.13]
+        bg-[radial-gradient(circle_at_50%_5%,rgba(168,85,247,0.12),transparent_42%),linear-gradient(180deg,#09040e_0%,#050208_100%)]
+        shadow-[inset_0_0_45px_rgba(168,85,247,0.045)]
+
+        sm:h-[350px]
+
+        lg:h-[390px]
       "
     >
-      {/* BACK WALL LINES */}
+      {/* SUBTLE BACK WALL */}
 
       <div
         className="
           pointer-events-none
           absolute inset-0
-          opacity-[0.10]
-          [background-image:linear-gradient(rgba(216,180,254,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(216,180,254,0.12)_1px,transparent_1px)]
-          [background-size:28px_28px]
+          opacity-[0.08]
+          [background-image:linear-gradient(rgba(216,180,254,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(216,180,254,0.10)_1px,transparent_1px)]
+          [background-size:32px_32px]
         "
       />
 
-      {/* TOP PURPLE LIGHT */}
+      {/* TOP GLOW */}
 
-      <div className="pointer-events-none absolute left-1/2 top-0 h-24 w-[70%] -translate-x-1/2 rounded-full bg-purple-500/[0.08] blur-3xl" />
+      <div className="pointer-events-none absolute left-1/2 top-0 h-24 w-2/3 -translate-x-1/2 rounded-full bg-purple-500/[0.08] blur-3xl" />
 
-      {/* =================================================
-          CLAW RAIL
-      ================================================= */}
+      {/* =====================================================
+          RAIL
+      ===================================================== */}
 
-      <div className="absolute left-[5%] right-[5%] top-5 z-30 sm:top-7">
+      <div className="absolute left-[5%] right-[5%] top-4 z-30 sm:top-5 lg:top-6">
         <div
           className="
+            relative
             h-[6px]
             rounded-full
             border border-purple-300/25
-            bg-[linear-gradient(180deg,#2b1737,#100716)]
-            shadow-[0_0_12px_rgba(168,85,247,0.12)]
+            bg-[linear-gradient(180deg,#31183e,#100716)]
+            shadow-[0_0_12px_rgba(168,85,247,0.13)]
           "
-        />
-
-        <div className="absolute left-0 right-0 top-[2px] h-[1px] bg-purple-200/30" />
+        >
+          <div className="absolute inset-x-1 top-[1px] h-[1px] bg-purple-200/25" />
+        </div>
       </div>
 
-      {/* =================================================
-          MOVING CLAW ASSEMBLY
-      ================================================= */}
+      {/* =====================================================
+          CLAW
+
+          IMPORTANT:
+          winner card gets rendered INSIDE this moving assembly.
+      ===================================================== */}
 
       <div
-        className="
+        className={`
           absolute
-          top-[16px]
-          z-40
-          w-[58px]
-          transition-[left]
-          duration-300
-          ease-[cubic-bezier(0.22,1,0.36,1)]
-          sm:top-[22px]
-          sm:w-[72px]
-        "
+          top-[11px]
+          z-50
+          w-[52px]
+          will-change-[left]
+          sm:top-[13px]
+          sm:w-[62px]
+          lg:top-[15px]
+          lg:w-[70px]
+
+          ${
+            slotPickerPhase === "scanning"
+              ? "transition-[left] duration-[260ms] ease-in-out"
+              : slotPickerPhase === "targeting"
+              ? "transition-[left] duration-[280ms] ease-out"
+              : "transition-[left] duration-300 ease-out"
+          }
+        `}
         style={{
-          left:
-            slotPickerWinnerIndex === null
-              ? "50%"
-              : `calc(${
-                  ((slotPickerWinnerIndex + 0.5) /
-                    Math.max(slotPickerCards.length, 1)) *
-                  100
-                }%)`,
+          left: `${slotPickerClawX}%`,
           transform: "translateX(-50%)",
         }}
       >
-        {/* RAIL TROLLEY */}
+        {/* TROLLEY */}
 
         <div
           className="
+            relative
+            z-20
             mx-auto
             h-5 w-9
             rounded-md
-            border border-purple-300/35
-            bg-[linear-gradient(180deg,#281334,#100716)]
-            shadow-[0_0_14px_rgba(168,85,247,0.20)]
-            sm:h-6 sm:w-11
+            border border-purple-300/40
+            bg-[linear-gradient(180deg,#341742,#14091b)]
+            shadow-[0_0_13px_rgba(168,85,247,0.20)]
+            sm:h-6 sm:w-10
+            lg:w-11
           "
         >
-          <div className="mx-auto mt-1 h-1 w-5 rounded-full bg-purple-300/60 sm:w-6" />
+          <div className="mx-auto mt-1 h-1 w-5 rounded-full bg-purple-300/60" />
         </div>
 
-        {/* CABLE */}
+        {/* =================================================
+            CABLE
 
-        <div
-          className={`
-            mx-auto
-            w-[2px]
-            origin-top
-            bg-[linear-gradient(180deg,rgba(216,180,254,0.85),rgba(168,85,247,0.55))]
-            shadow-[0_0_5px_rgba(168,85,247,0.35)]
-            transition-[height]
-            ease-[cubic-bezier(0.22,1,0.36,1)]
-            ${
-              slotPickerPhase === "dropping" ||
-              slotPickerPhase === "grabbing"
-                ? "h-[125px] duration-[380ms] sm:h-[190px]"
-                : slotPickerPhase === "lifting" ||
-                  slotPickerPhase === "revealed"
-                ? "h-[28px] duration-[600ms] sm:h-[34px]"
-                : "h-[28px] duration-300 sm:h-[34px]"
-            }
-          `}
-        />
-
-        {/* CLAW HUB */}
+            Drop distance stops at TOP of cards.
+        ================================================= */}
 
         <div
           className={`
             relative
+            z-10
             mx-auto
-            h-5 w-8
-            rounded-b-lg rounded-t-sm
-            border border-purple-300/45
-            bg-[linear-gradient(180deg,#321640,#16091d)]
-            shadow-[0_0_14px_rgba(168,85,247,0.24)]
-            transition-transform
-            duration-200
-            sm:h-6 sm:w-10
+            w-[2px]
+            bg-[linear-gradient(180deg,#e9d5ff,#9333ea)]
+            shadow-[0_0_5px_rgba(168,85,247,0.35)]
+            will-change-[height]
+            transition-[height]
+            ease-[cubic-bezier(0.22,1,0.36,1)]
+
             ${
+              slotPickerPhase === "dropping" ||
               slotPickerPhase === "grabbing"
-                ? "scale-95"
-                : "scale-100"
+                ? `
+                    h-[92px]
+                    duration-[320ms]
+                    sm:h-[122px]
+                    lg:h-[136px]
+                  `
+                : `
+                    h-[20px]
+                    duration-[560ms]
+                    sm:h-[24px]
+                    lg:h-[26px]
+                  `
             }
           `}
-        >
-          <div className="absolute left-1/2 top-1 h-1 w-3 -translate-x-1/2 rounded-full bg-purple-200/60" />
-        </div>
+        />
 
-        {/* CLAW ARMS */}
+        {/* =================================================
+            LOWER CLAW ASSEMBLY
 
-        <div className="relative mx-auto h-10 w-[54px] sm:h-12 sm:w-[66px]">
-          {/* LEFT ARM */}
+            During lifting, the card lives in here.
+        ================================================= */}
 
-          <div
-            className={`
-              absolute
-              left-[9px]
-              top-0
-              h-8
-              w-[3px]
-              origin-top
-              rounded-full
-              bg-[linear-gradient(180deg,#d8b4fe,#7e22ce)]
-              shadow-[0_0_6px_rgba(168,85,247,0.30)]
-              transition-transform
-              duration-200
-              sm:left-[12px]
-              sm:h-10
-              ${
-                slotPickerPhase === "dropping"
-                  ? "rotate-[32deg]"
-                  : slotPickerPhase === "grabbing" ||
-                    slotPickerPhase === "lifting" ||
-                    slotPickerPhase === "revealed"
-                  ? "rotate-[10deg]"
-                  : "rotate-[26deg]"
-              }
-            `}
-          >
-            <div className="absolute -bottom-1 -left-[1px] h-3 w-[3px] rotate-[32deg] rounded-full bg-purple-300" />
-          </div>
+        <div className="relative mx-auto">
 
-          {/* RIGHT ARM */}
+          {/* HUB */}
 
           <div
-            className={`
-              absolute
-              right-[9px]
-              top-0
-              h-8
-              w-[3px]
-              origin-top
-              rounded-full
-              bg-[linear-gradient(180deg,#d8b4fe,#7e22ce)]
-              shadow-[0_0_6px_rgba(168,85,247,0.30)]
-              transition-transform
-              duration-200
-              sm:right-[12px]
-              sm:h-10
-              ${
-                slotPickerPhase === "dropping"
-                  ? "-rotate-[32deg]"
-                  : slotPickerPhase === "grabbing" ||
-                    slotPickerPhase === "lifting" ||
-                    slotPickerPhase === "revealed"
-                  ? "-rotate-[10deg]"
-                  : "-rotate-[26deg]"
-              }
-            `}
+            className="
+              relative
+              z-30
+              mx-auto
+              h-5 w-8
+              rounded-b-lg
+              border border-purple-300/50
+              bg-[linear-gradient(180deg,#351842,#15091b)]
+              shadow-[0_0_12px_rgba(168,85,247,0.22)]
+              sm:h-6 sm:w-9
+              lg:w-10
+            "
           >
-            <div className="absolute -bottom-1 -right-[1px] h-3 w-[3px] -rotate-[32deg] rounded-full bg-purple-300" />
+            <div className="absolute left-1/2 top-1 h-1 w-3 -translate-x-1/2 rounded-full bg-purple-200/60" />
           </div>
+
+          {/* CLAW ARMS */}
+
+          <div className="relative z-40 mx-auto h-10 w-[52px] sm:h-11 sm:w-[60px] lg:h-12 lg:w-[66px]">
+
+            {/* LEFT */}
+
+            <div
+              className={`
+                absolute
+                left-[8px]
+                top-0
+                h-8
+                w-[3px]
+                origin-top
+                rounded-full
+                bg-[linear-gradient(180deg,#e9d5ff,#9333ea)]
+                shadow-[0_0_5px_rgba(168,85,247,0.32)]
+                transition-transform
+                duration-200
+                sm:left-[10px]
+                sm:h-9
+                lg:left-[11px]
+                lg:h-10
+
+                ${
+                  slotPickerPhase === "opening" ||
+                  slotPickerPhase === "dropping"
+                    ? "rotate-[35deg]"
+                    : slotPickerPhase === "grabbing" ||
+                      slotPickerPhase === "lifting" ||
+                      slotPickerPhase === "revealed"
+                    ? "rotate-[10deg]"
+                    : "rotate-[24deg]"
+                }
+              `}
+            >
+              <div className="absolute -bottom-1 -left-[1px] h-3 w-[3px] rotate-[38deg] rounded-full bg-purple-200" />
+            </div>
+
+            {/* RIGHT */}
+
+            <div
+              className={`
+                absolute
+                right-[8px]
+                top-0
+                h-8
+                w-[3px]
+                origin-top
+                rounded-full
+                bg-[linear-gradient(180deg,#e9d5ff,#9333ea)]
+                shadow-[0_0_5px_rgba(168,85,247,0.32)]
+                transition-transform
+                duration-200
+                sm:right-[10px]
+                sm:h-9
+                lg:right-[11px]
+                lg:h-10
+
+                ${
+                  slotPickerPhase === "opening" ||
+                  slotPickerPhase === "dropping"
+                    ? "-rotate-[35deg]"
+                    : slotPickerPhase === "grabbing" ||
+                      slotPickerPhase === "lifting" ||
+                      slotPickerPhase === "revealed"
+                    ? "-rotate-[10deg]"
+                    : "-rotate-[24deg]"
+                }
+              `}
+            >
+              <div className="absolute -bottom-1 -right-[1px] h-3 w-[3px] -rotate-[38deg] rounded-full bg-purple-200" />
+            </div>
+
+          </div>
+
+          {/* =================================================
+              CARD ACTUALLY HELD BY CLAW
+
+              It only exists here after grab.
+          ================================================= */}
+
+          {pickedSlot &&
+            (slotPickerPhase === "lifting" ||
+              slotPickerPhase === "revealed") && (
+              <div
+                className="
+                  absolute
+                  left-1/2
+                  top-[28px]
+                  z-20
+                  w-[58px]
+                  -translate-x-1/2
+                  overflow-hidden
+                  rounded-md
+                  border border-purple-200/60
+                  bg-black
+                  shadow-[0_0_25px_rgba(168,85,247,0.42)]
+                  sm:top-[31px]
+                  sm:w-[78px]
+                  lg:top-[34px]
+                  lg:w-[96px]
+                "
+              >
+                <div className="aspect-[4/5] overflow-hidden bg-black">
+                  {pickedSlot.image ? (
+                    <img
+                      src={pickedSlot.image}
+                      alt={pickedSlot.name}
+                      draggable={false}
+                      className="h-full w-full select-none object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-xl text-purple-200/30">
+                      🎰
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-purple-300/10 bg-black/95 px-1 py-1 text-center">
+                  <div className="truncate text-[6px] font-black text-white sm:text-[8px] lg:text-[9px]">
+                    {pickedSlot.name}
+                  </div>
+                </div>
+              </div>
+            )}
         </div>
       </div>
 
-      {/* =================================================
-          TRASH / SLOT CARDS
-      ================================================= */}
+      {/* =====================================================
+          FIVE VISIBLE SLOT CARDS
+
+          These NEVER move/change while picking.
+      ===================================================== */}
 
       <div
         className="
           absolute
-          bottom-[47px]
-          left-[4%]
-          right-[4%]
+          bottom-[54px]
+          left-[3%]
+          right-[3%]
           z-20
           flex
           items-end
           justify-center
           gap-1.5
-          sm:bottom-[70px]
+
+          sm:bottom-[67px]
+          sm:left-[7%]
+          sm:right-[7%]
           sm:gap-2.5
+
+          lg:bottom-[76px]
+          lg:left-[12%]
+          lg:right-[12%]
+          lg:gap-4
         "
       >
         {slotPickerCards.map((slot, index) => {
-          const isTarget = slotPickerWinnerIndex === index;
+          const isWinner =
+            slotPickerWinnerIndex === index;
 
-          const isBeingLifted =
-            isTarget &&
+          const winnerHasBeenPickedUp =
+            isWinner &&
             (slotPickerPhase === "lifting" ||
               slotPickerPhase === "revealed");
-
-          const restingRotations = [
-            "-rotate-[3deg]",
-            "rotate-[2deg]",
-            "-rotate-[1deg]",
-            "rotate-[3deg]",
-            "-rotate-[2deg]",
-          ];
 
           return (
             <div
@@ -7720,35 +7861,35 @@ onClick={() => {
                 rounded-lg
                 border
                 bg-black
-                will-change-transform
-                transition-[transform,opacity,border-color,box-shadow]
+                transition-[opacity,transform,border-color,box-shadow]
+                duration-200
+
                 ${
-                  slotPickerPhase === "shuffle"
-                    ? "duration-100"
-                    : "duration-500"
+                  winnerHasBeenPickedUp
+                    ? "pointer-events-none opacity-0"
+                    : "opacity-100"
                 }
+
                 ${
-                  isBeingLifted
-                    ? "z-50 -translate-y-[150px] scale-[1.08] border-purple-200/70 shadow-[0_0_35px_rgba(168,85,247,0.45)] sm:-translate-y-[225px]"
-                    : isTarget &&
-                      (slotPickerPhase === "targeting" ||
-                        slotPickerPhase === "dropping" ||
-                        slotPickerPhase === "grabbing")
-                    ? "z-30 scale-[1.025] border-purple-300/45 shadow-[0_0_20px_rgba(168,85,247,0.20)]"
-                    : `${restingRotations[index % restingRotations.length]} border-purple-300/[0.12]`
-                }
-                ${
-                  slotPickerPhase === "shuffle"
-                    ? index % 2 === 0
-                      ? "-translate-y-1"
-                      : "translate-y-1"
-                    : ""
+                  isWinner &&
+                  (slotPickerPhase === "targeting" ||
+                    slotPickerPhase === "opening" ||
+                    slotPickerPhase === "dropping" ||
+                    slotPickerPhase === "grabbing")
+                    ? `
+                        scale-[1.025]
+                        border-purple-200/50
+                        shadow-[0_0_20px_rgba(168,85,247,0.22)]
+                      `
+                    : `
+                        border-purple-300/[0.12]
+                      `
                 }
               `}
             >
               {/* IMAGE */}
 
-              <div className="aspect-[4/5] overflow-hidden bg-[#060606]">
+              <div className="aspect-[4/5] overflow-hidden bg-[#050505]">
                 {slot.image ? (
                   <img
                     src={slot.image}
@@ -7760,20 +7901,20 @@ onClick={() => {
                     }}
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-lg text-purple-200/30 sm:text-2xl">
+                  <div className="flex h-full items-center justify-center text-lg text-purple-200/30 sm:text-xl lg:text-2xl">
                     🎰
                   </div>
                 )}
               </div>
 
-              {/* SLOT INFO */}
+              {/* TEXT */}
 
-              <div className="border-t border-purple-300/[0.08] bg-black/90 px-1 py-1.5 text-center sm:px-1.5 sm:py-2">
-                <div className="truncate text-[7px] font-black text-white sm:text-[11px]">
+              <div className="border-t border-purple-300/[0.07] bg-black/90 px-1 py-1.5 text-center sm:px-1.5 sm:py-2">
+                <div className="truncate text-[7px] font-black text-white sm:text-[9px] lg:text-[11px]">
                   {slot.name}
                 </div>
 
-                <div className="mt-0.5 truncate text-[6px] font-bold uppercase tracking-[0.04em] text-purple-200/45 sm:text-[8px]">
+                <div className="mt-0.5 truncate text-[6px] font-bold uppercase text-purple-200/40 sm:text-[7px] lg:text-[8px]">
                   {slot.provider}
                 </div>
               </div>
@@ -7782,28 +7923,46 @@ onClick={() => {
         })}
       </div>
 
-      {/* =================================================
-          DUMPSTER FRONT
-      ================================================= */}
+      {/* =====================================================
+          DUMPSTER
+      ===================================================== */}
 
-      <div className="pointer-events-none absolute bottom-0 left-[2%] right-[2%] z-30 h-[78px] sm:h-[108px]">
-        {/* TOP LIP */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          bottom-0
+          left-[2%]
+          right-[2%]
+          z-30
+          h-[70px]
+
+          sm:left-[5%]
+          sm:right-[5%]
+          sm:h-[86px]
+
+          lg:left-[9%]
+          lg:right-[9%]
+          lg:h-[96px]
+        "
+      >
+        {/* TOP METAL LIP */}
 
         <div
           className="
             absolute
-            left-[2%]
-            right-[2%]
+            left-0
+            right-0
             top-0
             h-4
-            rounded-t-md
+            rounded-t-lg
             border border-purple-300/25
-            bg-[linear-gradient(180deg,#32173e,#180b20)]
-            shadow-[0_-5px_18px_rgba(168,85,247,0.10)]
+            bg-[linear-gradient(180deg,#371944,#170a1e)]
+            shadow-[0_-4px_15px_rgba(168,85,247,0.10)]
             sm:h-5
           "
         >
-          <div className="absolute inset-x-3 top-[3px] h-[2px] rounded-full bg-purple-200/15" />
+          <div className="absolute inset-x-4 top-[3px] h-[2px] rounded-full bg-purple-100/[0.10]" />
         </div>
 
         {/* BODY */}
@@ -7812,132 +7971,135 @@ onClick={() => {
           className="
             absolute
             bottom-0
-            left-[4%]
-            right-[4%]
+            left-[2%]
+            right-[2%]
             top-[12px]
             overflow-hidden
             rounded-b-xl
-            border-x border-b border-purple-300/20
-            bg-[linear-gradient(180deg,#1b0c23_0%,#0c0510_100%)]
-            shadow-[inset_0_10px_25px_rgba(168,85,247,0.035)]
+            border-x
+            border-b
+            border-purple-300/20
+            bg-[linear-gradient(180deg,#1c0d24,#09040d)]
+            shadow-[inset_0_12px_28px_rgba(168,85,247,0.035)]
             sm:top-[16px]
           "
         >
-          {/* METAL RIBS */}
+          {/* VERTICAL METAL RIBS */}
 
-          <div className="absolute bottom-0 left-[18%] top-0 w-[2px] bg-purple-200/[0.06]" />
-          <div className="absolute bottom-0 left-[39%] top-0 w-[2px] bg-purple-200/[0.06]" />
-          <div className="absolute bottom-0 right-[39%] top-0 w-[2px] bg-purple-200/[0.06]" />
-          <div className="absolute bottom-0 right-[18%] top-0 w-[2px] bg-purple-200/[0.06]" />
+          <div className="absolute bottom-0 left-[20%] top-0 w-[2px] bg-purple-200/[0.055]" />
+          <div className="absolute bottom-0 left-[40%] top-0 w-[2px] bg-purple-200/[0.055]" />
+          <div className="absolute bottom-0 right-[40%] top-0 w-[2px] bg-purple-200/[0.055]" />
+          <div className="absolute bottom-0 right-[20%] top-0 w-[2px] bg-purple-200/[0.055]" />
 
-          {/* BRAND */}
+          {/* TRASHGUY PLATE */}
 
           <div className="absolute inset-0 flex items-center justify-center">
             <div
               className="
                 rounded-md
                 border border-purple-300/20
-                bg-black/35
+                bg-black/40
                 px-4 py-1
-                text-[10px]
+                text-[9px]
                 font-black
-                uppercase
                 tracking-[0.24em]
-                text-purple-100/70
-                shadow-[0_0_16px_rgba(168,85,247,0.08)]
-                sm:px-7
-                sm:py-1.5
-                sm:text-[14px]
+                text-purple-100/65
+                shadow-[0_0_14px_rgba(168,85,247,0.07)]
+                sm:px-6
+                sm:text-[11px]
+                lg:px-8
+                lg:text-[13px]
               "
             >
               TRASHGUY
             </div>
           </div>
-
-          {/* SCRATCH DETAILS */}
-
-          <div className="absolute left-[9%] top-[26%] h-[1px] w-8 -rotate-6 bg-purple-100/[0.10]" />
-          <div className="absolute right-[12%] top-[60%] h-[1px] w-10 rotate-3 bg-purple-100/[0.08]" />
         </div>
       </div>
 
-      {/* =================================================
-          WINNER LABEL
-      ================================================= */}
+      {/* WINNER REVEAL TEXT */}
 
-      {pickedSlot && slotPickerPhase === "revealed" && (
-        <div
-          className="
-            absolute
-            left-1/2
-            top-[150px]
-            z-[60]
-            -translate-x-1/2
-            animate-[trashWinnerPop_300ms_ease-out]
-            whitespace-nowrap
-            rounded-full
-            border border-purple-200/35
-            bg-black/90
-            px-3 py-1
-            text-[8px]
-            font-black
-            uppercase
-            tracking-[0.16em]
-            text-purple-100
-            shadow-[0_0_24px_rgba(168,85,247,0.24)]
-            sm:top-[202px]
-            sm:px-4
-            sm:py-1.5
-            sm:text-[10px]
-          "
-        >
-          SLOT GRABBED
-        </div>
-      )}
+      {pickedSlot &&
+        slotPickerPhase === "revealed" && (
+          <div
+            className="
+              absolute
+              left-1/2
+              top-[155px]
+              z-[70]
+              -translate-x-1/2
+              whitespace-nowrap
+              rounded-full
+              border border-purple-200/35
+              bg-black/90
+              px-3 py-1
+              text-[8px]
+              font-black
+              uppercase
+              tracking-[0.15em]
+              text-purple-100
+              shadow-[0_0_22px_rgba(168,85,247,0.20)]
+
+              sm:top-[190px]
+              sm:text-[9px]
+
+              lg:top-[205px]
+              lg:px-4
+              lg:py-1.5
+              lg:text-[10px]
+            "
+          >
+            SLOT GRABBED
+          </div>
+        )}
     </div>
 
     {/* =====================================================
-        RESULT
+        RESULT BAR
     ===================================================== */}
 
-    {pickedSlot && slotPickerPhase === "revealed" && (
-      <div
-        className="
-          mt-2.5
-          flex
-          items-center
-          justify-center
-          gap-2
-          rounded-xl
-          border border-purple-300/20
-          bg-purple-400/[0.055]
-          px-3
-          py-2.5
-          text-center
-          shadow-[0_0_22px_rgba(168,85,247,0.07)]
-        "
-      >
-        <span className="text-[8px] font-black uppercase tracking-[0.14em] text-purple-200/55 sm:text-[10px]">
-          Grabbed
-        </span>
+    {pickedSlot &&
+      slotPickerPhase === "revealed" && (
+        <div
+          className="
+            mt-2.5
+            flex
+            items-center
+            justify-center
+            gap-2
+            rounded-xl
+            border border-purple-300/20
+            bg-purple-400/[0.055]
+            px-3
+            py-2
+            text-center
+            shadow-[0_0_18px_rgba(168,85,247,0.06)]
+          "
+        >
+          <span className="text-[8px] font-black uppercase tracking-[0.12em] text-purple-200/50 sm:text-[9px]">
+            Grabbed
+          </span>
 
-        <span className="max-w-[60%] truncate text-[11px] font-black text-purple-100 sm:text-[15px]">
-          {pickedSlot.name}
-        </span>
+          <span className="max-w-[60%] truncate text-[10px] font-black text-purple-100 sm:text-[14px]">
+            {pickedSlot.name}
+          </span>
 
-        <span className="hidden text-[8px] font-bold uppercase text-white/35 sm:inline sm:text-[9px]">
-          {pickedSlot.provider}
-        </span>
-      </div>
-    )}
+          <span className="hidden text-[8px] font-bold uppercase text-white/35 sm:inline">
+            {pickedSlot.provider}
+          </span>
+        </div>
+      )}
 
     {/* =====================================================
-        GRAB BUTTON
+        BUTTON
     ===================================================== */}
 
     <button
       onClick={pickRandomSlot}
-      disabled={isPickingSlot || filteredSlots.length === 0}
+      disabled={
+        isPickingSlot ||
+        filteredSlots.length === 0
+      }
       className={`
         mt-2.5
         w-full
@@ -7952,7 +8114,8 @@ onClick={() => {
         transition-all
         duration-200
         sm:py-3
-        sm:text-[15px]
+        sm:text-[14px]
+
         ${
           isPickingSlot
             ? `
@@ -7965,17 +8128,19 @@ onClick={() => {
                 border-purple-300/40
                 bg-[linear-gradient(180deg,rgba(168,85,247,0.25),rgba(88,28,135,0.20))]
                 text-purple-50
-                shadow-[0_0_22px_rgba(168,85,247,0.11)]
+                shadow-[0_0_20px_rgba(168,85,247,0.10)]
                 hover:border-purple-200/60
-                hover:bg-purple-400/[0.20]
-                hover:shadow-[0_0_28px_rgba(168,85,247,0.17)]
+                hover:bg-purple-400/[0.18]
               `
         }
+
         disabled:cursor-not-allowed
         disabled:opacity-50
       `}
     >
-      {isPickingSlot ? "GRABBING..." : "GRAB A SLOT"}
+      {isPickingSlot
+        ? "GRABBING..."
+        : "GRAB A SLOT"}
     </button>
   </div>
 </div>
