@@ -681,6 +681,9 @@ const [slotPickerPhase, setSlotPickerPhase] =
   useState<SlotPickerPhase>("idle");
 
 const [slotPickerCards, setSlotPickerCards] = useState<SlotItem[]>([]);
+const [slotPickerReel, setSlotPickerReel] = useState<SlotItem[]>([]);
+const [slotPickerReelOffset, setSlotPickerReelOffset] = useState(0);
+const [slotPickerReelDuration, setSlotPickerReelDuration] = useState(0);
 
 const [slotPickerWinnerIndex, setSlotPickerWinnerIndex] =
   useState<number | null>(null);
@@ -688,9 +691,6 @@ const [slotPickerWinnerIndex, setSlotPickerWinnerIndex] =
 // Where the claw currently is.
 // This is a percentage across the machine.
 const [slotPickerClawX, setSlotPickerClawX] = useState(50);
-const [slotPickerReel, setSlotPickerReel] = useState<SlotItem[]>([]);
-const [slotPickerReelRunning, setSlotPickerReelRunning] = useState(false);
-const [slotPickerReelLanding, setSlotPickerReelLanding] = useState(false);
 
 const lastPickedRef = useRef<string | null>(null);
 const slotWheelWinnersThisCycleRef = useRef<Set<string>>(new Set());
@@ -1143,25 +1143,6 @@ const buildSlotPickerCards = (
   return shuffled.slice(0, cardCount);
 };
 
-const buildSlotPickerReel = (
-  pool: SlotItem[],
-  finalCards: SlotItem[],
-  randomCount = 18
-): SlotItem[] => {
-  if (!pool.length) return finalCards;
-
-  const randomCards: SlotItem[] = [];
-
-  for (let i = 0; i < randomCount; i++) {
-    randomCards.push(
-      pool[getSlotPickerRandomIndex(pool.length)]
-    );
-  }
-
-  // The reel ALWAYS ends with our predetermined final five.
-  return [...randomCards, ...finalCards];
-};
-
 const slotProviders = useMemo(() => {
   return Array.from(new Set(slotData.map((slot) => slot.provider)));
 }, []);
@@ -1233,215 +1214,145 @@ const pickRandomSlot = async () => {
   if (!filteredSlots.length || isPickingSlot) return;
 
   const sleep = (ms: number) =>
-    new Promise<void>((resolve) =>
-      window.setTimeout(resolve, ms)
-    );
+    new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
-  // =========================================================
-  // CHOOSE FINAL FIVE
-  // =========================================================
-
-  const finalCards = buildSlotPickerCards(
-    filteredSlots,
-    5
-  );
-
+  // Pick the five cards that will actually remain in the dumpster.
+  const finalCards = buildSlotPickerCards(filteredSlots, 5);
   if (!finalCards.length) return;
 
-  // =========================================================
-  // CHOOSE WINNER FROM FINAL FIVE
-  // =========================================================
-
-  let winnerIndex =
-    getSlotPickerRandomIndex(finalCards.length);
+  // Pick the winner from those exact five, avoiding an immediate repeat
+  // when another option is available.
+  let winnerIndex = getSlotPickerRandomIndex(finalCards.length);
 
   if (
     finalCards.length > 1 &&
-    finalCards[winnerIndex].name ===
-      lastPickedRef.current
+    finalCards[winnerIndex].name === lastPickedRef.current
   ) {
-    const otherIndexes = finalCards
-      .map((_, index) => index)
-      .filter(
-        (index) =>
-          finalCards[index].name !==
-          lastPickedRef.current
-      );
+    const alternatives = finalCards
+      .map((slot, index) => ({ slot, index }))
+      .filter(({ slot }) => slot.name !== lastPickedRef.current);
 
-    if (otherIndexes.length) {
+    if (alternatives.length) {
       winnerIndex =
-        otherIndexes[
-          getSlotPickerRandomIndex(
-            otherIndexes.length
-          )
-        ];
+        alternatives[getSlotPickerRandomIndex(alternatives.length)].index;
     }
   }
 
   const winner = finalCards[winnerIndex];
-
   lastPickedRef.current = winner.name;
 
-  const targetX =
-    ((winnerIndex + 0.5) /
-      finalCards.length) *
-    100;
+  const targetX = ((winnerIndex + 0.5) / finalCards.length) * 100;
 
-  // =========================================================
-  // BUILD REEL
-  // =========================================================
-
-  const reel = buildSlotPickerReel(
-    filteredSlots,
-    finalCards,
-    18
+  // Build one continuous track. The final five are literally the last five
+  // cards on the track, so the animation always lands on the real finalists.
+  const randomCardCount = 30;
+  const leadCards = Array.from({ length: randomCardCount }, () =>
+    getRandomSlotFromPool(filteredSlots)
   );
+  const reel = [...leadCards, ...finalCards];
 
-  // =========================================================
-  // START
-  // =========================================================
+  // Preload the artwork before movement starts. This prevents the blank-card
+  // flashes that happened when image src values were being replaced rapidly.
+  if (typeof window !== "undefined") {
+    await Promise.all(
+      reel.map(
+        (slot) =>
+          new Promise<void>((resolve) => {
+            if (!slot.image) {
+              resolve();
+              return;
+            }
+
+            const image = new Image();
+            image.onload = () => resolve();
+            image.onerror = () => resolve();
+            image.src = slot.image;
+          })
+      )
+    );
+  }
 
   setIsPickingSlot(true);
-
   setPickedSlot(null);
   setSlotPickerWinnerIndex(null);
-
   setSlotPickerClawX(50);
-
   setSlotPickerPhase("scanning");
-
   setSlotPickerReel(reel);
-  setSlotPickerReelRunning(false);
-  setSlotPickerReelLanding(false);
+  setSlotPickerReelOffset(0);
+  setSlotPickerReelDuration(0);
 
   const spinSound = new Audio("/spin.mp3");
-
   spinSound.loop = true;
   spinSound.volume = 0.18;
-  spinSound.playbackRate = 1.2;
-
+  spinSound.playbackRate = 1.15;
   spinSound.play().catch(() => {});
 
-  // Let React render the reel at its starting position.
+  // Give the browser two frames with the reel at x=0, then animate the whole
+  // track once. One transform = smooth GPU motion and no React shuffle loop.
   await new Promise<void>((resolve) =>
     requestAnimationFrame(() =>
       requestAnimationFrame(() => resolve())
     )
   );
 
-  // =========================================================
-  // START ONE CONTINUOUS GPU ANIMATION
-  // =========================================================
+  const reelDuration = 2100;
+  setSlotPickerReelDuration(reelDuration);
+  setSlotPickerReelOffset(randomCardCount);
 
-  setSlotPickerReelRunning(true);
+  await sleep(reelDuration + 40);
 
-  // Most of the reel travels quickly.
-  await sleep(1150);
-
-  // Final part slows naturally.
-  setSlotPickerReelLanding(true);
-
-  await sleep(850);
-
-  // =========================================================
-  // REEL HAS LANDED
-  //
-  // Swap to the exact final five AFTER motion has stopped.
-  // =========================================================
-
+  // The last five have landed. Swap to the normal five-card layer with the
+  // same sizing, so the claw can operate without a visible jump.
   setSlotPickerCards(finalCards);
-
-  setSlotPickerReelRunning(false);
-  setSlotPickerReelLanding(false);
   setSlotPickerReel([]);
+  setSlotPickerReelOffset(0);
+  setSlotPickerReelDuration(0);
 
-  await sleep(100);
+  await sleep(90);
 
-  // =========================================================
-  // CLAW SEARCH
-  // =========================================================
-
+  // Keep the claw motion from the version that already felt right.
   setSlotPickerClawX(15);
   await sleep(180);
-
   setSlotPickerClawX(84);
   await sleep(330);
-
   setSlotPickerClawX(28);
   await sleep(280);
-
   setSlotPickerClawX(72);
   await sleep(240);
 
-  // =========================================================
-  // TARGET WINNER
-  // =========================================================
-
   setSlotPickerPhase("targeting");
-
   setSlotPickerClawX(
     targetX < 50
       ? Math.min(targetX + 12, 88)
       : Math.max(targetX - 12, 12)
   );
-
   await sleep(220);
 
   setSlotPickerClawX(targetX);
-
   spinSound.playbackRate = 0.8;
-
   await sleep(300);
 
   spinSound.pause();
   spinSound.currentTime = 0;
-
   setSlotPickerWinnerIndex(winnerIndex);
 
-  // =========================================================
-  // OPEN
-  // =========================================================
-
   setSlotPickerPhase("opening");
-
   await sleep(180);
 
-  // =========================================================
-  // DROP
-  // =========================================================
-
   setSlotPickerPhase("dropping");
-
   await sleep(340);
 
-  // =========================================================
-  // GRAB
-  // =========================================================
-
   setSlotPickerPhase("grabbing");
-
   const clickSound = new Audio("/click.mp3");
-
   clickSound.volume = 0.5;
   clickSound.play().catch(() => {});
-
   await sleep(220);
-
-  // =========================================================
-  // LIFT
-  // =========================================================
 
   setPickedSlot(winner);
   setSlotPickerPhase("lifting");
-
   await sleep(620);
 
-  // =========================================================
-  // REVEAL
-  // =========================================================
-
   setSlotPickerPhase("revealed");
-
   await sleep(220);
 
   setIsPickingSlot(false);
@@ -7881,7 +7792,7 @@ onClick={() => {
       </div>
 
 {/* =====================================================
-    SLOT REEL / FINAL FIVE
+    SMOOTH SLOT TRACK / FINAL FIVE
 ===================================================== */}
 
 <div
@@ -7892,156 +7803,30 @@ onClick={() => {
     right-[3%]
     z-20
     overflow-hidden
-
     sm:bottom-[67px]
     sm:left-[7%]
     sm:right-[7%]
-
     lg:bottom-[76px]
     lg:left-[12%]
     lg:right-[12%]
   "
 >
-  {/* ===================================================
-      MOVING REEL
-  =================================================== */}
-
   {slotPickerReel.length > 0 ? (
     <div
-      className={`
-        flex
-        gap-1.5
-        will-change-transform
-        sm:gap-2.5
-        lg:gap-4
-
-        ${
-          slotPickerReelRunning
-            ? slotPickerReelLanding
-              ? `
-                  transition-transform
-                  duration-[850ms]
-                  ease-[cubic-bezier(0.16,1,0.3,1)]
-                `
-              : `
-                  transition-transform
-                  duration-[1150ms]
-                  ease-[cubic-bezier(0.25,0.46,0.45,0.94)]
-                `
-            : "transition-none"
-        }
-      `}
+      className="flex w-full will-change-transform"
       style={{
-        transform: slotPickerReelRunning
-          ? `translate3d(calc(-1 * ${
-              slotPickerReel.length - 5
-            } * ((100% - 4rem) / 5)), 0, 0)`
-          : "translate3d(0,0,0)",
+        transform: `translate3d(-${slotPickerReelOffset * 20}%, 0, 0)`,
+        transitionProperty: "transform",
+        transitionDuration: `${slotPickerReelDuration}ms`,
+        transitionTimingFunction: "cubic-bezier(0.12, 0.78, 0.16, 1)",
       }}
     >
       {slotPickerReel.map((slot, index) => (
         <div
           key={`reel-${slot.provider}-${slot.name}-${index}`}
-          className="
-w-[calc((100%_-_1.5rem)/5)]
-min-w-[calc((100%_-_1.5rem)/5)]
-shrink-0
-overflow-hidden
-rounded-lg
-border
-border-purple-300/[0.12]
-bg-black
-
-sm:w-[calc((100%_-_2.5rem)/5)]
-sm:min-w-[calc((100%_-_2.5rem)/5)]
-
-lg:w-[calc((100%_-_4rem)/5)]
-lg:min-w-[calc((100%_-_4rem)/5)]
-          "
+          className="w-1/5 min-w-[20%] shrink-0 px-[3px] sm:px-[5px] lg:px-2"
         >
-          <div className="aspect-[4/5] overflow-hidden bg-[#050505]">
-            {slot.image ? (
-              <img
-                src={slot.image}
-                alt={slot.name}
-                draggable={false}
-                className="
-                  h-full
-                  w-full
-                  select-none
-                  object-cover
-                "
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-lg text-purple-200/30">
-                🎰
-              </div>
-            )}
-          </div>
-
-          <div className="border-t border-purple-300/[0.07] bg-black/90 px-1 py-1.5 text-center sm:py-2">
-            <div className="truncate text-[7px] font-black text-white sm:text-[9px] lg:text-[11px]">
-              {slot.name}
-            </div>
-
-            <div className="mt-0.5 truncate text-[6px] font-bold uppercase text-purple-200/40 sm:text-[7px] lg:text-[8px]">
-              {slot.provider}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  ) : (
-
-    /* =================================================
-        FINAL FIVE — CLAW OPERATES ON THESE
-    ================================================= */
-
-    <div className="flex items-end justify-center gap-1.5 sm:gap-2.5 lg:gap-4">
-      {slotPickerCards.map((slot, index) => {
-        const isWinner =
-          slotPickerWinnerIndex === index;
-
-        const winnerHasBeenPickedUp =
-          isWinner &&
-          (slotPickerPhase === "lifting" ||
-            slotPickerPhase === "revealed");
-
-        return (
-          <div
-            key={`final-${slot.provider}-${slot.name}-${index}`}
-            className={`
-              relative
-              min-w-0
-              flex-1
-              overflow-hidden
-              rounded-lg
-              border
-              bg-black
-              transition-[opacity,transform,border-color,box-shadow]
-              duration-200
-
-              ${
-                winnerHasBeenPickedUp
-                  ? "pointer-events-none opacity-0"
-                  : "opacity-100"
-              }
-
-              ${
-                isWinner &&
-                (slotPickerPhase === "targeting" ||
-                  slotPickerPhase === "opening" ||
-                  slotPickerPhase === "dropping" ||
-                  slotPickerPhase === "grabbing")
-                  ? `
-                      scale-[1.025]
-                      border-purple-200/50
-                      shadow-[0_0_20px_rgba(168,85,247,0.22)]
-                    `
-                  : "border-purple-300/[0.12]"
-              }
-            `}
-          >
+          <div className="overflow-hidden rounded-lg border border-purple-300/[0.12] bg-black">
             <div className="aspect-[4/5] overflow-hidden bg-[#050505]">
               {slot.image ? (
                 <img
@@ -8049,25 +7834,92 @@ lg:min-w-[calc((100%_-_4rem)/5)]
                   alt={slot.name}
                   draggable={false}
                   className="h-full w-full select-none object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display =
-                      "none";
-                  }}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-lg text-purple-200/30 sm:text-xl lg:text-2xl">
+                <div className="flex h-full items-center justify-center text-lg text-purple-200/30">
                   🎰
                 </div>
               )}
             </div>
 
-            <div className="border-t border-purple-300/[0.07] bg-black/90 px-1 py-1.5 text-center sm:px-1.5 sm:py-2">
+            <div className="border-t border-purple-300/[0.07] bg-black/90 px-1 py-1.5 text-center sm:py-2">
               <div className="truncate text-[7px] font-black text-white sm:text-[9px] lg:text-[11px]">
                 {slot.name}
               </div>
-
               <div className="mt-0.5 truncate text-[6px] font-bold uppercase text-purple-200/40 sm:text-[7px] lg:text-[8px]">
                 {slot.provider}
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="flex w-full items-end">
+      {slotPickerCards.map((slot, index) => {
+        const isWinner = slotPickerWinnerIndex === index;
+        const winnerHasBeenPickedUp =
+          isWinner &&
+          (slotPickerPhase === "lifting" || slotPickerPhase === "revealed");
+
+        return (
+          <div
+            key={`final-${slot.provider}-${slot.name}-${index}`}
+            className={`
+              w-1/5 min-w-0 px-[3px] sm:px-[5px] lg:px-2
+              transition-[opacity,transform] duration-200
+              ${winnerHasBeenPickedUp ? "pointer-events-none opacity-0" : "opacity-100"}
+              ${
+                isWinner &&
+                (slotPickerPhase === "targeting" ||
+                  slotPickerPhase === "opening" ||
+                  slotPickerPhase === "dropping" ||
+                  slotPickerPhase === "grabbing")
+                  ? "scale-[1.025]"
+                  : "scale-100"
+              }
+            `}
+          >
+            <div
+              className={`
+                overflow-hidden rounded-lg border bg-black
+                transition-[border-color,box-shadow] duration-200
+                ${
+                  isWinner &&
+                  (slotPickerPhase === "targeting" ||
+                    slotPickerPhase === "opening" ||
+                    slotPickerPhase === "dropping" ||
+                    slotPickerPhase === "grabbing")
+                    ? "border-purple-200/50 shadow-[0_0_20px_rgba(168,85,247,0.22)]"
+                    : "border-purple-300/[0.12]"
+                }
+              `}
+            >
+              <div className="aspect-[4/5] overflow-hidden bg-[#050505]">
+                {slot.image ? (
+                  <img
+                    src={slot.image}
+                    alt={slot.name}
+                    draggable={false}
+                    className="h-full w-full select-none object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-lg text-purple-200/30 sm:text-xl lg:text-2xl">
+                    🎰
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-purple-300/[0.07] bg-black/90 px-1 py-1.5 text-center sm:py-2">
+                <div className="truncate text-[7px] font-black text-white sm:text-[9px] lg:text-[11px]">
+                  {slot.name}
+                </div>
+                <div className="mt-0.5 truncate text-[6px] font-bold uppercase text-purple-200/40 sm:text-[7px] lg:text-[8px]">
+                  {slot.provider}
+                </div>
               </div>
             </div>
           </div>
