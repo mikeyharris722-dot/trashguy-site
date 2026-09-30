@@ -1241,16 +1241,27 @@ const pickRandomSlot = async () => {
   const winner = finalCards[winnerIndex];
   lastPickedRef.current = winner.name;
 
-  const targetX = ((winnerIndex + 0.5) / finalCards.length) * 100;
+  // The cards sit inside a narrower window on desktop (12% inset on each
+  // side), while the claw is positioned against the full machine width.
+  // Compensate for that desktop inset so the claw lands on the TRUE center
+  // of the selected card instead of the theoretical 10/30/50/70/90% points.
+  // Mobile keeps its existing geometry because it is already visually aligned.
+  const isDesktopPicker =
+    typeof window !== "undefined" && window.innerWidth >= 1024;
+
+  const targetX = isDesktopPicker
+    ? 12 + ((winnerIndex + 0.5) / finalCards.length) * 76
+    : ((winnerIndex + 0.5) / finalCards.length) * 100;
 
   // Build one continuous track. The final five are literally the last five
   // cards on the track, so the animation always lands on the real finalists.
   // Desktop has a much larger composited reel, so keep fewer moving cards
   // there. The cards are still sampled from the ENTIRE eligible pool.
   // Mobile keeps the longer reel that already performs perfectly.
-  const isDesktopPicker =
-    typeof window !== "undefined" && window.innerWidth >= 1024;
-  const randomCardCount = isDesktopPicker ? 16 : 30;
+  // Desktop uses a shorter visual reel than mobile. It is still sampled from
+  // the ENTIRE eligible slot pool; this only reduces how many large images the
+  // browser must decode/composite at once while the track is moving.
+  const randomCardCount = isDesktopPicker ? 10 : 30;
 
   const leadCards = Array.from({ length: randomCardCount }, () =>
     getRandomSlotFromPool(filteredSlots)
@@ -1295,7 +1306,7 @@ const pickRandomSlot = async () => {
 
   // Keep desktop quick while reducing the amount of oversized artwork the
   // browser has to composite. Mobile timing is intentionally unchanged.
-  const reelDuration = isDesktopPicker ? 1650 : 2100;
+  const reelDuration = isDesktopPicker ? 1250 : 2100;
   setSlotPickerReelDuration(reelDuration);
   setSlotPickerReelOffset(randomCardCount);
 
@@ -7824,7 +7835,7 @@ onClick={() => {
       {slotPickerReel.map((slot, index) => (
         <div
           key={`reel-${slot.provider}-${slot.name}-${index}`}
-          className="w-1/5 min-w-[20%] shrink-0 px-[3px] sm:px-[5px] lg:px-2"
+          className="w-1/5 min-w-[20%] shrink-0 px-[3px] sm:px-[5px] lg:px-2 lg:[contain:layout_paint]"
         >
           <div className="overflow-hidden rounded-lg border border-purple-300/[0.12] bg-black">
             <div className="aspect-[4/5] overflow-hidden bg-[#050505]">
@@ -7833,8 +7844,9 @@ onClick={() => {
                   src={slot.image}
                   alt={slot.name}
                   draggable={false}
-                  className="h-full w-full select-none object-cover [backface-visibility:hidden]"
+                  className="h-full w-full select-none object-cover [backface-visibility:hidden] lg:[transform:translateZ(0)]"
                   decoding="async"
+                  loading="eager"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-lg text-purple-200/30">
