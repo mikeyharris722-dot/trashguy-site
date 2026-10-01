@@ -53,16 +53,16 @@ const socials = [
 ];
 
 const fallbackLeaderboard = [
-  { rank: 1, username: "PlayerOne", wagered: 12450 },
-  { rank: 2, username: "BigSpinner", wagered: 10920 },
-  { rank: 3, username: "MaxChaser", wagered: 9775 },
-  { rank: 4, username: "SlotKing", wagered: 7610 },
-  { rank: 5, username: "BonusBoss", wagered: 6980 },
-  { rank: 6, username: "RTPHunter", wagered: 6440 },
-  { rank: 7, username: "SpinSniper", wagered: 5990 },
-  { rank: 8, username: "WildDrop", wagered: 5420 },
-  { rank: 9, username: "DiceMode", wagered: 4980 },
-  { rank: 10, username: "ClipFarmer", wagered: 4520 },
+  { rank: 1, username: "PlayerOne", wagered: 12450, totalWagered: 12450 },
+  { rank: 2, username: "BigSpinner", wagered: 10920, totalWagered: 10920 },
+  { rank: 3, username: "MaxChaser", wagered: 9775, totalWagered: 9775 },
+  { rank: 4, username: "SlotKing", wagered: 7610, totalWagered: 7610 },
+  { rank: 5, username: "BonusBoss", wagered: 6980, totalWagered: 6980 },
+  { rank: 6, username: "RTPHunter", wagered: 6440, totalWagered: 6440 },
+  { rank: 7, username: "SpinSniper", wagered: 5990, totalWagered: 5990 },
+  { rank: 8, username: "WildDrop", wagered: 5420, totalWagered: 5420 },
+  { rank: 9, username: "DiceMode", wagered: 4980, totalWagered: 4980 },
+  { rank: 10, username: "ClipFarmer", wagered: 4520, totalWagered: 4520 },
 ];
 
 const leaderboardTotal = 1500;
@@ -121,6 +121,7 @@ type LeaderboardPlayer = {
   rank: number;
   username: string;
   wagered: number;
+  totalWagered: number;
 };
 
 type HuntBonusItem = {
@@ -1680,6 +1681,13 @@ wagered: Number(
   player.weighted_wagered_amount ??
     player.weightedWageredAmount ??
     player.weighted_wagered ??
+    0
+),
+totalWagered: Number(
+  player.wagered_amount ??
+    player.wageredAmount ??
+    player.total_wagered ??
+    player.totalWagered ??
     0
 ),
         }))
@@ -4935,7 +4943,7 @@ return (
       <div
         className="
           grid
-          grid-cols-[44px_minmax(0,1fr)_90px_54px]
+          grid-cols-[38px_minmax(0,1fr)_76px_76px_48px]
           items-center
           rounded-xl
           border border-purple-300/[0.10]
@@ -4945,7 +4953,7 @@ return (
           text-[8px] font-black uppercase
           tracking-[0.08em]
           text-purple-100/55
-          sm:grid-cols-[90px_minmax(0,1fr)_220px_160px]
+          sm:grid-cols-[90px_minmax(0,1fr)_190px_190px_140px]
           sm:px-5
           sm:py-3
           sm:text-[12px]
@@ -4954,7 +4962,8 @@ return (
       >
         <div>Rank</div>
         <div>Player</div>
-        <div className="text-right">Wagered</div>
+        <div className="text-right">Weighted</div>
+        <div className="text-right text-white/30">Total Wagered</div>
         <div className="text-right">Prize</div>
       </div>
 
@@ -5053,14 +5062,14 @@ return (
                   key={`${player.rank}-${player.username}`}
                   className={`
                     grid
-                    grid-cols-[48px_minmax(0,1fr)_92px_60px]
+                    grid-cols-[40px_minmax(0,1fr)_78px_78px_52px]
                     items-center
                     rounded-xl
                     border
                     px-2.5
                     py-2.5
                     transition
-                    sm:grid-cols-[90px_minmax(0,1fr)_220px_160px]
+                    sm:grid-cols-[90px_minmax(0,1fr)_190px_190px_140px]
                     sm:rounded-2xl
                     sm:px-5
                     sm:py-4
@@ -5126,7 +5135,7 @@ return (
                         sm:text-[9px]
                       "
                     >
-                      Wagered
+                      Weighted
                     </div>
 
                     <div
@@ -5139,6 +5148,33 @@ return (
                       "
                     >
                       {formatMoney(player.wagered)}
+                    </div>
+                  </div>
+
+                  {/* TOTAL WAGERED */}
+
+                  <div className="text-right">
+                    <div
+                      className="
+                        text-[6px] font-bold uppercase
+                        tracking-[0.10em]
+                        text-white/18
+                        sm:text-[8px]
+                      "
+                    >
+                      Total
+                    </div>
+
+                    <div
+                      className="
+                        mt-0.5
+                        whitespace-nowrap
+                        text-[8px] font-bold
+                        text-white/45
+                        sm:text-[14px]
+                      "
+                    >
+                      {formatMoney(player.totalWagered)}
                     </div>
                   </div>
 
@@ -5184,7 +5220,7 @@ return (
                 key={`${player.rank}-${player.username}`}
                 className="
                   grid
-                  grid-cols-[44px_minmax(0,1fr)_92px_54px]
+                  grid-cols-[38px_minmax(0,1fr)_78px_78px_48px]
                   items-center
                   rounded-xl
                   border border-purple-300/[0.09]
@@ -5194,7 +5230,7 @@ return (
                   transition-all duration-200
                   hover:border-purple-300/20
                   hover:bg-purple-400/[0.06]
-                  sm:grid-cols-[90px_minmax(0,1fr)_220px_160px]
+                  sm:grid-cols-[90px_minmax(0,1fr)_190px_190px_140px]
                   sm:px-5
                   sm:py-3.5
                 "
@@ -5250,6 +5286,20 @@ return (
                   "
                 >
                   {formatMoney(player.wagered)}
+                </div>
+
+                {/* TOTAL WAGERED */}
+
+                <div
+                  className="
+                    whitespace-nowrap
+                    text-right
+                    text-[8px] font-semibold
+                    text-white/40
+                    sm:text-[12px]
+                  "
+                >
+                  {formatMoney(player.totalWagered)}
                 </div>
 
                 {/* PRIZE */}
