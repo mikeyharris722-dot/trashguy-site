@@ -65,7 +65,7 @@ const fallbackLeaderboard = [
   { rank: 10, username: "ClipFarmer", wagered: 4520, totalWagered: 4520 },
 ];
 
-const leaderboardTotal = 200;
+const leaderboardTotal = 2000;
 
 const leaderboardPrizes: Record<number, number> = {
   1: 525,
@@ -4880,7 +4880,7 @@ return (
         lg:text-[54px]
       "
     >
-      $1,500 LEADERBOARD
+      $2,000 LEADERBOARD
     </div>
 
   </div>
