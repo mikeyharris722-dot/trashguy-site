@@ -20,8 +20,8 @@ function getDateRange() {
 
 function getCurrentLeaderboardRange() {
   return {
-    start_at: "2026-09-05",
-    end_at: "2026-10-05",
+    start_at: "2026-10-05",
+    end_at: "2026-11-05",
   };
 }
 
