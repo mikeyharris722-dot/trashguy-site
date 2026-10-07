@@ -7,7 +7,6 @@ type Entry = {
   status: string;
   bet_size: string;
   payout: string | null;
-  collection_cost: string;
 };
 export default function TrackerResults({ huntId }: { huntId: string }) {
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -70,8 +69,7 @@ export default function TrackerResults({ huntId }: { huntId: string }) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold">{e.slot_name}</p>
                 <p className="text-xs text-white/45">
-                  {e.username} · Bet ${Number(e.bet_size).toFixed(2)} · Cost $
-                  {Number(e.collection_cost).toFixed(2)}
+                  {e.username} · Bet ${Number(e.bet_size).toFixed(2)}
                 </p>
               </div>
               <span
