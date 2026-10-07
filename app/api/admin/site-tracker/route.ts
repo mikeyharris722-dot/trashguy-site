@@ -7,7 +7,13 @@ export async function POST(request: Request) {
       b = await request.json(),
       db = siteDb();
     let result;
-    if (b.action === "select") {
+    if (b.action === "reorder") {
+      result = await db.rpc("site_tracker_reorder", {
+        p_actor: actor,
+        p_hunt: b.huntId,
+        p_entries: b.entryIds,
+      });
+    } else if (b.action === "select") {
       result = await db.rpc("site_tracker_select", {
         p_actor: actor,
         p_hunt: b.huntId || null,
@@ -121,6 +127,32 @@ export async function POST(request: Request) {
           (g) => g.identifier === b.identifier && g.enabled !== false,
         );
       if (!game) throw new Error("Select an enabled game");
+      const { data: setting, error: settingError } = await db
+        .from("site_tracker_settings")
+        .select("active_hunt_id")
+        .eq("id", true)
+        .maybeSingle();
+      if (settingError) throw new Error(settingError.message);
+      if (setting?.active_hunt_id) {
+        const { data: duplicate, error } = await db
+          .from("site_tracker_entries")
+          .select("id")
+          .eq("hunt_id", setting.active_hunt_id)
+          .eq("identifier", game.identifier)
+          .eq("status", "collected")
+          .is("deleted_at", null)
+          .limit(1);
+        if (error) throw new Error(error.message);
+        if (duplicate?.length) {
+          await db.rpc("site_tracker_resolve", {
+            p_actor: actor,
+            p_call: String(b.callId),
+            p_identifier: game.identifier,
+            p_name: game.name,
+          });
+          return Response.json({ ok: true, ignored: true });
+        }
+      }
       result = await db.rpc("site_tracker_resolve", {
         p_actor: actor,
         p_call: String(b.callId),

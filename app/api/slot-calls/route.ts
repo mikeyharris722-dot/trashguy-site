@@ -57,7 +57,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    calls: await enrichCalls(calls || []),
+    calls: await eligibleCalls(calls || []),
     reviewCalls: await reviewCalls(calls || []),
     results: results || [],
   });
@@ -288,6 +288,15 @@ export async function POST(req: NextRequest) {
     const originalSlotName = String(body.slotName || body.slot_name || "").trim().slice(0,120);
     const matched = matchSlot(originalSlotName,await catalogue());
     const slotName = matched.game?.name || originalSlotName;
+    if (matched.game) {
+      const {data:settings,error:settingsError}=await supabase.from("site_tracker_settings").select("active_hunt_id").eq("id",true).maybeSingle();
+      if(settingsError) throw new Error(settingsError.message);
+      if(settings?.active_hunt_id){
+        const {data:duplicate,error}=await supabase.from("site_tracker_entries").select("id").eq("hunt_id",settings.active_hunt_id).eq("identifier",matched.game.identifier).eq("status","collected").is("deleted_at",null).limit(1);
+        if(error) throw new Error(error.message);
+        if(duplicate?.length) return NextResponse.json({error:`${slotName} is already in the active hunt. Call ignored.`,ignored:true},{status:409});
+      }
+    }
 
     const platform = String(
       body.platform || "twitch"
@@ -597,3 +606,15 @@ export async function DELETE(req: NextRequest) {
 async function callMetadata(){const r=await supabase.from("roulo_call_matches").select("*");return r.data||[];}
 async function enrichCalls(calls:Record<string,unknown>[]) {const meta=await callMetadata();return calls.map(c=>{const m=meta.find(m=>m.call_id===String(c.id));return {...c,needs_review:m?.status==="review",original_request:m?.original_request||c.slot_name,suggestions:m?.suggestions||[]};});}
 async function reviewCalls(calls:Record<string,unknown>[]){const meta=await callMetadata();return calls.flatMap(c=>{const m=meta.find(m=>m.call_id===String(c.id)&&m.status==="review");return m?[{...c,...m}]:[];});}
+
+async function eligibleCalls(calls:Record<string,unknown>[]) {
+  const enriched=await enrichCalls(calls);
+  const {data:setting,error}=await supabase.from("site_tracker_settings").select("active_hunt_id").eq("id",true).maybeSingle();
+  if(error) throw new Error(error.message);
+  if(!setting?.active_hunt_id) return enriched;
+  const {data:entries,error:entryError}=await supabase.from("site_tracker_entries").select("identifier").eq("hunt_id",setting.active_hunt_id).eq("status","collected").is("deleted_at",null);
+  if(entryError) throw new Error(entryError.message);
+  const identifiers=new Set((entries||[]).map(e=>e.identifier));
+  const metadata=await callMetadata();
+  return enriched.filter((c,index)=>!identifiers.has(metadata.find(m=>m.call_id===String(calls[index].id))?.identifier));
+}

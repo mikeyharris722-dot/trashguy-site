@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import OpeningSession from "./tracker-opening";
 import SlotSearch, { type SlotOption } from "./slot-search";
 import { supabaseBrowser } from "@/lib/supabase/client";
 type Game = {
@@ -12,7 +13,7 @@ type Game = {
   aliases?: string[];
   enabled?: boolean;
 };
-type Entry = {
+export type Entry = {
   id: string;
   call_id: string;
   artwork_url?: string | null;
@@ -143,6 +144,8 @@ export default function TrackerAdmin({
   const [searchReset, setSearchReset] = useState(0);
   const manualRequest = useRef<string | null>(null);
   const [manualBet, setManualBet] = useState("0.20");
+  const [opening, setOpening] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
   const current = hunts.find((h) => h.id === huntId);
   const input =
     "min-w-0 rounded-lg border border-purple-300/20 bg-black px-3 py-2 text-sm text-white";
@@ -260,7 +263,10 @@ export default function TrackerAdmin({
             aria-label="Tracker hunt"
             className={input + " mt-2 w-full"}
             value={huntId}
-            onChange={(e) => onHunt(e.target.value)}
+            onChange={(e) => {
+              setOpening(false);
+              onHunt(e.target.value);
+            }}
           >
             <option value="" disabled={Boolean(huntId)}>
               Select a hunt
@@ -330,18 +336,40 @@ export default function TrackerAdmin({
                   phase === current.phase ||
                   current.phase === "finished"
                 }
-                onClick={() =>
-                  action("/api/admin/site-tracker", {
-                    action: "phase",
-                    huntId,
-                    phase,
-                  })
-                }
+                onClick={async () => {
+                  if (
+                    await action("/api/admin/site-tracker", {
+                      action: "phase",
+                      huntId,
+                      phase,
+                    })
+                  ) {
+                    setOpening(phase === "opening");
+                  }
+                }}
               >
                 {phase}
               </button>
             ))}
           </div>
+          {manual && current.phase === "opening" && (
+            <button
+              className={button}
+              disabled={busy}
+              onClick={() => setOpening(true)}
+            >
+              Resume opening
+            </button>
+          )}
+          {manual && opening && current.phase === "opening" && (
+            <OpeningSession
+              key={current.id}
+              entries={current.entries}
+              busy={busy}
+              onClose={() => setOpening(false)}
+              save={(body) => action("/api/admin/site-tracker", body)}
+            />
+          )}
           <p className="text-xs">
             Returns ${current.stats.totalWinnings.toFixed(2)} · P/L $
             {current.stats.profitLoss.toFixed(2)} · Running{" "}
@@ -426,28 +454,72 @@ export default function TrackerAdmin({
             </section>
           )}
           {manual && (
-            <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="space-y-1.5">
               {current.entries.map((entry) => (
-                <BonusRow
-                  key={[
-                    entry.id,
-                    entry.bet_size,
-                    entry.collection_cost,
-                    entry.payout,
-                    entry.bonus_tier,
-                    entry.notes,
-                  ].join(":")}
-                  entry={entry}
-                  nextId={
-                    current.entries
-                      .slice(current.entries.indexOf(entry) + 1)
-                      .find(
-                        (e) => e.status === "collected" && e.payout === null,
-                      )?.id
-                  }
-                  disabled={busy || current.phase === "finished"}
-                  save={(body) => action("/api/admin/site-tracker", body)}
-                />
+                <div
+                  key={entry.id}
+                  onDragOver={(e) => {
+                    if (!busy && current.phase === "collecting")
+                      e.preventDefault();
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (
+                      !dragId ||
+                      busy ||
+                      current.phase !== "collecting" ||
+                      dragId === entry.id
+                    )
+                      return;
+                    const ids = current.entries.map((e) => e.id),
+                      from = ids.indexOf(dragId),
+                      to = ids.indexOf(entry.id);
+                    if (from < 0) return;
+                    ids.splice(from, 1);
+                    ids.splice(to, 0, dragId);
+                    setDragId(null);
+                    void action("/api/admin/site-tracker", {
+                      action: "reorder",
+                      huntId,
+                      entryIds: ids,
+                    });
+                  }}
+                >
+                  <BonusRow
+                    draggable={!busy && current.phase === "collecting"}
+                    onDrag={() => setDragId(entry.id)}
+                    move={(direction) => {
+                      const ids = current.entries.map((e) => e.id),
+                        from = ids.indexOf(entry.id),
+                        to = from + direction;
+                      if (to < 0 || to >= ids.length) return;
+                      [ids[from], ids[to]] = [ids[to], ids[from]];
+                      void action("/api/admin/site-tracker", {
+                        action: "reorder",
+                        huntId,
+                        entryIds: ids,
+                      });
+                    }}
+                    key={[
+                      entry.id,
+                      entry.bet_size,
+                      entry.collection_cost,
+                      entry.payout,
+                      entry.bonus_tier,
+                      entry.notes,
+                    ].join(":")}
+                    entry={entry}
+                    nextId={
+                      current.entries
+                        .slice(current.entries.indexOf(entry) + 1)
+                        .find(
+                          (e) => e.status === "collected" && e.payout === null,
+                        )?.id
+                    }
+                    disabled={busy || current.phase === "finished"}
+                    save={(body) => action("/api/admin/site-tracker", body)}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -464,10 +536,16 @@ function BonusRow({
   disabled,
   save,
   nextId,
+  draggable,
+  onDrag,
+  move,
 }: {
   entry: Entry;
   disabled: boolean;
   nextId?: string;
+  draggable: boolean;
+  onDrag: () => void;
+  move: (direction: number) => void;
   save: (b: Record<string, unknown>) => Promise<boolean>;
 }) {
   const [payout, setPayout] = useState(entry.payout ?? ""),
@@ -496,8 +574,35 @@ function BonusRow({
     }
   };
   return (
-    <article className="min-w-0 rounded-2xl border border-purple-300/15 bg-gradient-to-br from-purple-500/10 to-black/80 p-4">
-      <div className="flex items-start gap-3">
+    <article className="grid items-center gap-x-3 min-w-0 rounded-lg border border-purple-300/15 bg-black/70 px-3 py-2 lg:grid-cols-[minmax(220px,1fr)_auto_170px]">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-1 text-white/50">
+          <button
+            draggable={draggable}
+            disabled={!draggable}
+            onDragStart={onDrag}
+            aria-label={`Drag ${entry.slot_name} to reorder`}
+            className="cursor-grab px-1 py-2 disabled:opacity-20"
+          >
+            ⠿
+          </button>
+          <button
+            disabled={!draggable}
+            onClick={() => move(-1)}
+            aria-label={`Move ${entry.slot_name} up`}
+            className="disabled:opacity-20"
+          >
+            ↑
+          </button>
+          <button
+            disabled={!draggable}
+            onClick={() => move(1)}
+            aria-label={`Move ${entry.slot_name} down`}
+            className="disabled:opacity-20"
+          >
+            ↓
+          </button>
+        </div>
         {entry.artwork_url && (
           <Image
             unoptimized
@@ -505,12 +610,19 @@ function BonusRow({
             height={56}
             src={entry.artwork_url}
             alt=""
-            className="h-14 w-14 rounded-lg object-cover"
+            className="h-9 w-9 rounded object-cover"
           />
         )}
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-black text-white">{entry.slot_name}</h3>
-          <p className="mt-1 text-xs text-white/45">
+          <p
+            className={
+              "text-xs " +
+              (entry.bonus_tier !== "standard"
+                ? "font-black uppercase text-amber-300"
+                : "text-white/45")
+            }
+          >
             {entry.username} ·{" "}
             {entry.bonus_tier === "super_super"
               ? "Super Super"
@@ -534,17 +646,19 @@ function BonusRow({
         </span>
       </div>
       {entry.notes && (
-        <p className="mt-3 break-words text-xs text-white/60">{entry.notes}</p>
+        <p className="order-last mt-1 rounded border-l-2 border-cyan-300 bg-cyan-300/10 px-2 py-1 text-xs text-cyan-200 lg:col-span-3">
+          ✎ {entry.notes}
+        </p>
       )}
       {entry.status === "collected" && (
         <>
-          <div className="mt-4 flex items-end gap-2">
-            <label className="min-w-0 flex-1 text-xs text-white/60">
+          <div className="mt-1 flex items-center gap-2">
+            <label className="flex items-center gap-2 text-xs text-white/60">
               Payout
               <input
                 id={"tracker-payout-" + entry.id}
                 aria-label={`Payout for ${entry.slot_name}`}
-                className={field}
+                className="w-28 rounded border border-white/15 bg-black px-2 py-1 text-sm"
                 inputMode="decimal"
                 value={payout}
                 onChange={(e) => setPayout(e.target.value)}
@@ -560,7 +674,7 @@ function BonusRow({
               Save
             </button>
           </div>
-          <details className="mt-3 border-t border-white/10 pt-3">
+          <details className="mt-1 lg:row-span-2">
             <summary className="cursor-pointer text-xs font-bold text-purple-200">
               Edit bonus details
             </summary>
@@ -619,7 +733,7 @@ function BonusRow({
           </details>
         </>
       )}
-      <div className="mt-3 flex flex-wrap gap-3 border-t border-white/10 pt-3 text-xs">
+      <div className="mt-1 flex flex-wrap gap-3 text-[11px] lg:col-span-2">
         {entry.payout === null && !entry.call_id.startsWith("manual:") && (
           <button
             disabled={disabled}

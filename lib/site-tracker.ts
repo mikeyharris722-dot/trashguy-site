@@ -16,6 +16,7 @@ export async function trackerHunts() {
     .from("site_tracker_entries")
     .select("*")
     .is("deleted_at", null)
+    .order("sort_order")
     .order("created_at");
   if (entryError) throw new Error(entryError.message);
   return (settings || []).map((h) => {
