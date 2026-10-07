@@ -677,7 +677,7 @@ export default function Home() {
  const [trackerHuntId,setTrackerHuntId]=useState("");
  const [trackerEntryOpen,setTrackerEntryOpen]=useState(false);
  const [trackerBet,setTrackerBet]=useState("0.20");
- const [trackerCost,setTrackerCost]=useState("");
+
  const [trackerBusy,setTrackerBusy]=useState(false);
 
 
@@ -2667,7 +2667,7 @@ const trackerSelectionPending = useRef(false);
 useEffect(()=>{let live=true;const control=new AbortController();const load=async()=>{try{const r=await fetch("/api/site-tracker",{cache:"no-store",signal:control.signal});const d=await r.json();if(r.ok&&live&&!trackerSelectionPending.current)setTrackerHuntId(d.activeHuntId||"");}catch{}};void load();const timer=setInterval(load,5000);return()=>{live=false;control.abort();clearInterval(timer);};},[]);
 const selectTrackerHunt = async (id:string)=>{trackerSelectionPending.current=true;try{const r=await slotFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"select",huntId:id})});const d=await r.json();if(!r.ok)throw new Error(d.error);setTrackerHuntId(id);}catch(e){alert(e instanceof Error?e.message:"Could not select hunt");}finally{trackerSelectionPending.current=false;}};
 const resolvePickedCall=async(game:SlotOption)=>{if(!pickedSlotCall)return;setTrackerBusy(true);try{const r=await slotFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resolve",callId:pickedSlotCall.id,identifier:game.identifier})});const d=await r.json();if(!r.ok)throw new Error(d.error);if(d.ignored){setPickedSlotCall(null);setTrackerEntryOpen(false);alert("Slot already in the active hunt. Call ignored.");}else setPickedSlotCall(c=>c?{...c,slotName:game.name,needsReview:false}:null);await loadSlotCalls();}finally{setTrackerBusy(false);}};
-async function recordPickedCall(status:"collected"|"failed",payout?:string) {if(!pickedSlotCall||trackerBusy)return;if(!trackerHuntId){alert("Choose a site hunt in the tracker controls first.");return;}setTrackerBusy(true);try{const response=await fetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await getAccessToken()},body:JSON.stringify({action:"collect",huntId:trackerHuntId,callId:pickedSlotCall.id,status,bet:trackerBet,cost:trackerCost||"0",payout})});const d=await response.json();if(!response.ok)throw new Error(d.error);setPickedSlotCall(null);setTrackerEntryOpen(false);setSlotWheelRotation(0);setTrackerCost("");setSlotPayoutInput("");await loadSlotCalls();await loadHunts();}catch(e){alert(e instanceof Error?e.message:"Could not save result")}finally{setTrackerBusy(false)}}
+async function recordPickedCall(status:"collected"|"failed",payout?:string) {if(!pickedSlotCall||trackerBusy)return;if(!trackerHuntId){alert("Choose a site hunt in the tracker controls first.");return;}setTrackerBusy(true);try{const response=await fetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await getAccessToken()},body:JSON.stringify({action:"collect",huntId:trackerHuntId,callId:pickedSlotCall.id,status,bet:trackerBet,cost:"0",payout})});const d=await response.json();if(!response.ok)throw new Error(d.error);setPickedSlotCall(null);setTrackerEntryOpen(false);setSlotWheelRotation(0);setSlotPayoutInput("");await loadSlotCalls();await loadHunts();}catch(e){alert(e instanceof Error?e.message:"Could not save result")}finally{setTrackerBusy(false)}}
 const loadSlotCalls = async () => {
   try {
     const res = await slotFetch("/api/slot-calls", {
@@ -11153,7 +11153,7 @@ onClick={() => {
 )}
           </main>
 
-{activeSection === "admin" && pickedSlotCall && trackerEntryOpen && <WheelEntry key={pickedSlotCall.id} call={pickedSlotCall} cost={trackerCost} onCost={setTrackerCost} busy={trackerBusy} huntId={trackerHuntId} onClose={()=>setTrackerEntryOpen(false)} onResolve={resolvePickedCall} onRecord={recordPickedCall} />}
+{activeSection === "admin" && pickedSlotCall && trackerEntryOpen && <WheelEntry key={pickedSlotCall.id} call={pickedSlotCall} bet={trackerBet} onBet={setTrackerBet} busy={trackerBusy} huntId={trackerHuntId} onClose={()=>setTrackerEntryOpen(false)} onResolve={resolvePickedCall} onRecord={recordPickedCall} />}
 
 <footer
   className="

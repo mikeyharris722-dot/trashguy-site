@@ -12,8 +12,8 @@ export type WheelCall = {
 };
 export default function WheelEntry({
   call,
-  cost,
-  onCost,
+  bet,
+  onBet,
   busy,
   huntId,
   onClose,
@@ -21,8 +21,8 @@ export default function WheelEntry({
   onRecord,
 }: {
   call: WheelCall;
-  cost: string;
-  onCost: (s: string) => void;
+  bet: string;
+  onBet: (s: string) => void;
   busy: boolean;
   huntId: string;
   onClose: () => void;
@@ -113,26 +113,36 @@ export default function WheelEntry({
         ) : (
           <>
             <label className="mt-6 block text-sm text-white/70">
-              Collection cost
+              Bet size
               <input
-                aria-label="Selected call collection cost"
+                aria-label="Selected call bet size"
                 className="mt-2 w-full rounded-xl border border-purple-300/20 bg-black p-3 text-xl text-white"
-                value={cost}
-                onChange={(e) => onCost(e.target.value)}
+                value={bet}
+                onChange={(e) => onBet(e.target.value)}
                 inputMode="decimal"
                 placeholder="0.00"
               />
             </label>
             <div className="mt-5 grid grid-cols-2 gap-3">
               <button
-                disabled={busy || !huntId}
+                disabled={
+                  busy ||
+                  !huntId ||
+                  !/^\d+(?:\.\d{1,6})?$/.test(bet) ||
+                  Number(bet) <= 0
+                }
                 className="rounded-xl bg-emerald-500/20 p-3 text-sm font-black text-emerald-200 disabled:opacity-40"
                 onClick={() => onRecord("collected")}
               >
                 GOT IN
               </button>
               <button
-                disabled={busy || !huntId}
+                disabled={
+                  busy ||
+                  !huntId ||
+                  !/^\d+(?:\.\d{1,6})?$/.test(bet) ||
+                  Number(bet) <= 0
+                }
                 className="rounded-xl bg-red-500/20 p-3 text-sm font-black text-red-200 disabled:opacity-40"
                 onClick={() => onRecord("failed")}
               >
