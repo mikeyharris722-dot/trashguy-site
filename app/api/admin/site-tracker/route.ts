@@ -144,12 +144,13 @@ export async function POST(request: Request) {
           .limit(1);
         if (error) throw new Error(error.message);
         if (duplicate?.length) {
-          await db.rpc("site_tracker_resolve", {
+          const resolved = await db.rpc("site_tracker_resolve", {
             p_actor: actor,
             p_call: String(b.callId),
             p_identifier: game.identifier,
             p_name: game.name,
           });
+          if (resolved.error) throw new Error(resolved.error.message);
           return Response.json({ ok: true, ignored: true });
         }
       }
