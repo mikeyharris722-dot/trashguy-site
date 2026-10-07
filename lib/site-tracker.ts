@@ -6,6 +6,7 @@ export async function trackerHunts() {
   const { data: settings, error } = await db
     .from("site_tracker_hunts")
     .select("*")
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
   if (error) {
     if (error.code === "PGRST205" || error.code === "42P01") return [];

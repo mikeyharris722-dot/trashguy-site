@@ -29,3 +29,7 @@ The Twitch/Kick bot was not connected to a live channel during tests. Bot-origin
 ## Featured provider controls
 
 The slot picker defaults to the ten providers from the existing site: BGaming, Backseat Gaming, Bullshark Games, Hacksaw Gaming, NetEnt, NoLimit City, Peter & Sons, Popiplay, Pragmatic Play and Shady Lady. View more reveals the rest; merely expanding does not put them into the default pick pool. Selecting an additional provider explicitly enables it. Reset returns to the ten-provider pool. Display names use the actual studio when an aggregator lists a producer, and provider aliases are combined for the presentation only. All ten featured logos are served locally; unknown logos use readable initials. Additional seven SVGs were copied from the site's existing usercontent.cc logo URLs, preserving the existing logo sources. Browser tests confirmed ten loaded logos, expanded real names, extra-provider selection, reset behavior and no overflow at 390/1440px.
+
+## Hunt settings
+Admins can edit a site hunt title and starting bankroll in Slot Call Wheel > Edit or delete hunt. Totals recalculate from the saved bankroll and existing entries. Delete requires the exact saved title and removes the hunt from public and admin tracker lists. It sets deleted_at and finishes/locks the corresponding hunt; entries and audit history remain recoverable in Supabase. Queued calls are independent and are not deleted by removing a hunt. External BonusHunt.gg history is unaffected.
+

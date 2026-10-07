@@ -22,6 +22,7 @@ type Hunt = {
   id: string;
   title: string;
   phase: string;
+  startCost: number;
   entries: Entry[];
   stats: {
     totalWinnings: number;
@@ -110,6 +111,12 @@ export default function TrackerAdmin({
           : "Saved",
       );
       if (body.action === "create") onHunt(value.result);
+      if (body.action === "delete") {
+        onHunt("");
+        setMessage(
+          "Hunt deleted from the website. Its saved records are retained for recovery.",
+        );
+      }
       await load();
       if (body.action === "override") {
         const refreshed = await fetch(
@@ -277,6 +284,12 @@ export default function TrackerAdmin({
       </label>
       {current && (
         <>
+          <HuntSettings
+            key={current.id + ":" + current.title + ":" + current.startCost}
+            hunt={current}
+            busy={busy}
+            save={(body) => action("/api/admin/site-tracker", body)}
+          />
           <div className="flex flex-wrap gap-2">
             {["collecting", "opening", "finished"].map((phase) => (
               <button
@@ -434,5 +447,82 @@ function BonusRow({
         </button>
       )}
     </div>
+  );
+}
+
+function HuntSettings({
+  hunt,
+  busy,
+  save,
+}: {
+  hunt: Hunt;
+  busy: boolean;
+  save: (body: Record<string, unknown>) => Promise<boolean>;
+}) {
+  const [title, setTitle] = useState(hunt.title);
+  const [start, setStart] = useState(String(hunt.startCost));
+  const [confirmTitle, setConfirmTitle] = useState("");
+  const input =
+    "w-full rounded-lg border border-purple-300/20 bg-black px-3 py-2 text-sm text-white";
+  return (
+    <details className="rounded-lg border border-white/10 p-3">
+      <summary className="cursor-pointer text-sm font-bold text-purple-200">
+        Edit or delete hunt
+      </summary>
+      <div className="mt-3 space-y-3">
+        <label className="block text-xs">
+          Hunt title
+          <input
+            aria-label="Edit hunt title"
+            className={input}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </label>
+        <label className="block text-xs">
+          Starting bankroll
+          <input
+            aria-label="Edit starting bankroll"
+            inputMode="decimal"
+            className={input}
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+          />
+        </label>
+        <button
+          disabled={busy || !title.trim() || !start.trim()}
+          className="rounded-lg bg-purple-400/20 px-3 py-2 text-sm disabled:opacity-40"
+          onClick={() =>
+            save({ action: "edit", huntId: hunt.id, title, start })
+          }
+        >
+          Save hunt settings
+        </button>
+        <div className="space-y-2 border-t border-white/10 pt-3">
+          <p className="text-xs text-white/60">
+            Delete removes this hunt from the website. Saved results are
+            retained for recovery. Queued calls and other hunts stay unchanged.
+          </p>
+          <label className="block text-xs">
+            Type {hunt.title} to confirm
+            <input
+              aria-label="Confirm hunt deletion"
+              className={input}
+              value={confirmTitle}
+              onChange={(e) => setConfirmTitle(e.target.value)}
+            />
+          </label>
+          <button
+            disabled={busy || confirmTitle !== hunt.title}
+            className="rounded-lg border border-red-400/40 bg-red-400/10 px-3 py-2 text-sm text-red-200 disabled:opacity-40"
+            onClick={() =>
+              save({ action: "delete", huntId: hunt.id, confirmTitle })
+            }
+          >
+            Delete hunt
+          </button>
+        </div>
+      </div>
+    </details>
   );
 }

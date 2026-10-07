@@ -7,7 +7,27 @@ export async function POST(request: Request) {
       b = await request.json(),
       db = siteDb();
     let result;
-    if (b.action === "create") {
+    if (b.action === "delete") {
+      result = await db.rpc("site_tracker_delete", {
+        p_actor: actor,
+        p_hunt: b.huntId,
+        p_title: b.confirmTitle,
+      });
+    } else if (b.action === "edit") {
+      money(b.start);
+      if (
+        typeof b.title !== "string" ||
+        !b.title.trim() ||
+        b.title.length > 160
+      )
+        throw new Error("Enter a hunt title");
+      result = await db.rpc("site_tracker_edit", {
+        p_actor: actor,
+        p_hunt: b.huntId,
+        p_title: b.title.trim(),
+        p_start: b.start,
+      });
+    } else if (b.action === "create") {
       money(b.start);
       if (
         typeof b.title !== "string" ||

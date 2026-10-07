@@ -118,7 +118,7 @@ const STORAGE_KEYS = {
   activeSection: "trashguy_active_section",
 };
 
-const ADMIN_USERS = ["trashguy__", "trashguy", "parz", "parzwz"];
+const ADMIN_USERS = ["trashguy__", "trashguy", "parz", "parzwz", "gettyyy_"];
 
 type LeaderboardPlayer = {
   rank: number;
