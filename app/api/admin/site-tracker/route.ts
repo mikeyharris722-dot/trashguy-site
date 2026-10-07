@@ -7,7 +7,25 @@ export async function POST(request: Request) {
       b = await request.json(),
       db = siteDb();
     let result;
-    if (b.action === "delete") {
+    if (b.action === "removeEntry") {
+      result = await db.rpc("site_tracker_remove_entry", {
+        p_actor: actor,
+        p_entry: b.entryId,
+      });
+    } else if (b.action === "manual") {
+      money(b.bet);
+      const game = (await catalogue()).find(
+        (g) => g.identifier === b.identifier && g.enabled !== false,
+      );
+      if (!game) throw new Error("Select an enabled catalogue game");
+      result = await db.rpc("site_tracker_manual", {
+        p_actor: actor,
+        p_hunt: b.huntId,
+        p_request: b.requestId,
+        p_game: game,
+        p_bet: b.bet,
+      });
+    } else if (b.action === "delete") {
       result = await db.rpc("site_tracker_delete", {
         p_actor: actor,
         p_hunt: b.huntId,

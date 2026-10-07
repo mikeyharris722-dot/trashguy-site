@@ -18,6 +18,7 @@ import {
 import { SiKick } from "react-icons/si";
 import ProviderMark from "@/components/provider-mark";
 import {FEATURED_PROVIDERS,providerName,featuredLogos} from "@/lib/slot-providers";
+import TrackerResults from "@/components/tracker-results";
 import TrackerAdmin from "@/components/tracker-admin";
 import { slotData as originalSlotData, providerLogos, type SlotItem } from "./slotData";
 import { Russo_One } from "next/font/google";
@@ -672,6 +673,7 @@ export default function Home() {
  const [slotData,setCatalogueSlots]=useState<SlotItem[]>(()=>originalSlotData.map(g=>({...g,provider:providerName(g.provider)})));
  const [showMoreProviders,setShowMoreProviders]=useState(false);
  const [trackerHuntId,setTrackerHuntId]=useState("");
+ const [trackerEntryOpen,setTrackerEntryOpen]=useState(false);
  const [trackerBet,setTrackerBet]=useState("0.20");
  const [trackerCost,setTrackerCost]=useState("");
  const [trackerBusy,setTrackerBusy]=useState(false);
@@ -1001,7 +1003,7 @@ const [manualRewardAmount, setManualRewardAmount] = useState("");
 const [manualRewardType, setManualRewardType] = useState("discord_giveaway");
 
 const [activeAdminTab, setActiveAdminTab] = useState<
-  "giveaway" | "trashClaw" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel"
+  "giveaway" | "trashClaw" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel" | "bonusTracker"
 >(() => {
   if (typeof window === "undefined") return "giveaway";
 
@@ -1013,7 +1015,8 @@ const [activeAdminTab, setActiveAdminTab] = useState<
     saved === "prizePortal" ||
     saved === "tournament" ||
     saved === "snakeDraft" ||
-    saved === "slotWheel"
+    saved === "slotWheel" ||
+    saved === "bonusTracker"
   ) {
     return saved;
   }
@@ -2670,7 +2673,7 @@ useEffect(() => {
 async function slotFetch(url:string,options:RequestInit={}){const headers=new Headers(options.headers);if(options.method&&options.method!=="GET")headers.set("Authorization","Bearer "+await getAccessToken());return fetch(url,{...options,headers});}
 const refreshCatalogue=useCallback(async()=>{const r=await fetch("/api/catalogue?all=true");const d=await r.json();if(Array.isArray(d.games)&&d.games.length){const unique=new Map<string,SlotItem>();for(const g of d.games){if(g.enabled===false)continue;const displayProvider=providerName(g.provider,g.producer);const key=g.name.toLowerCase()+"|"+displayProvider.toLowerCase();if(!unique.has(key))unique.set(key,{name:g.name,provider:displayProvider,image:g.artwork_url||undefined});}setCatalogueSlots([...unique.values()]);}},[]);
 useEffect(()=>{void refreshCatalogue()},[refreshCatalogue]);
-async function recordPickedCall(status:"collected"|"failed",payout?:string) {if(!pickedSlotCall||trackerBusy)return;if(!trackerHuntId){alert("Choose a site hunt in the tracker controls first.");return;}setTrackerBusy(true);try{const response=await fetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await getAccessToken()},body:JSON.stringify({action:"collect",huntId:trackerHuntId,callId:pickedSlotCall.id,status,bet:trackerBet,cost:trackerCost||"0",payout})});const d=await response.json();if(!response.ok)throw new Error(d.error);setPickedSlotCall(null);setSlotWheelRotation(0);setTrackerCost("");setSlotPayoutInput("");await loadSlotCalls();await loadHunts();}catch(e){alert(e instanceof Error?e.message:"Could not save result")}finally{setTrackerBusy(false)}}
+async function recordPickedCall(status:"collected"|"failed",payout?:string) {if(!pickedSlotCall||trackerBusy)return;if(!trackerHuntId){alert("Choose a site hunt in the tracker controls first.");return;}setTrackerBusy(true);try{const response=await fetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await getAccessToken()},body:JSON.stringify({action:"collect",huntId:trackerHuntId,callId:pickedSlotCall.id,status,bet:trackerBet,cost:trackerCost||"0",payout})});const d=await response.json();if(!response.ok)throw new Error(d.error);setPickedSlotCall(null);setTrackerEntryOpen(false);setSlotWheelRotation(0);setTrackerCost("");setSlotPayoutInput("");await loadSlotCalls();await loadHunts();}catch(e){alert(e instanceof Error?e.message:"Could not save result")}finally{setTrackerBusy(false)}}
 const loadSlotCalls = async () => {
   try {
     const res = await slotFetch("/api/slot-calls", {
@@ -3458,6 +3461,7 @@ const handleSpinSlotWheel = () => {
     );
 
     setPickedSlotCall(winner);
+    setTrackerEntryOpen(true);
     setSlotWheelRotation(0);
 
     requestAnimationFrame(() => {
@@ -9532,7 +9536,7 @@ onClick={() => {
 
       {/* ADMIN NAVIGATION */}
       <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-purple-300/15 bg-black/70 p-1.5 shadow-[0_0_18px_rgba(168,85,247,0.06)] backdrop-blur-sm sm:mt-4">
-        <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-7">
           {[
             { id: "giveaway", label: "Giveaways" },
             { id: "trashClaw", label: "Trash Claw" },
@@ -9540,6 +9544,7 @@ onClick={() => {
             { id: "tournament", label: "Tournaments" },
             { id: "snakeDraft", label: "Snake Drafts" },
             { id: "slotWheel", label: "Slot Call Wheel" },
+            { id: "bonusTracker", label: "Bonus Hunt Tracker" },
           ].map((tab) => {
             const active = activeAdminTab === tab.id;
 
@@ -9556,6 +9561,7 @@ onClick={() => {
                       | "tournament"
                       | "snakeDraft"
                       | "slotWheel"
+                      | "bonusTracker"
                   )
                 }
                 className={`min-w-0 whitespace-normal break-words rounded-lg border px-1.5 py-2 text-[9px] font-black uppercase leading-tight tracking-[0.04em] transition sm:px-3 sm:text-xs sm:tracking-[0.08em] ${
@@ -10735,6 +10741,11 @@ onClick={() => {
           </div>
         </details>
 
+        {activeAdminTab === "bonusTracker" && <section className="rounded-xl border border-purple-300/20 bg-black/80 p-4">
+          <h2 className="text-xl font-black text-purple-100">Bonus Hunt Tracker</h2>
+          <p className="mt-1 text-sm text-white/50">Choose the same hunt as the wheel, or create one here. Search slots, add bonuses and manage opening results.</p>
+          <TrackerAdmin manual huntId={trackerHuntId} onHunt={setTrackerHuntId} onChange={()=>{void loadSlotCalls();void loadHunts();}} />
+        </section>}
         {/* =====================================================
             SLOT CALL WHEEL
         ===================================================== */}
@@ -10751,7 +10762,6 @@ onClick={() => {
             Slot Call Wheel
           </summary>
 
-          <TrackerAdmin huntId={trackerHuntId} onHunt={setTrackerHuntId} onChange={()=>{void loadSlotCalls();void loadHunts();void refreshCatalogue();}} />
           {/* SAME SMOOTH IDLE SCROLL AS VIEWER WHEEL */}
 
           <style>{`
@@ -10987,56 +10997,7 @@ onClick={() => {
                       {pickedSlotCall.username}
                     </div>
 
-                    <div className="mx-auto mt-4 max-w-md space-y-2">
-                      <div className="grid grid-cols-2 gap-2"><label className="text-xs">Bet size<input aria-label="Selected call bet size" className="mt-1 w-full rounded bg-black p-2" value={trackerBet} onChange={e=>setTrackerBet(e.target.value)}/></label><label className="text-xs">Collection cost<input aria-label="Selected call collection cost" className="mt-1 w-full rounded bg-black p-2" value={trackerCost} onChange={e=>setTrackerCost(e.target.value)} placeholder="0.00"/></label></div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <ActionButton
-                          onClick={()=>recordPickedCall("collected")}
-                          disabled={trackerBusy}
-                          variant="purple"
-                          className="min-h-[38px] text-[9px]"
-                        >
-                          Collected · Save to hunt
-                        </ActionButton>
-
-                        <ActionButton
-                          onClick={()=>recordPickedCall("failed")}
-                          disabled={trackerBusy}
-                          variant="red"
-                          className="min-h-[38px] text-[9px]"
-                        >
-                          Didn't Get In
-                        </ActionButton>
-                      </div>
-
-                      <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
-                        Buy Hunt / Enter Result Now
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <div className="flex min-w-0 flex-1 items-center rounded-lg border border-purple-300/15 bg-black/60 px-3">
-                          <span className="mr-1 text-sm font-black text-purple-200/60">$</span>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={slotPayoutInput}
-                            onChange={(e) => setSlotPayoutInput(e.target.value)}
-                            placeholder="0.00"
-                            className="min-w-0 flex-1 bg-transparent py-2 text-sm font-black text-white outline-none placeholder:text-white/20"
-                          />
-                        </div>
-
-                        <ActionButton
-                          onClick={()=>{if(slotPayoutInput.trim()===""){alert("Enter a payout first.");return;}void recordPickedCall("collected",slotPayoutInput);}}
-                          disabled={trackerBusy}
-                          variant="green"
-                          className="min-h-[38px] shrink-0 px-3 text-[9px]"
-                        >
-                          Enter Result
-                        </ActionButton>
-                      </div>
-                    </div>
+                    <ActionButton onClick={()=>setTrackerEntryOpen(true)} variant="purple" className="mt-3">Enter result</ActionButton>
                   </>
                 ) : (
                   <div className="flex h-[48px] items-center justify-center text-xs font-semibold text-white/40">
@@ -11179,201 +11140,30 @@ onClick={() => {
                 </div>
               </div>
 
-              {/* ROLLED RESULTS */}
-
-              <div className="rounded-xl border border-purple-300/10 bg-black/70 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
-                      Rolled Results
-                    </div>
-
-                    <div className="mt-0.5 text-[11px] text-white/35">
-                      Saved bonuses. Edit payouts after they are opened.
-                    </div>
-                  </div>
-
-                  <ActionButton
-                    onClick={async () => {
-                      if (
-                        !confirm(
-                          "Clear all rolled winners and payouts?"
-                        )
-                      )
-                        return;
-
-                      const res = await slotFetch(
-                        "/api/slot-calls?clearResults=true",
-                        {
-                          method: "DELETE",
-                        }
-                      );
-
-                      const data =
-                        await res.json();
-
-                      if (!res.ok || !data.ok) {
-                        alert(
-                          data.error ||
-                            "Failed to clear rolled results."
-                        );
-                        return;
-                      }
-
-                      setSlotCallResults([]);
-
-                      await loadSlotCalls();
-                    }}
-                    disabled={
-                      slotCallResults.length === 0
-                    }
-                    variant="red"
-                    className="min-h-[32px] px-3 py-1 text-[8px]"
-                  >
-                    Clear All
-                  </ActionButton>
-                </div>
-
-                <div className="mt-3 max-h-[300px] overflow-y-auto rounded-lg border border-purple-300/10 bg-black/50 p-2">
-                  {slotCallResults.length === 0 ? (
-                    <div className="p-5 text-center text-xs text-white/35">
-                      No rolled results yet.
-                    </div>
-                  ) : (
-                    <div className="grid gap-1.5">
-                      {slotCallResults.map(
-                        (result, index) => (
-                          <div
-                            key={result.id}
-                            className="grid grid-cols-[24px_minmax(0,0.8fr)_minmax(0,1fr)_70px_minmax(96px,auto)] items-center gap-2 rounded-lg border border-purple-300/10 bg-white/[0.025] px-2 py-1.5"
-                          >
-                            <div className="text-[8px] font-black text-purple-300/60">
-                              {index + 1}
-                            </div>
-
-                            <div className="truncate text-[9px] font-black text-white">
-                              {result.username}
-                            </div>
-
-                            <div className="truncate text-[9px] text-white/45">
-                              {result.slotName}
-                            </div>
-
-                            {editingSlotResultId === result.id ? (
-                              <input
-                                autoFocus
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={editingSlotPayout}
-                                onChange={(e) => setEditingSlotPayout(e.target.value)}
-                                placeholder="0.00"
-                                className="min-w-0 rounded border border-purple-300/20 bg-black/70 px-2 py-1 text-right text-[9px] font-black text-white outline-none"
-                              />
-                            ) : (
-                              <div className={`truncate text-right text-[9px] font-black ${result.payout === null ? "text-amber-300" : "text-emerald-300"}`}>
-                                {result.payout === null
-                                  ? "PENDING"
-                                  : `$${result.payout.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                              </div>
-                            )}
-
-                            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-                              {editingSlotResultId === result.id ? (
-                                <>
-                                  <button
-                                    onClick={async () => {
-                                      if (editingSlotPayout.trim() === "") {
-                                        alert("Enter a payout amount.");
-                                        return;
-                                      }
-                                      const payout = Number(editingSlotPayout);
-                                      if (!Number.isFinite(payout) || payout < 0) {
-                                        alert("Enter a valid payout amount.");
-                                        return;
-                                      }
-                                      const res = await slotFetch("/api/slot-calls", {
-                                        method: "POST",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({
-                                          action: "updateResult",
-                                          resultId: result.id,
-                                          username: result.username,
-                                          slotName: result.slotName,
-                                          payout,
-                                        }),
-                                      });
-                                      const data = await res.json();
-                                      if (!res.ok || !data.ok) {
-                                        alert(data.error || "Failed to update payout.");
-                                        return;
-                                      }
-                                      setEditingSlotResultId(null);
-                                      setEditingSlotPayout("");
-                                      await loadSlotCalls();
-                                    }}
-                                    className="rounded-md border border-emerald-300/15 bg-emerald-500/10 px-2 py-1 text-[8px] font-black uppercase text-emerald-200"
-                                  >
-                                    Save
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setEditingSlotResultId(null);
-                                      setEditingSlotPayout("");
-                                    }}
-                                    className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[8px] font-black uppercase text-white/60"
-                                  >
-                                    Cancel
-                                  </button>
-                                </>
-                              ) : (
-                                <button
-                                  onClick={() => {
-                                    setEditingSlotResultId(result.id);
-                                    setEditingSlotPayout(result.payout === null ? "" : String(result.payout));
-                                  }}
-                                  className="rounded-md border border-purple-300/15 bg-purple-500/10 px-2 py-1 text-[8px] font-black uppercase text-purple-200"
-                                >
-                                  Edit
-                                </button>
-                              )}
-
-                              <button
-                                onClick={async () => {
-                                  const res = await slotFetch(
-                                    `/api/slot-calls?resultId=${result.id}`,
-                                    { method: "DELETE" }
-                                  );
-                                  const data = await res.json();
-                                  if (!res.ok || !data.ok) {
-                                    alert(data.error || "Failed to remove rolled result.");
-                                    return;
-                                  }
-                                  setSlotCallResults((current) =>
-                                    current.filter((item) => item.id !== result.id)
-                                  );
-                                  await loadSlotCalls();
-                                }}
-                                className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20"
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <TrackerResults huntId={trackerHuntId} />
             </div>
           </div>
+          <details className="mt-6 rounded-xl border border-purple-300/15 bg-black/60 p-4">
+            <summary className="cursor-pointer text-sm font-bold text-purple-200">Hunt and catalogue controls</summary>
+            <label className="mt-3 block text-xs text-white/60">Default bet for wheel bonuses<input aria-label="Default wheel bet" className="ml-3 w-28 rounded border border-white/15 bg-black p-2 text-white" value={trackerBet} onChange={e=>setTrackerBet(e.target.value)} inputMode="decimal" /></label>
+            <p className="mt-2 text-xs text-white/40">Set the usual bet once. Edit individual bets and payouts in Bonus Hunt Tracker.</p>
+            {activeAdminTab === "slotWheel" && <TrackerAdmin huntId={trackerHuntId} onHunt={setTrackerHuntId} onChange={()=>{void loadSlotCalls();void loadHunts();void refreshCatalogue();}} />}
+          </details>
         </details>
       </div>
     </div>
   </section>
 )}
           </main>
+
+{activeSection === "admin" && pickedSlotCall && trackerEntryOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+ <section role="dialog" aria-modal="true" aria-labelledby="slot-entry-title" onKeyDown={event=>{if(event.key==="Escape"&&!trackerBusy){setTrackerEntryOpen(false);return;}if(event.key==="Tab"){const items=Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled)'));const first=items[0],last=items[items.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}}}} className="w-full max-w-md rounded-2xl border border-purple-300/30 bg-[#100817] p-6 shadow-[0_0_70px_rgba(168,85,247,0.2)]">
+  <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-purple-300">Slot call winner</p><h2 id="slot-entry-title" className="mt-2 text-2xl font-black text-white">{pickedSlotCall.slotName}</h2><p className="mt-1 text-sm text-white/50">{pickedSlotCall.username}</p></div><button aria-label="Close result entry" disabled={trackerBusy} onClick={()=>setTrackerEntryOpen(false)} className="rounded-lg border border-white/15 px-3 py-2 text-white">✕</button></div>
+  <label className="mt-6 block text-sm text-white/70">Collection cost<input autoFocus aria-label="Selected call collection cost" className="mt-2 w-full rounded-xl border border-purple-300/20 bg-black p-3 text-xl text-white" value={trackerCost} onChange={e=>setTrackerCost(e.target.value)} inputMode="decimal" placeholder="0.00" /></label>
+  <div className="mt-5 grid grid-cols-2 gap-3"><ActionButton disabled={trackerBusy||!trackerHuntId} variant="green" onClick={()=>recordPickedCall("collected")}>GOT IN</ActionButton><ActionButton disabled={trackerBusy||!trackerHuntId} variant="red" onClick={()=>recordPickedCall("failed")}>DIDN’T GET IN</ActionButton></div>
+  <p className="mt-3 text-xs text-white/45">{trackerHuntId?"Saves the result and removes this call from the wheel.":"Choose a hunt in the controls below the wheel first."}</p>
+ </section>
+</div>}
 
 <footer
   className="

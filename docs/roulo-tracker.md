@@ -33,3 +33,8 @@ The slot picker defaults to the ten providers from the existing site: BGaming, B
 ## Hunt settings
 Admins can edit a site hunt title and starting bankroll in Slot Call Wheel > Edit or delete hunt. Totals recalculate from the saved bankroll and existing entries. Delete requires the exact saved title and removes the hunt from public and admin tracker lists. It sets deleted_at and finishes/locks the corresponding hunt; entries and audit history remain recoverable in Supabase. Queued calls are independent and are not deleted by removing a hunt. External BonusHunt.gg history is unaffected.
 
+
+## Stream wheel and manual tracker
+Slot Call Wheel leads with the winner, live calls and current hunt rolled results. Hunt/catalogue management is collapsed underneath. The winner popup records collection cost with GOT IN or DIDN'T GET IN and removes the call atomically. Set the usual wheel bet in the lower controls; correct individual bets in Bonus Hunt Tracker.
+Bonus Hunt Tracker is a separate admin tab sharing the selected hunt with the wheel. Search the catalogue, select an enabled slot/provider and enter bet size to add a collected manual bonus. Manual entries do not enter the call queue. Existing wheel and manual bonuses can be edited or removed from the active hunt; removal sets deleted_at and excludes the record from public totals and finishing calculations while retaining recoverable data. Completed hunts remain locked for bonus edits.
+

@@ -1,16 +1,19 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { providerName } from "@/lib/slot-providers";
 import { supabaseBrowser } from "@/lib/supabase/client";
 type Game = {
   identifier: string;
   name: string;
   provider: string;
+  producer?: string;
   artwork_url?: string | null;
   aliases?: string[];
   enabled?: boolean;
 };
 type Entry = {
   id: string;
+  call_id: string;
   slot_name: string;
   username: string;
   status: string;
@@ -35,10 +38,12 @@ export default function TrackerAdmin({
   huntId,
   onHunt,
   onChange,
+  manual = false,
 }: {
   huntId: string;
   onHunt: (id: string) => void;
   onChange: () => void;
+  manual?: boolean;
 }) {
   const [hunts, setHunts] = useState<Hunt[]>([]),
     [message, setMessage] = useState(""),
@@ -133,110 +138,128 @@ export default function TrackerAdmin({
       setBusy(false);
     }
   }
+  const manualRequest = useRef<string | null>(null);
+  const [manualBet, setManualBet] = useState("0.20");
   const current = hunts.find((h) => h.id === huntId);
+  const manualGames = [
+    ...new Map(
+      games
+        .filter((g) => g.enabled !== false)
+        .map((g) => [
+          g.name.toLowerCase() + "|" + providerName(g.provider, g.producer),
+          g,
+        ]),
+    ).values(),
+  ];
   const input =
     "min-w-0 rounded-lg border border-purple-300/20 bg-black px-3 py-2 text-sm text-white";
   const button =
     "rounded-lg border border-purple-300/25 bg-purple-400/10 px-3 py-2 text-xs font-bold disabled:opacity-40";
   return (
     <div className="mt-3 space-y-3 rounded-xl border border-purple-300/15 bg-black/40 p-3 text-white">
-      <details>
-        <summary className="cursor-pointer text-sm font-bold text-purple-200">
-          Catalogue administration
-        </summary>
-        <div className="mt-3 space-y-2">
-          <button
-            className={button}
-            disabled={busy}
-            onClick={() => action("/api/admin/catalogue", { action: "update" })}
-          >
-            Update catalogue
-          </button>
-          <p className="text-xs text-white/50">
-            Refresh names and providers. Preserve corrections, aliases and
-            history. Existing artwork mappings stay; new games may need images.
-          </p>
-          <input
-            aria-label="Find catalogue game"
-            className={input + " w-full"}
-            placeholder="Search games to correct or confirm"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <select
-            aria-label="Catalogue game"
-            className={input + " w-full"}
-            value={choice}
-            onChange={(e) => {
-              setChoice(e.target.value);
-              const game = games.find((g) => g.identifier === e.target.value);
-              setAliases((game?.aliases || []).join(", "));
-              setCorrectedName(game?.name || "");
-              setImageUrl(game?.artwork_url || "");
-            }}
-          >
-            <option value="">Choose exact game / provider</option>
-            {games.map((g) => (
-              <option key={g.identifier} value={g.identifier}>
-                {g.name} · {g.provider} · {g.identifier}
-              </option>
-            ))}
-          </select>
-          <input
-            aria-label="Corrected game name"
-            className={input + " w-full"}
-            value={correctedName}
-            onChange={(e) => setCorrectedName(e.target.value)}
-            placeholder="Game name"
-          />
-          <input
-            aria-label="Game artwork URL"
-            className={input + " w-full"}
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="HTTPS artwork URL"
-          />
-          <input
-            aria-label="Game aliases"
-            className={input + " w-full"}
-            value={aliases}
-            placeholder="Aliases, separated by commas"
-            onChange={(e) => setAliases(e.target.value)}
-          />
-          <button
-            className={button}
-            disabled={busy || !choice}
-            onClick={() =>
-              action("/api/admin/catalogue", {
-                action: "override",
-                identifier: choice,
-                name: correctedName,
-                artwork_url: imageUrl,
-                aliases: aliases
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter(Boolean),
-              })
-            }
-          >
-            Save game corrections
-          </button>
-          <button
-            className={button}
-            disabled={busy || !choice}
-            onClick={() =>
-              action("/api/admin/catalogue", {
-                action: "override",
-                identifier: choice,
-                enabled:
-                  games.find((g) => g.identifier === choice)?.enabled === false,
-              })
-            }
-          >
-            Toggle enabled / disabled
-          </button>
-        </div>
-      </details>
+      {!manual && (
+        <details>
+          <summary className="cursor-pointer text-sm font-bold text-purple-200">
+            Catalogue administration
+          </summary>
+          <div className="mt-3 space-y-2">
+            <button
+              className={button}
+              disabled={busy}
+              onClick={() =>
+                action("/api/admin/catalogue", { action: "update" })
+              }
+            >
+              Update catalogue
+            </button>
+            <p className="text-xs text-white/50">
+              Refresh names and providers. Preserve corrections, aliases and
+              history. Existing artwork mappings stay; new games may need
+              images.
+            </p>
+            <input
+              aria-label="Find catalogue game"
+              className={input + " w-full"}
+              placeholder="Search games to correct or confirm"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <select
+              aria-label="Catalogue game"
+              className={input + " w-full"}
+              value={choice}
+              onChange={(e) => {
+                setChoice(e.target.value);
+                const game = games.find((g) => g.identifier === e.target.value);
+                setAliases((game?.aliases || []).join(", "));
+                setCorrectedName(game?.name || "");
+                setImageUrl(game?.artwork_url || "");
+              }}
+            >
+              <option value="">Choose exact game / provider</option>
+              {games.map((g) => (
+                <option key={g.identifier} value={g.identifier}>
+                  {g.name} · {g.provider} · {g.identifier}
+                </option>
+              ))}
+            </select>
+            <input
+              aria-label="Corrected game name"
+              className={input + " w-full"}
+              value={correctedName}
+              onChange={(e) => setCorrectedName(e.target.value)}
+              placeholder="Game name"
+            />
+            <input
+              aria-label="Game artwork URL"
+              className={input + " w-full"}
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="HTTPS artwork URL"
+            />
+            <input
+              aria-label="Game aliases"
+              className={input + " w-full"}
+              value={aliases}
+              placeholder="Aliases, separated by commas"
+              onChange={(e) => setAliases(e.target.value)}
+            />
+            <button
+              className={button}
+              disabled={busy || !choice}
+              onClick={() =>
+                action("/api/admin/catalogue", {
+                  action: "override",
+                  identifier: choice,
+                  name: correctedName,
+                  artwork_url: imageUrl,
+                  aliases: aliases
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                })
+              }
+            >
+              Save game corrections
+            </button>
+            <button
+              className={button}
+              disabled={busy || !choice}
+              onClick={() =>
+                action("/api/admin/catalogue", {
+                  action: "override",
+                  identifier: choice,
+                  enabled:
+                    games.find((g) => g.identifier === choice)?.enabled ===
+                    false,
+                })
+              }
+            >
+              Toggle enabled / disabled
+            </button>
+          </div>
+        </details>
+      )}
       <div className="flex flex-wrap gap-2">
         <input
           aria-label="New hunt title"
@@ -318,25 +341,99 @@ export default function TrackerAdmin({
             {current.stats.currentAverageMultiplier.toFixed(2)}× · Required{" "}
             {current.stats.averagePayoutRequired?.toFixed(2) ?? "—"}×
           </p>
-          <div className="max-h-96 space-y-2 overflow-auto">
-            {current.entries.map((entry) => (
-              <BonusRow
-                key={entry.id}
-                entry={entry}
-                nextId={
-                  current.entries
-                    .slice(current.entries.indexOf(entry) + 1)
-                    .find((e) => e.status === "collected" && e.payout === null)
-                    ?.id
-                }
-                disabled={busy || current.phase === "finished"}
-                save={(body) => action("/api/admin/site-tracker", body)}
+          {manual && (
+            <div className="space-y-3 rounded-xl border border-purple-300/20 bg-purple-400/5 p-4">
+              <h3 className="font-bold">Add a collected bonus</h3>
+              <input
+                aria-label="Find slot to add"
+                className={input + " w-full"}
+                placeholder="Start typing a slot name…"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setChoice("");
+                }}
               />
-            ))}
-          </div>
+              <select
+                aria-label="Slot to add"
+                className={input + " w-full"}
+                value={choice}
+                onChange={(e) => setChoice(e.target.value)}
+              >
+                <option value="">Select a slot and provider</option>
+                {manualGames.map((g) => (
+                  <option key={g.identifier} value={g.identifier}>
+                    {g.name} · {providerName(g.provider, g.producer)}
+                  </option>
+                ))}
+              </select>
+              <div className="flex flex-wrap items-end gap-2">
+                <label className="text-xs">
+                  Bet size
+                  <input
+                    aria-label="Manual bonus bet size"
+                    className={input + " mt-1 block w-32"}
+                    inputMode="decimal"
+                    value={manualBet}
+                    onChange={(e) => setManualBet(e.target.value)}
+                  />
+                </label>
+                <button
+                  className={button}
+                  disabled={busy || !choice || current.phase !== "collecting"}
+                  onClick={async () => {
+                    if (
+                      await action("/api/admin/site-tracker", {
+                        action: "manual",
+                        huntId,
+                        identifier: choice,
+                        bet: manualBet,
+                        requestId: (manualRequest.current ??=
+                          crypto.randomUUID()),
+                      })
+                    ) {
+                      manualRequest.current = null;
+                      setChoice("");
+                      setQuery("");
+                    }
+                  }}
+                >
+                  Add to hunt
+                </button>
+              </div>
+              <p className="text-xs text-white/50">
+                Wheel bonuses and manual bonuses share this hunt. Add bonuses
+                while collecting; record payouts when opening.
+              </p>
+            </div>
+          )}
+          {manual && (
+            <div className="max-h-[36rem] space-y-2 overflow-auto">
+              {current.entries.map((entry) => (
+                <BonusRow
+                  key={[
+                    entry.id,
+                    entry.bet_size,
+                    entry.collection_cost,
+                    entry.payout,
+                  ].join(":")}
+                  entry={entry}
+                  nextId={
+                    current.entries
+                      .slice(current.entries.indexOf(entry) + 1)
+                      .find(
+                        (e) => e.status === "collected" && e.payout === null,
+                      )?.id
+                  }
+                  disabled={busy || current.phase === "finished"}
+                  save={(body) => action("/api/admin/site-tracker", body)}
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
-      {review.length > 0 && (
+      {!manual && review.length > 0 && (
         <details open>
           <summary>Confirm or correct calls ({review.length})</summary>
           <p className="my-2 text-xs text-white/50">
@@ -395,26 +492,35 @@ function BonusRow({
       </p>
       {entry.status === "collected" && (
         <div className="mt-2 flex flex-wrap gap-2">
-          <input
-            aria-label={`Bet for ${entry.slot_name}`}
-            className="w-24 rounded bg-black p-2"
-            value={bet}
-            onChange={(e) => setBet(e.target.value)}
-          />
-          <input
-            aria-label={`Cost for ${entry.slot_name}`}
-            className="w-24 rounded bg-black p-2"
-            value={cost}
-            onChange={(e) => setCost(e.target.value)}
-          />
-          <input
-            id={"tracker-payout-" + entry.id}
-            aria-label={`Payout for ${entry.slot_name}`}
-            className="w-24 rounded bg-black p-2"
-            placeholder="Payout"
-            value={payout}
-            onChange={(e) => setPayout(e.target.value)}
-          />
+          <label className="text-white/60">
+            Bet size
+            <input
+              aria-label={`Bet for ${entry.slot_name}`}
+              className="mt-1 block w-28 rounded-lg border border-white/15 bg-black p-2 text-white"
+              value={bet}
+              onChange={(e) => setBet(e.target.value)}
+            />
+          </label>
+          <label className="text-white/60">
+            Collection cost
+            <input
+              aria-label={`Cost for ${entry.slot_name}`}
+              className="mt-1 block w-28 rounded-lg border border-white/15 bg-black p-2 text-white"
+              value={cost}
+              onChange={(e) => setCost(e.target.value)}
+            />
+          </label>
+          <label className="text-white/60">
+            Payout
+            <input
+              id={"tracker-payout-" + entry.id}
+              aria-label={`Payout for ${entry.slot_name}`}
+              className="mt-1 block w-28 rounded-lg border border-white/15 bg-black p-2 text-white"
+              placeholder="Payout"
+              value={payout}
+              onChange={(e) => setPayout(e.target.value)}
+            />
+          </label>
           <button
             disabled={disabled}
             onClick={async () => {
@@ -437,7 +543,7 @@ function BonusRow({
           </button>
         </div>
       )}
-      {entry.payout === null && (
+      {entry.payout === null && !entry.call_id.startsWith("manual:") && (
         <button
           className="mt-2 text-purple-200"
           disabled={disabled}
@@ -446,6 +552,20 @@ function BonusRow({
           Undo result / return to wheel
         </button>
       )}
+      <button
+        className="mt-2 ml-3 text-red-300 disabled:opacity-40"
+        disabled={disabled}
+        onClick={() => {
+          if (
+            confirm(
+              `Remove ${entry.slot_name} from this hunt? Totals will recalculate. Saved data remains recoverable.`,
+            )
+          )
+            void save({ action: "removeEntry", entryId: entry.id });
+        }}
+      >
+        Remove from hunt
+      </button>
     </div>
   );
 }
