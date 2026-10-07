@@ -873,12 +873,14 @@ const [slotCallResults, setSlotCallResults] = useState<
     id: string;
     username: string;
     slotName: string;
-    payout: number;
+    payout: number | null;
     createdAt: number;
   }[]
 >([]);
 
 const [slotPayoutInput, setSlotPayoutInput] = useState("");
+const [editingSlotResultId, setEditingSlotResultId] = useState<string | null>(null);
+const [editingSlotPayout, setEditingSlotPayout] = useState("");
 const [slotCallMessage, setSlotCallMessage] = useState("");
 const [isSlotWheelSpinning, setIsSlotWheelSpinning] = useState(false);
 
@@ -1209,10 +1211,14 @@ const toggleSlotProvider = (provider: string) => {
   );
 };
 
+const completedSlotCallResults = slotCallResults.filter(
+  (result) => result.payout !== null
+);
+
 const topSlotCallWinner =
-  slotCallResults.length > 0
-    ? [...slotCallResults].sort(
-        (a, b) => b.payout - a.payout
+  completedSlotCallResults.length > 0
+    ? [...completedSlotCallResults].sort(
+        (a, b) => Number(b.payout) - Number(a.payout)
       )[0]
     : null;
 
@@ -1447,21 +1453,48 @@ const trashClawHasUnsavedChanges =
 const getTrashClawPool = () =>
   savedTrashClawPrizes.map((prize) => prize.trim()).filter(Boolean);
 
-const getTrashClawPrizeDesign = (prize: string) => {
+const getTrashClawPrizeLook = (prize: string) => {
   const key = prize.trim().toUpperCase();
-  const designs: Record<string, { emoji: string; accent: string; card: string; glow: string; subtitle: string }> = {
-    "DOUBLE": { emoji: "2X", accent: "text-pink-200", card: "from-rose-950/95 via-pink-950/90 to-black", glow: "border-pink-400/70 shadow-[0_0_28px_rgba(236,72,153,0.28)]", subtitle: "DOUBLE IT" },
-    "-50%": { emoji: "⬇️", accent: "text-sky-200", card: "from-sky-950/95 via-blue-950/90 to-black", glow: "border-sky-400/70 shadow-[0_0_28px_rgba(56,189,248,0.28)]", subtitle: "HALF OFF" },
-    "TRASH CALL": { emoji: "🗑️📞", accent: "text-lime-200", card: "from-lime-950/80 via-emerald-950/85 to-black", glow: "border-lime-400/65 shadow-[0_0_28px_rgba(163,230,53,0.24)]", subtitle: "CALL THE TRASH" },
-    "MOD CALL": { emoji: "🛡️📞", accent: "text-blue-200", card: "from-blue-950/90 via-indigo-950/90 to-black", glow: "border-blue-400/65 shadow-[0_0_28px_rgba(96,165,250,0.25)]", subtitle: "MODS DECIDE" },
-    "SLOT PICKER": { emoji: "🎰", accent: "text-yellow-200", card: "from-red-950/90 via-amber-950/75 to-black", glow: "border-yellow-400/70 shadow-[0_0_30px_rgba(250,204,21,0.28)]", subtitle: "PICK A SLOT" },
-    "+50%": { emoji: "📈", accent: "text-emerald-200", card: "from-emerald-950/95 via-green-950/85 to-black", glow: "border-emerald-400/70 shadow-[0_0_28px_rgba(52,211,153,0.28)]", subtitle: "BOOST IT" },
-    "KENO": { emoji: "🎱", accent: "text-orange-200", card: "from-orange-950/90 via-amber-950/80 to-black", glow: "border-orange-400/70 shadow-[0_0_28px_rgba(251,146,60,0.28)]", subtitle: "LUCKY NUMBERS" },
-    "LIVE TABLES": { emoji: "🃏", accent: "text-red-200", card: "from-red-950/95 via-rose-950/80 to-black", glow: "border-red-400/70 shadow-[0_0_28px_rgba(248,113,113,0.28)]", subtitle: "DEAL IT" },
-    "ANOTHER GIVEAWAY": { emoji: "🎁", accent: "text-fuchsia-200", card: "from-fuchsia-950/95 via-purple-950/85 to-black", glow: "border-fuchsia-400/70 shadow-[0_0_30px_rgba(232,121,249,0.30)]", subtitle: "RUN IT BACK" },
-    "TRASH CASH": { emoji: "💵🗑️", accent: "text-green-200", card: "from-green-950/95 via-emerald-950/80 to-black", glow: "border-green-400/75 shadow-[0_0_32px_rgba(74,222,128,0.32)]", subtitle: "TRASHGUY CASH" },
+  const looks: Record<string, { emoji: string; glow: string; border: string; wash: string; badge: string }> = {
+    "DOUBLE": { emoji: "2X", glow: "rgba(244,63,94,.58)", border: "rgba(251,113,133,.78)", wash: "rgba(190,24,93,.34)", badge: "#fb7185" },
+    "-50%": { emoji: "⬇️", glow: "rgba(56,189,248,.58)", border: "rgba(125,211,252,.78)", wash: "rgba(3,105,161,.34)", badge: "#7dd3fc" },
+    "TRASH CALL": { emoji: "📞", glow: "rgba(34,197,94,.58)", border: "rgba(74,222,128,.78)", wash: "rgba(21,128,61,.32)", badge: "#4ade80" },
+    "MOD CALL": { emoji: "🛡️", glow: "rgba(96,165,250,.58)", border: "rgba(147,197,253,.78)", wash: "rgba(30,64,175,.34)", badge: "#93c5fd" },
+    "SLOT PICKER": { emoji: "🎰", glow: "rgba(249,115,22,.62)", border: "rgba(253,186,116,.82)", wash: "rgba(194,65,12,.34)", badge: "#fdba74" },
+    "+50%": { emoji: "📈", glow: "rgba(34,197,94,.60)", border: "rgba(134,239,172,.80)", wash: "rgba(22,101,52,.34)", badge: "#86efac" },
+    "KENO": { emoji: "🎱", glow: "rgba(250,204,21,.60)", border: "rgba(253,224,71,.80)", wash: "rgba(161,98,7,.34)", badge: "#fde047" },
+    "LIVE TABLES": { emoji: "🃏", glow: "rgba(239,68,68,.58)", border: "rgba(252,165,165,.80)", wash: "rgba(153,27,27,.34)", badge: "#fca5a5" },
+    "ANOTHER GIVEAWAY": { emoji: "🎁", glow: "rgba(236,72,153,.62)", border: "rgba(249,168,212,.82)", wash: "rgba(157,23,77,.34)", badge: "#f9a8d4" },
+    "TRASH CASH": { emoji: "💵", glow: "rgba(16,185,129,.66)", border: "rgba(110,231,183,.86)", wash: "rgba(6,95,70,.36)", badge: "#6ee7b7" },
   };
-  return designs[key] ?? { emoji: "🎁", accent: "text-purple-200", card: "from-purple-950/95 via-violet-950/85 to-black", glow: "border-purple-400/65 shadow-[0_0_28px_rgba(168,85,247,0.28)]", subtitle: "TRASH CLAW" };
+  return looks[key] ?? { emoji: "🎁", glow: "rgba(168,85,247,.55)", border: "rgba(216,180,254,.72)", wash: "rgba(107,33,168,.32)", badge: "#d8b4fe" };
+};
+
+const TrashClawPrizeCard = ({ prize, number, winner = false }: { prize: string; number: number; winner?: boolean }) => {
+  const look = getTrashClawPrizeLook(prize);
+  return (
+    <div
+      className={`relative flex aspect-[4/5] flex-col items-center justify-center overflow-hidden rounded-xl border px-1.5 text-center text-white transition-transform duration-200 ${winner ? "scale-[1.025]" : ""}`}
+      style={{
+        borderColor: look.border,
+        background: `radial-gradient(circle at 50% 20%, ${look.wash}, transparent 45%), linear-gradient(155deg,#170b20,#07030a 64%,#020103)`,
+        boxShadow: `0 0 ${winner ? 34 : 22}px ${look.glow}, inset 0 0 28px rgba(255,255,255,.035)`,
+      }}
+    >
+      <div className="absolute inset-x-[12%] top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+      <div className="absolute -right-3 -top-4 text-[38px] opacity-[0.06] sm:text-[52px]">{look.emoji}</div>
+      <div className="absolute left-1.5 top-1.5 rounded-full border border-white/15 bg-black/45 px-1.5 py-0.5 text-[5px] font-black tracking-wider text-white/55 sm:text-[6px]">#{String(number).padStart(2, "0")}</div>
+      <div
+        className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-black/25 text-[20px] font-black shadow-lg sm:h-12 sm:w-12 sm:text-[25px] lg:h-14 lg:w-14 lg:text-[29px]"
+        style={{ color: look.badge, textShadow: `0 0 16px ${look.glow}`, boxShadow: `0 0 22px ${look.glow}, inset 0 0 16px rgba(255,255,255,.05)` }}
+      >
+        {look.emoji}
+      </div>
+      <div className="max-w-full text-[7px] font-black uppercase leading-[1.05] drop-shadow-[0_2px_3px_rgba(0,0,0,.9)] sm:text-[9px] lg:text-[11px]">{prize}</div>
+      <div className="mt-1.5 text-[5px] font-black uppercase tracking-[0.18em] sm:text-[6px]" style={{ color: look.badge, opacity: .72 }}>TRASH CLAW</div>
+      <div className="absolute bottom-1.5 left-1/2 h-[3px] w-1/2 -translate-x-1/2 rounded-full" style={{ background: look.badge, boxShadow: `0 0 12px ${look.glow}` }} />
+    </div>
+  );
 };
 
 const buildTrashClawFinalists = (pool: string[], count = 5) => {
@@ -2649,7 +2682,10 @@ const loadSlotCalls = async () => {
           id: result.id,
           username: result.username,
           slotName: result.slot_name,
-          payout: Number(result.payout || 0),
+          payout:
+            result.payout === null || result.payout === undefined
+              ? null
+              : Number(result.payout),
           createdAt: new Date(
             result.created_at
           ).getTime(),
@@ -6571,7 +6607,7 @@ animation: `predictionWheelIdleScroll ${Math.max(
 
             <div className="whitespace-nowrap text-right text-[10px] font-black text-yellow-300 sm:text-base">
               $
-              {topSlotCallWinner.payout.toLocaleString("en-US", {
+              {Number(topSlotCallWinner.payout).toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -6761,12 +6797,19 @@ animation: `predictionWheelIdleScroll ${Math.max(
                   {result.slotName}
                 </div>
 
-                <div className="truncate text-right text-[9px] font-black text-emerald-300 sm:text-xs">
-                  $
-                  {result.payout.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                <div
+                  className={`truncate text-right text-[9px] font-black sm:text-xs ${
+                    result.payout === null
+                      ? "text-amber-300"
+                      : "text-emerald-300"
+                  }`}
+                >
+                  {result.payout === null
+                    ? "PENDING"
+                    : `$${result.payout.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`}
                 </div>
               </div>
             ))}
@@ -9559,7 +9602,7 @@ onClick={() => {
     <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <div className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-300/60 sm:text-[10px]">Giveaway Bonus Picker</div>
-        <h2 className="mt-1 text-xl font-black tracking-[0.08em] text-white drop-shadow-[0_0_12px_rgba(217,70,239,0.65)] sm:text-3xl">🗑️ TRASH CLAW 👑</h2>
+        <h2 className="mt-1 text-xl font-black tracking-[0.08em] text-white sm:text-3xl">TRASH CLAW</h2>
         <p className="mt-1 max-w-2xl text-[10px] leading-4 text-white/45 sm:text-xs">
           Edit your 10 possible extras, press Save 10 Options, then run the claw after a giveaway winner earns a Trash Claw grab.
         </p>
@@ -9585,18 +9628,6 @@ onClick={() => {
             <span>Option {index + 1}</span>
             <span className="rounded-full border border-purple-300/15 bg-purple-500/10 px-1.5 py-0.5 text-purple-200/55">#{String(index + 1).padStart(2, "0")}</span>
           </span>
-          {(() => {
-            const design = getTrashClawPrizeDesign(prize);
-            return (
-              <div className={`mb-2 flex items-center gap-2 rounded-lg border bg-gradient-to-r ${design.card} ${design.glow} px-2 py-1.5`}>
-                <div className={`flex h-8 min-w-8 items-center justify-center text-lg font-black drop-shadow-[0_0_8px_currentColor] ${design.accent}`}>{design.emoji}</div>
-                <div className="min-w-0">
-                  <div className="truncate text-[8px] font-black uppercase tracking-[0.08em] text-white sm:text-[9px]">{prize || `Prize ${index + 1}`}</div>
-                  <div className={`text-[6px] font-black uppercase tracking-[0.15em] opacity-65 ${design.accent}`}>{design.subtitle}</div>
-                </div>
-              </div>
-            );
-          })()}
           <input
             value={prize}
             disabled={isRunningTrashClaw}
@@ -9621,8 +9652,11 @@ onClick={() => {
       </div>
 
       <div className="p-2.5 sm:p-4">
-        <div className="relative h-[250px] overflow-hidden rounded-xl border border-purple-300/10 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.13),transparent_45%),#050207] sm:h-[320px] lg:h-[350px]">
-          <div className="absolute left-[5%] right-[5%] top-5 z-30 h-[6px] rounded-full border border-purple-300/25 bg-[linear-gradient(180deg,#31183e,#100716)]" />
+        <div className="relative h-[250px] overflow-hidden rounded-xl border border-purple-300/10 bg-[radial-gradient(circle_at_18%_18%,rgba(236,72,153,0.16),transparent_24%),radial-gradient(circle_at_82%_20%,rgba(59,130,246,0.14),transparent_24%),radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.22),transparent_48%),#050207] sm:h-[320px] lg:h-[350px]">
+          <div className="absolute left-[5%] right-[5%] top-5 z-30 h-[6px] rounded-full border border-fuchsia-300/35 bg-[linear-gradient(180deg,#54205f,#16081e)] shadow-[0_0_18px_rgba(217,70,239,.35)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:radial-gradient(circle,rgba(255,255,255,.32)_1px,transparent_1px)] [background-size:28px_28px] [mask-image:linear-gradient(to_bottom,black,transparent_72%)]" />
+          <div className="pointer-events-none absolute left-3 top-12 -rotate-6 text-[11px] font-black tracking-[0.18em] text-fuchsia-300/25 sm:left-6 sm:text-base">TRASH • GRAB • WIN</div>
+          <div className="pointer-events-none absolute right-4 top-14 rotate-6 text-2xl opacity-20 sm:right-8 sm:text-4xl">🗑️✨</div>
 
           <div
             className={`absolute top-[13px] z-50 w-[58px] transition-[left] sm:w-[66px] lg:w-[70px] ${trashClawPhase === "spinning" ? "duration-200 ease-in-out" : "duration-300 ease-out"}`}
@@ -9638,16 +9672,9 @@ onClick={() => {
               </div>
 
               {trashClawWinner && (trashClawPhase === "lifting" || trashClawPhase === "revealed") && (
-                (() => {
-                  const design = getTrashClawPrizeDesign(trashClawWinner);
-                  return (
-                    <div className={`absolute left-1/2 top-[27px] z-20 flex h-[70px] w-[62px] -translate-x-1/2 flex-col items-center justify-center overflow-hidden rounded-xl border bg-gradient-to-b ${design.card} ${design.glow} px-1.5 text-center text-white sm:h-[90px] sm:w-[80px] lg:h-[100px] lg:w-[92px]`}>
-                      <div className={`mb-1 text-[18px] font-black leading-none drop-shadow-[0_0_10px_currentColor] sm:text-[24px] ${design.accent}`}>{design.emoji}</div>
-                      <div className="text-[6px] font-black uppercase leading-tight sm:text-[8px] lg:text-[9px]">{trashClawWinner}</div>
-                      <div className={`mt-1 text-[5px] font-black uppercase tracking-[0.13em] opacity-70 sm:text-[6px] ${design.accent}`}>{design.subtitle}</div>
-                    </div>
-                  );
-                })()
+                <div className="absolute left-1/2 top-[27px] z-20 w-[62px] -translate-x-1/2 sm:w-[80px] lg:w-[92px]">
+                  <TrashClawPrizeCard prize={trashClawWinner} number={Math.max(1, savedTrashClawPrizes.indexOf(trashClawWinner) + 1)} winner />
+                </div>
               )}
             </div>
           </div>
@@ -9663,20 +9690,11 @@ onClick={() => {
                   transitionTimingFunction: "cubic-bezier(0.12,0.78,0.16,1)",
                 }}
               >
-                {trashClawReel.map((prize, index) => {
-                  const design = getTrashClawPrizeDesign(prize);
-                  return (
-                    <div key={`${prize}-${index}`} className="w-1/5 min-w-[20%] shrink-0 px-[3px] sm:px-[5px] lg:px-2">
-                      <div className={`relative flex aspect-[4/5] flex-col items-center justify-center overflow-hidden rounded-xl border bg-gradient-to-b ${design.card} ${design.glow} px-1.5 text-center text-white`}>
-                        <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_20%_20%,white_0,transparent_2px)] [background-size:18px_18px]" />
-                        <div className="absolute left-1.5 top-1.5 z-10 rounded-full border border-white/15 bg-black/45 px-1.5 py-0.5 text-[5px] font-black tracking-wider text-white/55 sm:text-[6px]">#{String((index % 10) + 1).padStart(2, "0")}</div>
-                        <div className={`relative z-10 mb-2 text-[22px] font-black leading-none drop-shadow-[0_0_12px_currentColor] sm:text-[30px] lg:text-[34px] ${design.accent}`}>{design.emoji}</div>
-                        <div className="relative z-10 text-[7px] font-black uppercase leading-tight sm:text-[9px] lg:text-[11px]">{prize}</div>
-                        <div className={`relative z-10 mt-1.5 text-[5px] font-black uppercase tracking-[0.13em] opacity-70 sm:text-[6px] ${design.accent}`}>{design.subtitle}</div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {trashClawReel.map((prize, index) => (
+                  <div key={`${prize}-${index}`} className="w-1/5 min-w-[20%] shrink-0 px-[3px] sm:px-[5px] lg:px-2">
+                    <TrashClawPrizeCard prize={prize} number={Math.max(1, savedTrashClawPrizes.indexOf(prize) + 1)} />
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="flex w-full items-end">
@@ -9685,21 +9703,7 @@ onClick={() => {
                   const lifted = isWinner && (trashClawPhase === "lifting" || trashClawPhase === "revealed");
                   return (
                     <div key={`${prize}-${index}`} className={`w-1/5 min-w-0 px-[3px] transition duration-200 sm:px-[5px] lg:px-2 ${lifted ? "opacity-0" : "opacity-100"} ${isWinner && ["targeting","opening","dropping","grabbing"].includes(trashClawPhase) ? "scale-[1.025]" : "scale-100"}`}>
-                      <div className={`relative flex aspect-[4/5] flex-col items-center justify-center overflow-hidden rounded-xl border bg-[radial-gradient(circle_at_50%_12%,rgba(216,180,254,0.20),transparent_38%),linear-gradient(155deg,#24102f,#09040d_62%,#030104)] px-1.5 text-center text-white ${isWinner ? "border-purple-200/50 shadow-[0_0_22px_rgba(168,85,247,0.24)]" : "border-purple-300/20"}`}>
-                        {(() => {
-                          const design = getTrashClawPrizeDesign(prize);
-                          return (
-                            <>
-                              <div className={`absolute inset-0 bg-gradient-to-b ${design.card}`} />
-                              <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_20%_20%,white_0,transparent_2px)] [background-size:18px_18px]" />
-                              <div className="absolute left-1.5 top-1.5 z-10 rounded-full border border-white/15 bg-black/45 px-1.5 py-0.5 text-[5px] font-black tracking-wider text-white/55 sm:text-[6px]">#{String(index + 1).padStart(2, "0")}</div>
-                              <div className={`relative z-10 mb-2 text-[22px] font-black leading-none drop-shadow-[0_0_12px_currentColor] sm:text-[30px] lg:text-[34px] ${design.accent}`}>{design.emoji}</div>
-                              <div className="relative z-10 text-[7px] font-black uppercase leading-tight sm:text-[9px] lg:text-[11px]">{prize}</div>
-                              <div className={`relative z-10 mt-1.5 text-[5px] font-black uppercase tracking-[0.13em] opacity-70 sm:text-[6px] ${design.accent}`}>{design.subtitle}</div>
-                            </>
-                          );
-                        })()}
-                      </div>
+                      <TrashClawPrizeCard prize={prize} number={Math.max(1, savedTrashClawPrizes.indexOf(prize) + 1)} winner={isWinner && ["targeting","opening","dropping","grabbing"].includes(trashClawPhase)} />
                     </div>
                   );
                 })}
@@ -9715,23 +9719,18 @@ onClick={() => {
           </div>
         </div>
 
-        {trashClawWinner && trashClawPhase === "revealed" && (() => {
-          const design = getTrashClawPrizeDesign(trashClawWinner);
-          return (
-            <div className={`mt-2.5 overflow-hidden rounded-xl border bg-gradient-to-r ${design.card} ${design.glow} px-3 py-3 text-center`}>
-              <div className="text-[8px] font-black uppercase tracking-[0.22em] text-white/55">🎉 TRASH CLAW WINNER 🎉</div>
-              <div className={`mt-1 text-3xl font-black drop-shadow-[0_0_12px_currentColor] ${design.accent}`}>{design.emoji}</div>
-              <div className="mt-1 text-base font-black uppercase text-white sm:text-xl">{trashClawWinner}</div>
-              <div className={`mt-1 text-[8px] font-black uppercase tracking-[0.18em] opacity-70 ${design.accent}`}>{design.subtitle}</div>
-            </div>
-          );
-        })()}
+        {trashClawWinner && trashClawPhase === "revealed" && (
+          <div className="mt-2.5 rounded-xl border border-purple-300/20 bg-purple-400/[0.06] px-3 py-2.5 text-center">
+            <div className="text-[8px] font-black uppercase tracking-[0.16em] text-purple-200/50">Trash Claw Grabbed</div>
+            <div className="mt-1 text-sm font-black text-purple-100 sm:text-lg">{trashClawWinner}</div>
+          </div>
+        )}
 
         <button
           type="button"
           onClick={runTrashClaw}
           disabled={isRunningTrashClaw || getTrashClawPool().length === 0}
-          className="mt-2.5 w-full rounded-xl border border-purple-300/40 bg-[linear-gradient(180deg,rgba(168,85,247,0.25),rgba(88,28,135,0.2))] px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.15em] text-purple-50 shadow-[0_0_20px_rgba(168,85,247,0.1)] transition hover:border-purple-200/60 hover:bg-purple-400/[0.18] disabled:cursor-not-allowed disabled:opacity-40 sm:py-3 sm:text-[14px]"
+          className="mt-2.5 w-full rounded-xl border border-fuchsia-300/55 bg-[linear-gradient(90deg,rgba(126,34,206,.38),rgba(219,39,119,.28),rgba(126,34,206,.38))] px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.15em] text-purple-50 shadow-[0_0_20px_rgba(168,85,247,0.1)] transition hover:border-purple-200/60 hover:bg-purple-400/[0.18] disabled:cursor-not-allowed disabled:opacity-40 sm:py-3 sm:text-[14px]"
         >
           {isRunningTrashClaw ? "GRABBING..." : "RUN TRASH CLAW"}
         </button>
@@ -10990,27 +10989,59 @@ onClick={() => {
                       {pickedSlotCall.username}
                     </div>
 
-                    <div className="mx-auto mt-4 max-w-sm">
-                      <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
-                        Payout
+                    <div className="mx-auto mt-4 max-w-md space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <ActionButton
+                          onClick={async () => {
+                            const res = await fetch("/api/slot-calls", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                action: "saveResult",
+                                username: pickedSlotCall.username,
+                                slotName: pickedSlotCall.slotName,
+                                payout: null,
+                              }),
+                            });
+                            const data = await res.json();
+                            if (!res.ok || !data.ok) {
+                              alert(data.error || "Failed to save bonus.");
+                              return;
+                            }
+                            await fetch(`/api/slot-calls?id=${pickedSlotCall.id}`, { method: "DELETE" });
+                            setPickedSlotCall(null);
+                            setSlotPayoutInput("");
+                            setSlotWheelRotation(0);
+                            await loadSlotCalls();
+                          }}
+                          variant="purple"
+                          className="min-h-[38px] text-[9px]"
+                        >
+                          Save for Bonus Hunt
+                        </ActionButton>
+
+                        <ActionButton
+                          onClick={handleRemovePickedSlot}
+                          variant="red"
+                          className="min-h-[38px] text-[9px]"
+                        >
+                          Didn't Get In
+                        </ActionButton>
                       </div>
 
-                      <div className="mt-2 flex items-center gap-2">
-                        <div className="flex min-w-0 flex-1 items-center rounded-lg border border-purple-300/15 bg-black/60 px-3">
-                          <span className="mr-1 text-sm font-black text-purple-200/60">
-                            $
-                          </span>
+                      <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
+                        Buy Hunt / Enter Result Now
+                      </div>
 
+                      <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 flex-1 items-center rounded-lg border border-purple-300/15 bg-black/60 px-3">
+                          <span className="mr-1 text-sm font-black text-purple-200/60">$</span>
                           <input
                             type="number"
                             min="0"
                             step="0.01"
                             value={slotPayoutInput}
-                            onChange={(e) =>
-                              setSlotPayoutInput(
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => setSlotPayoutInput(e.target.value)}
                             placeholder="0.00"
                             className="min-w-0 flex-1 bg-transparent py-2 text-sm font-black text-white outline-none placeholder:text-white/20"
                           />
@@ -11018,63 +11049,40 @@ onClick={() => {
 
                         <ActionButton
                           onClick={async () => {
-                            const payout = Number(
-                              slotPayoutInput
-                            );
-
-                            if (
-                              !Number.isFinite(payout) ||
-                              payout < 0
-                            ) {
-                              alert(
-                                "Enter a valid payout amount."
-                              );
+                            if (slotPayoutInput.trim() === "") {
+                              alert("Enter a payout amount.");
                               return;
                             }
-
-                            const res = await fetch(
-                              "/api/slot-calls",
-                              {
-                                method: "POST",
-                                headers: {
-                                  "Content-Type":
-                                    "application/json",
-                                },
-                                body: JSON.stringify({
-                                  action:
-                                    "saveResult",
-                                  username:
-                                    pickedSlotCall.username,
-                                  slotName:
-                                    pickedSlotCall.slotName,
-                                  payout,
-                                }),
-                              }
-                            );
-
-                            const data =
-                              await res.json();
-
+                            const payout = Number(slotPayoutInput);
+                            if (!Number.isFinite(payout) || payout < 0) {
+                              alert("Enter a valid payout amount.");
+                              return;
+                            }
+                            const res = await fetch("/api/slot-calls", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                action: "saveResult",
+                                username: pickedSlotCall.username,
+                                slotName: pickedSlotCall.slotName,
+                                payout,
+                              }),
+                            });
+                            const data = await res.json();
                             if (!res.ok || !data.ok) {
-                              alert(
-                                data.error ||
-                                  "Failed to save payout."
-                              );
+                              alert(data.error || "Failed to save payout.");
                               return;
                             }
-
+                            await fetch(`/api/slot-calls?id=${pickedSlotCall.id}`, { method: "DELETE" });
+                            setPickedSlotCall(null);
                             setSlotPayoutInput("");
-
+                            setSlotWheelRotation(0);
                             await loadSlotCalls();
-
-                            alert(
-                              "Rolled slot saved."
-                            );
                           }}
                           variant="green"
-                          className="min-h-[36px] shrink-0 px-3 text-[9px]"
+                          className="min-h-[38px] shrink-0 px-3 text-[9px]"
                         >
-                          Save Payout
+                          Enter Result
                         </ActionButton>
                       </div>
                     </div>
@@ -11230,8 +11238,7 @@ onClick={() => {
                     </div>
 
                     <div className="mt-0.5 text-[11px] text-white/35">
-                      Remove old rolled winners and
-                      payouts.
+                      Saved bonuses. Edit payouts after they are opened.
                     </div>
                   </div>
 
@@ -11301,16 +11308,80 @@ onClick={() => {
                               {result.slotName}
                             </div>
 
-                            <div className="truncate text-right text-[9px] font-black text-emerald-300">
-                              $
-                              {result.payout.toLocaleString(
-                                "en-US",
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }
-                              )}
-                            </div>
+                            {editingSlotResultId === result.id ? (
+                              <input
+                                autoFocus
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={editingSlotPayout}
+                                onChange={(e) => setEditingSlotPayout(e.target.value)}
+                                placeholder="0.00"
+                                className="min-w-0 rounded border border-purple-300/20 bg-black/70 px-2 py-1 text-right text-[9px] font-black text-white outline-none"
+                              />
+                            ) : (
+                              <div className={`truncate text-right text-[9px] font-black ${result.payout === null ? "text-amber-300" : "text-emerald-300"}`}>
+                                {result.payout === null
+                                  ? "PENDING"
+                                  : `$${result.payout.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                              </div>
+                            )}
+
+                            {editingSlotResultId === result.id ? (
+                              <>
+                                <button
+                                  onClick={async () => {
+                                    if (editingSlotPayout.trim() === "") {
+                                      alert("Enter a payout amount.");
+                                      return;
+                                    }
+                                    const payout = Number(editingSlotPayout);
+                                    if (!Number.isFinite(payout) || payout < 0) {
+                                      alert("Enter a valid payout amount.");
+                                      return;
+                                    }
+                                    const res = await fetch("/api/slot-calls", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({
+                                        action: "updateResult",
+                                        resultId: result.id,
+                                        username: result.username,
+                                        slotName: result.slotName,
+                                        payout,
+                                      }),
+                                    });
+                                    const data = await res.json();
+                                    if (!res.ok || !data.ok) {
+                                      alert(data.error || "Failed to update payout.");
+                                      return;
+                                    }
+                                    setEditingSlotResultId(null);
+                                    setEditingSlotPayout("");
+                                    await loadSlotCalls();
+                                  }}
+                                  className="rounded-md border border-emerald-300/15 bg-emerald-500/10 px-2 py-1 text-[8px] font-black uppercase text-emerald-200"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => { setEditingSlotResultId(null); setEditingSlotPayout(""); }}
+                                  className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[8px] font-black uppercase text-white/60"
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setEditingSlotResultId(result.id);
+                                  setEditingSlotPayout(result.payout === null ? "" : String(result.payout));
+                                }}
+                                className="rounded-md border border-purple-300/15 bg-purple-500/10 px-2 py-1 text-[8px] font-black uppercase text-purple-200"
+                              >
+                                Edit
+                              </button>
+                            )}
 
                             <button
                               onClick={async () => {
