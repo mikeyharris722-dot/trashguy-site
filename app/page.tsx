@@ -65,17 +65,15 @@ const fallbackLeaderboard = [
   { rank: 10, username: "ClipFarmer", wagered: 4520, totalWagered: 4520 },
 ];
 
-const leaderboardTotal = 2000;
+const leaderboardTotal = 1500;
 
 const leaderboardPrizes: Record<number, number> = {
-  1: 525,
-  2: 425,
-  3: 325,
-  4: 250,
-  5: 175,
-  6: 125,
-  7: 100,
-  8: 75,
+  1: 400,
+  2: 350,
+  3: 300,
+  4: 200,
+  5: 150,
+  6: 100,
 };
 
 const fallbackHunts: HuntItem[] = [];
@@ -716,16 +714,16 @@ type TrashClawPhase =
   | "revealed";
 
 const DEFAULT_TRASH_CLAW_PRIZES = [
-  "$5 BONUS",
-  "$10 BONUS",
-  "2X GIVEAWAY",
-  "EXTRA GIVEAWAY",
-  "VIP FOR A DAY",
-  "PICK MY NEXT SLOT",
-  "MYSTERY PRIZE",
-  "REROLL",
-  "$15 BONUS",
-  "JACKPOT",
+  "DOUBLE",
+  "-50%",
+  "TRASH CALL",
+  "MOD CALL",
+  "SLOT PICKER",
+  "+50%",
+  "KENO",
+  "LIVE TABLES",
+  "ANOTHER GIVEAWAY",
+  "TRASH CASH",
 ];
 
 const [trashClawPrizes, setTrashClawPrizes] = useState<string[]>(DEFAULT_TRASH_CLAW_PRIZES);
@@ -1120,7 +1118,7 @@ const currentPredictionAvgX =
     : "0.00";
 
     const leaderboardCountdown = useMemo(() => {
-  const end = new Date("2026-11-04T19:00:00-05:00").getTime();
+  const end = new Date("2026-10-04T19:00:00-04:00").getTime();
   const diff = end - countdownTick;
 
   if (diff <= 0) return "Ended";
@@ -1134,8 +1132,8 @@ const currentPredictionAvgX =
 }, [countdownTick]);
 
 const leaderboardProgress = useMemo(() => {
-  const start = new Date("2026-10-04T19:00:00-04:00").getTime();
-  const end = new Date("2026-11-04T19:00:00-05:00").getTime();
+  const start = new Date("2026-09-04T19:00:00-04:00").getTime();
+  const end = new Date("2026-10-04T19:00:00-04:00").getTime();
   const total = end - start;
   const elapsed = countdownTick - start;
 
@@ -1449,9 +1447,21 @@ const trashClawHasUnsavedChanges =
 const getTrashClawPool = () =>
   savedTrashClawPrizes.map((prize) => prize.trim()).filter(Boolean);
 
-const getTrashClawCardIcon = (index: number) => {
-  const icons = [FaGift, FaTicket, FaBolt, FaStar];
-  return icons[index % icons.length];
+const getTrashClawPrizeDesign = (prize: string) => {
+  const key = prize.trim().toUpperCase();
+  const designs: Record<string, { emoji: string; accent: string; card: string; glow: string; subtitle: string }> = {
+    "DOUBLE": { emoji: "2X", accent: "text-pink-200", card: "from-rose-950/95 via-pink-950/90 to-black", glow: "border-pink-400/70 shadow-[0_0_28px_rgba(236,72,153,0.28)]", subtitle: "DOUBLE IT" },
+    "-50%": { emoji: "⬇️", accent: "text-sky-200", card: "from-sky-950/95 via-blue-950/90 to-black", glow: "border-sky-400/70 shadow-[0_0_28px_rgba(56,189,248,0.28)]", subtitle: "HALF OFF" },
+    "TRASH CALL": { emoji: "🗑️📞", accent: "text-lime-200", card: "from-lime-950/80 via-emerald-950/85 to-black", glow: "border-lime-400/65 shadow-[0_0_28px_rgba(163,230,53,0.24)]", subtitle: "CALL THE TRASH" },
+    "MOD CALL": { emoji: "🛡️📞", accent: "text-blue-200", card: "from-blue-950/90 via-indigo-950/90 to-black", glow: "border-blue-400/65 shadow-[0_0_28px_rgba(96,165,250,0.25)]", subtitle: "MODS DECIDE" },
+    "SLOT PICKER": { emoji: "🎰", accent: "text-yellow-200", card: "from-red-950/90 via-amber-950/75 to-black", glow: "border-yellow-400/70 shadow-[0_0_30px_rgba(250,204,21,0.28)]", subtitle: "PICK A SLOT" },
+    "+50%": { emoji: "📈", accent: "text-emerald-200", card: "from-emerald-950/95 via-green-950/85 to-black", glow: "border-emerald-400/70 shadow-[0_0_28px_rgba(52,211,153,0.28)]", subtitle: "BOOST IT" },
+    "KENO": { emoji: "🎱", accent: "text-orange-200", card: "from-orange-950/90 via-amber-950/80 to-black", glow: "border-orange-400/70 shadow-[0_0_28px_rgba(251,146,60,0.28)]", subtitle: "LUCKY NUMBERS" },
+    "LIVE TABLES": { emoji: "🃏", accent: "text-red-200", card: "from-red-950/95 via-rose-950/80 to-black", glow: "border-red-400/70 shadow-[0_0_28px_rgba(248,113,113,0.28)]", subtitle: "DEAL IT" },
+    "ANOTHER GIVEAWAY": { emoji: "🎁", accent: "text-fuchsia-200", card: "from-fuchsia-950/95 via-purple-950/85 to-black", glow: "border-fuchsia-400/70 shadow-[0_0_30px_rgba(232,121,249,0.30)]", subtitle: "RUN IT BACK" },
+    "TRASH CASH": { emoji: "💵🗑️", accent: "text-green-200", card: "from-green-950/95 via-emerald-950/80 to-black", glow: "border-green-400/75 shadow-[0_0_32px_rgba(74,222,128,0.32)]", subtitle: "TRASHGUY CASH" },
+  };
+  return designs[key] ?? { emoji: "🎁", accent: "text-purple-200", card: "from-purple-950/95 via-violet-950/85 to-black", glow: "border-purple-400/65 shadow-[0_0_28px_rgba(168,85,247,0.28)]", subtitle: "TRASH CLAW" };
 };
 
 const buildTrashClawFinalists = (pool: string[], count = 5) => {
@@ -4880,7 +4890,7 @@ return (
         lg:text-[54px]
       "
     >
-      $2,000 LEADERBOARD
+      $1,500 LEADERBOARD
     </div>
 
   </div>
@@ -9549,7 +9559,7 @@ onClick={() => {
     <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <div className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-300/60 sm:text-[10px]">Giveaway Bonus Picker</div>
-        <h2 className="mt-1 text-xl font-black tracking-[0.08em] text-white sm:text-3xl">TRASH CLAW</h2>
+        <h2 className="mt-1 text-xl font-black tracking-[0.08em] text-white drop-shadow-[0_0_12px_rgba(217,70,239,0.65)] sm:text-3xl">🗑️ TRASH CLAW 👑</h2>
         <p className="mt-1 max-w-2xl text-[10px] leading-4 text-white/45 sm:text-xs">
           Edit your 10 possible extras, press Save 10 Options, then run the claw after a giveaway winner earns a Trash Claw grab.
         </p>
@@ -9575,6 +9585,18 @@ onClick={() => {
             <span>Option {index + 1}</span>
             <span className="rounded-full border border-purple-300/15 bg-purple-500/10 px-1.5 py-0.5 text-purple-200/55">#{String(index + 1).padStart(2, "0")}</span>
           </span>
+          {(() => {
+            const design = getTrashClawPrizeDesign(prize);
+            return (
+              <div className={`mb-2 flex items-center gap-2 rounded-lg border bg-gradient-to-r ${design.card} ${design.glow} px-2 py-1.5`}>
+                <div className={`flex h-8 min-w-8 items-center justify-center text-lg font-black drop-shadow-[0_0_8px_currentColor] ${design.accent}`}>{design.emoji}</div>
+                <div className="min-w-0">
+                  <div className="truncate text-[8px] font-black uppercase tracking-[0.08em] text-white sm:text-[9px]">{prize || `Prize ${index + 1}`}</div>
+                  <div className={`text-[6px] font-black uppercase tracking-[0.15em] opacity-65 ${design.accent}`}>{design.subtitle}</div>
+                </div>
+              </div>
+            );
+          })()}
           <input
             value={prize}
             disabled={isRunningTrashClaw}
@@ -9616,11 +9638,16 @@ onClick={() => {
               </div>
 
               {trashClawWinner && (trashClawPhase === "lifting" || trashClawPhase === "revealed") && (
-                <div className="absolute left-1/2 top-[27px] z-20 flex h-[70px] w-[62px] -translate-x-1/2 flex-col items-center justify-center overflow-hidden rounded-xl border border-purple-200/60 bg-[radial-gradient(circle_at_top,rgba(216,180,254,0.26),transparent_42%),linear-gradient(145deg,#281036,#070309)] px-1.5 text-center text-white shadow-[0_0_28px_rgba(168,85,247,0.42)] sm:h-[90px] sm:w-[80px] lg:h-[100px] lg:w-[92px]">
-                  <FaGift className="mb-1 text-[13px] text-purple-200 sm:text-[17px]" />
-                  <div className="text-[6px] font-black uppercase leading-tight sm:text-[8px] lg:text-[9px]">{trashClawWinner}</div>
-                  <div className="mt-1 text-[5px] font-black uppercase tracking-[0.16em] text-purple-300/45 sm:text-[6px]">TRASH CLAW</div>
-                </div>
+                (() => {
+                  const design = getTrashClawPrizeDesign(trashClawWinner);
+                  return (
+                    <div className={`absolute left-1/2 top-[27px] z-20 flex h-[70px] w-[62px] -translate-x-1/2 flex-col items-center justify-center overflow-hidden rounded-xl border bg-gradient-to-b ${design.card} ${design.glow} px-1.5 text-center text-white sm:h-[90px] sm:w-[80px] lg:h-[100px] lg:w-[92px]`}>
+                      <div className={`mb-1 text-[18px] font-black leading-none drop-shadow-[0_0_10px_currentColor] sm:text-[24px] ${design.accent}`}>{design.emoji}</div>
+                      <div className="text-[6px] font-black uppercase leading-tight sm:text-[8px] lg:text-[9px]">{trashClawWinner}</div>
+                      <div className={`mt-1 text-[5px] font-black uppercase tracking-[0.13em] opacity-70 sm:text-[6px] ${design.accent}`}>{design.subtitle}</div>
+                    </div>
+                  );
+                })()
               )}
             </div>
           </div>
@@ -9637,16 +9664,15 @@ onClick={() => {
                 }}
               >
                 {trashClawReel.map((prize, index) => {
-                  const PrizeIcon = getTrashClawCardIcon(index);
+                  const design = getTrashClawPrizeDesign(prize);
                   return (
                     <div key={`${prize}-${index}`} className="w-1/5 min-w-[20%] shrink-0 px-[3px] sm:px-[5px] lg:px-2">
-                      <div className="relative flex aspect-[4/5] flex-col items-center justify-center overflow-hidden rounded-xl border border-purple-300/20 bg-[radial-gradient(circle_at_50%_12%,rgba(216,180,254,0.20),transparent_38%),linear-gradient(155deg,#24102f,#09040d_62%,#030104)] px-1.5 text-center text-white shadow-[inset_0_0_22px_rgba(168,85,247,0.05)]">
-                        <div className="absolute left-1.5 top-1.5 rounded-full border border-purple-300/15 bg-black/35 px-1.5 py-0.5 text-[5px] font-black tracking-wider text-purple-200/45 sm:text-[6px]">#{String((index % 10) + 1).padStart(2, "0")}</div>
-                        <div className="mb-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-purple-300/25 bg-purple-500/10 shadow-[0_0_14px_rgba(168,85,247,0.16)] sm:h-9 sm:w-9 lg:h-10 lg:w-10">
-                          <PrizeIcon className="text-[12px] text-purple-200 sm:text-[15px] lg:text-[17px]" />
-                        </div>
-                        <div className="text-[7px] font-black uppercase leading-tight sm:text-[9px] lg:text-[11px]">{prize}</div>
-                        <div className="mt-1.5 text-[5px] font-black uppercase tracking-[0.16em] text-purple-300/35 sm:text-[6px]">TRASH CLAW</div>
+                      <div className={`relative flex aspect-[4/5] flex-col items-center justify-center overflow-hidden rounded-xl border bg-gradient-to-b ${design.card} ${design.glow} px-1.5 text-center text-white`}>
+                        <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_20%_20%,white_0,transparent_2px)] [background-size:18px_18px]" />
+                        <div className="absolute left-1.5 top-1.5 z-10 rounded-full border border-white/15 bg-black/45 px-1.5 py-0.5 text-[5px] font-black tracking-wider text-white/55 sm:text-[6px]">#{String((index % 10) + 1).padStart(2, "0")}</div>
+                        <div className={`relative z-10 mb-2 text-[22px] font-black leading-none drop-shadow-[0_0_12px_currentColor] sm:text-[30px] lg:text-[34px] ${design.accent}`}>{design.emoji}</div>
+                        <div className="relative z-10 text-[7px] font-black uppercase leading-tight sm:text-[9px] lg:text-[11px]">{prize}</div>
+                        <div className={`relative z-10 mt-1.5 text-[5px] font-black uppercase tracking-[0.13em] opacity-70 sm:text-[6px] ${design.accent}`}>{design.subtitle}</div>
                       </div>
                     </div>
                   );
@@ -9661,15 +9687,15 @@ onClick={() => {
                     <div key={`${prize}-${index}`} className={`w-1/5 min-w-0 px-[3px] transition duration-200 sm:px-[5px] lg:px-2 ${lifted ? "opacity-0" : "opacity-100"} ${isWinner && ["targeting","opening","dropping","grabbing"].includes(trashClawPhase) ? "scale-[1.025]" : "scale-100"}`}>
                       <div className={`relative flex aspect-[4/5] flex-col items-center justify-center overflow-hidden rounded-xl border bg-[radial-gradient(circle_at_50%_12%,rgba(216,180,254,0.20),transparent_38%),linear-gradient(155deg,#24102f,#09040d_62%,#030104)] px-1.5 text-center text-white ${isWinner ? "border-purple-200/50 shadow-[0_0_22px_rgba(168,85,247,0.24)]" : "border-purple-300/20"}`}>
                         {(() => {
-                          const PrizeIcon = getTrashClawCardIcon(index);
+                          const design = getTrashClawPrizeDesign(prize);
                           return (
                             <>
-                              <div className="absolute left-1.5 top-1.5 rounded-full border border-purple-300/15 bg-black/35 px-1.5 py-0.5 text-[5px] font-black tracking-wider text-purple-200/45 sm:text-[6px]">#{String(index + 1).padStart(2, "0")}</div>
-                              <div className="mb-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-purple-300/25 bg-purple-500/10 shadow-[0_0_14px_rgba(168,85,247,0.16)] sm:h-9 sm:w-9 lg:h-10 lg:w-10">
-                                <PrizeIcon className="text-[12px] text-purple-200 sm:text-[15px] lg:text-[17px]" />
-                              </div>
-                              <div className="text-[7px] font-black uppercase leading-tight sm:text-[9px] lg:text-[11px]">{prize}</div>
-                              <div className="mt-1.5 text-[5px] font-black uppercase tracking-[0.16em] text-purple-300/35 sm:text-[6px]">TRASH CLAW</div>
+                              <div className={`absolute inset-0 bg-gradient-to-b ${design.card}`} />
+                              <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_20%_20%,white_0,transparent_2px)] [background-size:18px_18px]" />
+                              <div className="absolute left-1.5 top-1.5 z-10 rounded-full border border-white/15 bg-black/45 px-1.5 py-0.5 text-[5px] font-black tracking-wider text-white/55 sm:text-[6px]">#{String(index + 1).padStart(2, "0")}</div>
+                              <div className={`relative z-10 mb-2 text-[22px] font-black leading-none drop-shadow-[0_0_12px_currentColor] sm:text-[30px] lg:text-[34px] ${design.accent}`}>{design.emoji}</div>
+                              <div className="relative z-10 text-[7px] font-black uppercase leading-tight sm:text-[9px] lg:text-[11px]">{prize}</div>
+                              <div className={`relative z-10 mt-1.5 text-[5px] font-black uppercase tracking-[0.13em] opacity-70 sm:text-[6px] ${design.accent}`}>{design.subtitle}</div>
                             </>
                           );
                         })()}
@@ -9689,12 +9715,17 @@ onClick={() => {
           </div>
         </div>
 
-        {trashClawWinner && trashClawPhase === "revealed" && (
-          <div className="mt-2.5 rounded-xl border border-purple-300/20 bg-purple-400/[0.06] px-3 py-2.5 text-center">
-            <div className="text-[8px] font-black uppercase tracking-[0.16em] text-purple-200/50">Trash Claw Grabbed</div>
-            <div className="mt-1 text-sm font-black text-purple-100 sm:text-lg">{trashClawWinner}</div>
-          </div>
-        )}
+        {trashClawWinner && trashClawPhase === "revealed" && (() => {
+          const design = getTrashClawPrizeDesign(trashClawWinner);
+          return (
+            <div className={`mt-2.5 overflow-hidden rounded-xl border bg-gradient-to-r ${design.card} ${design.glow} px-3 py-3 text-center`}>
+              <div className="text-[8px] font-black uppercase tracking-[0.22em] text-white/55">🎉 TRASH CLAW WINNER 🎉</div>
+              <div className={`mt-1 text-3xl font-black drop-shadow-[0_0_12px_currentColor] ${design.accent}`}>{design.emoji}</div>
+              <div className="mt-1 text-base font-black uppercase text-white sm:text-xl">{trashClawWinner}</div>
+              <div className={`mt-1 text-[8px] font-black uppercase tracking-[0.18em] opacity-70 ${design.accent}`}>{design.subtitle}</div>
+            </div>
+          );
+        })()}
 
         <button
           type="button"
