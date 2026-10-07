@@ -16,7 +16,10 @@ import {
   FaStar,
 } from "react-icons/fa6";
 import { SiKick } from "react-icons/si";
-import { slotData, providerLogos, type SlotItem } from "./slotData";
+import ProviderMark from "@/components/provider-mark";
+import {FEATURED_PROVIDERS,providerName,featuredLogos} from "@/lib/slot-providers";
+import TrackerAdmin from "@/components/tracker-admin";
+import { slotData as originalSlotData, providerLogos, type SlotItem } from "./slotData";
 import { Russo_One } from "next/font/google";
 
 const russo = Russo_One({
@@ -139,6 +142,7 @@ type HuntBonusItem = {
 };
 
 type HuntItem = {
+  source?: string;
   id: string;
   localId: string;
   externalHuntId: string;
@@ -665,6 +669,13 @@ function MatchCard({
 }
 
 export default function Home() {
+ const [slotData,setCatalogueSlots]=useState<SlotItem[]>(()=>originalSlotData.map(g=>({...g,provider:providerName(g.provider)})));
+ const [showMoreProviders,setShowMoreProviders]=useState(false);
+ const [trackerHuntId,setTrackerHuntId]=useState("");
+ const [trackerBet,setTrackerBet]=useState("0.20");
+ const [trackerCost,setTrackerCost]=useState("");
+ const [trackerBusy,setTrackerBusy]=useState(false);
+
 
   const [activeSection, setActiveSection] = useState("home");
 
@@ -1193,15 +1204,15 @@ const buildSlotPickerCards = (
 
 const slotProviders = useMemo(() => {
   return Array.from(new Set(slotData.map((slot) => slot.provider)));
-}, []);
+}, [slotData]);
 
 const filteredSlots = useMemo(() => {
-  if (selectedProviders.length === 0) return slotData;
+  if (selectedProviders.length === 0) return slotData.filter(slot=>FEATURED_PROVIDERS.includes(slot.provider));
 
   return slotData.filter((slot) =>
     selectedProviders.includes(slot.provider)
   );
-}, [selectedProviders]);
+}, [selectedProviders,slotData]);
 
 const toggleSlotProvider = (provider: string) => {
   setSelectedProviders((current) =>
@@ -1260,7 +1271,7 @@ useEffect(() => {
   setSlotPickerWinnerIndex(null);
   setSlotPickerClawX(50);
   setSlotPickerPhase("idle");
-}, [selectedProviders]);
+}, [selectedProviders,slotData]);
 
 const pickRandomSlot = async () => {
   if (!filteredSlots.length || isPickingSlot) return;
@@ -1660,6 +1671,7 @@ useEffect(() => {
     const rawHunts = Array.isArray(data?.hunts) ? data.hunts : [];
 
     const normalized: HuntItem[] = rawHunts.map((hunt: any, index: number) => ({
+      source: hunt.source,
       id: hunt.external_hunt_id || hunt.id || `hunt-${index}`,
       localId: hunt.local_id || hunt.db_id || hunt.uuid || hunt.hunt_id || hunt.id,
       externalHuntId: hunt.external_hunt_id || hunt.id,
@@ -2655,9 +2667,13 @@ useEffect(() => {
   loadSnakeDraft();
 }, []);
 
+async function slotFetch(url:string,options:RequestInit={}){const headers=new Headers(options.headers);if(options.method&&options.method!=="GET")headers.set("Authorization","Bearer "+await getAccessToken());return fetch(url,{...options,headers});}
+const refreshCatalogue=useCallback(async()=>{const r=await fetch("/api/catalogue?all=true");const d=await r.json();if(Array.isArray(d.games)&&d.games.length){const unique=new Map<string,SlotItem>();for(const g of d.games){if(g.enabled===false)continue;const displayProvider=providerName(g.provider,g.producer);const key=g.name.toLowerCase()+"|"+displayProvider.toLowerCase();if(!unique.has(key))unique.set(key,{name:g.name,provider:displayProvider,image:g.artwork_url||undefined});}setCatalogueSlots([...unique.values()]);}},[]);
+useEffect(()=>{void refreshCatalogue()},[refreshCatalogue]);
+async function recordPickedCall(status:"collected"|"failed",payout?:string) {if(!pickedSlotCall||trackerBusy)return;if(!trackerHuntId){alert("Choose a site hunt in the tracker controls first.");return;}setTrackerBusy(true);try{const response=await fetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await getAccessToken()},body:JSON.stringify({action:"collect",huntId:trackerHuntId,callId:pickedSlotCall.id,status,bet:trackerBet,cost:trackerCost||"0",payout})});const d=await response.json();if(!response.ok)throw new Error(d.error);setPickedSlotCall(null);setSlotWheelRotation(0);setTrackerCost("");setSlotPayoutInput("");await loadSlotCalls();await loadHunts();}catch(e){alert(e instanceof Error?e.message:"Could not save result")}finally{setTrackerBusy(false)}}
 const loadSlotCalls = async () => {
   try {
-    const res = await fetch("/api/slot-calls", {
+    const res = await slotFetch("/api/slot-calls", {
       cache: "no-store",
     });
 
@@ -3505,7 +3521,7 @@ const handleRemovePickedSlot = async () => {
   if (!pickedSlotCall) return;
 
   if (pickedSlotCall.id) {
-    await fetch(
+    await slotFetch(
       `/api/slot-calls?id=${pickedSlotCall.id}`,
       {
         method: "DELETE",
@@ -5679,7 +5695,7 @@ return (
                 </div>
 
                 <div className="mt-1 text-[14px] font-black text-white sm:text-[20px]">
-                  {currentPredictionHunt?.stats?.averagePayoutRequired &&
+                  {currentPredictionHunt?.source==="site" ? (currentPredictionHunt.stats?.averagePayoutRequired==null ? "---" : `${Number(currentPredictionHunt.stats.averagePayoutRequired).toFixed(2)}x`) : currentPredictionHunt?.stats?.averagePayoutRequired &&
                   currentPredictionHunt?.stats?.averageBetSize
                     ? `${(
                         Number(
@@ -7573,9 +7589,9 @@ animation: `predictionWheelIdleScroll ${Math.max(
 
       <div className="p-2.5 sm:p-3.5">
         <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 sm:gap-2.5">
-          {slotProviders.map((provider) => {
-            const active = selectedProviders.includes(provider);
-            const logo = providerLogos[provider];
+          {[...FEATURED_PROVIDERS.filter(p=>slotProviders.includes(p)),...(showMoreProviders?slotProviders.filter(p=>!FEATURED_PROVIDERS.includes(p)).sort():[])].map((provider) => {
+            const active = selectedProviders.length===0 ? FEATURED_PROVIDERS.includes(provider) : selectedProviders.includes(provider);
+            const logo = featuredLogos[provider]||providerLogos[provider];
 
             const providerSlotCount = slotData.filter(
               (slot) => slot.provider === provider
@@ -7584,6 +7600,9 @@ animation: `predictionWheelIdleScroll ${Math.max(
             return (
               <button
                 key={provider}
+                data-slot-provider={provider}
+                aria-label={`Provider ${provider}`}
+                aria-pressed={active}
                 onClick={() => toggleSlotProvider(provider)}
                 disabled={isPickingSlot}
                 className={`
@@ -7645,30 +7664,7 @@ animation: `predictionWheelIdleScroll ${Math.max(
                     }
                   `}
                 >
-                  {logo ? (
-                    <img
-                      src={logo}
-                      alt={provider}
-                      className={`
-                        h-6 w-6
-                        object-contain
-                        sm:h-8
-                        sm:w-8
-                        ${
-                          active
-                            ? "opacity-100"
-                            : "opacity-50"
-                        }
-                      `}
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <span className="text-[10px] font-black text-purple-200">
-                      {provider.charAt(0)}
-                    </span>
-                  )}
+                  <ProviderMark name={provider} src={logo} active={active}/>
                 </div>
 
                 {/* TEXT */}
@@ -7687,12 +7683,13 @@ animation: `predictionWheelIdleScroll ${Math.max(
           })}
         </div>
 
+        <button type="button" aria-expanded={showMoreProviders} className="mt-3 w-full rounded-lg border border-purple-300/15 bg-purple-400/5 py-2 text-xs font-bold text-purple-200" onClick={()=>setShowMoreProviders(v=>!v)}>{showMoreProviders?"Show fewer providers":`View more providers (${slotProviders.filter(p=>!FEATURED_PROVIDERS.includes(p)).length})`}</button>
         {/* PROVIDER STATUS / RESET */}
 
         <div className="mt-2.5 flex items-center justify-between border-t border-purple-300/[0.07] pt-2.5">
           <span className="text-[8px] font-black uppercase tracking-[0.10em] text-white/50 sm:text-[10px]">
             {selectedProviders.length === 0
-              ? "All providers active"
+              ? "Featured providers active"
               : `${selectedProviders.length} selected`}
           </span>
 
@@ -10754,6 +10751,7 @@ onClick={() => {
             Slot Call Wheel
           </summary>
 
+          <TrackerAdmin huntId={trackerHuntId} onHunt={setTrackerHuntId} onChange={()=>{void loadSlotCalls();void loadHunts();void refreshCatalogue();}} />
           {/* SAME SMOOTH IDLE SCROLL AS VIEWER WHEEL */}
 
           <style>{`
@@ -10990,38 +10988,20 @@ onClick={() => {
                     </div>
 
                     <div className="mx-auto mt-4 max-w-md space-y-2">
+                      <div className="grid grid-cols-2 gap-2"><label className="text-xs">Bet size<input aria-label="Selected call bet size" className="mt-1 w-full rounded bg-black p-2" value={trackerBet} onChange={e=>setTrackerBet(e.target.value)}/></label><label className="text-xs">Collection cost<input aria-label="Selected call collection cost" className="mt-1 w-full rounded bg-black p-2" value={trackerCost} onChange={e=>setTrackerCost(e.target.value)} placeholder="0.00"/></label></div>
                       <div className="grid grid-cols-2 gap-2">
                         <ActionButton
-                          onClick={async () => {
-                            const res = await fetch("/api/slot-calls", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                action: "saveResult",
-                                username: pickedSlotCall.username,
-                                slotName: pickedSlotCall.slotName,
-                                payout: null,
-                              }),
-                            });
-                            const data = await res.json();
-                            if (!res.ok || !data.ok) {
-                              alert(data.error || "Failed to save bonus.");
-                              return;
-                            }
-                            await fetch(`/api/slot-calls?id=${pickedSlotCall.id}`, { method: "DELETE" });
-                            setPickedSlotCall(null);
-                            setSlotPayoutInput("");
-                            setSlotWheelRotation(0);
-                            await loadSlotCalls();
-                          }}
+                          onClick={()=>recordPickedCall("collected")}
+                          disabled={trackerBusy}
                           variant="purple"
                           className="min-h-[38px] text-[9px]"
                         >
-                          Save for Bonus Hunt
+                          Collected · Save to hunt
                         </ActionButton>
 
                         <ActionButton
-                          onClick={handleRemovePickedSlot}
+                          onClick={()=>recordPickedCall("failed")}
+                          disabled={trackerBusy}
                           variant="red"
                           className="min-h-[38px] text-[9px]"
                         >
@@ -11048,37 +11028,8 @@ onClick={() => {
                         </div>
 
                         <ActionButton
-                          onClick={async () => {
-                            if (slotPayoutInput.trim() === "") {
-                              alert("Enter a payout amount.");
-                              return;
-                            }
-                            const payout = Number(slotPayoutInput);
-                            if (!Number.isFinite(payout) || payout < 0) {
-                              alert("Enter a valid payout amount.");
-                              return;
-                            }
-                            const res = await fetch("/api/slot-calls", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                action: "saveResult",
-                                username: pickedSlotCall.username,
-                                slotName: pickedSlotCall.slotName,
-                                payout,
-                              }),
-                            });
-                            const data = await res.json();
-                            if (!res.ok || !data.ok) {
-                              alert(data.error || "Failed to save payout.");
-                              return;
-                            }
-                            await fetch(`/api/slot-calls?id=${pickedSlotCall.id}`, { method: "DELETE" });
-                            setPickedSlotCall(null);
-                            setSlotPayoutInput("");
-                            setSlotWheelRotation(0);
-                            await loadSlotCalls();
-                          }}
+                          onClick={()=>{if(slotPayoutInput.trim()===""){alert("Enter a payout first.");return;}void recordPickedCall("collected",slotPayoutInput);}}
+                          disabled={trackerBusy}
                           variant="green"
                           className="min-h-[38px] shrink-0 px-3 text-[9px]"
                         >
@@ -11124,7 +11075,7 @@ onClick={() => {
                       )
                         return;
 
-                      const res = await fetch(
+                      const res = await slotFetch(
                         "/api/slot-calls?clearAll=true",
                         {
                           method: "DELETE",
@@ -11193,7 +11144,7 @@ onClick={() => {
                             <button
                               onClick={async () => {
                                 if (call.id) {
-                                  await fetch(
+                                  await slotFetch(
                                     `/api/slot-calls?id=${call.id}`,
                                     {
                                       method:
@@ -11251,7 +11202,7 @@ onClick={() => {
                       )
                         return;
 
-                      const res = await fetch(
+                      const res = await slotFetch(
                         "/api/slot-calls?clearResults=true",
                         {
                           method: "DELETE",
@@ -11341,7 +11292,7 @@ onClick={() => {
                                         alert("Enter a valid payout amount.");
                                         return;
                                       }
-                                      const res = await fetch("/api/slot-calls", {
+                                      const res = await slotFetch("/api/slot-calls", {
                                         method: "POST",
                                         headers: { "Content-Type": "application/json" },
                                         body: JSON.stringify({
@@ -11389,7 +11340,7 @@ onClick={() => {
 
                               <button
                                 onClick={async () => {
-                                  const res = await fetch(
+                                  const res = await slotFetch(
                                     `/api/slot-calls?resultId=${result.id}`,
                                     { method: "DELETE" }
                                   );

@@ -1,3 +1,4 @@
+import {trackerHunts} from "@/lib/site-tracker";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -9,14 +10,16 @@ const supabase = createClient(
 );
 
 export async function GET() {
+  let siteHunts:Awaited<ReturnType<typeof trackerHunts>>=[];
   try {
+    siteHunts=await trackerHunts();
     const apiKey = process.env.BONUSHUNT_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json({
         success: true,
-        hunts: [],
-        currentHuntState: null,
+        hunts: siteHunts,
+        currentHuntState: siteHunts.find(h=>h.phase!=="finished")||null,
         note: "Missing BONUSHUNT_API_KEY",
       });
     }
@@ -33,8 +36,8 @@ export async function GET() {
 
       return NextResponse.json({
         success: true,
-        hunts: [],
-        currentHuntState: null,
+        hunts: siteHunts,
+        currentHuntState: siteHunts.find(h=>h.phase!=="finished")||null,
         note: `BonusHunt API error: ${text}`,
       });
     }
@@ -55,8 +58,8 @@ export async function GET() {
     if (localError) {
       return NextResponse.json({
         success: true,
-        hunts: [],
-        currentHuntState: null,
+        hunts: siteHunts,
+        currentHuntState: siteHunts.find(h=>h.phase!=="finished")||null,
         note: localError.message,
       });
     }
@@ -68,7 +71,7 @@ export async function GET() {
       ])
     );
 
-    const hunts = externalHunts.map((hunt: any) => {
+    const externalMapped = externalHunts.map((hunt: any) => {
       const externalId = String(hunt.id);
       const local = localMap.get(externalId);
 
@@ -98,6 +101,7 @@ export async function GET() {
       };
     });
 
+    const hunts=[...siteHunts.filter(h=>h.phase!=="finished"),...externalMapped.filter((h:any)=>!String(h.id).startsWith("local:")),...siteHunts.filter(h=>h.phase==="finished")];
     const currentHuntState =
       hunts.find(
         (hunt: any) =>
@@ -114,8 +118,8 @@ export async function GET() {
   } catch (error: any) {
     return NextResponse.json({
       success: true,
-      hunts: [],
-      currentHuntState: null,
+      hunts: siteHunts,
+      currentHuntState: siteHunts.find(h=>h.phase!=="finished")||null,
       note: error?.message || "Failed to load hunts",
     });
   }

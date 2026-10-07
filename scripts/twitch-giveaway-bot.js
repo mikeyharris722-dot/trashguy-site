@@ -38,7 +38,7 @@ async function submitSlotCall({ platform, username, displayName, message }) {
     const data = await res.json();
 
     if (data.ok) {
-      console.log(`${displayName} added slot from ${platform}: ${slotName}`);
+      console.log(`${displayName} ${data.needsReview ? "requested a slot needing host confirmation" : "added slot"} from ${platform}: ${slotName}`);
     } else {
       console.log(`${displayName} slot failed: ${data.error}`);
     }

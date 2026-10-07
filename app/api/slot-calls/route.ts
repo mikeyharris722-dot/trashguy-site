@@ -1,3 +1,6 @@
+import {catalogue} from "@/lib/roulo-catalogue";
+import {matchSlot} from "@/lib/slot-matching";
+import {requireTrackerAdmin} from "@/lib/site-db";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -54,7 +57,8 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    calls: calls || [],
+    calls: await enrichCalls(calls || []),
+    reviewCalls: await reviewCalls(calls || []),
     results: results || [],
   });
 }
@@ -74,6 +78,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     const action = String(body.action || "").trim();
+    if(action) await requireTrackerAdmin(req);
 
     /*
       ========================================================
@@ -280,9 +285,9 @@ export async function POST(req: NextRequest) {
 
     const username = String(body.username || "").trim();
 
-    const slotName = String(
-      body.slotName || body.slot_name || ""
-    ).trim();
+    const originalSlotName = String(body.slotName || body.slot_name || "").trim().slice(0,120);
+    const matched = matchSlot(originalSlotName,await catalogue());
+    const slotName = matched.game?.name || originalSlotName;
 
     const platform = String(
       body.platform || "twitch"
@@ -392,11 +397,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      ok: true,
-      call: data,
-    });
+    const metadata = await supabase.from("roulo_call_matches").upsert({call_id:String(data.id),original_request:originalSlotName,identifier:matched.game?.identifier||null,status:matched.status,suggestions:matched.suggestions});
+    if(metadata.error) {await supabase.from("slot_calls").delete().eq("id",data.id);return NextResponse.json({error:"Catalogue migration is not installed; call was not queued."},{status:503});}
+    return NextResponse.json({ok:true,call:data,needsReview:matched.status==="review"});
   } catch (error: any) {
+    if(error?.message?.startsWith("AUTH:"))return NextResponse.json({error:error.message},{status:403});
     console.error("POST /api/slot-calls error:", error);
 
     return NextResponse.json(
@@ -427,6 +432,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    await requireTrackerAdmin(req);
     const id = req.nextUrl.searchParams.get("id");
 
     const clearAll =
@@ -573,6 +579,7 @@ export async function DELETE(req: NextRequest) {
       deleted: true,
     });
   } catch (error: any) {
+    if(error?.message?.startsWith("AUTH:"))return NextResponse.json({error:error.message},{status:403});
     console.error("DELETE /api/slot-calls error:", error);
 
     return NextResponse.json(
@@ -587,3 +594,6 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
+async function callMetadata(){const r=await supabase.from("roulo_call_matches").select("*");return r.data||[];}
+async function enrichCalls(calls:Record<string,unknown>[]){const meta=await callMetadata();return calls.filter(c=>!meta.some(m=>m.call_id===String(c.id)&&m.status==="review"));}
+async function reviewCalls(calls:Record<string,unknown>[]){const meta=await callMetadata();return calls.flatMap(c=>{const m=meta.find(m=>m.call_id===String(c.id)&&m.status==="review");return m?[{...c,...m}]:[];});}

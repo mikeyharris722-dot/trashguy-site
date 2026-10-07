@@ -1,0 +1,31 @@
+# Roulobets catalogue and Twitch hunt integration
+
+## Scope
+
+The existing site styling, animated slot picker and Twitch/Kick command connection remain. The existing Slot Call Wheel admin section now includes catalogue administration, matching review, a site hunt selector, bet size and collection cost. Collected and Failed results move a call out of the existing wheel transactionally. Collected bonuses and payouts feed the existing hunt display via its existing DTO shape. External BonusHunt.gg history is still read; site-managed hunts use local Supabase storage and are not written back to BonusHunt.gg.
+
+Under Admin > Slot Call Wheel, expand Catalogue administration and choose Update catalogue. The server fetches the public Roulobets game map and parses exact artwork declarations from the public frontend bundle without executing it. Current source mapping: 6,265 slot-artwork candidates. Updates preserve missing games, catalogue overrides, aliases and hunt history. Newly discovered metadata without slot-artwork evidence is not automatically promoted. Source failure retains the previous catalogue; artwork failure retains existing images and produces a warning. Source formats may change, so refresh is supported by a checked-in seed and format validation.
+
+Search and choose an exact game/provider to correct its name, image, aliases or enabled state. Calls that are ambiguous stay in review until confirmed. Equivalent provider aliases are grouped only when their source game identifiers agree; sequels and different variants stay separate. Calls retain their original text in matching metadata. Disabled games stay out of automated matching.
+
+Create a site hunt with a starting bankroll, then select it before saving wheel results. This bankroll is the recovery target. Collection costs are a separate recorded total; they are not added to that target again. During opening, save payouts with Save and next. Zero is a completed zero payout, whereas blank is pending. Required X is remaining target divided by total remaining bonus stakes, so different bet sizes are accounted for. Running X is the average of the opened bonuses' individual payout/stake ratios. Profit/loss is recorded returns minus the starting bankroll.
+
+Pending collected or failed results can be undone to return a call to the wheel. A recorded payout must be cleared before undoing collection. Finished hunts are locked against further result edits. Existing saved-results functionality remains available, but new wheel collection and immediate-result actions feed the site tracker.
+
+## Security and migration
+
+Two additive migrations live under supabase/migrations. They add catalogue state, overrides, matching metadata, site tracker tables, an audit log and private transactional functions. Existing hunts, slot calls and saved results are not reset or backfilled. RLS is enabled on new tables; browser roles have no direct access. Functions are executable only by service_role. Route handlers check a server-verified Twitch identity against the existing protected profiles.is_admin flag; signed Kick sessions require an admin profile too. Client user_metadata and admin-mode localStorage are never trusted for these actions. Existing result/edit/delete slot-call APIs now require an admin login; normal bot submissions remain compatible with the existing connection.
+
+Applied to the configured Trashguy project on 7 October 2026 after isolated SQL dry runs and a recoverable backup outside Git. Hash checks confirmed 114 existing hunts, an empty queued-call table and 14 saved results remained unchanged after the first migration. No real hunt results were used for testing.
+
+Supabase security advisors report INFO notices for service-only RLS tables without public policies; this is intentional deny-by-default behavior. Existing unrelated warnings remain: mutable search_path on set_updated_at and leaked-password protection disabled. References: https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable and https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection . No authentication setting was changed.
+
+## Verification
+
+npm run test:tracker tests exact/alias/typo matching, ambiguity, disabled games, provider aliases, precise currency, weighted remaining X and source artwork parsing. Type checking and edited helper/component lint pass. Isolated Postgres tests passed migration rollback, atomic collection, duplicate-save retry, zero payout, edits, undo, phase protection and denied anonymous function access. A synthetic local Supabase adapter exercised actual Next routes and real Edge UI: existing wheel spin, collection and payout appeared in the shared hunt DTO. Admin layout had no horizontal overflow at 390 and 1440 pixels. A successful live-source catalogue refresh against the local test database retained a manually saved alias.
+
+The Twitch/Kick bot was not connected to a live channel during tests. Bot-origin requests were simulated through its existing POST endpoint. Bulk image downloads remain unsupported; image URLs may fail to hotlink and need manual replacement. OBS overlay creation is outside this particular implementation request. Production website deployment is not part of local verification.
+
+## Featured provider controls
+
+The slot picker defaults to the ten providers from the existing site: BGaming, Backseat Gaming, Bullshark Games, Hacksaw Gaming, NetEnt, NoLimit City, Peter & Sons, Popiplay, Pragmatic Play and Shady Lady. View more reveals the rest; merely expanding does not put them into the default pick pool. Selecting an additional provider explicitly enables it. Reset returns to the ten-provider pool. Display names use the actual studio when an aggregator lists a producer, and provider aliases are combined for the presentation only. All ten featured logos are served locally; unknown logos use readable initials. Additional seven SVGs were copied from the site's existing usercontent.cc logo URLs, preserving the existing logo sources. Browser tests confirmed ten loaded logos, expanded real names, extra-provider selection, reset behavior and no overflow at 390/1440px.

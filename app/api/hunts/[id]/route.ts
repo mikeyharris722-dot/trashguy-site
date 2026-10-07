@@ -1,3 +1,4 @@
+import {trackerHunts} from "@/lib/site-tracker";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -9,6 +10,7 @@ export async function GET(
   try {
     const params = await context.params;
     const id = params?.id?.trim();
+    const local=(await trackerHunts()).find(h=>h.id===id);if(local)return NextResponse.json({success:true,hunt:local});
     const apiKey = process.env.BONUSHUNT_API_KEY;
 
     if (!id) {

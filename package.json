@@ -6,7 +6,8 @@
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:tracker": "node scripts/tracker-tests.cjs"
   },
   "dependencies": {
     "@retconned/kick-js": "^0.5.4",
