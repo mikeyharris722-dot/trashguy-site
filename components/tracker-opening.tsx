@@ -1,24 +1,33 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import type { Entry } from "./tracker-admin";
 
 export default function OpeningSession({
   entries,
+  huntId,
+  initialQueue,
   busy,
   onClose,
   save,
 }: {
   entries: Entry[];
+  huntId: string;
+  initialQueue: string[];
   busy: boolean;
   onClose: () => void;
   save: (body: Record<string, unknown>) => Promise<boolean>;
 }) {
-  const [queue, setQueue] = useState(() =>
-    entries
+  const [queue, setQueue] = useState(() => {
+    const ids = entries
       .filter((e) => e.status === "collected" && e.payout === null)
-      .map((e) => e.id),
-  );
+      .map((e) => e.id);
+    return [
+      ...initialQueue.filter((id) => ids.includes(id)),
+      ...ids.filter((id) => !initialQueue.includes(id)),
+    ];
+  });
   const [saved, setSaved] = useState<string[]>([]);
   const [payout, setPayout] = useState("");
   const [error, setError] = useState("");
@@ -30,6 +39,40 @@ export default function OpeningSession({
         (e) => e.id === id && e.status === "collected" && e.payout === null,
       ),
   );
+  const queueKey = pending.join(",");
+  useEffect(() => {
+    const abort = new AbortController();
+    async function sync() {
+      try {
+        const { data } = await supabaseBrowser.auth.getSession();
+        if (abort.signal.aborted) return;
+        const r = await fetch("/api/admin/site-tracker", {
+          method: "POST",
+          signal: abort.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + (data.session?.access_token || ""),
+          },
+          body: JSON.stringify({
+            action: "openingFocus",
+            huntId,
+            entryIds: queueKey ? queueKey.split(",") : [],
+          }),
+        });
+        if (!r.ok && !abort.signal.aborted)
+          setError(
+            "Overlay order could not sync. Close and resume opening to retry.",
+          );
+      } catch {
+        if (!abort.signal.aborted)
+          setError(
+            "Overlay connection interrupted. Close and resume to retry.",
+          );
+      }
+    }
+    void sync();
+    return () => abort.abort();
+  }, [huntId, queueKey]);
   const entry = entries.find((e) => e.id === pending[0]);
   useEffect(() => {
     input.current?.focus();

@@ -27,6 +27,7 @@ export type Entry = {
   collection_cost: string;
 };
 type Hunt = {
+  openingQueue?: string[];
   id: string;
   title: string;
   phase: string;
@@ -318,6 +319,36 @@ export default function TrackerAdmin({
           </button>
         </div>
       </details>
+      {manual && (
+        <details className="rounded-lg border border-teal-300/20 p-3">
+          <summary className="cursor-pointer font-bold text-teal-200">
+            OBS overlay
+          </summary>
+          <p className="mt-2 text-xs text-white/60">
+            Add a Browser Source in OBS. Use this overlay URL, width 420 and
+            height 700. It follows the active hunt. Collection scrolls; opening
+            stays still and follows skips.
+          </p>
+          <input
+            readOnly
+            aria-label="OBS overlay URL"
+            className={input + " mt-2 w-full"}
+            value={
+              typeof window !== "undefined"
+                ? window.location.origin + "/overlay"
+                : "/overlay"
+            }
+          />
+          <a
+            href="/overlay"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-block text-xs text-teal-200"
+          >
+            Preview overlay ↗
+          </a>
+        </details>
+      )}
       {current && (
         <>
           <HuntSettings
@@ -364,6 +395,8 @@ export default function TrackerAdmin({
           {manual && opening && current.phase === "opening" && (
             <OpeningSession
               key={current.id}
+              huntId={current.id}
+              initialQueue={current.openingQueue || []}
               entries={current.entries}
               busy={busy}
               onClose={() => setOpening(false)}
@@ -379,6 +412,14 @@ export default function TrackerAdmin({
           {manual && (
             <section className="space-y-4 rounded-xl border border-purple-300/20 bg-purple-400/5 p-4">
               <h3 className="font-bold text-purple-100">Add a bonus</h3>
+              {message.includes("already in the hunt") && (
+                <p
+                  role="alert"
+                  className="rounded-lg border border-amber-300/30 bg-amber-300/10 p-2 text-sm text-amber-200"
+                >
+                  This slot is already in the hunt.
+                </p>
+              )}
               <SlotSearch
                 key={searchReset}
                 selected={manualSlot}

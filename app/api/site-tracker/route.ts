@@ -6,13 +6,19 @@ export async function GET() {
       trackerHunts(),
       siteDb()
         .from("site_tracker_settings")
-        .select("active_hunt_id")
+        .select("active_hunt_id,opening_queue")
         .eq("id", true)
         .maybeSingle(),
     ]);
     if (settings.error) throw new Error(settings.error.message);
     return Response.json({
-      hunts,
+      hunts: hunts.map((h) => ({
+        ...h,
+        openingQueue:
+          h.id === settings.data?.active_hunt_id
+            ? settings.data?.opening_queue || []
+            : [],
+      })),
       activeHuntId: settings.data?.active_hunt_id || "",
     });
   } catch (e) {

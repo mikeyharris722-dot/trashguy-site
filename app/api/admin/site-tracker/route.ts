@@ -7,7 +7,13 @@ export async function POST(request: Request) {
       b = await request.json(),
       db = siteDb();
     let result;
-    if (b.action === "reorder") {
+    if (b.action === "openingFocus") {
+      result = await db.rpc("site_tracker_opening_focus", {
+        p_actor: actor,
+        p_hunt: b.huntId,
+        p_entries: b.entryIds,
+      });
+    } else if (b.action === "reorder") {
       result = await db.rpc("site_tracker_reorder", {
         p_actor: actor,
         p_hunt: b.huntId,
@@ -136,14 +142,19 @@ export async function POST(request: Request) {
       if (setting?.active_hunt_id) {
         const { data: duplicate, error } = await db
           .from("site_tracker_entries")
-          .select("id")
+          .select("id,identifier,slot_name")
           .eq("hunt_id", setting.active_hunt_id)
-          .eq("identifier", game.identifier)
           .eq("status", "collected")
-          .is("deleted_at", null)
-          .limit(1);
+          .is("deleted_at", null);
         if (error) throw new Error(error.message);
-        if (duplicate?.length) {
+        if (
+          duplicate?.some(
+            (e) =>
+              e.identifier === game.identifier ||
+              e.slot_name.trim().toLowerCase() ===
+                game.name.trim().toLowerCase(),
+          )
+        ) {
           const resolved = await db.rpc("site_tracker_resolve", {
             p_actor: actor,
             p_call: String(b.callId),

@@ -292,9 +292,9 @@ export async function POST(req: NextRequest) {
       const {data:settings,error:settingsError}=await supabase.from("site_tracker_settings").select("active_hunt_id").eq("id",true).maybeSingle();
       if(settingsError) throw new Error(settingsError.message);
       if(settings?.active_hunt_id){
-        const {data:duplicate,error}=await supabase.from("site_tracker_entries").select("id").eq("hunt_id",settings.active_hunt_id).eq("identifier",matched.game.identifier).eq("status","collected").is("deleted_at",null).limit(1);
+        const {data:duplicate,error}=await supabase.from("site_tracker_entries").select("id,identifier,slot_name").eq("hunt_id",settings.active_hunt_id).eq("status","collected").is("deleted_at",null);
         if(error) throw new Error(error.message);
-        if(duplicate?.length) return NextResponse.json({error:`${slotName} is already in the active hunt. Call ignored.`,ignored:true},{status:409});
+        if(duplicate?.some(e=>e.identifier===matched.game?.identifier||e.slot_name.trim().toLowerCase()===slotName.trim().toLowerCase())) return NextResponse.json({error:`${slotName} is already in the active hunt. Call ignored.`,ignored:true},{status:409});
       }
     }
 
@@ -612,9 +612,9 @@ async function eligibleCalls(calls:Record<string,unknown>[]) {
   const {data:setting,error}=await supabase.from("site_tracker_settings").select("active_hunt_id").eq("id",true).maybeSingle();
   if(error) throw new Error(error.message);
   if(!setting?.active_hunt_id) return enriched;
-  const {data:entries,error:entryError}=await supabase.from("site_tracker_entries").select("identifier").eq("hunt_id",setting.active_hunt_id).eq("status","collected").is("deleted_at",null);
+  const {data:entries,error:entryError}=await supabase.from("site_tracker_entries").select("identifier,slot_name").eq("hunt_id",setting.active_hunt_id).eq("status","collected").is("deleted_at",null);
   if(entryError) throw new Error(entryError.message);
-  const identifiers=new Set((entries||[]).map(e=>e.identifier));
+  const identifiers=new Set((entries||[]).map(e=>e.identifier));const names=new Set((entries||[]).map(e=>e.slot_name.trim().toLowerCase()));
   const metadata=await callMetadata();
-  return enriched.filter((c,index)=>!identifiers.has(metadata.find(m=>m.call_id===String(calls[index].id))?.identifier));
+  return enriched.filter((c,index)=>!identifiers.has(metadata.find(m=>m.call_id===String(calls[index].id))?.identifier) && (c.needs_review || !names.has(String(calls[index].slot_name).trim().toLowerCase())));
 }
