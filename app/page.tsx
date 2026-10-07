@@ -11294,7 +11294,7 @@ onClick={() => {
                         (result, index) => (
                           <div
                             key={result.id}
-                            className="grid grid-cols-[24px_minmax(0,0.8fr)_minmax(0,1fr)_70px_auto] items-center gap-2 rounded-lg border border-purple-300/10 bg-white/[0.025] px-2 py-1.5"
+                            className="grid grid-cols-[24px_minmax(0,0.8fr)_minmax(0,1fr)_70px_minmax(96px,auto)] items-center gap-2 rounded-lg border border-purple-300/10 bg-white/[0.025] px-2 py-1.5"
                           >
                             <div className="text-[8px] font-black text-purple-300/60">
                               {index + 1}
@@ -11327,102 +11327,87 @@ onClick={() => {
                               </div>
                             )}
 
-                            {editingSlotResultId === result.id ? (
-                              <>
+                            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                              {editingSlotResultId === result.id ? (
+                                <>
+                                  <button
+                                    onClick={async () => {
+                                      if (editingSlotPayout.trim() === "") {
+                                        alert("Enter a payout amount.");
+                                        return;
+                                      }
+                                      const payout = Number(editingSlotPayout);
+                                      if (!Number.isFinite(payout) || payout < 0) {
+                                        alert("Enter a valid payout amount.");
+                                        return;
+                                      }
+                                      const res = await fetch("/api/slot-calls", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                          action: "updateResult",
+                                          resultId: result.id,
+                                          username: result.username,
+                                          slotName: result.slotName,
+                                          payout,
+                                        }),
+                                      });
+                                      const data = await res.json();
+                                      if (!res.ok || !data.ok) {
+                                        alert(data.error || "Failed to update payout.");
+                                        return;
+                                      }
+                                      setEditingSlotResultId(null);
+                                      setEditingSlotPayout("");
+                                      await loadSlotCalls();
+                                    }}
+                                    className="rounded-md border border-emerald-300/15 bg-emerald-500/10 px-2 py-1 text-[8px] font-black uppercase text-emerald-200"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingSlotResultId(null);
+                                      setEditingSlotPayout("");
+                                    }}
+                                    className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[8px] font-black uppercase text-white/60"
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
                                 <button
-                                  onClick={async () => {
-                                    if (editingSlotPayout.trim() === "") {
-                                      alert("Enter a payout amount.");
-                                      return;
-                                    }
-                                    const payout = Number(editingSlotPayout);
-                                    if (!Number.isFinite(payout) || payout < 0) {
-                                      alert("Enter a valid payout amount.");
-                                      return;
-                                    }
-                                    const res = await fetch("/api/slot-calls", {
-                                      method: "POST",
-                                      headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify({
-                                        action: "updateResult",
-                                        resultId: result.id,
-                                        username: result.username,
-                                        slotName: result.slotName,
-                                        payout,
-                                      }),
-                                    });
-                                    const data = await res.json();
-                                    if (!res.ok || !data.ok) {
-                                      alert(data.error || "Failed to update payout.");
-                                      return;
-                                    }
-                                    setEditingSlotResultId(null);
-                                    setEditingSlotPayout("");
-                                    await loadSlotCalls();
+                                  onClick={() => {
+                                    setEditingSlotResultId(result.id);
+                                    setEditingSlotPayout(result.payout === null ? "" : String(result.payout));
                                   }}
-                                  className="rounded-md border border-emerald-300/15 bg-emerald-500/10 px-2 py-1 text-[8px] font-black uppercase text-emerald-200"
+                                  className="rounded-md border border-purple-300/15 bg-purple-500/10 px-2 py-1 text-[8px] font-black uppercase text-purple-200"
                                 >
-                                  Save
+                                  Edit
                                 </button>
-                                <button
-                                  onClick={() => { setEditingSlotResultId(null); setEditingSlotPayout(""); }}
-                                  className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[8px] font-black uppercase text-white/60"
-                                >
-                                  Cancel
-                                </button>
-                              </>
-                            ) : (
+                              )}
+
                               <button
-                                onClick={() => {
-                                  setEditingSlotResultId(result.id);
-                                  setEditingSlotPayout(result.payout === null ? "" : String(result.payout));
-                                }}
-                                className="rounded-md border border-purple-300/15 bg-purple-500/10 px-2 py-1 text-[8px] font-black uppercase text-purple-200"
-                              >
-                                Edit
-                              </button>
-                            )}
-
-                            <button
-                              onClick={async () => {
-                                const res =
-                                  await fetch(
+                                onClick={async () => {
+                                  const res = await fetch(
                                     `/api/slot-calls?resultId=${result.id}`,
-                                    {
-                                      method:
-                                        "DELETE",
-                                    }
+                                    { method: "DELETE" }
                                   );
-
-                                const data =
-                                  await res.json();
-
-                                if (
-                                  !res.ok ||
-                                  !data.ok
-                                ) {
-                                  alert(
-                                    data.error ||
-                                      "Failed to remove rolled result."
+                                  const data = await res.json();
+                                  if (!res.ok || !data.ok) {
+                                    alert(data.error || "Failed to remove rolled result.");
+                                    return;
+                                  }
+                                  setSlotCallResults((current) =>
+                                    current.filter((item) => item.id !== result.id)
                                   );
-                                  return;
-                                }
-
-                                setSlotCallResults(
-                                  (current) =>
-                                    current.filter(
-                                      (item) =>
-                                        item.id !==
-                                        result.id
-                                    )
-                                );
-
-                                await loadSlotCalls();
-                              }}
-                              className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20"
-                            >
-                              Remove
-                            </button>
+                                  await loadSlotCalls();
+                                }}
+                                className="rounded-md border border-red-300/15 bg-red-500/10 px-2 py-1 text-[8px] font-black uppercase text-red-200 transition hover:bg-red-500/20"
+                              >
+                                Remove
+                              </button>
+                            </div>
                           </div>
                         )
                       )}
