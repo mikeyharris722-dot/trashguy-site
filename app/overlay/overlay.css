@@ -187,45 +187,31 @@ body:has(.hunt-overlay) nextjs-portal {
   display: none !important;
 }
 
-/* Sized for an 800 × 600 OBS browser source. */
+/* Compact OBS browser source: 435 × 285. */
 .hunt-overlay {
-  width: min(100vw, 800px);
-  max-width: 800px;
-  height: min(100dvh, 600px);
+  width: min(100vw, 435px);
+  max-width: 435px;
+  height: min(100dvh, 285px);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px;
-  font-size: 16px;
+  gap: 3px;
+  padding: 4px;
+  font-size: 11px;
 }
-.hunt-overlay > header,
-.overlay-stats,
-.overlay-awards,
-.overlay-latest,
-.overlay-warning {
-  flex-shrink: 0;
-}
-.hunt-overlay header { font-size: 20px; padding: 10px; }
+.hunt-overlay > header, .overlay-stats, .overlay-awards,
+.overlay-latest, .overlay-warning { flex-shrink: 0; }
+.hunt-overlay header { padding: 5px 7px; font-size: 12px; }
 .hunt-overlay header strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hunt-overlay header span { font-size: 12px; }
-.overlay-stats { gap: 8px 24px; padding: 10px; margin-top: 0; }
-.overlay-awards { padding: 10px; margin: 0; }
-.overlay-awards span { font-size: 12px; }
-.overlay-awards b { font-size: 16px; }
-.overlay-table { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 8px; }
-.overlay-columns, .overlay-row { grid-template-columns: minmax(0, 1fr) 90px 110px; gap: 10px; }
-.overlay-columns { font-size: 12px; flex-shrink: 0; }
-.overlay-row { height: 32px; font-size: 16px; }
-.overlay-slot em { font-size: 11px; }
+.hunt-overlay header span { font-size: 9px; }
+.overlay-stats { gap: 4px 10px; padding: 5px 7px; margin: 0; }
+.overlay-awards { padding: 5px 7px; margin: 0; }
+.overlay-awards div { gap: 2px; }
+.overlay-table { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 4px; }
+.overlay-columns { flex-shrink: 0; padding-bottom: 4px; }
+.overlay-row { height: 21px; font-size: 11px; }
 .overlay-list { flex: 1; min-height: 0; }
 .overlay-scroll { height: auto; }
-.overlay-latest { margin-bottom: 0; padding: 10px; }
-.overlay-latest > span { font-size: 11px; }
-.overlay-latest small { font-size: 14px; }
-@media (max-width: 500px) {
-  .hunt-overlay { font-size: 12px; }
-  .hunt-overlay header { font-size: 15px; }
-  .overlay-columns, .overlay-row { grid-template-columns: minmax(0, 1fr) 60px 75px; gap: 4px; }
-  .overlay-row, .overlay-awards b { font-size: 12px; }
-  .overlay-stats { gap: 6px 8px; }
-}
+.overlay-latest { grid-template-columns: 1fr auto; gap: 2px 8px; padding: 4px 7px; margin: 0; }
+.overlay-latest > span { grid-column: 1 / -1; }
+.overlay-latest b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.overlay-latest strong { white-space: nowrap; }
