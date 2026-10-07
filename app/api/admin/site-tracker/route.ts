@@ -7,7 +7,12 @@ export async function POST(request: Request) {
       b = await request.json(),
       db = siteDb();
     let result;
-    if (b.action === "removeEntry") {
+    if (b.action === "select") {
+      result = await db.rpc("site_tracker_select", {
+        p_actor: actor,
+        p_hunt: b.huntId || null,
+      });
+    } else if (b.action === "removeEntry") {
       result = await db.rpc("site_tracker_remove_entry", {
         p_actor: actor,
         p_entry: b.entryId,
@@ -22,7 +27,11 @@ export async function POST(request: Request) {
         p_actor: actor,
         p_hunt: b.huntId,
         p_request: b.requestId,
-        p_game: game,
+        p_game: {
+          ...game,
+          bonus_tier: b.tier || "standard",
+          notes: b.notes || "",
+        },
         p_bet: b.bet,
       });
     } else if (b.action === "delete") {
@@ -97,12 +106,14 @@ export async function POST(request: Request) {
       if (b.payout !== null) money(b.payout);
       money(b.bet);
       money(b.cost);
-      result = await db.rpc("site_tracker_payout", {
+      result = await db.rpc("site_tracker_bonus_edit", {
         p_actor: actor,
         p_entry: b.entryId,
         p_payout: b.payout,
         p_bet: b.bet,
         p_cost: b.cost,
+        p_tier: b.tier ?? null,
+        p_notes: b.notes ?? null,
       });
     } else if (b.action === "resolve") {
       const games = await catalogue(),

@@ -595,5 +595,5 @@ export async function DELETE(req: NextRequest) {
   }
 }
 async function callMetadata(){const r=await supabase.from("roulo_call_matches").select("*");return r.data||[];}
-async function enrichCalls(calls:Record<string,unknown>[]){const meta=await callMetadata();return calls.filter(c=>!meta.some(m=>m.call_id===String(c.id)&&m.status==="review"));}
+async function enrichCalls(calls:Record<string,unknown>[]) {const meta=await callMetadata();return calls.map(c=>{const m=meta.find(m=>m.call_id===String(c.id));return {...c,needs_review:m?.status==="review",original_request:m?.original_request||c.slot_name,suggestions:m?.suggestions||[]};});}
 async function reviewCalls(calls:Record<string,unknown>[]){const meta=await callMetadata();return calls.flatMap(c=>{const m=meta.find(m=>m.call_id===String(c.id)&&m.status==="review");return m?[{...c,...m}]:[];});}

@@ -18,6 +18,8 @@ import {
 import { SiKick } from "react-icons/si";
 import ProviderMark from "@/components/provider-mark";
 import {FEATURED_PROVIDERS,providerName,featuredLogos} from "@/lib/slot-providers";
+import WheelEntry, {type WheelCall} from "@/components/wheel-entry";
+import type {SlotOption} from "@/components/slot-search";
 import TrackerResults from "@/components/tracker-results";
 import TrackerAdmin from "@/components/tracker-admin";
 import { slotData as originalSlotData, providerLogos, type SlotItem } from "./slotData";
@@ -873,14 +875,7 @@ async function loadSnakeDraft() {
 
 const [tournamentView, setTournamentView] = useState<"bracket" | "snake">("bracket");
 
-const [slotCalls, setSlotCalls] = useState<
-  {
-    id: string;
-    username: string;
-    slotName: string;
-    createdAt: number;
-  }[]
->([]);
+const [slotCalls, setSlotCalls] = useState<WheelCall[]>([]);
 const [slotCallResults, setSlotCallResults] = useState<
   {
     id: string;
@@ -897,12 +892,7 @@ const [editingSlotPayout, setEditingSlotPayout] = useState("");
 const [slotCallMessage, setSlotCallMessage] = useState("");
 const [isSlotWheelSpinning, setIsSlotWheelSpinning] = useState(false);
 
-const [pickedSlotCall, setPickedSlotCall] = useState<{
-  id: string;
-  username: string;
-  slotName: string;
-  createdAt: number;
-} | null>(null);
+const [pickedSlotCall, setPickedSlotCall] = useState<WheelCall | null>(null);
 
 const [slotWheelRotation, setSlotWheelRotation] = useState(0);
 const [giveawayEntries, setGiveawayEntries] = useState<any[]>([]);
@@ -2673,6 +2663,10 @@ useEffect(() => {
 async function slotFetch(url:string,options:RequestInit={}){const headers=new Headers(options.headers);if(options.method&&options.method!=="GET")headers.set("Authorization","Bearer "+await getAccessToken());return fetch(url,{...options,headers});}
 const refreshCatalogue=useCallback(async()=>{const r=await fetch("/api/catalogue?all=true");const d=await r.json();if(Array.isArray(d.games)&&d.games.length){const unique=new Map<string,SlotItem>();for(const g of d.games){if(g.enabled===false)continue;const displayProvider=providerName(g.provider,g.producer);const key=g.name.toLowerCase()+"|"+displayProvider.toLowerCase();if(!unique.has(key))unique.set(key,{name:g.name,provider:displayProvider,image:g.artwork_url||undefined});}setCatalogueSlots([...unique.values()]);}},[]);
 useEffect(()=>{void refreshCatalogue()},[refreshCatalogue]);
+const trackerSelectionPending = useRef(false);
+useEffect(()=>{let live=true;const control=new AbortController();const load=async()=>{try{const r=await fetch("/api/site-tracker",{cache:"no-store",signal:control.signal});const d=await r.json();if(r.ok&&live&&!trackerSelectionPending.current)setTrackerHuntId(d.activeHuntId||"");}catch{}};void load();const timer=setInterval(load,5000);return()=>{live=false;control.abort();clearInterval(timer);};},[]);
+const selectTrackerHunt = async (id:string)=>{trackerSelectionPending.current=true;try{const r=await slotFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"select",huntId:id})});const d=await r.json();if(!r.ok)throw new Error(d.error);setTrackerHuntId(id);}catch(e){alert(e instanceof Error?e.message:"Could not select hunt");}finally{trackerSelectionPending.current=false;}};
+const resolvePickedCall=async(game:SlotOption)=>{if(!pickedSlotCall)return;setTrackerBusy(true);try{const r=await slotFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resolve",callId:pickedSlotCall.id,identifier:game.identifier})});const d=await r.json();if(!r.ok)throw new Error(d.error);setPickedSlotCall(c=>c?{...c,slotName:game.name,needsReview:false}:null);await loadSlotCalls();}finally{setTrackerBusy(false);}};
 async function recordPickedCall(status:"collected"|"failed",payout?:string) {if(!pickedSlotCall||trackerBusy)return;if(!trackerHuntId){alert("Choose a site hunt in the tracker controls first.");return;}setTrackerBusy(true);try{const response=await fetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await getAccessToken()},body:JSON.stringify({action:"collect",huntId:trackerHuntId,callId:pickedSlotCall.id,status,bet:trackerBet,cost:trackerCost||"0",payout})});const d=await response.json();if(!response.ok)throw new Error(d.error);setPickedSlotCall(null);setTrackerEntryOpen(false);setSlotWheelRotation(0);setTrackerCost("");setSlotPayoutInput("");await loadSlotCalls();await loadHunts();}catch(e){alert(e instanceof Error?e.message:"Could not save result")}finally{setTrackerBusy(false)}}
 const loadSlotCalls = async () => {
   try {
@@ -2688,6 +2682,9 @@ const loadSlotCalls = async () => {
           id: call.id,
           username: call.username,
           slotName: call.slot_name,
+          needsReview: Boolean(call.needs_review),
+          originalRequest: call.original_request,
+          suggestions: call.suggestions || [],
           createdAt: new Date(
             call.created_at
           ).getTime(),
@@ -10744,7 +10741,7 @@ onClick={() => {
         {activeAdminTab === "bonusTracker" && <section className="rounded-xl border border-purple-300/20 bg-black/80 p-4">
           <h2 className="text-xl font-black text-purple-100">Bonus Hunt Tracker</h2>
           <p className="mt-1 text-sm text-white/50">Choose the same hunt as the wheel, or create one here. Search slots, add bonuses and manage opening results.</p>
-          <TrackerAdmin manual huntId={trackerHuntId} onHunt={setTrackerHuntId} onChange={()=>{void loadSlotCalls();void loadHunts();}} />
+          <TrackerAdmin manual huntId={trackerHuntId} onHunt={selectTrackerHunt} onChange={()=>{void loadSlotCalls();void loadHunts();}} />
         </section>}
         {/* =====================================================
             SLOT CALL WHEEL
@@ -11147,7 +11144,7 @@ onClick={() => {
             <summary className="cursor-pointer text-sm font-bold text-purple-200">Hunt and catalogue controls</summary>
             <label className="mt-3 block text-xs text-white/60">Default bet for wheel bonuses<input aria-label="Default wheel bet" className="ml-3 w-28 rounded border border-white/15 bg-black p-2 text-white" value={trackerBet} onChange={e=>setTrackerBet(e.target.value)} inputMode="decimal" /></label>
             <p className="mt-2 text-xs text-white/40">Set the usual bet once. Edit individual bets and payouts in Bonus Hunt Tracker.</p>
-            {activeAdminTab === "slotWheel" && <TrackerAdmin huntId={trackerHuntId} onHunt={setTrackerHuntId} onChange={()=>{void loadSlotCalls();void loadHunts();void refreshCatalogue();}} />}
+            {activeAdminTab === "slotWheel" && <TrackerAdmin huntId={trackerHuntId} onHunt={selectTrackerHunt} onChange={()=>{void loadSlotCalls();void loadHunts();void refreshCatalogue();}} />}
           </details>
         </details>
       </div>
@@ -11156,14 +11153,7 @@ onClick={() => {
 )}
           </main>
 
-{activeSection === "admin" && pickedSlotCall && trackerEntryOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
- <section role="dialog" aria-modal="true" aria-labelledby="slot-entry-title" onKeyDown={event=>{if(event.key==="Escape"&&!trackerBusy){setTrackerEntryOpen(false);return;}if(event.key==="Tab"){const items=Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled)'));const first=items[0],last=items[items.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}}}} className="w-full max-w-md rounded-2xl border border-purple-300/30 bg-[#100817] p-6 shadow-[0_0_70px_rgba(168,85,247,0.2)]">
-  <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-purple-300">Slot call winner</p><h2 id="slot-entry-title" className="mt-2 text-2xl font-black text-white">{pickedSlotCall.slotName}</h2><p className="mt-1 text-sm text-white/50">{pickedSlotCall.username}</p></div><button aria-label="Close result entry" disabled={trackerBusy} onClick={()=>setTrackerEntryOpen(false)} className="rounded-lg border border-white/15 px-3 py-2 text-white">✕</button></div>
-  <label className="mt-6 block text-sm text-white/70">Collection cost<input autoFocus aria-label="Selected call collection cost" className="mt-2 w-full rounded-xl border border-purple-300/20 bg-black p-3 text-xl text-white" value={trackerCost} onChange={e=>setTrackerCost(e.target.value)} inputMode="decimal" placeholder="0.00" /></label>
-  <div className="mt-5 grid grid-cols-2 gap-3"><ActionButton disabled={trackerBusy||!trackerHuntId} variant="green" onClick={()=>recordPickedCall("collected")}>GOT IN</ActionButton><ActionButton disabled={trackerBusy||!trackerHuntId} variant="red" onClick={()=>recordPickedCall("failed")}>DIDN’T GET IN</ActionButton></div>
-  <p className="mt-3 text-xs text-white/45">{trackerHuntId?"Saves the result and removes this call from the wheel.":"Choose a hunt in the controls below the wheel first."}</p>
- </section>
-</div>}
+{activeSection === "admin" && pickedSlotCall && trackerEntryOpen && <WheelEntry key={pickedSlotCall.id} call={pickedSlotCall} cost={trackerCost} onCost={setTrackerCost} busy={trackerBusy} huntId={trackerHuntId} onClose={()=>setTrackerEntryOpen(false)} onResolve={resolvePickedCall} onRecord={recordPickedCall} />}
 
 <footer
   className="

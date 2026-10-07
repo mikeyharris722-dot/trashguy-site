@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { providerName } from "@/lib/slot-providers";
+import Image from "next/image";
+import SlotSearch, { type SlotOption } from "./slot-search";
 import { supabaseBrowser } from "@/lib/supabase/client";
 type Game = {
   identifier: string;
@@ -14,6 +15,9 @@ type Game = {
 type Entry = {
   id: string;
   call_id: string;
+  artwork_url?: string | null;
+  bonus_tier: string;
+  notes: string;
   slot_name: string;
   username: string;
   status: string;
@@ -52,20 +56,15 @@ export default function TrackerAdmin({
     [start, setStart] = useState(""),
     [query, setQuery] = useState(""),
     [games, setGames] = useState<Game[]>([]),
-    [review, setReview] = useState<
-      { id: string; username: string; slot_name: string }[]
-    >([]),
     [choice, setChoice] = useState(""),
     [aliases, setAliases] = useState(""),
     [correctedName, setCorrectedName] = useState(""),
     [imageUrl, setImageUrl] = useState("");
   async function load() {
-    const [h, c] = await Promise.all([
-      fetch("/api/site-tracker").then((r) => r.json()),
-      fetch("/api/slot-calls").then((r) => r.json()),
-    ]);
+    const h = await fetch("/api/site-tracker", { cache: "no-store" }).then(
+      (r) => r.json(),
+    );
     setHunts(h.hunts || []);
-    setReview([...(c.reviewCalls || []), ...(c.calls || [])]);
     if (h.error) setMessage(h.error);
   }
   useEffect(() => {
@@ -138,19 +137,13 @@ export default function TrackerAdmin({
       setBusy(false);
     }
   }
+  const [manualSlot, setManualSlot] = useState<SlotOption | null>(null);
+  const [manualTier, setManualTier] = useState("standard");
+  const [manualNotes, setManualNotes] = useState("");
+  const [searchReset, setSearchReset] = useState(0);
   const manualRequest = useRef<string | null>(null);
   const [manualBet, setManualBet] = useState("0.20");
   const current = hunts.find((h) => h.id === huntId);
-  const manualGames = [
-    ...new Map(
-      games
-        .filter((g) => g.enabled !== false)
-        .map((g) => [
-          g.name.toLowerCase() + "|" + providerName(g.provider, g.producer),
-          g,
-        ]),
-    ).values(),
-  ];
   const input =
     "min-w-0 rounded-lg border border-purple-300/20 bg-black px-3 py-2 text-sm text-white";
   const button =
@@ -260,51 +253,65 @@ export default function TrackerAdmin({
           </div>
         </details>
       )}
-      <div className="flex flex-wrap gap-2">
-        <input
-          aria-label="New hunt title"
-          className={input}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="New site hunt name"
-        />
-        <input
-          aria-label="Recovery target"
-          className={input + " w-32"}
-          value={start}
-          onChange={(e) => setStart(e.target.value)}
-          placeholder="Starting bankroll"
-        />
-        <button
-          className={button}
-          disabled={busy || !title || !start}
-          onClick={() =>
-            action("/api/admin/site-tracker", {
-              action: "create",
-              title,
-              start,
-            })
-          }
-        >
-          Create site hunt
-        </button>
-      </div>
-      <label className="block text-xs">
-        Save selected Twitch calls to
-        <select
-          aria-label="Tracker hunt"
-          className={input + " mt-1 w-full"}
-          value={huntId}
-          onChange={(e) => onHunt(e.target.value)}
-        >
-          <option value="">Select a site hunt</option>
-          {hunts.map((h) => (
-            <option key={h.id} value={h.id}>
-              {h.title} · {h.phase}
+      <div className="rounded-xl border border-purple-300/20 bg-purple-500/5 p-4">
+        <label className="block text-xs font-bold uppercase tracking-wider text-purple-200">
+          Active hunt
+          <select
+            aria-label="Tracker hunt"
+            className={input + " mt-2 w-full"}
+            value={huntId}
+            onChange={(e) => onHunt(e.target.value)}
+          >
+            <option value="" disabled={Boolean(huntId)}>
+              Select a hunt
             </option>
-          ))}
-        </select>
-      </label>
+            {hunts.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.title} · {h.phase}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="mt-2 text-xs text-white/40">
+          Shared by the wheel and tracker. Your selection stays active until you
+          choose or create another hunt.
+        </p>
+      </div>
+      <details className="rounded-xl border border-white/10 p-3">
+        <summary className="cursor-pointer text-sm font-bold text-purple-200">
+          Create a new hunt
+        </summary>
+        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_160px_auto]">
+          <input
+            aria-label="New hunt title"
+            className={input}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Hunt name"
+          />
+          <input
+            aria-label="Recovery target"
+            className={input}
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+            inputMode="decimal"
+            placeholder="Starting bankroll"
+          />
+          <button
+            className={button}
+            disabled={busy || !title.trim() || !start.trim()}
+            onClick={() =>
+              action("/api/admin/site-tracker", {
+                action: "create",
+                title,
+                start,
+              })
+            }
+          >
+            Create hunt
+          </button>
+        </div>
+      </details>
       {current && (
         <>
           <HuntSettings
@@ -342,73 +349,84 @@ export default function TrackerAdmin({
             {current.stats.averagePayoutRequired?.toFixed(2) ?? "—"}×
           </p>
           {manual && (
-            <div className="space-y-3 rounded-xl border border-purple-300/20 bg-purple-400/5 p-4">
-              <h3 className="font-bold">Add a collected bonus</h3>
-              <input
-                aria-label="Find slot to add"
-                className={input + " w-full"}
-                placeholder="Start typing a slot name…"
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setChoice("");
+            <section className="space-y-4 rounded-xl border border-purple-300/20 bg-purple-400/5 p-4">
+              <h3 className="font-bold text-purple-100">Add a bonus</h3>
+              <SlotSearch
+                key={searchReset}
+                selected={manualSlot}
+                onSelect={(g) => {
+                  setManualSlot(g);
+                  manualRequest.current = null;
                 }}
               />
-              <select
-                aria-label="Slot to add"
-                className={input + " w-full"}
-                value={choice}
-                onChange={(e) => setChoice(e.target.value)}
-              >
-                <option value="">Select a slot and provider</option>
-                {manualGames.map((g) => (
-                  <option key={g.identifier} value={g.identifier}>
-                    {g.name} · {providerName(g.provider, g.producer)}
-                  </option>
-                ))}
-              </select>
-              <div className="flex flex-wrap items-end gap-2">
-                <label className="text-xs">
+              <div className="grid gap-3 sm:grid-cols-[140px_1fr_auto]">
+                <label className="text-xs text-white/60">
                   Bet size
                   <input
                     aria-label="Manual bonus bet size"
-                    className={input + " mt-1 block w-32"}
+                    className={input + " mt-1 w-full"}
                     inputMode="decimal"
                     value={manualBet}
                     onChange={(e) => setManualBet(e.target.value)}
                   />
                 </label>
+                <label className="text-xs text-white/60">
+                  Bonus type
+                  <select
+                    aria-label="Manual bonus type"
+                    className={input + " mt-1 w-full"}
+                    value={manualTier}
+                    onChange={(e) => setManualTier(e.target.value)}
+                  >
+                    <option value="standard">Standard</option>
+                    <option value="super">Super</option>
+                    <option value="super_super">Super Super</option>
+                  </select>
+                </label>
                 <button
-                  className={button}
-                  disabled={busy || !choice || current.phase !== "collecting"}
+                  className={button + " self-end"}
+                  disabled={
+                    busy || !manualSlot || current.phase !== "collecting"
+                  }
                   onClick={async () => {
+                    if (!manualSlot) return;
                     if (
                       await action("/api/admin/site-tracker", {
                         action: "manual",
                         huntId,
-                        identifier: choice,
+                        identifier: manualSlot.identifier,
                         bet: manualBet,
+                        tier: manualTier,
+                        notes: manualNotes,
                         requestId: (manualRequest.current ??=
                           crypto.randomUUID()),
                       })
                     ) {
                       manualRequest.current = null;
-                      setChoice("");
-                      setQuery("");
+                      setManualSlot(null);
+                      setManualNotes("");
+                      setSearchReset((n) => n + 1);
                     }
                   }}
                 >
                   Add to hunt
                 </button>
               </div>
-              <p className="text-xs text-white/50">
-                Wheel bonuses and manual bonuses share this hunt. Add bonuses
-                while collecting; record payouts when opening.
-              </p>
-            </div>
+              <label className="block text-xs text-white/60">
+                Notes (optional)
+                <input
+                  aria-label="Manual bonus notes"
+                  maxLength={1000}
+                  className={input + " mt-1 w-full"}
+                  placeholder="Feature details or a reminder…"
+                  value={manualNotes}
+                  onChange={(e) => setManualNotes(e.target.value)}
+                />
+              </label>
+            </section>
           )}
           {manual && (
-            <div className="max-h-[36rem] space-y-2 overflow-auto">
+            <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
               {current.entries.map((entry) => (
                 <BonusRow
                   key={[
@@ -416,6 +434,8 @@ export default function TrackerAdmin({
                     entry.bet_size,
                     entry.collection_cost,
                     entry.payout,
+                    entry.bonus_tier,
+                    entry.notes,
                   ].join(":")}
                   entry={entry}
                   nextId={
@@ -433,38 +453,6 @@ export default function TrackerAdmin({
           )}
         </>
       )}
-      {!manual && review.length > 0 && (
-        <details open>
-          <summary>Confirm or correct calls ({review.length})</summary>
-          <p className="my-2 text-xs text-white/50">
-            Search and select the exact catalogue game above, then confirm its
-            call below. Unconfirmed calls stay out of the wheel.
-          </p>
-          {review.map((c) => (
-            <div
-              key={c.id}
-              className="flex items-center justify-between gap-2 py-2 text-sm"
-            >
-              <span>
-                {c.username}: {c.slot_name}
-              </span>
-              <button
-                className={button}
-                disabled={busy || !choice}
-                onClick={() =>
-                  action("/api/admin/site-tracker", {
-                    action: "resolve",
-                    callId: c.id,
-                    identifier: choice,
-                  })
-                }
-              >
-                Confirm selected game
-              </button>
-            </div>
-          ))}
-        </details>
-      )}
       <p role="status" className="text-xs text-purple-200">
         {message}
       </p>
@@ -478,95 +466,185 @@ function BonusRow({
   nextId,
 }: {
   entry: Entry;
-  nextId?: string;
   disabled: boolean;
+  nextId?: string;
   save: (b: Record<string, unknown>) => Promise<boolean>;
 }) {
   const [payout, setPayout] = useState(entry.payout ?? ""),
     [bet, setBet] = useState(String(entry.bet_size)),
-    [cost, setCost] = useState(String(entry.collection_cost));
+    [cost, setCost] = useState(String(entry.collection_cost)),
+    [tier, setTier] = useState(entry.bonus_tier || "standard"),
+    [notes, setNotes] = useState(entry.notes || "");
+  const field =
+    "mt-1 w-full rounded-lg border border-white/15 bg-black/70 p-2 text-sm text-white";
+  const saveBonus = async () => {
+    if (
+      await save({
+        action: "payout",
+        entryId: entry.id,
+        bet,
+        cost,
+        payout: payout.trim() === "" ? null : payout,
+        tier,
+        notes,
+      })
+    ) {
+      if (nextId)
+        requestAnimationFrame(() =>
+          document.getElementById("tracker-payout-" + nextId)?.focus(),
+        );
+    }
+  };
   return (
-    <div className="rounded-lg border border-white/10 p-2 text-xs">
-      <p>
-        {entry.slot_name} · {entry.username} · {entry.status}
-      </p>
+    <article className="min-w-0 rounded-2xl border border-purple-300/15 bg-gradient-to-br from-purple-500/10 to-black/80 p-4">
+      <div className="flex items-start gap-3">
+        {entry.artwork_url && (
+          <Image
+            unoptimized
+            width={56}
+            height={56}
+            src={entry.artwork_url}
+            alt=""
+            className="h-14 w-14 rounded-lg object-cover"
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-black text-white">{entry.slot_name}</h3>
+          <p className="mt-1 text-xs text-white/45">
+            {entry.username} ·{" "}
+            {entry.bonus_tier === "super_super"
+              ? "Super Super"
+              : entry.bonus_tier === "super"
+                ? "Super"
+                : "Standard"}
+          </p>
+          <p className="mt-1 text-xs font-bold text-purple-200">
+            Bet ${Number(entry.bet_size).toFixed(2)}
+          </p>
+        </div>
+        <span
+          className={
+            "rounded px-2 py-1 text-[9px] font-bold " +
+            (entry.status === "collected"
+              ? "bg-emerald-400/10 text-emerald-300"
+              : "bg-red-400/10 text-red-300")
+          }
+        >
+          {entry.status === "collected" ? "GOT IN" : "FAILED"}
+        </span>
+      </div>
+      {entry.notes && (
+        <p className="mt-3 break-words text-xs text-white/60">{entry.notes}</p>
+      )}
       {entry.status === "collected" && (
-        <div className="mt-2 flex flex-wrap gap-2">
-          <label className="text-white/60">
-            Bet size
-            <input
-              aria-label={`Bet for ${entry.slot_name}`}
-              className="mt-1 block w-28 rounded-lg border border-white/15 bg-black p-2 text-white"
-              value={bet}
-              onChange={(e) => setBet(e.target.value)}
-            />
-          </label>
-          <label className="text-white/60">
-            Collection cost
-            <input
-              aria-label={`Cost for ${entry.slot_name}`}
-              className="mt-1 block w-28 rounded-lg border border-white/15 bg-black p-2 text-white"
-              value={cost}
-              onChange={(e) => setCost(e.target.value)}
-            />
-          </label>
-          <label className="text-white/60">
-            Payout
-            <input
-              id={"tracker-payout-" + entry.id}
-              aria-label={`Payout for ${entry.slot_name}`}
-              className="mt-1 block w-28 rounded-lg border border-white/15 bg-black p-2 text-white"
-              placeholder="Payout"
-              value={payout}
-              onChange={(e) => setPayout(e.target.value)}
-            />
-          </label>
+        <>
+          <div className="mt-4 flex items-end gap-2">
+            <label className="min-w-0 flex-1 text-xs text-white/60">
+              Payout
+              <input
+                id={"tracker-payout-" + entry.id}
+                aria-label={`Payout for ${entry.slot_name}`}
+                className={field}
+                inputMode="decimal"
+                value={payout}
+                onChange={(e) => setPayout(e.target.value)}
+                placeholder="Pending"
+                disabled={disabled}
+              />
+            </label>
+            <button
+              className="rounded-lg bg-purple-500/20 px-3 py-2 text-xs font-bold text-purple-100 disabled:opacity-40"
+              disabled={disabled}
+              onClick={saveBonus}
+            >
+              Save
+            </button>
+          </div>
+          <details className="mt-3 border-t border-white/10 pt-3">
+            <summary className="cursor-pointer text-xs font-bold text-purple-200">
+              Edit bonus details
+            </summary>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <label className="text-xs text-white/60">
+                Bet size
+                <input
+                  aria-label={`Bet for ${entry.slot_name}`}
+                  className={field}
+                  value={bet}
+                  onChange={(e) => setBet(e.target.value)}
+                  inputMode="decimal"
+                />
+              </label>
+              <label className="text-xs text-white/60">
+                Collection cost
+                <input
+                  aria-label={`Cost for ${entry.slot_name}`}
+                  className={field}
+                  value={cost}
+                  onChange={(e) => setCost(e.target.value)}
+                  inputMode="decimal"
+                />
+              </label>
+              <label className="col-span-2 text-xs text-white/60">
+                Bonus type
+                <select
+                  aria-label={`Bonus type for ${entry.slot_name}`}
+                  className={field}
+                  value={tier}
+                  onChange={(e) => setTier(e.target.value)}
+                >
+                  <option value="standard">Standard</option>
+                  <option value="super">Super</option>
+                  <option value="super_super">Super Super</option>
+                </select>
+              </label>
+              <label className="col-span-2 text-xs text-white/60">
+                Notes
+                <textarea
+                  aria-label={`Notes for ${entry.slot_name}`}
+                  maxLength={1000}
+                  className={field}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </label>
+            </div>
+            <button
+              disabled={disabled}
+              className="mt-3 rounded-lg bg-purple-500/20 px-3 py-2 text-xs text-purple-100 disabled:opacity-40"
+              onClick={saveBonus}
+            >
+              Save details
+            </button>
+          </details>
+        </>
+      )}
+      <div className="mt-3 flex flex-wrap gap-3 border-t border-white/10 pt-3 text-xs">
+        {entry.payout === null && !entry.call_id.startsWith("manual:") && (
           <button
             disabled={disabled}
-            onClick={async () => {
-              if (
-                (await save({
-                  action: "payout",
-                  entryId: entry.id,
-                  bet,
-                  cost,
-                  payout: payout.trim() === "" ? null : payout,
-                })) &&
-                nextId
-              )
-                requestAnimationFrame(() =>
-                  document.getElementById("tracker-payout-" + nextId)?.focus(),
-                );
-            }}
+            className="text-purple-200 disabled:opacity-40"
+            onClick={() => save({ action: "undo", entryId: entry.id })}
           >
-            Save and next
+            Undo / return to wheel
           </button>
-        </div>
-      )}
-      {entry.payout === null && !entry.call_id.startsWith("manual:") && (
+        )}
         <button
-          className="mt-2 text-purple-200"
           disabled={disabled}
-          onClick={() => save({ action: "undo", entryId: entry.id })}
-        >
-          Undo result / return to wheel
-        </button>
-      )}
-      <button
-        className="mt-2 ml-3 text-red-300 disabled:opacity-40"
-        disabled={disabled}
-        onClick={() => {
-          if (
-            confirm(
-              `Remove ${entry.slot_name} from this hunt? Totals will recalculate. Saved data remains recoverable.`,
+          className="text-red-300 disabled:opacity-40"
+          onClick={() => {
+            if (
+              confirm(
+                `Remove ${entry.slot_name} from this hunt? Saved data remains recoverable.`,
+              )
             )
-          )
-            void save({ action: "removeEntry", entryId: entry.id });
-        }}
-      >
-        Remove from hunt
-      </button>
-    </div>
+              void save({ action: "removeEntry", entryId: entry.id });
+          }}
+        >
+          Remove
+        </button>
+      </div>
+    </article>
   );
 }
 

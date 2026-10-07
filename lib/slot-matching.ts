@@ -18,14 +18,25 @@ export const normaliseSlot = (s: string) =>
     .replace(/\s+/g, " ");
 function distance(a: string, b: string) {
   let row = Array.from({ length: b.length + 1 }, (_, i) => i);
+  let previousRow: number[] | null = null;
   for (let i = 1; i <= a.length; i++) {
     const next = [i];
-    for (let k = 1; k <= b.length; k++)
+    for (let k = 1; k <= b.length; k++) {
       next[k] = Math.min(
         next[k - 1] + 1,
         row[k] + 1,
         row[k - 1] + (a[i - 1] === b[k - 1] ? 0 : 1),
       );
+      if (
+        previousRow &&
+        i > 1 &&
+        k > 1 &&
+        a[i - 1] === b[k - 2] &&
+        a[i - 2] === b[k - 1]
+      )
+        next[k] = Math.min(next[k], previousRow[k - 2] + 1);
+    }
+    previousRow = row;
     row = next;
   }
   return row[b.length];
@@ -87,8 +98,9 @@ export function matchSlot(query: string, games: CatalogueGame[]) {
     : false;
   const safe =
     top &&
-    q.length >= 7 &&
-    top.score >= 0.88 &&
+    q.length >= 5 &&
+    (top.score >= 0.88 ||
+      (top.score >= 0.8 && distance(q, normaliseSlot(top.g.name)) === 1)) &&
     (!second || top.score - second.score >= 0.12) &&
     uniqueTitle;
   return {

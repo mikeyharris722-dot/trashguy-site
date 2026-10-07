@@ -5,20 +5,29 @@ export async function GET(request: Request) {
   try {
     const games = await catalogue(),
       q = new URL(request.url).searchParams.get("q") || "";
+    const matched = q ? matchSlot(q, games) : null;
+    const ranked = q
+      ? [
+          ...new Map(
+            [
+              ...(matched?.suggestions || []),
+              ...games.filter(
+                (g) =>
+                  g.enabled !== false &&
+                  normaliseSlot(`${g.name} ${g.provider}`).includes(
+                    normaliseSlot(q),
+                  ),
+              ),
+            ].map((g) => [g.identifier, g]),
+          ).values(),
+        ].slice(0, 20)
+      : [];
     return Response.json({
       games:
         new URL(request.url).searchParams.get("all") === "true"
           ? games
-          : q
-            ? games
-                .filter((g) =>
-                  normaliseSlot(`${g.name} ${g.provider}`).includes(
-                    normaliseSlot(q),
-                  ),
-                )
-                .slice(0, 30)
-            : [],
-      match: q ? matchSlot(q, games) : null,
+          : ranked,
+      match: matched,
       total: games.length,
     });
   } catch (e) {
