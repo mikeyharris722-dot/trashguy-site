@@ -325,8 +325,8 @@ export default function TrackerAdmin({
             OBS overlay
           </summary>
           <p className="mt-2 text-xs text-white/60">
-            Add a Browser Source in OBS. Use this overlay URL, width 420 and
-            height 700. It follows the active hunt. Collection scrolls; opening
+            Add a Browser Source in OBS. Use this overlay URL, width 800 and
+            height 600. It follows the active hunt. Collection scrolls; opening
             stays still and follows skips.
           </p>
           <input

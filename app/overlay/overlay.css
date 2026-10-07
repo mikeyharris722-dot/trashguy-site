@@ -186,3 +186,46 @@ body:has(.hunt-overlay)::after {
 body:has(.hunt-overlay) nextjs-portal {
   display: none !important;
 }
+
+/* Sized for an 800 × 600 OBS browser source. */
+.hunt-overlay {
+  width: min(100vw, 800px);
+  max-width: 800px;
+  height: min(100dvh, 600px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  font-size: 16px;
+}
+.hunt-overlay > header,
+.overlay-stats,
+.overlay-awards,
+.overlay-latest,
+.overlay-warning {
+  flex-shrink: 0;
+}
+.hunt-overlay header { font-size: 20px; padding: 10px; }
+.hunt-overlay header strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hunt-overlay header span { font-size: 12px; }
+.overlay-stats { gap: 8px 24px; padding: 10px; margin-top: 0; }
+.overlay-awards { padding: 10px; margin: 0; }
+.overlay-awards span { font-size: 12px; }
+.overlay-awards b { font-size: 16px; }
+.overlay-table { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 8px; }
+.overlay-columns, .overlay-row { grid-template-columns: minmax(0, 1fr) 90px 110px; gap: 10px; }
+.overlay-columns { font-size: 12px; flex-shrink: 0; }
+.overlay-row { height: 32px; font-size: 16px; }
+.overlay-slot em { font-size: 11px; }
+.overlay-list { flex: 1; min-height: 0; }
+.overlay-scroll { height: auto; }
+.overlay-latest { margin-bottom: 0; padding: 10px; }
+.overlay-latest > span { font-size: 11px; }
+.overlay-latest small { font-size: 14px; }
+@media (max-width: 500px) {
+  .hunt-overlay { font-size: 12px; }
+  .hunt-overlay header { font-size: 15px; }
+  .overlay-columns, .overlay-row { grid-template-columns: minmax(0, 1fr) 60px 75px; gap: 4px; }
+  .overlay-row, .overlay-awards b { font-size: 12px; }
+  .overlay-stats { gap: 6px 8px; }
+}
