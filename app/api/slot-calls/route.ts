@@ -59,7 +59,7 @@ export async function GET() {
   return NextResponse.json({
     calls: await eligibleCalls(calls || []),
     reviewCalls: await reviewCalls(calls || []),
-    results: results || [],
+    results: await activeHuntResults(results || []),
   });
 }
 
@@ -617,4 +617,23 @@ async function eligibleCalls(calls:Record<string,unknown>[]) {
   const identifiers=new Set((entries||[]).map(e=>e.identifier));const names=new Set((entries||[]).map(e=>e.slot_name.trim().toLowerCase()));
   const metadata=await callMetadata();
   return enriched.filter((c,index)=>!identifiers.has(metadata.find(m=>m.call_id===String(calls[index].id))?.identifier) && (c.needs_review || !names.has(String(calls[index].slot_name).trim().toLowerCase())));
+}
+
+// The viewer wheel and tracker share the explicitly selected hunt.
+async function activeHuntResults(legacyResults: Record<string, unknown>[]) {
+  const { data: settings, error } = await supabase
+    .from("site_tracker_settings")
+    .select("active_hunt_id")
+    .eq("id", true)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!settings?.active_hunt_id) return legacyResults;
+  const { data: entries, error: entryError } = await supabase
+    .from("site_tracker_entries")
+    .select("id,username,slot_name,payout,status,created_at")
+    .eq("hunt_id", settings.active_hunt_id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+  if (entryError) throw new Error(entryError.message);
+  return entries || [];
 }
