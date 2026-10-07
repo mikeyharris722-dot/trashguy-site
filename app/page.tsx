@@ -74,12 +74,14 @@ const fallbackLeaderboard = [
 const leaderboardTotal = 1500;
 
 const leaderboardPrizes: Record<number, number> = {
-  1: 400,
-  2: 350,
-  3: 300,
-  4: 200,
-  5: 150,
-  6: 100,
+  1: 525,
+  2: 425,
+  3: 325,
+  4: 250,
+  5: 175,
+  6: 125,
+  7: 100,
+  8: 75,
 };
 
 const fallbackHunts: HuntItem[] = [];
