@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
+import { communityState } from "@/lib/community-local";
+import { resolvedPrizeSettings } from "@/lib/prize-settings";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
     const apiKey = process.env.ROULO_API_KEY;
+    const settings = resolvedPrizeSettings((await communityState()).prizeSettings);
 
     if (!apiKey) {
       return NextResponse.json({
@@ -15,8 +18,8 @@ export async function GET() {
     }
 
     const url = new URL("https://api.roulobets.com/v1/external/affiliates");
-    url.searchParams.set("start_at", "2026-10-05");
-    url.searchParams.set("end_at", "2026-11-05");
+    url.searchParams.set("start_at", settings.leaderboardStart);
+    url.searchParams.set("end_at", settings.leaderboardEnd);
     url.searchParams.set("key", apiKey);
     url.searchParams.set("weighted", "true");
 

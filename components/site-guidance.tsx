@@ -58,7 +58,7 @@ const guides: Record<string, { description: string; steps: string[] }> = {
 };
 export function PageGuidance({ section }: { section: string }) {
   const g = guides[section];
-  if (!g) return null;
+  if (!g || section === "leaderboard") return null;
   return (
     <section
       className="page-intro"
@@ -148,6 +148,7 @@ export function HomeGuidance({
   );
 }
 const adminGuides: Record<string, [string, string]> = {
+  prizes: ["Prize Settings", "Edit the advertised leaderboard payouts and prediction prize. Totals update automatically; existing rewards keep their recorded amounts."],
   giveaway: [
     "Giveaways",
     "Create a session, manage entries and draw a winner. Record prizes in the Prize Portal.",
@@ -183,7 +184,7 @@ const adminGuides: Record<string, [string, string]> = {
 };
 export function AdminGuidance({ tab }: { tab: string }) {
   const g = adminGuides[tab];
-  return g && tab !== "community" ? (
+  return g && !["community", "prizes", "bonusTracker"].includes(tab) ? (
     <div className="admin-guidance">
       <span className="eyebrow">Current workspace</span>
       <h2>{g[0]}</h2>

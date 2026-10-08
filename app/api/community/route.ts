@@ -50,6 +50,8 @@ export async function GET(request: Request) {
               notes: "",
             })),
         limit: h.limit,
+        predictionPrize: h.predictionPrize ?? 15,
+        predictions: (h.predictions || []).map((p) => ({ username: p.username, amount: p.amount, createdAt: p.createdAt, mine: p.userId === who?.id })),
         calls: h.calls.filter((c) => c.status !== "withdrawn"),
         members: h.members
           .filter((m) => admin || m.status === "accepted" || m.id === who?.id)

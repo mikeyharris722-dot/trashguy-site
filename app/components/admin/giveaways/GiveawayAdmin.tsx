@@ -1,10 +1,12 @@
 "use client";
 
 import { siteFetch } from "@/lib/site-fetch";
+
 import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -12,68 +14,104 @@ type GiveawayType = "regular" | "vip";
 
 type GiveawayViewState = {
   giveaway: any | null;
+
   entries: any[];
+
   recentWinners: any[];
+
   winnerCounts: Record<string, number>;
+
   message: string;
+
   winnerUsername: string;
+
   winnerMessages: string[];
+
   prizeAmount: string;
+
   drawTime: number | null;
+
   respondedTime: number | null;
+
   followAge: string;
+
   loading: boolean;
 };
 
 const emptyState = (): GiveawayViewState => ({
   giveaway: null,
+
   entries: [],
+
   recentWinners: [],
+
   winnerCounts: {},
+
   message: "",
+
   winnerUsername: "",
+
   winnerMessages: [],
+
   prizeAmount: "",
+
   drawTime: null,
+
   respondedTime: null,
+
   followAge: "",
+
   loading: false,
 });
 
 function normalize(value: unknown) {
   return String(value || "")
     .replace("@", "")
+
     .trim()
+
     .toLowerCase();
 }
 
 function SmallButton({
   children,
+
   onClick,
+
   disabled = false,
+
   variant = "purple",
+
   className = "",
 }: {
   children: React.ReactNode;
+
   onClick: () => void;
+
   disabled?: boolean;
+
   variant?: "purple" | "brightPurple" | "dark";
+
   className?: string;
 }) {
   const variants = {
     purple:
       "border-purple-300/35 bg-purple-500/15 text-purple-100 shadow-[0_0_14px_rgba(168,85,247,0.08)] hover:border-purple-200/60 hover:bg-purple-500/20 hover:shadow-[0_0_18px_rgba(168,85,247,0.16)]",
+
     brightPurple:
       "border-fuchsia-300/35 bg-fuchsia-500/15 text-fuchsia-100 shadow-[0_0_14px_rgba(217,70,239,0.08)] hover:border-fuchsia-200/60 hover:bg-fuchsia-500/20 hover:shadow-[0_0_18px_rgba(217,70,239,0.16)]",
-    dark:
-      "border-purple-300/10 bg-white/[0.04] text-white/70 hover:border-purple-300/25 hover:bg-purple-500/[0.06] hover:text-white",
+
+    dark: "border-purple-300/10 bg-white/[0.04] text-white/70 hover:border-purple-300/25 hover:bg-purple-500/[0.06] hover:text-white",
   };
 
   return (
     <button
       type="button"
+
       onClick={onClick}
+
       disabled={disabled}
+
       className={`min-h-[42px] min-w-0 max-w-full rounded-xl border px-2 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:text-[11px] ${variants[variant]} ${className}`}
     >
       {children}
@@ -81,50 +119,50 @@ function SmallButton({
   );
 }
 
-export default function GiveawayAdmin({
-  isAdmin,
-}: {
-  isAdmin: boolean;
-}) {
-  const [activeType, setActiveType] =
-    useState<GiveawayType>("vip");
+export default function GiveawayAdmin({ isAdmin }: { isAdmin: boolean }) {
+  const [activeType, setActiveType] = useState<GiveawayType>("vip");
 
   const [tick, setTick] = useState(Date.now());
 
-  const [states, setStates] = useState<
-    Record<GiveawayType, GiveawayViewState>
-  >({
-    regular: emptyState(),
-    vip: emptyState(),
-  });
+  const [states, setStates] = useState<Record<GiveawayType, GiveawayViewState>>(
+    {
+      regular: emptyState(),
+
+      vip: emptyState(),
+    },
+  );
+
+  const statesRef = useRef(states);
+
+  statesRef.current = states;
 
   const updateState = useCallback(
     (
       type: GiveawayType,
+
       patch:
         | Partial<GiveawayViewState>
-        | ((
-            current: GiveawayViewState
-          ) => Partial<GiveawayViewState>)
+        | ((current: GiveawayViewState) => Partial<GiveawayViewState>),
     ) => {
       setStates((current) => {
         const currentType = current[type];
 
         const nextPatch =
-          typeof patch === "function"
-            ? patch(currentType)
-            : patch;
+          typeof patch === "function" ? patch(currentType) : patch;
 
         return {
           ...current,
+
           [type]: {
             ...currentType,
+
             ...nextPatch,
           },
         };
       });
     },
-    []
+
+    [],
   );
 
   const loadGiveaway = useCallback(
@@ -132,68 +170,78 @@ export default function GiveawayAdmin({
       try {
         const res = await siteFetch(
           `/api/chat-giveaway?type=${type}`,
+
           {
             cache: "no-store",
-          }
+          },
         );
 
         const data = await res.json();
 
         if (!res.ok || !data?.ok) {
           updateState(type, {
-            message:
-              data?.error ||
-              `Could not load ${type} giveaway.`,
+            message: data?.error || `Could not load ${type} giveaway.`,
           });
 
           return;
         }
 
-        const winnerUsername = normalize(
-          data?.giveaway?.winner_username
-        );
+        const winnerUsername = normalize(data?.giveaway?.winner_username);
 
         updateState(type, (current) => ({
           giveaway: data.giveaway || null,
-          entries: Array.isArray(data.entries)
-            ? data.entries
-            : [],
-          recentWinners: Array.isArray(
-            data.recentWinners
-          )
+
+          entries: Array.isArray(data.entries) ? data.entries : [],
+
+          recentWinners: Array.isArray(data.recentWinners)
             ? data.recentWinners
             : [],
+
           winnerCounts: data.winnerCounts || {},
-          winnerUsername:
-            winnerUsername || current.winnerUsername,
-          message:
-            winnerUsername ||
-            (data?.giveaway?.status === "live"
-              ? "Giveaway live."
-              : current.message),
+
+          winnerUsername,
+
+          drawTime:
+            winnerUsername && data.giveaway?.finished_at
+              ? new Date(data.giveaway.finished_at).getTime()
+              : null,
+
+          ...(current.giveaway?.id !== data.giveaway?.id ||
+          current.winnerUsername !== winnerUsername ||
+          current.giveaway?.finished_at !== data.giveaway?.finished_at
+            ? {
+                winnerMessages: [],
+                respondedTime: null,
+                followAge: "",
+                prizeAmount: "",
+              }
+            : {}),
         }));
       } catch (error) {
         console.error(
           `${type} giveaway failed to load`,
-          error
+
+          error,
         );
       }
     },
-    [updateState]
+
+    [updateState],
   );
 
   const loadWinnerMessages = useCallback(
     async (type: GiveawayType) => {
-      const current = states[type];
+      const current = statesRef.current[type];
 
       if (!current.winnerUsername) return;
 
       try {
         const res = await siteFetch(
-          `/api/chat-giveaway/winner-message?type=${type}`,
+          `/api/chat-giveaway/winner-message?type=${type}&giveawayId=${encodeURIComponent(current.giveaway.id)}`,
+
           {
             cache: "no-store",
-          }
+          },
         );
 
         const data = await res.json();
@@ -201,59 +249,71 @@ export default function GiveawayAdmin({
         if (
           !res.ok ||
           !data?.ok ||
-          normalize(data.winnerUsername) !==
-            current.winnerUsername
+          data.giveawayId !== current.giveaway?.id ||
+          normalize(data.winnerUsername) !== current.winnerUsername
         ) {
           return;
         }
 
-        const messages = Array.isArray(data.messages)
-          ? data.messages
-          : [];
+        const messages = (
+          Array.isArray(data.messages) ? data.messages : []
+        ).filter(
+          (item: any) =>
+            normalize(item.username) === current.winnerUsername &&
+            new Date(item.created_at).getTime() >=
+              (current.drawTime || Infinity),
+        );
+
+        if (
+          statesRef.current[type].giveaway?.id !== current.giveaway?.id ||
+          statesRef.current[type].drawTime !== current.drawTime
+        )
+          return;
 
         updateState(type, (old) => ({
           winnerMessages: messages.map(
             (item: any) =>
-              `${
-                item.display_name || item.username
-              }: ${item.message}`
+              `${item.display_name || item.username}: ${item.message}`,
           ),
+
           respondedTime:
             old.respondedTime ||
             (messages.length
-              ? new Date(
-                  messages[
-                    messages.length - 1
-                  ].created_at
-                ).getTime()
+              ? new Date(messages[messages.length - 1].created_at).getTime()
               : null),
         }));
       } catch (error) {
         console.error(
           `${type} winner messages failed to load`,
-          error
+
+          error,
         );
       }
     },
-    [states, updateState]
+
+    [updateState],
   );
 
   useEffect(() => {
     loadGiveaway("regular");
+
     loadGiveaway("vip");
 
     const giveawayTimer = window.setInterval(() => {
       loadGiveaway("regular");
+
       loadGiveaway("vip");
     }, 2000);
 
     const clockTimer = window.setInterval(
       () => setTick(Date.now()),
-      1000
+
+      1000,
     );
 
     return () => {
       window.clearInterval(giveawayTimer);
+
       window.clearInterval(clockTimer);
     };
   }, [loadGiveaway]);
@@ -263,7 +323,8 @@ export default function GiveawayAdmin({
 
     const timer = window.setInterval(
       () => loadWinnerMessages(activeType),
-      1500
+
+      1500,
     );
 
     return () => window.clearInterval(timer);
@@ -278,41 +339,38 @@ export default function GiveawayAdmin({
 
     const total = Math.max(
       0,
-      Math.floor((end - state.drawTime) / 1000)
+
+      Math.floor((end - state.drawTime) / 1000),
     );
 
-    return `${Math.floor(total / 60)}m ${String(
-      total % 60
-    ).padStart(2, "0")}s`;
-  }, [
-    state.drawTime,
-    state.respondedTime,
-    tick,
-  ]);
+    return `${Math.floor(total / 60)}m ${String(total % 60).padStart(2, "0")}s`;
+  }, [state.drawTime, state.respondedTime, tick]);
 
   const winnerEntry = useMemo(
     () =>
       state.entries.find(
         (entry) =>
-          normalize(
-            entry.username || entry.display_name
-          ) === state.winnerUsername
+          normalize(entry.username || entry.display_name) ===
+          state.winnerUsername,
       ),
-    [state.entries, state.winnerUsername]
+
+    [state.entries, state.winnerUsername],
   );
 
   const handleStart = async () => {
     updateState(activeType, {
       loading: true,
+
       message: `Starting ${activeType} giveaway...`,
     });
 
     try {
       const res = await siteFetch(
         `/api/chat-giveaway?type=${activeType}`,
+
         {
           method: "POST",
-        }
+        },
       );
 
       const data = await res.json();
@@ -320,9 +378,8 @@ export default function GiveawayAdmin({
       if (!res.ok || !data?.ok) {
         updateState(activeType, {
           loading: false,
-          message:
-            data?.error ||
-            "Failed to start giveaway.",
+
+          message: data?.error || "Failed to start giveaway.",
         });
 
         return;
@@ -330,16 +387,25 @@ export default function GiveawayAdmin({
 
       updateState(activeType, {
         giveaway: data.giveaway,
+
         entries: [],
+
         winnerUsername: "",
+
         winnerMessages: [],
+
         prizeAmount: "",
+
         drawTime: null,
+
         respondedTime: null,
+
         followAge: "",
+
         message: `${
           activeType === "vip" ? "VIP" : "Regular"
         } giveaway started.`,
+
         loading: false,
       });
 
@@ -347,6 +413,7 @@ export default function GiveawayAdmin({
     } catch {
       updateState(activeType, {
         loading: false,
+
         message: "Failed to start giveaway.",
       });
     }
@@ -355,64 +422,58 @@ export default function GiveawayAdmin({
   const handleDraw = async () => {
     updateState(activeType, {
       loading: true,
+
       message: "Drawing winner...",
     });
 
     try {
       const res = await siteFetch(
         `/api/chat-giveaway/draw?type=${activeType}&amount=0`,
+
         {
           method: "POST",
-        }
+        },
       );
 
       const data = await res.json();
 
-      if (
-        !res.ok ||
-        !data?.ok ||
-        !data?.winner?.username
-      ) {
+      if (!res.ok || !data?.ok || !data?.winner?.username) {
         updateState(activeType, {
           loading: false,
-          message:
-            data?.error ||
-            "Failed to draw winner.",
+
+          message: data?.error || "Failed to draw winner.",
         });
 
         return;
       }
 
-      const winnerUsername = normalize(
-        data.winner.username
-      );
+      const winnerUsername = normalize(data.winner.username);
 
-      const platform =
-        data.winner.platform === "kick"
-          ? "kick"
-          : "twitch";
+      const platform = data.winner.platform === "kick" ? "kick" : "twitch";
 
       updateState(activeType, {
         winnerUsername,
+
         winnerMessages: [],
+
         message: winnerUsername,
+
         drawTime: Date.now(),
+
         respondedTime: null,
-        followAge:
-          platform === "kick" ? "Kick viewer" : "",
+
+        followAge: platform === "kick" ? "Kick viewer" : "",
+
         loading: false,
       });
 
       if (platform === "twitch") {
         try {
           const followRes = await siteFetch(
-            `/api/twitch/follow-age?user=${encodeURIComponent(
-              winnerUsername
-            )}`
+            `/api/twitch/follow-age?user=${encodeURIComponent(winnerUsername)}`,
           );
 
-          const followData =
-            await followRes.json();
+          const followData = await followRes.json();
 
           updateState(activeType, {
             followAge: followData?.ok
@@ -430,131 +491,130 @@ export default function GiveawayAdmin({
     } catch {
       updateState(activeType, {
         loading: false,
+
         message: "Failed to draw winner.",
       });
     }
   };
 
   const handleAward = async () => {
-    const amount = Number(state.prizeAmount || 0);
+    const amount = Number(state.prizeAmount);
 
-    if (!state.winnerUsername) {
-      return alert("Draw a winner first.");
-    }
+    if (!state.winnerUsername || !Number.isFinite(amount) || amount <= 0) {
+      updateState(activeType, {
+        message: "Draw a winner and enter a prize amount greater than zero.",
+      });
 
-    if (
-      !Number.isFinite(amount) ||
-      amount <= 0
-    ) {
-      return alert(
-        "Enter a valid prize amount."
-      );
-    }
-
-    const rewardsRes = await siteFetch(
-      "/api/rewards",
-      {
-        cache: "no-store",
-      }
-    );
-
-    const rewardsData =
-      await rewardsRes.json();
-
-    const rewards = Array.isArray(
-      rewardsData?.rewards
-    )
-      ? rewardsData.rewards
-      : [];
-
-    const reward = rewards.find(
-      (item: any) =>
-        String(item.giveaway_id || "") ===
-        String(state.giveaway?.id || "")
-    );
-
-    if (!reward?.id) {
-      alert(
-        "Reward not found yet. Wait a second and try again."
-      );
       return;
     }
 
-    const res = await siteFetch(
-      `/api/admin/rewards?id=${encodeURIComponent(
-        reward.id
-      )}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
+    updateState(activeType, { loading: true, message: "Saving prize…" });
+
+    try {
+      const rewardsRes = await siteFetch("/api/rewards", { cache: "no-store" });
+
+      const rewardsData = await rewardsRes.json();
+
+      if (!rewardsRes.ok || !rewardsData.ok)
+        throw new Error(rewardsData.error || "Could not load rewards.");
+
+      const platform = winnerEntry?.platform === "kick" ? "kick" : "twitch";
+
+      const matches = (
+        Array.isArray(rewardsData.rewards) ? rewardsData.rewards : []
+      ).filter(
+        (item: any) =>
+          String(item.giveaway_id) === String(state.giveaway?.id) &&
+          normalize(
+            platform === "kick" ? item.kick_username : item.twitch_username,
+          ) === state.winnerUsername,
+      );
+
+      if (matches.length !== 1)
+        throw new Error(
+          "Cannot safely identify this winner’s reward. Check the rewards page before awarding.",
+        );
+
+      const res = await siteFetch(
+        `/api/admin/rewards?id=${encodeURIComponent(matches[0].id)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+
+          body: JSON.stringify({ amount }),
         },
-        body: JSON.stringify({
-          amount,
-          status: "pending",
-        }),
-      }
-    );
+      );
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok || !data?.ok) {
-      alert(data?.error || "Award failed.");
-      return;
+      if (!res.ok || !data.ok) throw new Error(data.error || "Award failed.");
+
+      updateState(activeType, {
+        prizeAmount: "",
+        message: `Awarded $${amount.toFixed(2)} to ${state.winnerUsername}.`,
+      });
+    } catch (error) {
+      updateState(activeType, {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not save the prize. Try again.",
+      });
+    } finally {
+      updateState(activeType, { loading: false });
     }
-
-    updateState(activeType, {
-      prizeAmount: "",
-    });
-
-    alert(
-      `Awarded $${amount} to ${state.winnerUsername}`
-    );
   };
 
   const winnerWeight = Number(
-    winnerEntry?.weight ||
-      winnerEntry?.total_odds ||
-      1
+    winnerEntry?.total_odds || winnerEntry?.weight || 1,
   );
 
-  const winnerRole = String(
-    winnerEntry?.role || "viewer"
-  ).toLowerCase();
+  const winnerRole = String(winnerEntry?.role || "viewer").toLowerCase();
 
   const isWinnerVip = winnerRole === "vip";
 
   const isWinnerOnCode = Boolean(
-    winnerEntry?.roulo_username ||
-      winnerEntry?.is_roulo_affiliate
+    winnerEntry?.roulo_username || winnerEntry?.is_roulo_affiliate,
   );
 
   const isWinnerDiscord = Boolean(
-    winnerEntry?.is_in_discord ||
-      winnerEntry?.discord_username
+    winnerEntry?.is_in_discord || winnerEntry?.discord_username,
   );
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden">
+      <p className="mb-3 text-sm leading-relaxed text-white/75">
+        Start a session, collect chat entries, then draw a winner. Prize amounts
+        are entered after the draw. Entry weights affect the chance of winning;
+        they are not percentages.
+      </p>
+
+      {state.message && (
+        <p
+          role="status"
+          aria-live="polite"
+          className="mb-3 rounded-xl border border-purple-300/25 bg-purple-500/10 p-3 text-sm text-purple-100"
+        >
+          {state.message}
+        </p>
+      )}
+
       {/* GIVEAWAY TYPE */}
 
       <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 rounded-xl border border-purple-300/15 bg-black/55 p-1 shadow-[inset_0_0_18px_rgba(168,85,247,0.04)] sm:gap-2 sm:p-1.5">
-        {(
-          ["vip", "regular"] as GiveawayType[]
-        ).map((type) => {
+        {(["vip", "regular"] as GiveawayType[]).map((type) => {
           const active = activeType === type;
 
-          const live =
-            states[type].giveaway?.status ===
-            "live";
+          const live = states[type].giveaway?.status === "live";
 
           return (
             <button
               key={type}
+
               type="button"
-              onClick={() =>
-                setActiveType(type)
-              }
+
+              onClick={() => setActiveType(type)}
+
               className={`min-w-0 rounded-lg border px-1 py-2 text-[9px] font-black uppercase leading-tight tracking-[0.03em] transition sm:px-2 sm:text-xs sm:tracking-[0.07em] ${
                 active
                   ? "border-purple-300/45 bg-purple-500/20 text-purple-100 shadow-[0_0_16px_rgba(168,85,247,0.14)]"
@@ -562,16 +622,12 @@ export default function GiveawayAdmin({
               }`}
             >
               <span className="block truncate">
-                {type === "vip"
-                  ? "VIP Giveaway"
-                  : "Regular Giveaway"}
+                {type === "vip" ? "VIP Giveaway" : "Regular Giveaway"}
               </span>
 
               <span
                 className={`mt-0.5 block text-[8px] ${
-                  live
-                    ? "text-green-300"
-                    : "text-white/30"
+                  live ? "text-green-300" : "text-white/30"
                 }`}
               >
                 {live ? "LIVE" : "NOT LIVE"}
@@ -587,18 +643,22 @@ export default function GiveawayAdmin({
         <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 sm:gap-2">
           <SmallButton
             onClick={handleStart}
-            disabled={
-              !isAdmin || state.loading
-            }
+
+            disabled={!isAdmin || state.loading}
           >
             Start Giveaway
           </SmallButton>
 
           <SmallButton
             onClick={handleDraw}
+
             disabled={
-              !isAdmin || state.loading
+              !isAdmin ||
+              state.loading ||
+              state.giveaway?.status !== "live" ||
+              !state.entries.length
             }
+
             variant="brightPurple"
           >
             Draw Winner
@@ -617,7 +677,7 @@ export default function GiveawayAdmin({
               </div>
 
               <div className="mt-2 break-words text-xl font-black text-purple-100 drop-shadow-[0_0_12px_rgba(168,85,247,0.35)] sm:text-3xl">
-                {state.message || "Waiting..."}
+                {state.winnerUsername || "No winner drawn yet"}
               </div>
 
               {state.winnerUsername && (
@@ -637,8 +697,7 @@ export default function GiveawayAdmin({
                   )}
 
                   <span className="rounded-full border border-green-300/20 bg-green-400/10 px-2 py-1 text-[9px] font-black text-green-200">
-                    {winnerWeight.toFixed(1)}x
-                    Odds
+                    {winnerWeight.toFixed(1)}x Weight
                   </span>
 
                   {state.followAge && (
@@ -673,27 +732,22 @@ export default function GiveawayAdmin({
             <div className="mt-2 max-h-[160px] min-h-[88px] space-y-2 overflow-y-auto">
               {!state.winnerUsername ? (
                 <div className="text-xs text-white/35">
-                  Draw a winner to track their
-                  chat.
+                  Draw a winner to track their chat.
                 </div>
-              ) : state.winnerMessages.length ===
-                0 ? (
+              ) : state.winnerMessages.length === 0 ? (
                 <div className="text-xs text-white/35">
-                  Waiting for @
-                  {state.winnerUsername} to
-                  type...
+                  Waiting for @{state.winnerUsername} to type...
                 </div>
               ) : (
-                state.winnerMessages.map(
-                  (message, index) => (
-                    <div
-                      key={`${message}-${index}`}
-                      className="break-words rounded-lg border border-purple-300/10 bg-purple-400/[0.05] px-3 py-2 text-xs font-semibold text-white"
-                    >
-                      {message}
-                    </div>
-                  )
-                )
+                state.winnerMessages.map((message, index) => (
+                  <div
+                    key={`${message}-${index}`}
+
+                    className="break-words rounded-lg border border-purple-300/10 bg-purple-400/[0.05] px-3 py-2 text-xs font-semibold text-white"
+                  >
+                    {message}
+                  </div>
+                ))
               )}
             </div>
           </div>
@@ -708,28 +762,32 @@ export default function GiveawayAdmin({
 
               <input
                 value={state.prizeAmount}
+
                 onChange={(event) =>
                   updateState(activeType, {
-                    prizeAmount:
-                      event.target.value.replace(
-                        /[^0-9.]/g,
-                        ""
-                      ),
+                    prizeAmount: event.target.value.replace(
+                      /[^0-9.]/g,
+
+                      "",
+                    ),
                   })
                 }
+
                 inputMode="decimal"
+
                 placeholder="e.g. 50"
+
                 className="mt-2 w-full min-w-0 rounded-lg border border-purple-300/15 bg-black/55 px-3 py-2 text-sm font-black text-white outline-none transition placeholder:text-white/25 focus:border-purple-300/45 focus:shadow-[0_0_14px_rgba(168,85,247,0.08)]"
               />
             </label>
 
             <SmallButton
               onClick={handleAward}
-              disabled={
-                !isAdmin ||
-                !state.winnerUsername
-              }
+
+              disabled={!isAdmin || state.loading || !state.winnerUsername}
+
               variant="brightPurple"
+
               className="w-full sm:w-auto"
             >
               Award Prize
@@ -762,89 +820,65 @@ export default function GiveawayAdmin({
                   : "divide-y divide-purple-300/[0.06]"
               }
             >
-              {state.entries.map(
-                (entry, index) => {
-                  const isVip =
-                    String(
-                      entry.role || ""
-                    ).toLowerCase() === "vip";
+              {state.entries.map((entry, index) => {
+                const isVip = String(entry.role || "").toLowerCase() === "vip";
 
-                  const isOnCode = Boolean(
-                    entry.roulo_username ||
-                      entry.is_roulo_affiliate
-                  );
+                const isOnCode = Boolean(
+                  entry.roulo_username || entry.is_roulo_affiliate,
+                );
 
-                  const isInDiscord = Boolean(
-                    entry.is_in_discord ||
-                      entry.discord_username
-                  );
+                const isInDiscord = Boolean(
+                  entry.is_in_discord || entry.discord_username,
+                );
 
-                  const baseOdds = Number(
-                    entry.base_odds ??
-                      entry.base_weight ??
-                      entry.weight ??
-                      1
-                  );
+                const baseOdds = Number(
+                  entry.base_odds ?? entry.base_weight ?? entry.weight ?? 1,
+                );
 
-                  const luckOdds = Number(
-                    entry.luck_odds || 0
-                  );
+                const luckOdds = Number(entry.luck_odds || 0);
 
-                  const totalOdds = Number(
-                    entry.total_odds ??
-                      entry.weight ??
-                      baseOdds + luckOdds
-                  );
+                const totalOdds = Number(
+                  entry.total_odds ?? entry.weight ?? baseOdds + luckOdds,
+                );
 
-                  return (
-                    <div
-                      key={
-                        entry.id ||
-                        `${entry.platform}-${entry.username}-${index}`
-                      }
-                      className="grid min-w-0 gap-2 px-3 py-2 transition hover:bg-purple-400/[0.025] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
-                    >
-                      <div className="flex min-w-0 items-center gap-2">
-                        <div className="truncate text-sm font-black text-white">
-                          {entry.display_name ||
-                            entry.username}
-                        </div>
+                return (
+                  <div
+                    key={
+                      entry.id || `${entry.platform}-${entry.username}-${index}`
+                    }
 
-                        <div className="flex shrink-0 gap-1 text-[11px]">
-                          {isVip && (
-                            <span>👑</span>
-                          )}
-
-                          {isOnCode && (
-                            <span>💎</span>
-                          )}
-
-                          {isInDiscord && (
-                            <span>💬</span>
-                          )}
-                        </div>
+                    className="grid min-w-0 gap-2 px-3 py-2 transition hover:bg-purple-400/[0.025] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div className="truncate text-sm font-black text-white">
+                        {entry.display_name || entry.username}
                       </div>
 
-                      <div className="grid grid-cols-3 gap-1 text-center text-[9px] font-black sm:flex sm:items-center sm:gap-2 sm:text-[10px]">
-                        <span className="rounded-md border border-purple-300/[0.06] bg-purple-400/[0.04] px-1.5 py-1 text-purple-100/65">
-                          Base{" "}
-                          {baseOdds.toFixed(1)}x
-                        </span>
+                      <div className="flex shrink-0 gap-1 text-[11px]">
+                        {isVip && <span>👑</span>}
 
-                        <span className="rounded-md bg-green-400/5 px-1.5 py-1 text-green-300">
-                          Luck +
-                          {luckOdds.toFixed(1)}x
-                        </span>
+                        {isOnCode && <span>💎</span>}
 
-                        <span className="rounded-md border border-red-300/25 bg-red-400/10 px-1.5 py-1 text-red-200">
-                          Total{" "}
-                          {totalOdds.toFixed(1)}x
-                        </span>
+                        {isInDiscord && <span>💬</span>}
                       </div>
                     </div>
-                  );
-                }
-              )}
+
+                    <div className="grid grid-cols-3 gap-1 text-center text-[9px] font-black sm:flex sm:items-center sm:gap-2 sm:text-[10px]">
+                      <span className="rounded-md border border-purple-300/[0.06] bg-purple-400/[0.04] px-1.5 py-1 text-purple-100/65">
+                        Base {baseOdds.toFixed(1)}x
+                      </span>
+
+                      <span className="rounded-md bg-green-400/5 px-1.5 py-1 text-green-300">
+                        Luck +{luckOdds.toFixed(1)}x
+                      </span>
+
+                      <span className="rounded-md border border-red-300/25 bg-red-400/10 px-1.5 py-1 text-red-200">
+                        Total {totalOdds.toFixed(1)}x
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

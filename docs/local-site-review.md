@@ -144,3 +144,37 @@ The ignored local environment already enables `COMMUNITY_HUNT_LOCAL=1` and `NEXT
 Repeatable checks: `npm run test:review`, `npm run test:community`, `npm run test:community:production`, and `npm run test:tracker`.
 
 The demo can be prepared with `npm run review:demo`; it will not overwrite an existing demo you have already edited.
+
+
+## Giveaway follow-up
+
+Local fixes clear stale winners, recover response timers, scope winner chat to the current session and draw, stabilize polling, separate action feedback from winner names, disable empty draws, match prizes to the current winner, and protect admin giveaway controls. Award errors now appear inline with saving feedback.
+
+TypeScript and isolated review checks passed. No real giveaway draw, prize award, claim or Twitch chat submission was performed. Review mode blocks live mutations. Test both tabs, guidance, winner display and disabled empty draws locally. Full draw/award testing needs a separate development database or mocked data.
+
+Remaining concern: the existing draw performs several separate database writes. Concurrent draws and partial failures need a transactional implementation before the prize flow can be called fully reliable. No live schema changes were made.
+
+
+## Leaderboard, prediction and admin follow-up
+
+- Redesigned leaderboard: top-three cards, aligned standings table, readable mobile rows and honest empty/error states instead of made-up fallback players. The prize pool is calculated from the payout amounts (the previous $1,500 heading disagreed with its $2,000 payout list). Countdown and provider request now share the same competition period.
+- Admin hub: descriptive workspace cards and a new **Prize Settings** workspace. Edit ten leaderboard payouts and the closest-prediction prize. Invalid/negative amounts and unauthorised saves are rejected. Existing reward records are not rewritten. New community hunts snapshot the prediction prize on creation.
+- Community Hunt: decimal predictions, one entry per signed-in account, editable until closure, clear open/closed status, compact saved entries, closest-result rankings and a tie rule. Predictions lock when opening begins and cannot reopen after results are revealed. Final results do not create a payment automatically; use Prize Portal after confirming the winner.
+- Normal bonus hunt predictions: replaced the moving carousel (which rendered twelve copies of every entry) with a stationary list, sorting and Show more. Decimal input is supported.
+- Prize Portal: unpaid rewards have an inline **Edit amount** control with Save/Cancel and validation. Live reward edits remain blocked in local review.
+
+Additional morning tests:
+1. Visit Leaderboard on desktop and phone width; compare the top-three cards and standings.
+2. Open Admin → Prize Settings, change a payout and check the calculated total. Save, refresh, and verify the local public leaderboard. Restore the original amounts when done.
+3. Change the prediction prize, create a new local community hunt, and verify its displayed prize. Existing community hunts retain their prize.
+4. Open the labelled Friday demo hunt on Community Hunt. Sample predictions are labelled DEMO. Save/edit your own decimal prediction.
+5. In Admin → Community Hunt, close predictions and confirm the public form locks. Open bonuses and confirm entries remain locked.
+6. Follow a finished demo hunt to inspect the closest prediction and distance. No prize is automatically paid or issued.
+7. Open the ordinary Bonus Hunts page and inspect the stationary prediction list.
+8. Inspect Prize Portal → Edit amount; actual live rewards cannot be saved from this review environment.
+
+Verified locally: browser prize save recalculates and persists the total, original amounts restored, anonymous saves return 403; TypeScript, isolated prize/prediction validation and lock checks, community tests and production-mode mocked concurrency tests pass. No live draw, prize edit, payment or deployment was performed.
+
+Leaderboard schedule clarification: Admin → Prize Settings now includes the site’s own start/end dates in UTC. These dates control the requested standings period and public countdown independently of Roulo’s own competition. Existing 5 October–5 November 2026 dates are preserved until changed by the admin. Invalid/reversed dates are rejected.
+
+Final follow-up verification: production build passed; focused React/component lint passed; all tracker/community/review suites and luck retry tests passed. Browser checks verified the desktop leaderboard, admin workspaces, prize save persistence and decimal prediction saving. Mobile prediction layout was inspected at 390 px and the viewport was reset.

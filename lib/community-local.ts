@@ -9,6 +9,7 @@ import { randomUUID, randomInt } from "node:crypto";
 import { money, trackerStats } from "./tracker-math";
 import games from "@/data/rainbet-community.json";
 import { matchSlot, normaliseSlot } from "./slot-matching";
+import { validatePrizeSettings, defaultPrizeSettings, type PrizeSettings } from "./prize-settings";
 import { validateSchedule } from "./community-schedule";
 export type CommunityActor = { id: string; name: string };
 type Member = CommunityActor & {
@@ -43,6 +44,7 @@ type Entry = {
   updated_at: string;
   deleted_at: string | null;
 };
+type Prediction = { userId: string; username: string; amount: string; createdAt: string };
 type Hunt = {
   id: string;
   title: string;
@@ -56,9 +58,12 @@ type Hunt = {
   updatedAt?: string;
   scheduledAt?: string | null;
   timeZone?: string;
+  predictions?: Prediction[];
+  predictionsClosed?: boolean;
+  predictionPrize?: number;
   deleted: boolean;
 };
-type State = { hunts: Hunt[]; activeHuntId: string };
+type State = { hunts: Hunt[]; activeHuntId: string; prizeSettings?: PrizeSettings };
 export const communityEnabled = () => true;
 export function validLaunch(value: unknown): value is string {
   return (
@@ -92,7 +97,7 @@ export function communityTracker(h: Hunt) {
     status: h.phase === "finished" ? "completed" : "open",
     phase: h.phase,
     isOpening: h.phase === "opening",
-    prediction_status: h.phase === "collecting" ? "open" : "locked",
+    prediction_status: h.phase === "collecting" && !h.predictionsClosed && !h.entries.some((entry) => entry.payout !== null) ? "open" : "locked",
     createdAt: h.createdAt,
     updatedAt: h.updatedAt || h.createdAt,
     scheduledAt: h.scheduledAt || null,
@@ -164,7 +169,10 @@ export async function communityCommand(
         const staff = () => {
           if (!admin) throw Error("AUTH: Admin access required.");
         };
-        if (action === "clearSelection") {
+        if (action === "prizeSettings") {
+          staff();
+          s.prizeSettings = validatePrizeSettings(b.settings);
+        } else if (action === "clearSelection") {
           staff();
           s.activeHuntId = "";
         } else if (action === "create") {
@@ -185,6 +193,9 @@ export async function communityCommand(
             ...validateSchedule(b.scheduledAt, b.timeZone),
             phase: "collecting",
             limit,
+            predictions: [],
+            predictionsClosed: false,
+            predictionPrize: (s.prizeSettings || defaultPrizeSettings).predictionPrize,
             members: [],
             calls: [],
             entries: [],
@@ -206,6 +217,20 @@ export async function communityCommand(
               throw Error("Type the hunt title to delete it.");
             h.deleted = true;
             if (s.activeHuntId === h.id) s.activeHuntId = "";
+          } else if (action === "predict") {
+            if (h.phase !== "collecting" || h.predictionsClosed || h.entries.some((entry) => entry.payout !== null)) throw Error("Predictions are closed for this hunt.");
+            const amount = String(b.amount ?? "");
+            if (!/^\d+(?:\.\d{1,2})?$/.test(amount) || money(amount) > BigInt("1000000000000"))
+              throw Error("Enter a prediction from $0 to $1,000,000 with up to two decimal places.");
+            const predictions = h.predictions ||= [];
+            const existing = predictions.find((p) => p.userId === actor.id);
+            if (existing) existing.amount = amount;
+            else predictions.push({ userId: actor.id, username: actor.name, amount, createdAt: new Date().toISOString() });
+          } else if (action === "predictionStatus") {
+            staff();
+            if (h.phase !== "collecting") throw Error("Predictions stay closed after bonus opening starts.");
+            if (b.closed === false && h.entries.some((entry) => entry.payout !== null)) throw Error("Predictions cannot reopen after a bonus result has been revealed.");
+            h.predictionsClosed = b.closed !== false;
           } else if (action === "register") {
             if (h.phase !== "collecting")
               throw Error("Registration is closed.");
@@ -392,6 +417,7 @@ export async function communityCommand(
               )
                 throw Error("Enter all payouts before finishing.");
               h.phase = String(b.phase);
+              if (h.phase === "opening" || h.phase === "finished") h.predictionsClosed = true;
             } else if (action === "reorder") {
               if (h.phase !== "collecting")
                 throw Error("Order is locked during opening.");

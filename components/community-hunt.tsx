@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import SlotSearch, { type SlotOption } from "./slot-search";
 import TrackerAdmin from "./tracker-admin";
+import CommunityPredictions, { type PredictionHunt } from "./community-predictions";
 import PendingRegistration from "./pending-registration";
 import {
   ScheduleFields,
@@ -26,7 +27,7 @@ type Call = {
   launch: string | null;
   status: string;
 };
-type Hunt = {
+type Hunt = PredictionHunt & {
   id: string;
   title: string;
   phase: string;
@@ -140,6 +141,8 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
       await load();
       const labels: Record<string, string> = {
         create: "Community hunt created.",
+        predict: "Your prediction is saved. You can edit it until predictions close.",
+        predictionStatus: "Prediction entry status updated.",
         register: "Request sent. Your place will be confirmed after approval.",
         approve: "Contribution approved. The starting bankroll has updated.",
         decline: "Registration declined.",
@@ -210,7 +213,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
     );
   }
   return (
-    <section className="mx-auto max-w-6xl space-y-5 text-white">
+    <section className="community-layout mx-auto max-w-6xl space-y-5 text-white">
       <div className="rounded-2xl border border-purple-300/20 bg-black/80 p-5">
         <p className="text-xs font-bold uppercase tracking-widest text-amber-200">
           Community · Rainbet slots
@@ -343,7 +346,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
             {loading
               ? "Getting the latest hunt details."
               : hunts.length
-                ? "Choose a community hunt from the selector above. Selecting it will also make it active in the tracker and OBS."
+                ? "Choose a community hunt from the selector above to see its registration, predictions and results."
                 : admin
                   ? "Create a hunt above to open registration."
                   : "Check back here for the next hunt. Its date and registration details will appear here."}
@@ -356,6 +359,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
             timeZone={h.timeZone}
             phase={h.phase}
           />
+          <CommunityPredictions key={h.id} hunt={h} admin={admin} signedIn={!!me} busy={busy} command={command} />
           {admin && (
             <CommunitySettings
               key={[h.id, h.title, h.scheduledAt, h.timeZone, h.limit].join(

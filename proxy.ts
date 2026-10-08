@@ -11,6 +11,7 @@ export async function proxy(request: NextRequest) {
       path === "/api/kick/logout" ||
       (localCommunity &&
         [
+          "/api/prize-settings",
           "/api/community",
           "/api/community/tracker",
           "/api/community/catalogue",

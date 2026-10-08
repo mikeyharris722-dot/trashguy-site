@@ -116,9 +116,9 @@ export async function GET(req: NextRequest) {
 
     const { data: giveaway, error: giveawayError } = await supabase
       .from("chat_giveaways")
-      .select("id, winner_username, giveaway_type")
+      .select("id, winner_username, giveaway_type, finished_at")
       .eq("giveaway_type", giveawayType)
-      .not("winner_username", "is", null)
+      .eq("id", req.nextUrl.searchParams.get("giveawayId") || "00000000-0000-0000-0000-000000000000")
       .order("finished_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -136,6 +136,8 @@ export async function GET(req: NextRequest) {
       .from("chat_giveaway_winner_messages")
       .select("id, username, display_name, platform, message, created_at")
       .eq("giveaway_id", giveaway.id)
+      .eq("username", normalize(giveaway.winner_username))
+      .gte("created_at", giveaway.finished_at || new Date().toISOString())
       .order("created_at", { ascending: false })
       .limit(6);
 
@@ -149,6 +151,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       giveawayType,
+      giveawayId: giveaway.id,
       winnerUsername: normalize(giveaway.winner_username),
       messages: data || [],
     });

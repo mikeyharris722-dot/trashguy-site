@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
+import { retryLuckRead } from "@/lib/giveaway-luck-retry";
 
 export const runtime = "nodejs";
 
@@ -60,13 +61,13 @@ export async function GET(req: NextRequest) {
     let luckRows: any[] = [];
 
     if (usernames.length > 0) {
-      const { data, error } = await supabase
+      const { data, error } = await retryLuckRead(() => supabase
         .from("giveaway_luck")
         .select("twitch_username, luck, loss_count, win_count")
-        .in("twitch_username", usernames);
+        .in("twitch_username", usernames));
 
       if (error) {
-        console.error("Giveaway luck lookup failed:", error);
+        return NextResponse.json({ ok: false, error: "Could not load entrant luck. Please retry; displayed odds have not been recalculated." }, { status: 503 });
       } else {
         luckRows = data || [];
       }

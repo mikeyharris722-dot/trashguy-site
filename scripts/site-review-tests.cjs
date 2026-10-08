@@ -32,6 +32,30 @@ function factory(env={},mocks={},globals={}){const cache={};function load(name){
  await assert.rejects(c.communityCommand(admin,true,{action:'phase',huntId:id,phase:'finished'}),/all payouts/);
  assert.equal((await c.rainbetGames('Wanted Dead'))[0].name,'Wanted Dead or a Wild');
  assert((await c.rainbetGames('ntu job')).some(g=>g.name.toLowerCase()==='nut job'));
+ const prizes=load('prize-settings');assert.equal(prizes.prizeTotal(prizes.defaultPrizeSettings),2000);
+ assert.throws(()=>prizes.validatePrizeSettings({leaderboard:[1],predictionPrize:15}),/ten/);
+ for(const invalid of [-1,Infinity,NaN,1.001])assert.throws(()=>prizes.validatePrizeSettings({leaderboard:Array(10).fill(invalid),predictionPrize:15}),/Prize amounts/);
+ assert.throws(()=>prizes.validatePrizeSettings({...prizes.defaultPrizeSettings,leaderboardStart:'2026-11-05',leaderboardEnd:'2026-10-05'}),/end date/);
+ assert.throws(()=>prizes.validatePrizeSettings({...prizes.defaultPrizeSettings,leaderboardStart:'2026-02-30'}),/end date/);
+ const custom=prizes.validatePrizeSettings({...prizes.defaultPrizeSettings,leaderboardStart:'2026-10-12',leaderboardEnd:'2026-11-12'});assert.equal(custom.leaderboardStart,'2026-10-12');
+ const settings={leaderboard:[100,80,60,40,20,0,0,0,0,0],predictionPrize:25};
+ await assert.rejects(c.communityCommand(player,false,{action:'prizeSettings',settings}),/Admin/);
+ await c.communityCommand(admin,true,{action:'prizeSettings',settings});
+ assert.equal((await c.communityState()).prizeSettings.predictionPrize,25);
+ const predictionHunt=await c.communityCommand(admin,true,{action:'create',title:'Prediction test'});
+ assert.equal((await c.communityState()).hunts[0].predictionPrize,25);
+ await c.communityCommand(player,false,{action:'predict',huntId:predictionHunt,amount:'1250.50'});
+ await c.communityCommand(player,false,{action:'predict',huntId:predictionHunt,amount:'1100.25'});
+ let ph=(await c.communityState()).hunts[0];assert.equal(ph.predictions.length,1);assert.equal(ph.predictions[0].amount,'1100.25');
+ await assert.rejects(c.communityCommand(player,false,{action:'predict',huntId:predictionHunt,amount:'-1'}),/prediction/);
+ await assert.rejects(c.communityCommand(player,false,{action:'predictionStatus',huntId:predictionHunt,closed:true}),/Admin/);
+ await c.communityCommand(admin,true,{action:'predictionStatus',huntId:predictionHunt,closed:true});
+ await assert.rejects(c.communityCommand(player,false,{action:'predict',huntId:predictionHunt,amount:'10'}),/closed/);
+ await c.communityCommand(admin,true,{action:'predictionStatus',huntId:predictionHunt,closed:false});
+ await c.communityCommand(admin,true,{action:'phase',huntId:predictionHunt,phase:'opening'});
+ await assert.rejects(c.communityCommand(player,false,{action:'predict',huntId:predictionHunt,amount:'10'}),/closed/);
+ await assert.rejects(c.communityCommand(admin,true,{action:'predictionStatus',huntId:predictionHunt,closed:false}),/closed/);
+ assert.equal(c.communityTracker((await c.communityState()).hunts[0]).prediction_status,'locked');
  let sent=0;const guard=factory({NEXT_PUBLIC_LOCAL_REVIEW:'1'})('review-client').reviewFetch(async()=>{sent++;return Response.json({ok:true});});
  for(const method of ['POST','PATCH','DELETE']){const result=await guard('https://example.supabase.co/rest/v1/rewards',{method});assert.equal(result.status,403);}
  assert.equal((await guard(new Request('https://example.supabase.co/rest/v1/rpc/community_commit',{method:'POST'}))).status,403);
@@ -55,6 +79,6 @@ function factory(env={},mocks={},globals={}){const cache={};function load(name){
  await apiLoad('site-fetch').siteFetch('https://external.example/image');assert.equal(calls[1].init,undefined);
  const selection=factory({NEXT_PUBLIC_LOCAL_REVIEW:'1'})('review-selection');await selection.saveReviewNativeSelection('TEST-HUNT-ID');assert.equal(await selection.reviewNativeSelection(),'TEST-HUNT-ID');assert.equal(await factory({NEXT_PUBLIC_LOCAL_REVIEW:'0'})('review-selection').reviewNativeSelection(),'');
  const parser=load('community-request');await assert.rejects(parser.communityJson(new Request('http://localhost',{method:'POST',body:'x'.repeat(40)}),20),/too large/);
- console.log('PASS: UTC/DST schedules, invalid/past dates, pending contribution edits/cancellation, approved equity lock, mixed failed/collected reorder, closed-call guard, typo search, local write isolation, admin policy and verified viewer identity.');
+ console.log('PASS: prize validation/admin guards, prediction updates/locks/prize snapshots, UTC/DST schedules, invalid/past dates, pending contribution edits/cancellation, approved equity lock, mixed failed/collected reorder, closed-call guard, typo search, local write isolation, admin policy and verified viewer identity.');
  const resolved=path.resolve(dir);if(!resolved.startsWith(path.resolve(os.tmpdir())+path.sep)||!path.basename(resolved).startsWith("trash-site-review-"))throw Error("Unsafe temporary cleanup path");fs.rmSync(resolved,{recursive:true});
 })().catch(e=>{console.error(e);process.exitCode=1});

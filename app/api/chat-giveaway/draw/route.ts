@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomInt } from "node:crypto";
+import { retryLuckRead } from "@/lib/giveaway-luck-retry";
 import { createClient } from "@/lib/review-client";
 
 export const runtime = "nodejs";
@@ -24,11 +26,11 @@ function pickWeightedWinner(entries: any[]) {
     0
   );
 
-  let random = Math.random() * totalWeight;
+  let random = (randomInt(0, 2 ** 48 - 1) / (2 ** 48 - 1)) * totalWeight;
 
   for (const entry of entries) {
     random -= Math.max(1, Number(entry.weight || 1));
-    if (random <= 0) return entry;
+    if (random < 0) return entry;
   }
 
   return entries[entries.length - 1];
@@ -97,28 +99,32 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const entriesWithLuck = await Promise.all(
-      eligibleEntries.map(async (entry: any) => {
-        const username = normalizeUsername(entry.username);
-        const { data: luckRow } = await supabase
-          .from("giveaway_luck")
-          .select("luck")
-          .eq("twitch_username", username)
-          .maybeSingle();
-
-        const baseWeight = Math.max(1, Number(entry.weight || 1));
-        const luckOdds = Number(luckRow?.luck || 0);
-        const totalWeight = Number((baseWeight + luckOdds).toFixed(2));
-
-        return {
-          ...entry,
-          base_weight: baseWeight,
-          luck_odds: luckOdds,
-          weight: totalWeight,
-          total_weight: totalWeight,
-        };
-      })
-    );
+    // Read every eligible entrant's luck before choosing or changing anything.
+    // A missing row is a new entrant; a failed query is not zero luck.
+    const usernames = [...new Set(eligibleEntries.map((entry: any) => normalizeUsername(entry.username)))];
+    const { data: luckRows, error: luckError } = await retryLuckRead(() => supabase
+      .from("giveaway_luck")
+      .select("twitch_username, luck")
+      .in("twitch_username", usernames));
+    if (luckError || !Array.isArray(luckRows)) {
+      return NextResponse.json({ ok: false, error: "Could not verify entrant luck after three attempts. No winner was drawn. Please try again." }, { status: 503 });
+    }
+    const luckByUsername = new Map<string, number>();
+    for (const row of luckRows) {
+      const username = normalizeUsername(row.twitch_username);
+      const luck = Number(row.luck);
+      if (row.luck == null || !Number.isFinite(luck) || luck < 0 || luckByUsername.has(username)) {
+        return NextResponse.json({ ok: false, error: "An entrant has invalid or duplicate luck records. No winner was drawn. Check the luck records before retrying." }, { status: 503 });
+      }
+      luckByUsername.set(username, luck);
+    }
+    const entriesWithLuck = eligibleEntries.map((entry: any) => {
+      const baseWeight = Math.max(1, Number(entry.weight || 1));
+      const luckOdds = luckByUsername.get(normalizeUsername(entry.username)) ?? 0;
+      const totalWeight = Number((baseWeight + luckOdds).toFixed(2));
+      if (!Number.isFinite(totalWeight)) throw new Error("Invalid entrant weight. No winner was drawn.");
+      return { ...entry, base_weight: baseWeight, luck_odds: luckOdds, weight: totalWeight, total_weight: totalWeight };
+    });
 
     const winner = pickWeightedWinner(entriesWithLuck);
     const winnerUsername = normalizeUsername(winner.username);

@@ -26,6 +26,11 @@ import type {SlotOption} from "@/components/slot-search";
 import TrackerResults from "@/components/tracker-results";
 import CommunityHunt from "@/components/community-hunt";
 import CatalogueLookup from "@/components/catalogue-lookup";
+import Leaderboard from "@/components/leaderboard";
+import PredictionList from "@/components/prediction-list";
+import PrizeSettingsEditor from "@/components/prize-settings";
+import RewardAmountEditor from "@/components/reward-amount-editor";
+import { defaultPrizeSettings, type PrizeSettings } from "@/lib/prize-settings";
 import TrackerAdmin from "@/components/tracker-admin";
 import { slotData as originalSlotData, providerLogos, type SlotItem } from "./slotData";
 import { Russo_One } from "next/font/google";
@@ -62,32 +67,6 @@ const socials = [
     icon: FaXTwitter,
   },
 ];
-
-const fallbackLeaderboard = [
-  { rank: 1, username: "PlayerOne", wagered: 12450, totalWagered: 12450 },
-  { rank: 2, username: "BigSpinner", wagered: 10920, totalWagered: 10920 },
-  { rank: 3, username: "MaxChaser", wagered: 9775, totalWagered: 9775 },
-  { rank: 4, username: "SlotKing", wagered: 7610, totalWagered: 7610 },
-  { rank: 5, username: "BonusBoss", wagered: 6980, totalWagered: 6980 },
-  { rank: 6, username: "RTPHunter", wagered: 6440, totalWagered: 6440 },
-  { rank: 7, username: "SpinSniper", wagered: 5990, totalWagered: 5990 },
-  { rank: 8, username: "WildDrop", wagered: 5420, totalWagered: 5420 },
-  { rank: 9, username: "DiceMode", wagered: 4980, totalWagered: 4980 },
-  { rank: 10, username: "ClipFarmer", wagered: 4520, totalWagered: 4520 },
-];
-
-const leaderboardTotal = 1500;
-
-const leaderboardPrizes: Record<number, number> = {
-  1: 525,
-  2: 425,
-  3: 325,
-  4: 250,
-  5: 175,
-  6: 125,
-  7: 100,
-  8: 75,
-};
 
 const fallbackHunts: HuntItem[] = [];
 
@@ -771,12 +750,12 @@ const trashClawLastWinnerRef = useRef<string | null>(null);
   const [isTwitchConnected, setIsTwitchConnected] = useState(false);
   const [authLoaded, setAuthLoaded] = useState(false);
 
-  const [predictionSortMode, setPredictionSortMode] = useState<"newest" | "highest">("newest");
+
   const [predictionInput, setPredictionInput] = useState("");
   const [predictionStatus, setPredictionStatus] = useState<"open" | "locked">("locked");
   const [predictions, setPredictions] = useState<PredictionItem[]>([]);
   const [predictionMessage, setPredictionMessage] = useState("");
-  const [predictionScrollIndex, setPredictionScrollIndex] = useState(0);
+
 
 
   const [adminName, setAdminName] = useState("Trashguy");
@@ -940,8 +919,20 @@ const Winner = async (id: string) => {
   loadGiveawayEntries(); // refresh list
 };
 
-const [leaderboardData, setLeaderboardData] = useState<LeaderboardPlayer[]>(fallbackLeaderboard);
+const [leaderboardData, setLeaderboardData] = useState<LeaderboardPlayer[]>([]);
 const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+const [leaderboardError, setLeaderboardError] = useState("");
+const [prizeSettings, setPrizeSettings] = useState<PrizeSettings>(defaultPrizeSettings);
+const [prizeSettingsError, setPrizeSettingsError] = useState("");
+useEffect(() => {
+  let cancelled = false;
+  void siteFetch("/api/prize-settings", { cache: "no-store" }).then(async (response) => {
+    const data = await response.json();
+    if (!response.ok) throw Error(data.error || "Could not load prize settings.");
+    if (!cancelled) { setPrizeSettings(data.settings); setPrizeSettingsError(""); }
+  }).catch(() => { if (!cancelled) setPrizeSettingsError("Could not load the saved prize settings. Refresh before editing amounts."); });
+  return () => { cancelled = true; };
+}, []);
 
 const [giveaways, setGiveaways] = useState<any[]>([]);
 const [giveawayTotal, setGiveawayTotal] = useState(0);
@@ -1003,7 +994,7 @@ const [manualRewardAmount, setManualRewardAmount] = useState("");
 const [manualRewardType, setManualRewardType] = useState("discord_giveaway");
 
 const [activeAdminTab, setActiveAdminTab] = useState<
-  "giveaway" | "trashClaw" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel" | "bonusTracker" | "community"
+  "giveaway" | "trashClaw" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel" | "bonusTracker" | "community" | "prizes"
 >(() => {
   if (typeof window === "undefined") return "giveaway";
 
@@ -1016,7 +1007,7 @@ const [activeAdminTab, setActiveAdminTab] = useState<
     saved === "tournament" ||
     saved === "snakeDraft" ||
     saved === "slotWheel" ||
-    saved === "bonusTracker" || saved === "community"
+    saved === "bonusTracker" || saved === "community" || saved === "prizes"
   ) {
     return saved;
   }
@@ -1053,48 +1044,6 @@ useEffect(() => {
 
   const normalizedViewer = viewerName.trim().toLowerCase();
   const adminAllowed = ADMIN_USERS.includes(normalizedViewer);
-
-  const sortedPredictionsForTab = useMemo(() => {
-  const next = [...predictions];
-
-  if (predictionSortMode === "highest") {
-    return next.sort((a, b) => b.guess - a.guess);
-  }
-
-  return next.sort((a: any, b: any) => {
-    const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return bTime - aTime;
-  });
-}, [predictions, predictionSortMode]);
-
-useEffect(() => {
-  if (sortedPredictionsForTab.length <= 5) return;
-
-  const timer = setInterval(() => {
-    setPredictionScrollIndex((current) =>
-      current + 1 >= sortedPredictionsForTab.length ? 0 : current + 1
-    );
-  }, 2000);
-
-  return () => clearInterval(timer);
-}, [sortedPredictionsForTab.length]);
-
-const visibleScrollingPredictions = useMemo(() => {
-  if (!sortedPredictionsForTab.length) return [];
-
-  const items = [];
-
-  for (let i = 0; i < Math.min(5, sortedPredictionsForTab.length); i++) {
-    items.push(
-      sortedPredictionsForTab[
-        (predictionScrollIndex + i) % sortedPredictionsForTab.length
-      ]
-    );
-  }
-
-  return items;
-}, [sortedPredictionsForTab, predictionScrollIndex]);
 
 const currentPredictionEntry = useMemo(() => {
   return predictions.find(
@@ -1134,7 +1083,7 @@ const currentPredictionAvgX =
     : "0.00";
 
     const leaderboardCountdown = useMemo(() => {
-  const end = new Date("2026-10-04T19:00:00-04:00").getTime();
+  const end = new Date(`${prizeSettings.leaderboardEnd}T00:00:00Z`).getTime();
   const diff = end - countdownTick;
 
   if (diff <= 0) return "Ended";
@@ -1145,19 +1094,7 @@ const currentPredictionAvgX =
   const seconds = Math.floor((diff / 1000) % 60);
 
   return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-}, [countdownTick]);
-
-const leaderboardProgress = useMemo(() => {
-  const start = new Date("2026-09-04T19:00:00-04:00").getTime();
-  const end = new Date("2026-10-04T19:00:00-04:00").getTime();
-  const total = end - start;
-  const elapsed = countdownTick - start;
-
-  if (elapsed <= 0) return 0;
-  if (elapsed >= total) return 100;
-
-  return (elapsed / total) * 100;
-}, [countdownTick]);
+}, [countdownTick, prizeSettings.leaderboardEnd]);
 
 const giveawayResponseTimer = useMemo(() => {
   if (!giveawayDrawTime) return "0m 00s";
@@ -1723,10 +1660,12 @@ if (normalized.length > 0) {
 }, []);
 
   const loadLeaderboard = useCallback(async () => {
+    setLeaderboardLoading(true);
     try {
       const res = await siteFetch("/api/leaderboard", { cache: "no-store" });
       const data = await res.json();
 
+      if (!res.ok || data?.success === false || data?.note) throw Error("The provider leaderboard is temporarily unavailable. Please try refreshing.");
       const affiliates = Array.isArray(data?.affiliates) ? data.affiliates : [];
 
       const normalized: LeaderboardPlayer[] = affiliates
@@ -1758,11 +1697,10 @@ totalWagered: Number(
           rank: index + 1,
         }));
 
-      if (normalized.length > 0) {
-        setLeaderboardData(normalized);
-      }
+      setLeaderboardData(normalized);
+      setLeaderboardError("");
     } catch (error) {
-      console.error("Leaderboard failed to load", error);
+      setLeaderboardError(error instanceof Error ? error.message : "Could not load the leaderboard.");
     } finally {
       setLeaderboardLoading(false);
     }
@@ -2289,7 +2227,7 @@ useEffect(() => {
   const huntId = currentPredictionHunt?.localId || "";
 
   predictionRequestRef.current += 1;
-  setPredictionScrollIndex(0);
+
 
   if (!huntId) {
     setPredictions([]);
@@ -2789,8 +2727,8 @@ const handleTwitchLogin = async () => {
 
   const guess = Number(predictionInput || 0);
 
-  if (!guess || Number.isNaN(guess)) {
-    setPredictionMessage("Enter a valid guess.");
+  if (!Number.isFinite(guess) || guess <= 0 || !/^\d+(?:\.\d{1,2})?$/.test(predictionInput)) {
+    setPredictionMessage("Enter a positive prediction with up to two decimal places.");
     return;
   }
 
@@ -4897,497 +4835,8 @@ return (
 {activeSection === "leaderboard" && (
   <section className="w-full min-w-0 max-w-full space-y-4 overflow-x-hidden sm:space-y-5">
 
-    {/* =========================================================
-        HEADER
-    ========================================================= */}
-
-    <div className="mx-auto max-w-[1400px] text-center">
-<div className="flex justify-center">
-  <div className="relative inline-flex items-center justify-center px-4 py-2 sm:px-6">
-
-    {/* SOFT PURPLE BACK GLOW */}
-    <div
-      className="
-        pointer-events-none
-        absolute
-        inset-x-[12%]
-        inset-y-[20%]
-        rounded-full
-        bg-purple-600/20
-        blur-2xl
-      "
-    />
-
-    {/* TITLE */}
-    <div
-      className="
-        relative z-10
-        whitespace-nowrap
-        bg-gradient-to-b
-        from-white
-        from-[42%]
-        via-purple-100
-        via-[52%]
-        to-purple-400
-        bg-clip-text
-        text-center
-        text-[28px]
-        font-black
-        uppercase
-        leading-none
-        tracking-[0.11em]
-        text-transparent
-        drop-shadow-[0_4px_2px_rgba(0,0,0,0.95)]
-        sm:text-[48px]
-        lg:text-[54px]
-      "
-    >
-      $1,500 LEADERBOARD
-    </div>
-
-  </div>
-</div>
-
-      <div className="mt-2 flex justify-center sm:mt-3">
-        <div
-          className="
-            inline-flex items-center justify-center gap-2
-            rounded-full
-            border border-purple-300/25
-            bg-purple-400/[0.08]
-            px-3 py-1.5
-            shadow-[0_0_20px_rgba(168,85,247,0.08)]
-            backdrop-blur-md
-            sm:px-5
-            sm:py-2.5
-          "
-        >
-          <span className="text-sm sm:text-lg">
-            ⏳
-          </span>
-
-          <span
-            className="
-              text-[10px] font-black
-              uppercase
-              tracking-[0.08em]
-              text-purple-100
-              sm:text-[15px]
-            "
-          >
-            Ends in {leaderboardCountdown}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    {/* =========================================================
-        LEADERBOARD CARD
-    ========================================================= */}
-
-    <div
-      className="
-        mx-auto
-        w-full
-        max-w-[1400px]
-        overflow-hidden
-        rounded-2xl
-        border border-purple-300/20
-        bg-[linear-gradient(180deg,rgba(13,5,20,0.72),rgba(4,2,8,0.60))]
-        p-2
-        shadow-[0_18px_55px_rgba(0,0,0,0.28),0_0_30px_rgba(168,85,247,0.06)]
-        backdrop-blur-[9px]
-        sm:rounded-3xl
-        sm:p-4
-      "
-    >
-
-      {/* TABLE HEADER */}
-
-      <div
-        className="
-          grid
-          grid-cols-[38px_minmax(0,1fr)_76px_76px_48px]
-          items-center
-          rounded-xl
-          border border-purple-300/[0.10]
-          bg-purple-400/[0.045]
-          px-2
-          py-2
-          text-[8px] font-black uppercase
-          tracking-[0.08em]
-          text-purple-100/55
-          sm:grid-cols-[90px_minmax(0,1fr)_190px_190px_140px]
-          sm:px-5
-          sm:py-3
-          sm:text-[12px]
-          sm:tracking-[0.14em]
-        "
-      >
-        <div>Rank</div>
-        <div>Player</div>
-        <div className="text-right">Weighted</div>
-        <div className="text-right text-white/30">Total Wagered</div>
-        <div className="text-right">Prize</div>
-      </div>
-
-      {/* =========================================================
-          PLAYERS
-      ========================================================= */}
-
-      {leaderboardLoading && leaderboardData.length === 0 ? (
-        <div
-          className="
-            mt-2
-            rounded-xl
-            border border-white/[0.07]
-            bg-black/25
-            px-4
-            py-6
-            text-center
-            text-xs
-            text-white/45
-            sm:text-sm
-          "
-        >
-          Loading leaderboard...
-        </div>
-      ) : (
-        <div className="mt-2 space-y-2 sm:mt-3 sm:space-y-2.5">
-          {leaderboardData.map((player) => {
-            const prize =
-              leaderboardPrizes[player.rank] || 0;
-
-            const isFirst = player.rank === 1;
-            const isSecond = player.rank === 2;
-            const isThird = player.rank === 3;
-            const isTopThree = player.rank <= 3;
-
-            const topRowStyle = isFirst
-              ? `
-                border-yellow-300/45
-                bg-[linear-gradient(110deg,rgba(117,76,0,0.78),rgba(58,38,3,0.70),rgba(10,6,2,0.72))]
-                shadow-[0_0_28px_rgba(250,204,21,0.12)]
-              `
-              : isSecond
-                ? `
-                  border-slate-200/35
-                  bg-[linear-gradient(110deg,rgba(92,104,122,0.70),rgba(44,52,66,0.68),rgba(9,11,16,0.74))]
-                  shadow-[0_0_26px_rgba(220,230,245,0.08)]
-                `
-                : `
-                  border-orange-400/40
-                  bg-[linear-gradient(110deg,rgba(119,52,12,0.72),rgba(60,26,7,0.68),rgba(10,6,3,0.74))]
-                  shadow-[0_0_26px_rgba(251,146,60,0.09)]
-                `;
-
-            const rankBadgeStyle = isFirst
-              ? `
-                border-yellow-200/60
-                bg-yellow-300/15
-                text-yellow-100
-                shadow-[0_0_16px_rgba(250,204,21,0.18)]
-              `
-              : isSecond
-                ? `
-                  border-slate-100/45
-                  bg-slate-100/10
-                  text-white
-                  shadow-[0_0_16px_rgba(226,232,240,0.12)]
-                `
-                : isThird
-                  ? `
-                    border-orange-300/50
-                    bg-orange-400/12
-                    text-orange-100
-                    shadow-[0_0_16px_rgba(251,146,60,0.14)]
-                  `
-                  : `
-                    border-purple-300/15
-                    bg-purple-400/[0.055]
-                    text-purple-100/80
-                  `;
-
-            const rankLabel = isFirst
-              ? "🥇"
-              : isSecond
-                ? "🥈"
-                : isThird
-                  ? "🥉"
-                  : `#${player.rank}`;
-
-            /* =====================================================
-                TOP 3
-            ===================================================== */
-
-            if (isTopThree) {
-              return (
-                <div
-                  key={`${player.rank}-${player.username}`}
-                  className={`
-                    grid
-                    grid-cols-[40px_minmax(0,1fr)_78px_78px_52px]
-                    items-center
-                    rounded-xl
-                    border
-                    px-2.5
-                    py-2.5
-                    transition
-                    sm:grid-cols-[90px_minmax(0,1fr)_190px_190px_140px]
-                    sm:rounded-2xl
-                    sm:px-5
-                    sm:py-4
-                    ${topRowStyle}
-                  `}
-                >
-                  {/* RANK */}
-
-                  <div className="flex justify-start">
-                    <div
-                      className={`
-                        flex h-9 w-9
-                        items-center justify-center
-                        rounded-lg
-                        border
-                        text-base font-black
-                        sm:h-14
-                        sm:w-14
-                        sm:rounded-xl
-                        sm:text-[28px]
-                        ${rankBadgeStyle}
-                      `}
-                    >
-                      {rankLabel}
-                    </div>
-                  </div>
-
-                  {/* PLAYER */}
-
-                  <div className="min-w-0 pl-1 sm:pl-3">
-                    <div
-                      className="
-                        truncate
-                        text-[12px] font-black
-                        text-white
-                        sm:text-[22px]
-                      "
-                    >
-                      {player.username}
-                    </div>
-
-                    <div
-                      className="
-                        mt-0.5
-                        text-[7px] font-bold uppercase
-                        tracking-[0.12em]
-                        text-white/35
-                        sm:text-[10px]
-                      "
-                    >
-                      Rank #{player.rank}
-                    </div>
-                  </div>
-
-                  {/* WAGERED */}
-
-                  <div className="text-right">
-                    <div
-                      className="
-                        text-[6px] font-black uppercase
-                        tracking-[0.10em]
-                        text-white/30
-                        sm:text-[9px]
-                      "
-                    >
-                      Weighted
-                    </div>
-
-                    <div
-                      className="
-                        mt-0.5
-                        whitespace-nowrap
-                        text-[10px] font-black
-                        text-white
-                        sm:text-[18px]
-                      "
-                    >
-                      {formatMoney(player.wagered)}
-                    </div>
-                  </div>
-
-                  {/* TOTAL WAGERED */}
-
-                  <div className="text-right">
-                    <div
-                      className="
-                        text-[6px] font-bold uppercase
-                        tracking-[0.10em]
-                        text-white/18
-                        sm:text-[8px]
-                      "
-                    >
-                      Total
-                    </div>
-
-                    <div
-                      className="
-                        mt-0.5
-                        whitespace-nowrap
-                        text-[8px] font-bold
-                        text-white/45
-                        sm:text-[14px]
-                      "
-                    >
-                      {formatMoney(player.totalWagered)}
-                    </div>
-                  </div>
-
-                  {/* PRIZE */}
-
-                  <div className="text-right">
-                    <div
-                      className="
-                        text-[6px] font-black uppercase
-                        tracking-[0.10em]
-                        text-white/30
-                        sm:text-[9px]
-                      "
-                    >
-                      Prize
-                    </div>
-
-                    <div
-                      className="
-                        mt-0.5
-                        whitespace-nowrap
-                        text-[10px] font-black
-                        text-emerald-300
-                        drop-shadow-[0_0_10px_rgba(110,231,183,0.25)]
-                        sm:text-[18px]
-                      "
-                    >
-                      {prize > 0
-                        ? `$${prize.toLocaleString()}`
-                        : "-"}
-                    </div>
-                  </div>
-                </div>
-              );
-            }
-
-            /* =====================================================
-                POSITIONS 4+
-            ===================================================== */
-
-            return (
-              <div
-                key={`${player.rank}-${player.username}`}
-                className="
-                  grid
-                  grid-cols-[38px_minmax(0,1fr)_78px_78px_48px]
-                  items-center
-                  rounded-xl
-                  border border-purple-300/[0.09]
-                  bg-[linear-gradient(90deg,rgba(14,6,22,0.68),rgba(5,3,9,0.58))]
-                  px-2
-                  py-2
-                  transition-all duration-200
-                  hover:border-purple-300/20
-                  hover:bg-purple-400/[0.06]
-                  sm:grid-cols-[90px_minmax(0,1fr)_190px_190px_140px]
-                  sm:px-5
-                  sm:py-3.5
-                "
-              >
-                {/* RANK */}
-
-                <div className="flex justify-start">
-                  <div
-                    className={`
-                      flex
-                      h-8
-                      min-w-[36px]
-                      items-center justify-center
-                      rounded-full
-                      border
-                      px-2
-                      text-[9px] font-black
-                      sm:h-10
-                      sm:min-w-[52px]
-                      sm:px-3
-                      sm:text-[13px]
-                      ${rankBadgeStyle}
-                    `}
-                  >
-                    {rankLabel}
-                  </div>
-                </div>
-
-                {/* PLAYER */}
-
-                <div className="min-w-0 pl-1 sm:pl-3">
-                  <div
-                    className="
-                      truncate
-                      text-[10px] font-black
-                      text-white
-                      sm:text-[17px]
-                    "
-                  >
-                    {player.username}
-                  </div>
-                </div>
-
-                {/* WAGERED */}
-
-                <div
-                  className="
-                    whitespace-nowrap
-                    text-right
-                    text-[9px] font-black
-                    text-white/85
-                    sm:text-[15px]
-                  "
-                >
-                  {formatMoney(player.wagered)}
-                </div>
-
-                {/* TOTAL WAGERED */}
-
-                <div
-                  className="
-                    whitespace-nowrap
-                    text-right
-                    text-[8px] font-semibold
-                    text-white/40
-                    sm:text-[12px]
-                  "
-                >
-                  {formatMoney(player.totalWagered)}
-                </div>
-
-                {/* PRIZE */}
-
-                <div
-                  className="
-                    whitespace-nowrap
-                    text-right
-                    text-[9px] font-black
-                    text-emerald-300
-                    drop-shadow-[0_0_9px_rgba(110,231,183,0.20)]
-                    sm:text-[15px]
-                  "
-                >
-                  {prize > 0
-                    ? `$${prize.toLocaleString()}`
-                    : "-"}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
+    <Leaderboard players={leaderboardData} settings={prizeSettings} loading={leaderboardLoading} error={leaderboardError || prizeSettingsError} countdown={leaderboardCountdown} retry={() => void loadLeaderboard()} />
+    <div>
       {/* =========================================================
           ADMIN VIP SNAPSHOT
       ========================================================= */}
@@ -5802,7 +5251,7 @@ return (
                   sm:text-[11px]
                 "
               >
-                🥇 1st Closest $15
+                {prizeSettings.predictionPrize > 0 ? `🥇 Closest prediction $${prizeSettings.predictionPrize.toLocaleString()}` : "Closest prediction wins"}
               </div>
             </div>
           </div>
@@ -5934,10 +5383,12 @@ return (
                   value={predictionInput}
                   onChange={(e) =>
                     setPredictionInput(
-                      e.target.value.replace(/[^0-9]/g, "")
+                      e.target.value.replace(/[^0-9.]/g, "")
                     )
                   }
-                  placeholder="Enter your end balance prediction"
+                  aria-label="Your end balance prediction"
+                  inputMode="decimal"
+                  placeholder="Your predicted end balance, e.g. 1,250.50"
                   disabled={predictionStatus !== "open"}
                   className="
                     w-full
@@ -6015,193 +5466,7 @@ return (
     LIVE GUESSES
 ========================================================= */}
 
-<style>{`
-  @keyframes predictionWheelIdleScroll {
-    from {
-      transform: translateY(0);
-    }
-
-    to {
-      transform: translateY(-${
-        sortedPredictionsForTab.length * 44
-      }px);
-    }
-  }
-`}</style>
-
-<div className="border-t border-purple-300/[0.10] p-3 sm:p-4">
-  <div className="mb-2 flex items-center justify-between gap-3">
-    <div className="text-[9px] font-black uppercase tracking-[0.16em] text-purple-200 sm:text-[12px]">
-      🎯 Live Guesses
-    </div>
-
-    <div
-      className="
-        rounded-full
-        border border-purple-300/20
-        bg-purple-400/[0.07]
-        px-2 py-0.5
-        text-[8px] font-black
-        text-purple-100
-        sm:px-3
-        sm:py-1
-        sm:text-[10px]
-      "
-    >
-      {currentPredictionCount} Entries
-    </div>
-  </div>
-
-  {/* VIEWER-WHEEL STYLE SCROLLER */}
-  <div
-    className="
-      relative
-      h-[220px]
-      overflow-hidden
-      rounded-xl
-      border border-purple-300/20
-      bg-black/70
-      shadow-[inset_0_0_30px_rgba(168,85,247,0.07),0_0_20px_rgba(168,85,247,0.05)]
-    "
-  >
-    {/* TOP FADE */}
-    <div
-      className="
-        pointer-events-none
-        absolute inset-x-0 top-0 z-20
-        h-16
-        bg-gradient-to-b
-        from-black
-        via-black/85
-        to-transparent
-      "
-    />
-
-    {/* BOTTOM FADE */}
-    <div
-      className="
-        pointer-events-none
-        absolute inset-x-0 bottom-0 z-20
-        h-16
-        bg-gradient-to-t
-        from-black
-        via-black/85
-        to-transparent
-      "
-    />
-
-    {/* CENTER SELECTOR */}
-    <div
-      className="
-        pointer-events-none
-        absolute inset-x-2 top-1/2 z-30
-        h-11
-        -translate-y-1/2
-        rounded-lg
-        border border-purple-300/45
-        bg-purple-400/[0.10]
-        shadow-[0_0_24px_rgba(168,85,247,0.16)]
-      "
-    />
-
-    {/* LEFT ARROW */}
-    <div
-      className="
-        pointer-events-none
-        absolute left-0 top-1/2 z-40
-        -translate-y-1/2
-        border-y-[8px]
-        border-l-[12px]
-        border-y-transparent
-        border-l-purple-300
-      "
-    />
-
-    {/* RIGHT ARROW */}
-    <div
-      className="
-        pointer-events-none
-        absolute right-0 top-1/2 z-40
-        -translate-y-1/2
-        border-y-[8px]
-        border-r-[12px]
-        border-y-transparent
-        border-r-purple-300
-      "
-    />
-
-    {sortedPredictionsForTab.length === 0 ? (
-      <div className="flex h-full items-center justify-center text-[9px] font-semibold text-white/35 sm:text-[11px]">
-        No guesses yet.
-      </div>
-    ) : (
-      <div
-        style={{
-animation: `predictionWheelIdleScroll ${Math.max(
-  sortedPredictionsForTab.length * 1.2,
-  3
-)}s linear infinite`,
-          willChange: "transform",
-        }}
-      >
-        {Array.from({ length: 12 }, () => sortedPredictionsForTab)
-          .flat()
-          .map((entry, index) => {
-            const predictionIndex =
-              index % sortedPredictionsForTab.length;
-
-            return (
-              <div
-                key={`prediction-idle-${entry.id}-${index}`}
-                className="
-                  grid
-                  h-[44px]
-                  grid-cols-[auto_minmax(0,1fr)_auto]
-                  items-center
-                  gap-3
-                  border-b border-white/[0.05]
-                  px-3
-                "
-              >
-                {/* RANK */}
-                <div className="w-7 text-[8px] font-black text-purple-300/70 sm:text-[10px]">
-                  #{predictionIndex + 1}
-                </div>
-
-                {/* VIEWER */}
-                <div className="min-w-0">
-                  <div className="truncate text-[10px] font-black text-white sm:text-[12px]">
-                    {entry.username}
-                  </div>
-
-                  <div className="text-[7px] text-white/30 sm:text-[9px]">
-                    {formatTimeAgo(entry.createdAt)}
-                  </div>
-                </div>
-
-                {/* GUESS */}
-                <div
-                  className="
-                    whitespace-nowrap
-                    rounded-lg
-                    border border-purple-300/15
-                    bg-purple-400/[0.06]
-                    px-2.5 py-1
-                    text-[10px]
-                    font-black
-                    text-purple-200
-                    sm:text-[12px]
-                  "
-                >
-                  {formatMoney(entry.guess)}
-                </div>
-              </div>
-            );
-          })}
-      </div>
-    )}
-  </div>
-</div>
+<PredictionList key={currentPredictionHunt?.localId || "none"} entries={predictions} viewer={viewerName} />
 
       {/* =========================================================
           BONUS LIST
@@ -9537,16 +8802,17 @@ onClick={() => {
 
       {/* ADMIN NAVIGATION */}
       <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-purple-300/15 bg-black/70 p-1.5 shadow-[0_0_18px_rgba(168,85,247,0.06)] backdrop-blur-sm sm:mt-4">
-        <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-4">
+        <div className="admin-workspaces">
           {[
-            { id: "giveaway", label: "Giveaways" },
-            { id: "trashClaw", label: "Trash Claw" },
-            { id: "prizePortal", label: "Prize Portal" },
-            { id: "tournament", label: "Tournaments" },
-            { id: "snakeDraft", label: "Snake Drafts" },
-            { id: "slotWheel", label: "Slot Call Wheel" },
-            { id: "bonusTracker", label: "Bonus Hunt Tracker" },
-            {id:"community",label:"Community Hunt"},
+            { id: "giveaway", label: "Giveaways", description: "Chat entries, draws & winners", icon: "🎟" },
+            { id: "trashClaw", label: "Trash Claw", description: "On-stream prize reveal", icon: "🎁" },
+            { id: "prizePortal", label: "Prize Portal", description: "Claims, rewards & payments", icon: "💳" },
+            { id: "tournament", label: "Tournaments", description: "Brackets, players & results", icon: "🏆" },
+            { id: "snakeDraft", label: "Snake Drafts", description: "Teams & draft order", icon: "↔" },
+            { id: "slotWheel", label: "Slot Call Wheel", description: "Viewer calls & live rolls", icon: "🎡" },
+            { id: "bonusTracker", label: "Bonus Hunt Tracker", description: "Collect, open & track bonuses", icon: "📋" },
+            {id:"community",label:"Community Hunt",description:"Contributions, calls & predictions",icon:"👥"},
+            {id:"prizes",label:"Prize Settings",description:"Schedule & prize amounts",icon:"$"},
           ].map((tab) => {
             const active = activeAdminTab === tab.id;
 
@@ -9564,7 +8830,7 @@ onClick={() => {
                       | "tournament"
                       | "snakeDraft"
                       | "slotWheel"
-                      | "bonusTracker" | "community"
+                      | "bonusTracker" | "community" | "prizes"
                   )
                 }
                 className={`min-w-0 whitespace-normal break-words rounded-xl border px-3 py-3 text-sm font-bold leading-snug transition ${
@@ -9573,7 +8839,9 @@ onClick={() => {
                     : "border-white/10 bg-white/[0.03] text-white/55 hover:border-purple-300/20 hover:bg-purple-400/[0.06] hover:text-white"
                 }`}
               >
-                {tab.label}
+                <span aria-hidden="true" className="workspace-icon">{tab.icon}</span>
+                <span className="workspace-label">{tab.label}</span>
+                <small>{tab.description}</small>
               </button>
             );
           })}
@@ -9583,6 +8851,7 @@ onClick={() => {
 <div className="mt-2 grid w-full min-w-0 max-w-full gap-2 overflow-x-hidden sm:mt-3 sm:gap-3">
   {/* GIVEAWAY ADMIN */}
   <AdminGuidance tab={activeAdminTab} />
+  {activeAdminTab === "prizes" && (prizeSettingsError ? <p className="form-error" role="alert">{prizeSettingsError}</p> : <PrizeSettingsEditor key={JSON.stringify(prizeSettings)} settings={prizeSettings} saved={(settings) => { setPrizeSettings(settings); void loadLeaderboard(); setSiteNotice("Prize amounts saved locally. The leaderboard total and prediction banner have updated."); }} />)}
   <details
     open={activeAdminTab === "giveaway"}
     className={`${
@@ -9806,6 +9075,7 @@ onClick={() => {
 
               <div className="grid gap-2 sm:grid-cols-[120px_1fr_120px_1fr_auto]">
                 <select
+                  aria-label="Reward platform"
                   value={manualRewardPlatform}
                   onChange={(e) =>
                     setManualRewardPlatform(
@@ -9834,6 +9104,7 @@ onClick={() => {
                 />
 
                 <select
+                  aria-label="Reward category"
                   value={manualRewardType}
                   onChange={(e) => setManualRewardType(e.target.value)}
                   className="rounded-lg border border-purple-300/15 bg-black/60 px-3 py-2 text-xs font-black text-white outline-none focus:border-purple-300/40"
@@ -9941,7 +9212,7 @@ onClick={() => {
 
                         <div className="flex shrink-0 flex-col items-end gap-2">
                           <div className="text-base font-black text-purple-200">
-                            ${Number(reward.amount || 0).toLocaleString()}
+                            <RewardAmountEditor id={reward.id} amount={Number(reward.amount || 0)} paid={Boolean(reward.paid)} saved={loadAdminRewards} />
                           </div>
 
                           <ActionButton
@@ -10028,7 +9299,7 @@ onClick={() => {
 
                         <div className="flex flex-col items-end justify-between">
                           <div className="text-base font-black text-purple-200">
-                            ${Number(reward.amount || 0).toLocaleString()}
+                            <RewardAmountEditor id={reward.id} amount={Number(reward.amount || 0)} paid={Boolean(reward.paid)} saved={loadAdminRewards} />
                           </div>
 
                           <div className="mt-2 flex items-center gap-2">
@@ -10105,7 +9376,7 @@ onClick={() => {
 
                         <div className="shrink-0 text-right">
                           <div className="text-sm font-black text-purple-200">
-                            ${Number(reward.amount || 0).toLocaleString()}
+                            <RewardAmountEditor id={reward.id} amount={Number(reward.amount || 0)} paid={Boolean(reward.paid)} saved={loadAdminRewards} />
                           </div>
 
                           <button

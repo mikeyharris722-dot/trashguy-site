@@ -67,7 +67,10 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (body.amount !== undefined) {
-    updateData.amount = Number(body.amount);
+    const amount = body.amount;
+    if (typeof amount !== "number" || !Number.isFinite(amount) || amount < 0 || amount > 1000000 || Math.abs(amount * 100 - Math.round(amount * 100)) > 0.00001)
+      return NextResponse.json({ ok: false, error: "Enter a prize from $0 to $1,000,000 with up to two decimal places." }, { status: 400 });
+    updateData.amount = amount;
   }
 
   const { data, error } = await supabase
