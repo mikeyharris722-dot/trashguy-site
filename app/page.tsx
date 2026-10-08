@@ -441,7 +441,7 @@ function GlowTabTitle({
   label: string;
 }) {
   return (
-    <div className="mb-3 flex justify-center text-center sm:mb-5">
+    <div className="glow-tab-title mb-3 flex justify-center text-center sm:mb-5">
       <div className="relative inline-flex items-center justify-center px-3 py-2 sm:px-6">
 
         {/* SOFT PURPLE GLOW BEHIND TITLE */}
@@ -6862,7 +6862,7 @@ return (
       {/* PROVIDER GRID */}
 
       <div className="p-2.5 sm:p-3.5">
-        <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 sm:gap-2.5">
+        <div className="provider-grid grid grid-cols-3 gap-1.5 sm:grid-cols-5 sm:gap-2.5">
           {[...FEATURED_PROVIDERS.filter(p=>slotProviders.includes(p)),...(showMoreProviders?slotProviders.filter(p=>!FEATURED_PROVIDERS.includes(p)).sort():[])].map((provider) => {
             const active = selectedProviders.length===0 ? FEATURED_PROVIDERS.includes(provider) : selectedProviders.includes(provider);
             const logo = featuredLogos[provider]||providerLogos[provider];
@@ -8799,7 +8799,7 @@ onClick={() => {
       </div>
 
       <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-purple-300/15 bg-black/85 p-2.5 shadow-[0_0_24px_rgba(168,85,247,0.08)] backdrop-blur-sm sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
-        <div className="rounded-xl border border-purple-300/15 bg-purple-400/5 px-3 py-2 text-[11px] font-semibold leading-5 text-purple-100/75 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
+        <div className="admin-signin-summary rounded-xl border border-purple-300/15 bg-purple-400/5 px-3 py-2 text-[11px] font-semibold leading-5 text-purple-100/75 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
           Signed in as {viewerDisplayName}. Choose a workspace below to manage the stream.
         </div>
       </div>
@@ -8815,7 +8815,7 @@ onClick={() => {
             { id: "snakeDraft", label: "Snake Drafts", description: "Teams & draft order", icon: "↔" },
             { id: "slotWheel", label: "Slot Call Wheel", description: "Viewer calls & live rolls", icon: "🎡" },
             { id: "bonusTracker", label: "Bonus Hunt Tracker", description: "Collect, open & track bonuses", icon: "📋" },
-            {id:"community",label:"Community Hunt",description:"Contributions, calls & predictions",icon:"👥"},
+            {id:"community",label:"Community Hunt",description:"Contributions, calls & bonuses",icon:"👥"},
             {id:"prizes",label:"Prize Settings",description:"Schedule & prize amounts",icon:"$"},
           ].map((tab) => {
             const active = activeAdminTab === tab.id;
@@ -8824,6 +8824,8 @@ onClick={() => {
               <button
                 key={tab.id}
                 aria-pressed={active}
+                aria-label={tab.label}
+                title={tab.label}
                 type="button"
                 onClick={() =>
                   setActiveAdminTab(
@@ -8844,7 +8846,7 @@ onClick={() => {
                 }`}
               >
                 <span aria-hidden="true" className="workspace-icon">{tab.icon}</span>
-                <span className="workspace-label">{tab.label}</span>
+                <span className="workspace-label"><span className="workspace-desktop-label">{tab.label}</span><span className="workspace-mobile-label">{{giveaway:"Giveaways",trashClaw:"Claw",prizePortal:"Prizes",tournament:"Tournaments",snakeDraft:"Drafts",slotWheel:"Call Wheel",bonusTracker:"Tracker",community:"Community",prizes:"Settings"}[tab.id]}</span></span>
                 <small>{tab.description}</small>
               </button>
             );

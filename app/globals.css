@@ -1403,3 +1403,95 @@ textarea::placeholder {
 .reward-amount-editor{display:grid;gap:7px;text-align:right;max-width:240px;}.reward-amount-editor>strong{font-size:18px;color:#e9d5ff;}.reward-amount-editor button{font-size:12px;font-weight:650;color:#e9d5ff;border:1px solid #c084fc40;background:#a855f714;border-radius:8px;padding:7px 10px;}.reward-amount-editor form{padding:12px;border:1px solid #c084fc40;border-radius:12px;background:#100a1d;text-align:left;}.reward-amount-editor label{display:grid;gap:6px;font-size:12px;color:#eee;}.reward-amount-editor input{width:100%;border:1px solid #c084fc40;border-radius:8px;background:#07050d;padding:9px;color:white;}.reward-amount-editor form>div{display:flex;gap:6px;margin-top:10px;}.reward-amount-editor form p{font-size:12px;font-weight:400;line-height:1.5;color:#fde68a;margin-top:10px;}
 
 .prize-editor .competition-settings{margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #c084fc25;}.competition-settings p{font-size:14px;line-height:1.6;color:#d5c6e2;margin-bottom:16px;max-width:760px;}.competition-settings .prize-fields{grid-template-columns:repeat(2,minmax(0,1fr));max-width:620px;}.competition-settings input{border:1px solid #c084fc40;background:#07060dd9;border-radius:10px;padding:12px;color:white;color-scheme:dark;}.competition-settings small{display:block;margin-top:10px;font-size:12px;color:#cabbd7;}
+
+/* Compact phone layouts. Desktop layout and OBS remain unchanged. */
+.workspace-mobile-label { display: none; }
+@media (max-width: 639px) {
+  .header-inner { padding: 7px 10px; gap: 8px; }
+  .header-brand { gap: 6px; }
+  .header-brand strong { font-size: 19px; }
+  .header-brand img { width: 34px; height: 34px; }
+  .header-brand small { font-size: 8px; letter-spacing: 1.2px; }
+  .menu-toggle { min-width: 40px; min-height: 40px; padding: 7px 9px; }
+  .navigation-panel { max-height: calc(100dvh - 70px); overflow-y: auto; }
+  .navigation-panel a, .navigation-panel button { min-height: 44px; }
+  .site-content { padding: 10px 9px; }
+  .site-content > section { min-width: 0; }
+  .site-content :is(.space-y-5,.space-y-4) > :not([hidden]) ~ :not([hidden]) { margin-block-start: 10px; }
+  .site-content :is(.p-8,.p-6,.p-5,.p-4) { padding: 12px; }
+  .site-content :is(.gap-6,.gap-5,.gap-4) { gap: 10px; }
+  .site-content :is(.text-4xl,.text-3xl) { font-size: 23px; line-height: 1.2; }
+  .site-content .text-2xl { font-size: 20px; line-height: 1.25; }
+  .site-content .text-xl { font-size: 17px; }
+  .site-content .text-lg { font-size: 15px; }
+  .site-content .text-sm { font-size: 12px; line-height: 1.45; }
+  .site-content :is(input,select,textarea) { font-size: 16px; min-width: 0; max-width: 100%; }
+  .site-content :is(input,select) { padding-top: 9px; padding-bottom: 9px; }
+  .site-content textarea { padding: 9px 10px; }
+  .workspace-panel, .page-intro { padding: 13px; border-radius: 13px; }
+  .workspace-heading { gap: 10px; margin-bottom: 12px; }
+  .workspace-heading h2, .page-intro h1 { font-size: 20px; margin: 4px 0 7px; }
+  .workspace-heading p, .leaderboard-intro p, .intro-description { font-size: 12px; line-height: 1.5; }
+  .page-help { margin-top: 9px; font-size: 12px; }
+  .community-layout > div:first-child { padding: 14px; border-radius: 13px; }
+  .community-layout > div:first-child h1 { font-size: 22px; }
+  .community-layout > div:first-child p { font-size: 12px; line-height: 1.5; }
+  .admin-workspaces { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 5px; padding: 2px; }
+  .admin-workspaces button { grid-template-columns: 1fr; gap: 4px; align-content: center; justify-items: center; min-height: 58px; padding: 5px 2px!important; border-radius: 9px; text-align: center; }
+  .admin-workspaces .workspace-icon { grid-row: auto; width: 21px; height: 21px; font-size: 14px; background: transparent; }
+  .admin-workspaces .workspace-label { font-size: 10px; line-height: 1.2; overflow-wrap: normal; }
+  .admin-workspaces small, .workspace-desktop-label { display: none; }
+  .workspace-mobile-label { display: inline; }
+  .leaderboard-layout { gap: 10px; }
+  .leaderboard-intro { gap: 12px; }
+  .leaderboard-intro h1 { font-size: 24px; margin: 5px 0 8px; }
+  .deadline-chip { padding: 9px 12px; gap: 3px; width: 100%; }
+  .deadline-chip strong { font-size: 15px; }
+  .leaderboard-podium { gap: 7px; }
+  .podium-place { padding: 10px; gap: 8px; border-radius: 11px; grid-template-columns: 29px minmax(0,1fr) auto; }
+  .podium-rank { width: 29px; height: 29px; font-size: 14px; border-radius: 8px; }
+  .podium-place h2 { font-size: 13px; }
+  .podium-place p { margin-top: 3px; }
+  .podium-prize { font-size: 17px; }
+  .leaderboard-table th, .leaderboard-table td { padding: 9px 4px; }
+  .tracker-stats { gap: 6px; }
+  .tracker-stats > div { padding: 9px; }
+  .tracker-stats dt { font-size: 11px; margin-bottom: 3px; }
+  .tracker-stats dd { font-size: 16px; }
+  .tracker-explainer, .slot-search > label { font-size: 11px; }
+  .search-input-wrap input { padding: 9px 10px; }
+  .search-results { max-height: 220px; }
+  .search-results > button { min-height: 48px; padding: 6px; gap: 8px; }
+  .search-results img { width: 34px; height: 34px; }
+  .search-results b { font-size: 12px; }
+  .hunt-schedule-card { padding: 11px; gap: 8px; }
+  .calendar-symbol { width: 31px; height: 31px; font-size: 21px; }
+  .hunt-schedule-card h2 { font-size: 14px; }
+  .hunt-create-row, .schedule-fields { gap: 10px; }
+  .prize-fields { gap: 10px; }
+  .prediction-form { padding: 12px; gap: 10px; margin: 12px 0; }
+  .prediction-summary { margin-bottom: 12px; }
+  .prediction-summary div { padding: 9px; }
+  .prediction-list li { padding: 9px 0; font-size: 12px; gap: 7px; }
+  .prediction-help, .prediction-winner { padding: 12px; font-size: 12px; }
+  .hunt-history-controls { padding: 11px; }
+  .local-review-banner { padding: 9px 11px; font-size: 11px; }
+}
+
+@media (max-width: 639px) {
+  .glow-tab-title { margin-bottom: 6px; }
+  .glow-tab-title h2 { font-size: 19px; letter-spacing: .06em; }
+  .glow-tab-title > div { padding: 6px 8px; }
+  .admin-signin-summary { font-size: 11px; line-height: 1.45; }
+  .admin-guidance { padding: 12px; }
+  .admin-guidance h2 { font-size: 18px; }
+  .admin-guidance p { font-size: 12px; line-height: 1.5; }
+  .site-content [class~="h-[220px]"] { height: 110px; }
+  .site-content [class~="min-h-[360px]"] { min-height: 180px; }
+}
+
+@media (max-width: 639px) {
+  .provider-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .provider-grid [data-slot-provider] { gap: 6px; padding: 6px; }
+  .provider-grid .truncate { white-space: normal; font-size: 11px; overflow-wrap: anywhere; }
+}
