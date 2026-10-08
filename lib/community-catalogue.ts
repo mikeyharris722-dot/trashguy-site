@@ -1,11 +1,12 @@
 import "server-only";
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import {
-  communityEnabled,
-  localCatalogue,
-  validLaunch,
-} from "./community-local";
+  readDocument,
+  commitDocument,
+  requestKey,
+  receipt,
+} from "./community-store";
+import initialCatalogue from "@/data/rainbet-community.json";
+import { validLaunch } from "./community-local";
 export function normalizeImport(input: unknown) {
   const raw = Array.isArray(input)
     ? input
@@ -65,53 +66,78 @@ export function normalizeImport(input: unknown) {
     };
   });
 }
-export async function saveCatalogue(raw: unknown) {
-  if (!communityEnabled()) throw Error("Local community testing only.");
-  const imported = normalizeImport(raw),
-    existing = await localCatalogue();
-  const byId = new Map(existing.map((g) => [g.identifier, g])),
-    byUrl = new Map(
-      existing
-        .filter((g) => g.rainbet_launch_url)
-        .map((g) => [g.rainbet_launch_url, g]),
+export async function saveCatalogue(
+  raw: unknown,
+  actor = "local-test",
+  requestId?: string,
+) {
+  const imported = normalizeImport(raw);
+  const key = requestKey({ records: imported, requestId }, actor, "catalogue");
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const replay = await receipt("catalogue", actor, key);
+    if (replay)
+      return replay.result as {
+        total: number;
+        added: number;
+        imported: number;
+      };
+    const snapshot = await readDocument<ReturnType<typeof normalizeImport>>(
+      "catalogue",
+      initialCatalogue,
     );
-  let added = 0;
-  const seen = new Set<string>();
-  for (const g of imported) {
-    if (seen.has(g.identifier))
-      throw Error("Duplicate source identifiers in import.");
-    seen.add(g.identifier);
-    const old =
-      byId.get(g.identifier) ||
-      (g.rainbet_launch_url ? byUrl.get(g.rainbet_launch_url) : undefined);
-    if (old) byId.set(old.identifier, { ...g, identifier: old.identifier });
-    else {
-      byId.set(g.identifier, g);
-      added++;
+    const existing = snapshot.payload.length
+      ? snapshot.payload
+      : initialCatalogue;
+    const byId = new Map(existing.map((g) => [g.identifier, g])),
+      byUrl = new Map(
+        existing
+          .filter((g) => g.rainbet_launch_url)
+          .map((g) => [g.rainbet_launch_url, g]),
+      );
+    let added = 0;
+    const seen = new Set<string>();
+    for (const g of imported) {
+      if (seen.has(g.identifier))
+        throw Error("Duplicate source identifiers in import.");
+      seen.add(g.identifier);
+      const old =
+        byId.get(g.identifier) ||
+        (g.rainbet_launch_url ? byUrl.get(g.rainbet_launch_url) : undefined);
+      if (old) byId.set(old.identifier, { ...g, identifier: old.identifier });
+      else {
+        byId.set(g.identifier, g);
+        added++;
+      }
     }
+    const records = [...byId.values()].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+    const result = { total: records.length, added, imported: imported.length };
+    const saved = await commitDocument(
+      "catalogue",
+      records,
+      snapshot.version,
+      result,
+      actor,
+      key,
+    );
+    if (saved.committed) return saved.result as typeof result;
   }
-  const records = [...byId.values()].sort((a, b) =>
-    a.name.localeCompare(b.name),
-  );
-  const dir = path.join(process.cwd(), ".local");
-  await fs.mkdir(dir, { recursive: true });
-  const target = path.join(dir, "rainbet-catalogue.json");
-  try {
-    await fs.copyFile(target, target + ".backup");
-  } catch (e) {
-    if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
-  }
-  await fs.writeFile(target + ".tmp", JSON.stringify(records));
-  await fs.rename(target + ".tmp", target);
-  return { total: records.length, added, imported: imported.length };
+  throw Error("Another catalogue update is running. Please retry.");
 }
+
 export async function fetchCatalogue(country: string) {
   if (!["GB", "IE", "CA", "AU", "NZ"].includes(country))
     throw Error("Choose a supported catalogue country.");
+  const deadline = Date.now() + 45000;
   const games: unknown[] = [],
     seen = new Set<string>();
   let cursor: string | null = null;
   for (let page = 0; page < 250; page++) {
+    if (Date.now() > deadline)
+      throw Error(
+        "Rainbet took too long. Catalogue unchanged; use JSON import.",
+      );
     const url = new URL("https://services.rainbet.com/v1/public/games/list");
     url.searchParams.set("grouping", "slots");
     url.searchParams.set("sort_by", "recommended");

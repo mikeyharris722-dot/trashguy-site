@@ -57,6 +57,7 @@ export default function OpeningSession({
           },
           body: JSON.stringify({
             action: "openingFocus",
+            requestId: crypto.randomUUID(),
             huntId,
             entryIds: queueKey ? queueKey.split(",") : [],
           }),

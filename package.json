@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:tracker": "node scripts/tracker-tests.cjs",
-    "test:community": "node scripts/community-tests.cjs"
+    "test:community": "node scripts/community-tests.cjs",
+    "test:community:production": "node scripts/community-production-tests.cjs"
   },
   "dependencies": {
     "@retconned/kick-js": "^0.5.4",

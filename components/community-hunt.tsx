@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import SlotSearch, { type SlotOption } from "./slot-search";
 import TrackerAdmin from "./tracker-admin";
@@ -89,17 +89,27 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
       clearInterval(timer);
     };
   }, [load]);
+  const pendingRequest = useRef<{ body: string; id: string } | null>(null);
   async function command(action: string, extra: Record<string, unknown> = {}) {
+    const body = JSON.stringify({ huntId: id, action, ...extra });
+    if (pendingRequest.current?.body !== body)
+      pendingRequest.current = { body, id: crypto.randomUUID() };
     setBusy(true);
     setMessage("");
     try {
       const r = await fetch("/api/community", {
         method: "POST",
         headers: await headers(),
-        body: JSON.stringify({ huntId: id, action, ...extra }),
+        body: JSON.stringify({
+          huntId: id,
+          action,
+          requestId: pendingRequest.current.id,
+          ...extra,
+        }),
       });
       const d = await r.json();
       if (!r.ok) throw Error(d.error);
+      pendingRequest.current = null;
       if (action === "create") setId(d.result);
       if (action === "submit" || action === "hostCall") {
         setChoice(null);
@@ -165,7 +175,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
     <section className="mx-auto max-w-6xl space-y-5 text-white">
       <div className="rounded-2xl border border-purple-300/20 bg-black/80 p-5">
         <p className="text-xs font-bold uppercase tracking-widest text-amber-200">
-          Local test · no live hunt data changed
+          Community · Rainbet slots
         </p>
         <h1 className="mt-2 text-3xl font-black">Community Hunt</h1>
         <p className="mt-2 text-sm text-white/60">
@@ -497,8 +507,8 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                 Delete community hunt
               </summary>
               <p className="my-3 text-xs text-white/50">
-                Hides the hunt. Local test records remain recoverable in the
-                local data file.
+                Hides the hunt from the website. Saved records remain
+                recoverable by the site owner.
               </p>
               <input
                 aria-label="Confirm community hunt deletion"

@@ -38,9 +38,7 @@ export default function SiteHeader({
     { id: "home", label: "Home", icon: "🏠" },
     { id: "leaderboard", label: "Leaderboard", icon: "🏆" },
     { id: "hunts", label: "Bonus Hunts", icon: "🎁" },
-    ...(process.env.NEXT_PUBLIC_COMMUNITY_HUNT_LOCAL === "1"
-      ? [{ id: "community", label: "Community Hunt", icon: "👻" }]
-      : []),
+    { id: "community", label: "Community Hunt", icon: "👻" },
     { id: "slotwheel", label: "Viewer Wheel", icon: "🎡" },
     { id: "tournaments", label: "Tournaments", icon: "🏅" },
     { id: "slotpicker", label: "Slot Picker", icon: "🎰" },

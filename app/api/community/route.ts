@@ -4,6 +4,8 @@ import {
   communityCommand,
   rainbetGames,
 } from "@/lib/community-local";
+import { communityJson } from "@/lib/community-request";
+import { localCommunity } from "@/lib/community-store";
 import { siteDb, requireTrackerAdmin, apiError } from "@/lib/site-db";
 async function actor(request: Request) {
   const token = (request.headers.get("authorization") || "")
@@ -12,6 +14,7 @@ async function actor(request: Request) {
   const { data, error } = await siteDb().auth.getUser(token);
   if (error || !data.user) throw Error("AUTH: Sign in with Twitch to join.");
   const identity = data.user.identities?.find((i) => i.provider === "twitch");
+  if (!identity) throw Error("AUTH: Sign in with Twitch to join.");
   const name = String(
     identity?.identity_data?.preferred_username ||
       identity?.identity_data?.name ||
@@ -21,12 +24,12 @@ async function actor(request: Request) {
 }
 export async function GET(request: Request) {
   try {
-    const s = await communityState();
     const url = new URL(request.url);
     if (url.searchParams.has("q"))
       return Response.json({
         games: await rainbetGames(url.searchParams.get("q") || ""),
       });
+    const s = await communityState();
     let who: null | { id: string; name: string } = null,
       admin = false;
     if (request.headers.get("authorization")) {
@@ -57,7 +60,7 @@ export async function GET(request: Request) {
           ),
       }));
     return Response.json(
-      { hunts, activeHuntId: s.activeHuntId, localTest: true },
+      { hunts, activeHuntId: s.activeHuntId, localTest: localCommunity() },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (e) {
@@ -72,7 +75,7 @@ export async function POST(request: Request) {
       await requireTrackerAdmin(request);
       admin = true;
     } catch {}
-    const b = await request.json();
+    const b = await communityJson(request);
     const result = await communityCommand(who, admin, b);
     return Response.json({ ok: true, result });
   } catch (e) {

@@ -112,7 +112,11 @@ export default function TrackerAdmin({
       control.abort();
     };
   }, [query, catalogueApi]);
+  const communityRequest = useRef<{ body: string; id: string } | null>(null);
   async function action(path: string, body: Record<string, unknown>) {
+    const key = JSON.stringify({ huntId, ...body });
+    if (communityRequest.current?.body !== key)
+      communityRequest.current = { body: key, id: crypto.randomUUID() };
     setBusy(true);
     setMessage("");
     try {
@@ -123,10 +127,15 @@ export default function TrackerAdmin({
           "Content-Type": "application/json",
           Authorization: "Bearer " + (data.session?.access_token || ""),
         },
-        body: JSON.stringify(communityMode ? { huntId, ...body } : body),
+        body: JSON.stringify(
+          communityMode
+            ? { huntId, requestId: communityRequest.current.id, ...body }
+            : body,
+        ),
       });
       const value = await response.json();
       if (!response.ok) throw new Error(value.error || "Request failed");
+      communityRequest.current = null;
       setMessage(
         body.action === "update"
           ? `Updated ${value.total} games; ${value.added} new; ${value.missing} absent records retained. ${value.artworkWarning || ""}`

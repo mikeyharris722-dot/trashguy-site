@@ -1009,7 +1009,7 @@ const [activeAdminTab, setActiveAdminTab] = useState<
     saved === "tournament" ||
     saved === "snakeDraft" ||
     saved === "slotWheel" ||
-    saved === "bonusTracker" || (saved === "community" && process.env.NEXT_PUBLIC_COMMUNITY_HUNT_LOCAL === "1")
+    saved === "bonusTracker" || saved === "community"
   ) {
     return saved;
   }
@@ -9547,7 +9547,7 @@ onClick={() => {
             { id: "snakeDraft", label: "Snake Drafts" },
             { id: "slotWheel", label: "Slot Call Wheel" },
             { id: "bonusTracker", label: "Bonus Hunt Tracker" },
-            ...(process.env.NEXT_PUBLIC_COMMUNITY_HUNT_LOCAL === "1" ? [{id:"community",label:"Community Hunt"}] : []),
+            {id:"community",label:"Community Hunt"},
           ].map((tab) => {
             const active = activeAdminTab === tab.id;
 
