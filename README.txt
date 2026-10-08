@@ -3,7 +3,7 @@ Replace these two files:
 app/page.tsx
 components/site-header.tsx
 
-Then run:
+Then run :
 
 npm run build
 
