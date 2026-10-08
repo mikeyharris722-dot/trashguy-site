@@ -182,51 +182,6 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
         </p>
       )}
       {admin && (
-        <details className="rounded-xl border border-purple-300/20 bg-black/75 p-4">
-          <summary className="cursor-pointer font-bold">
-            Rainbet catalogue
-          </summary>
-          <p className="my-3 text-sm text-white/60">
-            Refresh the GB catalogue. Existing hunt records are preserved. If
-            Rainbet blocks the request, import its catalogue JSON instead.
-          </p>
-          <button
-            className={button}
-            disabled={busy}
-            onClick={() =>
-              void catalogueAction({ action: "update", country: "GB" })
-            }
-          >
-            Update Rainbet catalogue
-          </button>
-          <label className="mt-3 block text-sm">
-            Import Rainbet JSON
-            <input
-              className="mt-2 block"
-              aria-label="Import Rainbet catalogue JSON"
-              type="file"
-              accept=".json,application/json"
-              disabled={busy}
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                if (file.size > 10000000) {
-                  setMessage("File must be under 10 MB");
-                  return;
-                }
-                try {
-                  const records = JSON.parse(await file.text());
-                  await catalogueAction({ action: "import", records });
-                } catch {
-                  setMessage("Could not read JSON file");
-                }
-                e.target.value = "";
-              }}
-            />
-          </label>
-        </details>
-      )}
-      {admin && (
         <form
           className="flex flex-wrap gap-3 rounded-xl border border-white/10 bg-black/75 p-4"
           onSubmit={(e) => {
@@ -578,6 +533,51 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
             </section>
           )}
         </>
+      )}
+      {admin && (
+        <details className="rounded-xl border border-purple-300/20 bg-black/75 p-4">
+          <summary className="cursor-pointer font-bold">
+            Rainbet catalogue
+          </summary>
+          <p className="my-3 text-sm text-white/60">
+            Refresh the GB catalogue. Existing hunt records are preserved. If
+            Rainbet blocks the request, import its catalogue JSON instead.
+          </p>
+          <button
+            className={button}
+            disabled={busy}
+            onClick={() =>
+              void catalogueAction({ action: "update", country: "GB" })
+            }
+          >
+            Update Rainbet catalogue
+          </button>
+          <label className="mt-3 block text-sm">
+            Import Rainbet JSON
+            <input
+              className="mt-2 block"
+              aria-label="Import Rainbet catalogue JSON"
+              type="file"
+              accept=".json,application/json"
+              disabled={busy}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 10000000) {
+                  setMessage("File must be under 10 MB");
+                  return;
+                }
+                try {
+                  const records = JSON.parse(await file.text());
+                  await catalogueAction({ action: "import", records });
+                } catch {
+                  setMessage("Could not read JSON file");
+                }
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </details>
       )}
     </section>
   );
