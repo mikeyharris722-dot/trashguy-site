@@ -440,7 +440,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
               </li>
             </ol>
           )}
-          <div className="grid gap-3 rounded-xl border border-purple-300/20 bg-black/75 p-4 sm:grid-cols-4">
+          <div className="community-stats grid gap-3 rounded-xl border border-purple-300/20 bg-black/75 p-4 sm:grid-cols-4">
             <div>
               <span className="text-xs text-white/50">Approved bankroll</span>
               <p className="text-xl font-bold">${h.startCost.toFixed(2)}</p>
