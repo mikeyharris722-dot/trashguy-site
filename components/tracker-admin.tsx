@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import OpeningSession from "./tracker-opening";
 import SlotSearch, { type SlotOption } from "./slot-search";
@@ -45,12 +45,18 @@ export default function TrackerAdmin({
   onHunt,
   onChange,
   manual = false,
+  community = false,
 }: {
   huntId: string;
   onHunt: (id: string) => void;
   onChange: () => void;
   manual?: boolean;
+  community?: boolean;
 }) {
+  const trackerApi = community
+    ? "/api/community/tracker"
+    : "/api/admin/site-tracker";
+  const catalogueApi = community ? "/api/community" : "/api/catalogue";
   const [hunts, setHunts] = useState<Hunt[]>([]),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
@@ -62,13 +68,20 @@ export default function TrackerAdmin({
     [aliases, setAliases] = useState(""),
     [correctedName, setCorrectedName] = useState(""),
     [imageUrl, setImageUrl] = useState("");
-  async function load() {
-    const h = await fetch("/api/site-tracker", { cache: "no-store" }).then(
-      (r) => r.json(),
-    );
+  const load = useCallback(async () => {
+    const { data: session } = await supabaseBrowser.auth.getSession();
+    const h = await fetch(
+      community ? "/api/community/tracker" : "/api/site-tracker",
+      {
+        cache: "no-store",
+        headers: community
+          ? { Authorization: "Bearer " + (session.session?.access_token || "") }
+          : {},
+      },
+    ).then((r) => r.json());
     setHunts(h.hunts || []);
     if (h.error) setMessage(h.error);
-  }
+  }, [community]);
   useEffect(() => {
     let live = true;
     const run = () => {
@@ -80,11 +93,11 @@ export default function TrackerAdmin({
       live = false;
       clearInterval(timer);
     };
-  }, []);
+  }, [load]);
   useEffect(() => {
     const control = new AbortController();
     const timer = setTimeout(() => {
-      fetch("/api/catalogue?q=" + encodeURIComponent(query), {
+      fetch(catalogueApi + "?q=" + encodeURIComponent(query), {
         signal: control.signal,
       })
         .then((r) => r.json())
@@ -95,7 +108,7 @@ export default function TrackerAdmin({
       clearTimeout(timer);
       control.abort();
     };
-  }, [query]);
+  }, [query, catalogueApi]);
   async function action(path: string, body: Record<string, unknown>) {
     setBusy(true);
     setMessage("");
@@ -107,7 +120,7 @@ export default function TrackerAdmin({
           "Content-Type": "application/json",
           Authorization: "Bearer " + (data.session?.access_token || ""),
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(community ? { huntId, ...body } : body),
       });
       const value = await response.json();
       if (!response.ok) throw new Error(value.error || "Request failed");
@@ -284,41 +297,43 @@ export default function TrackerAdmin({
           choose or create another hunt.
         </p>
       </div>
-      <details className="rounded-xl border border-white/10 p-3">
-        <summary className="cursor-pointer text-sm font-bold text-purple-200">
-          Create a new hunt
-        </summary>
-        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_160px_auto]">
-          <input
-            aria-label="New hunt title"
-            className={input}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Hunt name"
-          />
-          <input
-            aria-label="Recovery target"
-            className={input}
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-            inputMode="decimal"
-            placeholder="Starting bankroll"
-          />
-          <button
-            className={button}
-            disabled={busy || !title.trim() || !start.trim()}
-            onClick={() =>
-              action("/api/admin/site-tracker", {
-                action: "create",
-                title,
-                start,
-              })
-            }
-          >
-            Create hunt
-          </button>
-        </div>
-      </details>
+      {!community && (
+        <details className="rounded-xl border border-white/10 p-3">
+          <summary className="cursor-pointer text-sm font-bold text-purple-200">
+            Create a new hunt
+          </summary>
+          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_160px_auto]">
+            <input
+              aria-label="New hunt title"
+              className={input}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Hunt name"
+            />
+            <input
+              aria-label="Recovery target"
+              className={input}
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              inputMode="decimal"
+              placeholder="Starting bankroll"
+            />
+            <button
+              className={button}
+              disabled={busy || !title.trim() || !start.trim()}
+              onClick={() =>
+                action(trackerApi, {
+                  action: "create",
+                  title,
+                  start,
+                })
+              }
+            >
+              Create hunt
+            </button>
+          </div>
+        </details>
+      )}
       {manual && (
         <details className="rounded-lg border border-teal-300/20 p-3">
           <summary className="cursor-pointer font-bold text-teal-200">
@@ -335,12 +350,13 @@ export default function TrackerAdmin({
             className={input + " mt-2 w-full"}
             value={
               typeof window !== "undefined"
-                ? window.location.origin + "/overlay"
+                ? window.location.origin +
+                  (community ? "/overlay?community=1" : "/overlay")
                 : "/overlay"
             }
           />
           <a
-            href="/overlay"
+            href={community ? "/overlay?community=1" : "/overlay"}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-2 inline-block text-xs text-teal-200"
@@ -351,12 +367,14 @@ export default function TrackerAdmin({
       )}
       {current && (
         <>
-          <HuntSettings
-            key={current.id + ":" + current.title + ":" + current.startCost}
-            hunt={current}
-            busy={busy}
-            save={(body) => action("/api/admin/site-tracker", body)}
-          />
+          {!community && (
+            <HuntSettings
+              key={current.id + ":" + current.title + ":" + current.startCost}
+              hunt={current}
+              busy={busy}
+              save={(body) => action(trackerApi, body)}
+            />
+          )}
           <div className="flex flex-wrap gap-2">
             {["collecting", "opening", "finished"].map((phase) => (
               <button
@@ -369,7 +387,7 @@ export default function TrackerAdmin({
                 }
                 onClick={async () => {
                   if (
-                    await action("/api/admin/site-tracker", {
+                    await action(trackerApi, {
                       action: "phase",
                       huntId,
                       phase,
@@ -394,13 +412,14 @@ export default function TrackerAdmin({
           )}
           {manual && opening && current.phase === "opening" && (
             <OpeningSession
+              endpoint={trackerApi}
               key={current.id}
               huntId={current.id}
               initialQueue={current.openingQueue || []}
               entries={current.entries}
               busy={busy}
               onClose={() => setOpening(false)}
-              save={(body) => action("/api/admin/site-tracker", body)}
+              save={(body) => action(trackerApi, body)}
             />
           )}
           <p className="text-xs">
@@ -421,6 +440,7 @@ export default function TrackerAdmin({
                 </p>
               )}
               <SlotSearch
+                endpoint={catalogueApi}
                 key={searchReset}
                 selected={manualSlot}
                 onSelect={(g) => {
@@ -460,7 +480,7 @@ export default function TrackerAdmin({
                   onClick={async () => {
                     if (!manualSlot) return;
                     if (
-                      await action("/api/admin/site-tracker", {
+                      await action(trackerApi, {
                         action: "manual",
                         huntId,
                         identifier: manualSlot.identifier,
@@ -519,7 +539,7 @@ export default function TrackerAdmin({
                     ids.splice(from, 1);
                     ids.splice(to, 0, dragId);
                     setDragId(null);
-                    void action("/api/admin/site-tracker", {
+                    void action(trackerApi, {
                       action: "reorder",
                       huntId,
                       entryIds: ids,
@@ -535,7 +555,7 @@ export default function TrackerAdmin({
                         to = from + direction;
                       if (to < 0 || to >= ids.length) return;
                       [ids[from], ids[to]] = [ids[to], ids[from]];
-                      void action("/api/admin/site-tracker", {
+                      void action(trackerApi, {
                         action: "reorder",
                         huntId,
                         entryIds: ids,
@@ -558,7 +578,7 @@ export default function TrackerAdmin({
                         )?.id
                     }
                     disabled={busy || current.phase === "finished"}
-                    save={(body) => action("/api/admin/site-tracker", body)}
+                    save={(body) => action(trackerApi, body)}
                   />
                 </div>
               ))}

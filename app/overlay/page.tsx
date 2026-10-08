@@ -40,10 +40,15 @@ export default function Overlay() {
     const abort = new AbortController();
     async function load() {
       try {
-        const r = await fetch("/api/overlay", {
-          cache: "no-store",
-          signal: abort.signal,
-        });
+        const r = await fetch(
+          new URLSearchParams(window.location.search).get("community") === "1"
+            ? "/api/community/overlay"
+            : "/api/overlay",
+          {
+            cache: "no-store",
+            signal: abort.signal,
+          },
+        );
         if (!r.ok) throw Error();
         const d = await r.json();
         if (live) {

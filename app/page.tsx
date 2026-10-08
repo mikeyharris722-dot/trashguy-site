@@ -21,6 +21,7 @@ import {FEATURED_PROVIDERS,providerName,featuredLogos} from "@/lib/slot-provider
 import WheelEntry, {type WheelCall} from "@/components/wheel-entry";
 import type {SlotOption} from "@/components/slot-search";
 import TrackerResults from "@/components/tracker-results";
+import CommunityHunt from "@/components/community-hunt";
 import TrackerAdmin from "@/components/tracker-admin";
 import { slotData as originalSlotData, providerLogos, type SlotItem } from "./slotData";
 import { Russo_One } from "next/font/google";
@@ -995,7 +996,7 @@ const [manualRewardAmount, setManualRewardAmount] = useState("");
 const [manualRewardType, setManualRewardType] = useState("discord_giveaway");
 
 const [activeAdminTab, setActiveAdminTab] = useState<
-  "giveaway" | "trashClaw" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel" | "bonusTracker"
+  "giveaway" | "trashClaw" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel" | "bonusTracker" | "community"
 >(() => {
   if (typeof window === "undefined") return "giveaway";
 
@@ -1008,7 +1009,7 @@ const [activeAdminTab, setActiveAdminTab] = useState<
     saved === "tournament" ||
     saved === "snakeDraft" ||
     saved === "slotWheel" ||
-    saved === "bonusTracker"
+    saved === "bonusTracker" || (saved === "community" && process.env.NEXT_PUBLIC_COMMUNITY_HUNT_LOCAL === "1")
   ) {
     return saved;
   }
@@ -6315,6 +6316,8 @@ animation: `predictionWheelIdleScroll ${Math.max(
   </section>
 )}
 
+{activeSection === "community" && <CommunityHunt />}
+
 {activeSection === "slotwheel" && (
   <section className="space-y-3 sm:space-y-5">
     {/* TITLE */}
@@ -9544,6 +9547,7 @@ onClick={() => {
             { id: "snakeDraft", label: "Snake Drafts" },
             { id: "slotWheel", label: "Slot Call Wheel" },
             { id: "bonusTracker", label: "Bonus Hunt Tracker" },
+            ...(process.env.NEXT_PUBLIC_COMMUNITY_HUNT_LOCAL === "1" ? [{id:"community",label:"Community Hunt"}] : []),
           ].map((tab) => {
             const active = activeAdminTab === tab.id;
 
@@ -9560,7 +9564,7 @@ onClick={() => {
                       | "tournament"
                       | "snakeDraft"
                       | "slotWheel"
-                      | "bonusTracker"
+                      | "bonusTracker" | "community"
                   )
                 }
                 className={`min-w-0 whitespace-normal break-words rounded-lg border px-1.5 py-2 text-[9px] font-black uppercase leading-tight tracking-[0.04em] transition sm:px-3 sm:text-xs sm:tracking-[0.08em] ${
@@ -10740,6 +10744,7 @@ onClick={() => {
           </div>
         </details>
 
+        {activeAdminTab === "community" && <CommunityHunt admin />}
         {activeAdminTab === "bonusTracker" && <section className="rounded-xl border border-purple-300/20 bg-black/80 p-4">
           <h2 className="text-xl font-black text-purple-100">Bonus Hunt Tracker</h2>
           <p className="mt-1 text-sm text-white/50">Choose the same hunt as the wheel, or create one here. Search slots, add bonuses and manage opening results.</p>

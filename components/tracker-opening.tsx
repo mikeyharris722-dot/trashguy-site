@@ -5,6 +5,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import type { Entry } from "./tracker-admin";
 
 export default function OpeningSession({
+  endpoint = "/api/admin/site-tracker",
   entries,
   huntId,
   initialQueue,
@@ -12,6 +13,7 @@ export default function OpeningSession({
   onClose,
   save,
 }: {
+  endpoint?: string;
   entries: Entry[];
   huntId: string;
   initialQueue: string[];
@@ -46,7 +48,7 @@ export default function OpeningSession({
       try {
         const { data } = await supabaseBrowser.auth.getSession();
         if (abort.signal.aborted) return;
-        const r = await fetch("/api/admin/site-tracker", {
+        const r = await fetch(endpoint, {
           method: "POST",
           signal: abort.signal,
           headers: {
@@ -72,7 +74,7 @@ export default function OpeningSession({
     }
     void sync();
     return () => abort.abort();
-  }, [huntId, queueKey]);
+  }, [huntId, queueKey, endpoint]);
   const entry = entries.find((e) => e.id === pending[0]);
   useEffect(() => {
     input.current?.focus();

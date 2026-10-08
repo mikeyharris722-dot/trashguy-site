@@ -16,12 +16,14 @@ export default function SlotSearch({
   label = "Find slot to add",
   initialQuery = "",
   suggestions = [],
+  endpoint = "/api/catalogue",
 }: {
   selected: SlotOption | null;
   onSelect: (game: SlotOption | null) => void;
   label?: string;
   initialQuery?: string;
   suggestions?: SlotOption[];
+  endpoint?: string;
 }) {
   const [query, setQuery] = useState(initialQuery),
     [results, setResults] = useState<SlotOption[]>(suggestions),
@@ -32,7 +34,7 @@ export default function SlotSearch({
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const r = await fetch("/api/catalogue?q=" + encodeURIComponent(query), {
+        const r = await fetch(endpoint + "?q=" + encodeURIComponent(query), {
           signal: controller.signal,
         });
         const d = await r.json();
@@ -48,7 +50,7 @@ export default function SlotSearch({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, open]);
+  }, [query, open, endpoint]);
   const unique = [
     ...new Map(
       results

@@ -38,18 +38,20 @@ export default function SiteHeader({
     { id: "home", label: "Home", icon: "🏠" },
     { id: "leaderboard", label: "Leaderboard", icon: "🏆" },
     { id: "hunts", label: "Bonus Hunts", icon: "🎁" },
+    ...(process.env.NEXT_PUBLIC_COMMUNITY_HUNT_LOCAL === "1"
+      ? [{ id: "community", label: "Community Hunt", icon: "👻" }]
+      : []),
     { id: "slotwheel", label: "Viewer Wheel", icon: "🎡" },
     { id: "tournaments", label: "Tournaments", icon: "🏅" },
     { id: "slotpicker", label: "Slot Picker", icon: "🎰" },
     { id: "profile", label: "Profile", icon: "👤" },
-    ...(adminAllowed
-      ? [{ id: "admin", label: "Admin", icon: "👑" }]
-      : []),
+    ...(adminAllowed ? [{ id: "admin", label: "Admin", icon: "👑" }] : []),
   ];
 
   const closeMenu = () => {
-    const details =
-      document.querySelector<HTMLDetailsElement>("#trashguy-main-menu");
+    const details = document.querySelector<HTMLDetailsElement>(
+      "#trashguy-main-menu",
+    );
 
     if (details) {
       details.removeAttribute("open");
@@ -346,10 +348,7 @@ export default function SiteHeader({
             ========================= */}
 
             <div className="relative">
-              <details
-                id="trashguy-main-menu"
-                className="group relative"
-              >
+              <details id="trashguy-main-menu" className="group relative">
                 <summary
                   className="
                     flex h-10 w-10 cursor-pointer
