@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import SlotSearch, { type SlotOption } from "./slot-search";
 import TrackerAdmin from "./tracker-admin";
-import CommunityPredictions, { type PredictionHunt } from "./community-predictions";
+import { type PredictionHunt } from "./community-predictions";
 import PendingRegistration from "./pending-registration";
 import {
   ScheduleFields,
@@ -346,7 +346,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
             {loading
               ? "Getting the latest hunt details."
               : hunts.length
-                ? "Choose a community hunt from the selector above to see its registration, predictions and results."
+                ? "Choose a community hunt from the selector above to see its registration and results."
                 : admin
                   ? "Create a hunt above to open registration."
                   : "Check back here for the next hunt. Its date and registration details will appear here."}
@@ -359,7 +359,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
             timeZone={h.timeZone}
             phase={h.phase}
           />
-          <CommunityPredictions key={h.id} hunt={h} admin={admin} signedIn={!!me} busy={busy} command={command} />
+
           {admin && (
             <CommunitySettings
               key={[h.id, h.title, h.scheduledAt, h.timeZone, h.limit].join(

@@ -38,10 +38,7 @@ export default function Leaderboard({
             {settings.leaderboardStart} to {settings.leaderboardEnd} · Ends at
             00:00 UTC
           </p>
-          <p>
-            Places are ranked by weighted wager. Total wager is shown separately
-            and does not decide your rank.
-          </p>
+          <p>Places are ranked by weighted wager.</p>
         </div>
         <div className="deadline-chip">
           <span>Time remaining</span>
@@ -99,9 +96,7 @@ export default function Leaderboard({
                   <th scope="col">Place</th>
                   <th scope="col">Player</th>
                   <th scope="col">Weighted wager</th>
-                  <th scope="col" className="leaderboard-total">
-                    Total wager
-                  </th>
+
                   <th scope="col">Prize</th>
                 </tr>
               </thead>
@@ -116,14 +111,9 @@ export default function Leaderboard({
                     </td>
                     <th scope="row">
                       <span title={player.username}>{player.username}</span>
-                      <small className="mobile-wager">
-                        Total: {money(player.totalWagered)}
-                      </small>
                     </th>
                     <td>{money(player.wagered)}</td>
-                    <td className="leaderboard-total">
-                      {money(player.totalWagered)}
-                    </td>
+
                     <td className="table-prize">
                       {settings.leaderboard[player.rank - 1] > 0
                         ? money(settings.leaderboard[player.rank - 1])

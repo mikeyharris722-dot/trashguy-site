@@ -5,7 +5,7 @@ import React, { Activity, useCallback, useEffect, useMemo, useRef, useState } fr
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
 import { useSiteNavigation, sectionTitles } from "@/lib/site-navigation";
-import { PageGuidance, HomeGuidance, AdminGuidance, LocalReviewBanner, SiteNotice } from "@/components/site-guidance";
+import { PageGuidance, AdminGuidance, LocalReviewBanner, SiteNotice } from "@/components/site-guidance";
 import GiveawayAdmin from "./components/admin/giveaways/GiveawayAdmin";
 import {
   FaTwitch,
@@ -25,7 +25,7 @@ import WheelEntry, {type WheelCall} from "@/components/wheel-entry";
 import type {SlotOption} from "@/components/slot-search";
 import TrackerResults from "@/components/tracker-results";
 import CommunityHunt from "@/components/community-hunt";
-import CatalogueLookup from "@/components/catalogue-lookup";
+import HuntPredictionSelector from "@/components/hunt-prediction-selector";
 import Leaderboard from "@/components/leaderboard";
 import PredictionList from "@/components/prediction-list";
 import PrizeSettingsEditor from "@/components/prize-settings";
@@ -661,6 +661,7 @@ export default function Home() {
  const [slotData,setCatalogueSlots]=useState<SlotItem[]>(()=>originalSlotData.map(g=>({...g,provider:providerName(g.provider)})));
  const [showMoreProviders,setShowMoreProviders]=useState(false);
  const [trackerHuntId,setTrackerHuntId]=useState("");
+ const [communityPredictionId,setCommunityPredictionId]=useState("");
  const [trackerEntryOpen,setTrackerEntryOpen]=useState(false);
  const [trackerBet,setTrackerBet]=useState("0.20");
 
@@ -3943,7 +3944,7 @@ return (
 <PageGuidance section={activeSection} />
 {activeSection === "home" && (
   <section className="space-y-4 sm:space-y-5">
-    <HomeGuidance navigate={setActiveSection} signedIn={isTwitchConnected} />
+
 
     {/* =========================================================
         TOP DASHBOARD
@@ -4912,7 +4913,9 @@ return (
   <section className="space-y-3 sm:space-y-5">
 
 
-    <div className="hunt-history-controls"><label>Choose a hunt from the full history<select aria-label="Choose bonus hunt from history" value={currentPredictionHunt?.localId||""} onChange={e=>{const hunt=huntsData.find(h=>String(h.localId||h.id)===e.target.value);if(hunt)handleSelectPredictionHunt(hunt);}}><option value="" disabled>Choose a bonus hunt</option>{huntsData.map(h=><option key={h.id} value={String(h.localId||h.id)}>{h.title||"Bonus hunt"} · Start ${Number(h.startCost||0).toFixed(2)}</option>)}</select></label><p>Recent hunts are below. Older hunts stay available in the history selector.</p></div>
+    <HuntPredictionSelector hunts={huntsData} selectedId={communityPredictionId || currentPredictionHunt?.localId || ""} activeId={trackerHuntId} signedIn={isTwitchConnected} admin={adminAllowed} onSelect={(id, community)=>{setCommunityPredictionId(community ? id : "");if(!community){const hunt=huntsData.find(h=>h.localId===id);if(hunt)handleSelectPredictionHunt(hunt);}}} />
+    {!communityPredictionId && <>
+
     {/* =========================================================
         HUNT TABS
     ========================================================= */}
@@ -5576,6 +5579,7 @@ return (
         </div>
       </div>
     </div>
+    </>}
   </section>
 )}
 
@@ -6801,7 +6805,7 @@ return (
 
 {activeSection === "slotpicker" && (
   <section className="space-y-3 sm:space-y-4">
-    <CatalogueLookup />
+
     {/* =========================================================
         TITLE
     ========================================================= */}
