@@ -2,7 +2,7 @@ import {catalogue} from "@/lib/roulo-catalogue";
 import {matchSlot} from "@/lib/slot-matching";
 import {requireTrackerAdmin} from "@/lib/site-db";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/review-client";
 
 export const runtime = "nodejs";
 

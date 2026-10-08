@@ -1,5 +1,6 @@
 "use client";
 
+import { siteFetch } from "@/lib/site-fetch";
 import React, {
   useCallback,
   useEffect,
@@ -129,7 +130,7 @@ export default function GiveawayAdmin({
   const loadGiveaway = useCallback(
     async (type: GiveawayType) => {
       try {
-        const res = await fetch(
+        const res = await siteFetch(
           `/api/chat-giveaway?type=${type}`,
           {
             cache: "no-store",
@@ -188,7 +189,7 @@ export default function GiveawayAdmin({
       if (!current.winnerUsername) return;
 
       try {
-        const res = await fetch(
+        const res = await siteFetch(
           `/api/chat-giveaway/winner-message?type=${type}`,
           {
             cache: "no-store",
@@ -307,7 +308,7 @@ export default function GiveawayAdmin({
     });
 
     try {
-      const res = await fetch(
+      const res = await siteFetch(
         `/api/chat-giveaway?type=${activeType}`,
         {
           method: "POST",
@@ -358,7 +359,7 @@ export default function GiveawayAdmin({
     });
 
     try {
-      const res = await fetch(
+      const res = await siteFetch(
         `/api/chat-giveaway/draw?type=${activeType}&amount=0`,
         {
           method: "POST",
@@ -404,7 +405,7 @@ export default function GiveawayAdmin({
 
       if (platform === "twitch") {
         try {
-          const followRes = await fetch(
+          const followRes = await siteFetch(
             `/api/twitch/follow-age?user=${encodeURIComponent(
               winnerUsername
             )}`
@@ -450,7 +451,7 @@ export default function GiveawayAdmin({
       );
     }
 
-    const rewardsRes = await fetch(
+    const rewardsRes = await siteFetch(
       "/api/rewards",
       {
         cache: "no-store",
@@ -479,7 +480,7 @@ export default function GiveawayAdmin({
       return;
     }
 
-    const res = await fetch(
+    const res = await siteFetch(
       `/api/admin/rewards?id=${encodeURIComponent(
         reward.id
       )}`,

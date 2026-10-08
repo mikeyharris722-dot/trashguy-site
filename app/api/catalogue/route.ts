@@ -10,7 +10,6 @@ export async function GET(request: Request) {
       ? [
           ...new Map(
             [
-              ...(matched?.suggestions || []),
               ...games.filter(
                 (g) =>
                   g.enabled !== false &&
@@ -18,6 +17,7 @@ export async function GET(request: Request) {
                     normaliseSlot(q),
                   ),
               ),
+              ...(matched?.suggestions || []),
             ].map((g) => [g.identifier, g]),
           ).values(),
         ].slice(0, 20)

@@ -6,6 +6,7 @@ import {
 import { requireTrackerAdmin } from "@/lib/site-db";
 import { apiError, siteDb } from "@/lib/site-db";
 import { trackerHunts } from "@/lib/site-tracker";
+import { reviewNativeSelection } from "@/lib/review-selection";
 export async function GET(request: Request) {
   try {
     const [hunts, settings] = await Promise.all([
@@ -45,7 +46,11 @@ export async function GET(request: Request) {
               : [],
         })),
       ],
-      activeHuntId: local?.activeHuntId || settings.data?.active_hunt_id || "",
+      activeHuntId:
+        local?.activeHuntId ||
+        (await reviewNativeSelection()) ||
+        settings.data?.active_hunt_id ||
+        "",
     });
   } catch (e) {
     return apiError(e);

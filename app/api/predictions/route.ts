@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/review-client";
 import { KICK_SESSION_COOKIE, verifyKickSessionToken } from "@/lib/kick-session";
 
 export const runtime = "nodejs";

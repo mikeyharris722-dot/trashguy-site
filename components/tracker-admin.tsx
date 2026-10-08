@@ -72,28 +72,37 @@ export default function TrackerAdmin({
     : "/api/admin/site-tracker";
   const catalogueApi = communityMode ? "/api/community" : "/api/catalogue";
   const load = useCallback(async () => {
-    const { data: session } = await supabaseBrowser.auth.getSession();
-    const h = await fetch(
-      community ? "/api/community/tracker" : "/api/site-tracker",
-      {
-        cache: "no-store",
-        headers: true
-          ? { Authorization: "Bearer " + (session.session?.access_token || "") }
-          : {},
-      },
-    ).then((r) => r.json());
-    setHunts(h.hunts || []);
-    if (h.error) setMessage(h.error);
+    try {
+      const { data: session } = await supabaseBrowser.auth.getSession();
+      const response = await fetch(
+        community ? "/api/community/tracker" : "/api/site-tracker",
+        {
+          cache: "no-store",
+          headers: {
+            Authorization: "Bearer " + (session.session?.access_token || ""),
+          },
+        },
+      );
+      const data = await response.json();
+      if (!response.ok)
+        throw Error(data.error || "The tracker could not load. Try again.");
+      setHunts(data.hunts || []);
+    } catch (e) {
+      setMessage(
+        e instanceof Error ? e.message : "The tracker could not load.",
+      );
+    }
   }, [community]);
   useEffect(() => {
     let live = true;
     const run = () => {
-      if (live) void load();
+      if (live && document.visibilityState === "visible") void load();
     };
-    run();
+    const initial = setTimeout(() => void load(), 0);
     const timer = setInterval(run, 10000);
     return () => {
       live = false;
+      clearTimeout(initial);
       clearInterval(timer);
     };
   }, [load]);
@@ -173,6 +182,9 @@ export default function TrackerAdmin({
   const [opening, setOpening] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const current = hunts.find((h) => h.id === huntId);
+  const bonusEntries = (current?.entries || []).filter(
+    (e) => e.status === "collected",
+  );
   const input =
     "min-w-0 rounded-lg border border-purple-300/20 bg-black px-3 py-2 text-sm text-white";
   const button =
@@ -300,7 +312,13 @@ export default function TrackerAdmin({
             {hunts.map((h) => (
               <option key={h.id} value={h.id}>
                 {h.title} · {h.source === "community" ? "Community · " : ""}
-                {h.phase}
+                {(
+                  {
+                    collecting: "Collecting bonuses",
+                    opening: "Opening bonuses",
+                    finished: "Finished",
+                  } as Record<string, string>
+                )[h.phase] || h.phase}
               </option>
             ))}
           </select>
@@ -324,7 +342,7 @@ export default function TrackerAdmin({
               placeholder="Hunt name"
             />
             <input
-              aria-label="Recovery target"
+              aria-label="Starting bankroll"
               className={input}
               value={start}
               onChange={(e) => setStart(e.target.value)}
@@ -409,7 +427,11 @@ export default function TrackerAdmin({
                   }
                 }}
               >
-                {phase}
+                {phase === "collecting"
+                  ? "Collecting bonuses"
+                  : phase === "opening"
+                    ? "Start opening"
+                    : "Finish hunt"}
               </button>
             ))}
           </div>
@@ -434,11 +456,27 @@ export default function TrackerAdmin({
               save={(body) => action(trackerApi, body)}
             />
           )}
-          <p className="text-xs">
-            Returns ${current.stats.totalWinnings.toFixed(2)} · P/L $
-            {current.stats.profitLoss.toFixed(2)} · Running{" "}
-            {current.stats.currentAverageMultiplier.toFixed(2)}× · Required{" "}
-            {current.stats.averagePayoutRequired?.toFixed(2) ?? "—"}×
+          <dl className="tracker-stats">
+            <div>
+              <dt>Total returns</dt>
+              <dd>${current.stats.totalWinnings.toFixed(2)}</dd>
+            </div>
+            <div>
+              <dt>Profit / loss</dt>
+              <dd>${current.stats.profitLoss.toFixed(2)}</dd>
+            </div>
+            <div>
+              <dt>Average result</dt>
+              <dd>{current.stats.currentAverageMultiplier.toFixed(2)}×</dd>
+            </div>
+            <div>
+              <dt>Required average</dt>
+              <dd>{current.stats.averagePayoutRequired?.toFixed(2) ?? "—"}×</dd>
+            </div>
+          </dl>
+          <p className="tracker-explainer">
+            Required average is the multiplier needed from the unopened bonuses
+            to recover the starting bankroll.
           </p>
           {manual && (
             <section className="space-y-4 rounded-xl border border-purple-300/20 bg-purple-400/5 p-4">
@@ -528,9 +566,16 @@ export default function TrackerAdmin({
           )}
           {manual && (
             <div className="space-y-1.5">
-              {current.entries.map((entry) => (
+              {!bonusEntries.length && (
+                <p className="empty-list">
+                  No bonuses collected yet. Add a slot above or record a
+                  successful slot call.
+                </p>
+              )}
+              {bonusEntries.map((entry) => (
                 <div
                   key={entry.id}
+                  onDragEnd={() => setDragId(null)}
                   onDragOver={(e) => {
                     if (!busy && current.phase === "collecting")
                       e.preventDefault();
@@ -544,7 +589,7 @@ export default function TrackerAdmin({
                       dragId === entry.id
                     )
                       return;
-                    const ids = current.entries.map((e) => e.id),
+                    const ids = bonusEntries.map((e) => e.id),
                       from = ids.indexOf(dragId),
                       to = ids.indexOf(entry.id);
                     if (from < 0) return;
@@ -559,10 +604,18 @@ export default function TrackerAdmin({
                   }}
                 >
                   <BonusRow
-                    draggable={!busy && current.phase === "collecting"}
+                    draggable={
+                      !busy &&
+                      current.phase === "collecting" &&
+                      bonusEntries.length > 1
+                    }
+                    canMoveUp={bonusEntries.indexOf(entry) > 0}
+                    canMoveDown={
+                      bonusEntries.indexOf(entry) < bonusEntries.length - 1
+                    }
                     onDrag={() => setDragId(entry.id)}
                     move={(direction) => {
-                      const ids = current.entries.map((e) => e.id),
+                      const ids = bonusEntries.map((e) => e.id),
                         from = ids.indexOf(entry.id),
                         to = from + direction;
                       if (to < 0 || to >= ids.length) return;
@@ -583,8 +636,8 @@ export default function TrackerAdmin({
                     ].join(":")}
                     entry={entry}
                     nextId={
-                      current.entries
-                        .slice(current.entries.indexOf(entry) + 1)
+                      bonusEntries
+                        .slice(bonusEntries.indexOf(entry) + 1)
                         .find(
                           (e) => e.status === "collected" && e.payout === null,
                         )?.id
@@ -612,12 +665,16 @@ function BonusRow({
   draggable,
   onDrag,
   move,
+  canMoveUp,
+  canMoveDown,
 }: {
   entry: Entry;
   disabled: boolean;
   nextId?: string;
   draggable: boolean;
   onDrag: () => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   move: (direction: number) => void;
   save: (b: Record<string, unknown>) => Promise<boolean>;
 }) {
@@ -660,7 +717,7 @@ function BonusRow({
             ⠿
           </button>
           <button
-            disabled={!draggable}
+            disabled={!draggable || !canMoveUp}
             onClick={() => move(-1)}
             aria-label={`Move ${entry.slot_name} up`}
             className="disabled:opacity-20"
@@ -668,7 +725,7 @@ function BonusRow({
             ↑
           </button>
           <button
-            disabled={!draggable}
+            disabled={!draggable || !canMoveDown}
             onClick={() => move(1)}
             aria-label={`Move ${entry.slot_name} down`}
             className="disabled:opacity-20"

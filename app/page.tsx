@@ -1,8 +1,11 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { siteFetch } from "@/lib/site-fetch";
+import React, { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
+import { useSiteNavigation, sectionTitles } from "@/lib/site-navigation";
+import { PageGuidance, HomeGuidance, AdminGuidance, LocalReviewBanner, SiteNotice } from "@/components/site-guidance";
 import GiveawayAdmin from "./components/admin/giveaways/GiveawayAdmin";
 import {
   FaTwitch,
@@ -22,6 +25,7 @@ import WheelEntry, {type WheelCall} from "@/components/wheel-entry";
 import type {SlotOption} from "@/components/slot-search";
 import TrackerResults from "@/components/tracker-results";
 import CommunityHunt from "@/components/community-hunt";
+import CatalogueLookup from "@/components/catalogue-lookup";
 import TrackerAdmin from "@/components/tracker-admin";
 import { slotData as originalSlotData, providerLogos, type SlotItem } from "./slotData";
 import { Russo_One } from "next/font/google";
@@ -684,7 +688,10 @@ export default function Home() {
  const [trackerBusy,setTrackerBusy]=useState(false);
 
 
-  const [activeSection, setActiveSection] = useState("home");
+  const [activeSection, setActiveSection] = useSiteNavigation(STORAGE_KEYS.activeSection);
+  const [siteNotice, setSiteNotice] = useState("");
+  const [visibleWinnerCount,setVisibleWinnerCount]=useState(20);
+  const [visiblePaidCount,setVisiblePaidCount]=useState(20);
 
 const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
 const [pickedSlot, setPickedSlot] = useState<SlotItem | null>(null);
@@ -802,7 +809,7 @@ const [snakeSlotHit, setSnakeSlotHit] = useState<Record<string, boolean>>({});
 const [snakeSlotRounds, setSnakeSlotRounds] = useState("5");
 
 async function saveSnakeDraft() {
-  const res = await fetch("/api/snake-draft", {
+  const res = await siteFetch("/api/snake-draft", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -835,7 +842,7 @@ async function saveSnakeDraft() {
 async function handleGenerateVipSnapshot() {
   setAdminMessage("Generating VIP snapshot...");
 
-  const res = await fetch("/api/admin/vip-snapshot", {
+  const res = await siteFetch("/api/admin/vip-snapshot", {
     method: "POST",
   });
 
@@ -851,7 +858,7 @@ async function handleGenerateVipSnapshot() {
 }
 
 async function loadSnakeDraft() {
-  const res = await fetch("/api/snake-draft", {
+  const res = await siteFetch("/api/snake-draft", {
     cache: "no-store",
   });
 
@@ -904,7 +911,7 @@ const [giveawayWinnerCounts, setGiveawayWinnerCounts] = useState<Record<string, 
 
 const loadGiveawayEntries = async () => {
   try {
-    const res = await fetch("/api/chat-giveaway");
+    const res = await siteFetch("/api/chat-giveaway");
     const data = await res.json();
 
     if (Array.isArray(data?.entries)) {
@@ -926,7 +933,7 @@ const loadGiveawayEntries = async () => {
 const Winner = async (id: string) => {
   if (!confirm("Delete this winner?")) return;
 
-  await fetch(`/api/chat-giveaway/delete?id=${id}`, {
+  await siteFetch(`/api/chat-giveaway/delete?id=${id}`, {
     method: "DELETE",
   });
 
@@ -1661,7 +1668,7 @@ useEffect(() => {
 
   const loadHunts = useCallback(async () => {
   try {
-    const res = await fetch("/api/hunts", { cache: "no-store" });
+    const res = await siteFetch("/api/hunts", { cache: "no-store" });
     const data = await res.json();
 
     const rawHunts = Array.isArray(data?.hunts) ? data.hunts : [];
@@ -1702,7 +1709,7 @@ useEffect(() => {
           }))
         : [],
     }));
-    
+
 if (normalized.length > 0) {
       setHuntsData(normalized);
     } else if (!data?.success) {
@@ -1717,7 +1724,7 @@ if (normalized.length > 0) {
 
   const loadLeaderboard = useCallback(async () => {
     try {
-      const res = await fetch("/api/leaderboard", { cache: "no-store" });
+      const res = await siteFetch("/api/leaderboard", { cache: "no-store" });
       const data = await res.json();
 
       const affiliates = Array.isArray(data?.affiliates) ? data.affiliates : [];
@@ -1805,7 +1812,7 @@ const loadViewerRewards = useCallback(async () => {
     const platform =
       viewerPlatform === "kick" ? "kick" : "twitch";
 
-    const res = await fetch(
+    const res = await siteFetch(
       `/api/prize-portal?viewer=${encodeURIComponent(
         viewer
       )}&platform=${encodeURIComponent(platform)}`,
@@ -1902,7 +1909,7 @@ const loadRouloLink = useCallback(async () => {
     const platform =
       viewerPlatform === "kick" ? "kick" : "twitch";
 
-    const res = await fetch(
+    const res = await siteFetch(
       `/api/roulo-link?viewer=${encodeURIComponent(
         viewerName
       )}&platform=${encodeURIComponent(platform)}`,
@@ -1948,7 +1955,7 @@ const loadDiscordLink = useCallback(async () => {
     const platform =
       viewerPlatform === "kick" ? "kick" : "twitch";
 
-    const res = await fetch(
+    const res = await siteFetch(
       `/api/discord-link?viewer=${encodeURIComponent(
         viewerName
       )}&platform=${encodeURIComponent(platform)}`,
@@ -1979,7 +1986,7 @@ const handleLinkRoulo = async () => {
   try {
     setRouloLinkMessage("Checking Roulo account...");
 
-    const res = await fetch("/api/roulo-link", {
+    const res = await siteFetch("/api/roulo-link", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -2117,7 +2124,7 @@ const handleUnlinkRoulo = async () => {
     setProfileActionLoading("roulo");
     setProfileActionMessage("Unlinking Roulo...");
 
-    const res = await fetch(
+    const res = await siteFetch(
       `/api/roulo-link?viewer=${encodeURIComponent(
         viewerName
       )}&platform=${encodeURIComponent(
@@ -2171,7 +2178,7 @@ const handleUnlinkDiscord = async () => {
     setProfileActionLoading("discord");
     setProfileActionMessage("Unlinking Discord...");
 
-    const res = await fetch(
+    const res = await siteFetch(
       `/api/discord-link?viewer=${encodeURIComponent(
         viewerName
       )}&platform=${encodeURIComponent(
@@ -2213,7 +2220,7 @@ const handleUnlinkDiscord = async () => {
 
   const loadGiveaways = useCallback(async () => {
   try {
-    const res = await fetch("/api/giveaways", { cache: "no-store" });
+    const res = await siteFetch("/api/giveaways", { cache: "no-store" });
     const data = await res.json();
 
     setGiveaways(Array.isArray(data?.giveaways) ? data.giveaways : []);
@@ -2234,7 +2241,7 @@ const loadPredictions = useCallback(async (huntId: string) => {
   }
 
   try {
-    const res = await fetch(
+    const res = await siteFetch(
       `/api/predictions?huntId=${encodeURIComponent(huntId)}`,
       { cache: "no-store" }
     );
@@ -2300,7 +2307,7 @@ useEffect(() => {
 
   const loadLiveStatus = useCallback(async () => {
     try {
-      const res = await fetch("/api/twitch/live", { cache: "no-store" });
+      const res = await siteFetch("/api/twitch/live", { cache: "no-store" });
       if (!res.ok) {
         setLiveLoading(false);
         return;
@@ -2324,7 +2331,7 @@ useEffect(() => {
 
   const loadBracket = useCallback(async () => {
     try {
-      const res = await fetch("/api/tournaments", { cache: "no-store" });
+      const res = await siteFetch("/api/tournaments", { cache: "no-store" });
       if (!res.ok) {
         setBracketLoading(false);
         return;
@@ -2399,7 +2406,7 @@ useEffect(() => {
         params.get("platform") || localStorage.getItem("viewerPlatform");
 
       if (preferredPlatform === "kick") {
-        const kickResponse = await fetch("/api/kick/session", {
+        const kickResponse = await siteFetch("/api/kick/session", {
           cache: "no-store",
           credentials: "include",
         });
@@ -2417,7 +2424,8 @@ useEffect(() => {
           setViewerDisplayName(kick.displayName || kick.username || "viewer");
           setViewerAvatar(kick.avatarUrl || "");
           setAuthLoaded(true);
-          window.history.replaceState({}, "", window.location.pathname);
+          const currentHash=window.location.hash;
+          window.history.replaceState({}, "", window.location.pathname+(Object.hasOwn(sectionTitles,currentHash.slice(1))?currentHash:""));
           return;
         }
       }
@@ -2479,29 +2487,6 @@ useEffect(() => {
     subscription.unsubscribe();
   };
 }, []);
-
-// RESTORE ACTIVE SECTION AFTER REFRESH
-useEffect(() => {
-  if (typeof window === "undefined") return;
-
-  const storedSection = localStorage.getItem(
-    STORAGE_KEYS.activeSection
-  );
-
-  if (storedSection) {
-    setActiveSection(storedSection);
-  }
-}, []);
-
-// SAVE ACTIVE TAB
-useEffect(() => {
-  if (typeof window === "undefined") return;
-
-  localStorage.setItem(
-    STORAGE_KEYS.activeSection,
-    activeSection
-  );
-}, [activeSection]);
 
 useEffect(() => {
   if (typeof window === "undefined" || huntsLoading) return;
@@ -2608,7 +2593,7 @@ useEffect(() => {
 
   const loadWinnerMessages = async () => {
     try {
-      const res = await fetch(
+      const res = await siteFetch(
         "/api/chat-giveaway/winner-message",
         { cache: "no-store" }
       );
@@ -2663,14 +2648,14 @@ useEffect(() => {
   loadSnakeDraft();
 }, []);
 
-async function slotFetch(url:string,options:RequestInit={}){const headers=new Headers(options.headers);if(options.method&&options.method!=="GET")headers.set("Authorization","Bearer "+await getAccessToken());return fetch(url,{...options,headers});}
-const refreshCatalogue=useCallback(async()=>{const r=await fetch("/api/catalogue?all=true");const d=await r.json();if(Array.isArray(d.games)&&d.games.length){const unique=new Map<string,SlotItem>();for(const g of d.games){if(g.enabled===false)continue;const displayProvider=providerName(g.provider,g.producer);const key=g.name.toLowerCase()+"|"+displayProvider.toLowerCase();if(!unique.has(key))unique.set(key,{name:g.name,provider:displayProvider,image:g.artwork_url||undefined});}setCatalogueSlots([...unique.values()]);}},[]);
+async function slotFetch(url:string,options:RequestInit={}){const headers=new Headers(options.headers);if(options.method&&options.method!=="GET")headers.set("Authorization","Bearer "+await getAccessToken());return siteFetch(url,{...options,headers});}
+const refreshCatalogue=useCallback(async()=>{const r=await siteFetch("/api/catalogue?all=true");const d=await r.json();if(Array.isArray(d.games)&&d.games.length){const unique=new Map<string,SlotItem>();for(const g of d.games){if(g.enabled===false)continue;const displayProvider=providerName(g.provider,g.producer);const key=g.name.toLowerCase()+"|"+displayProvider.toLowerCase();if(!unique.has(key))unique.set(key,{name:g.name,provider:displayProvider,image:g.artwork_url||undefined});}setCatalogueSlots([...unique.values()]);}},[]);
 useEffect(()=>{void refreshCatalogue()},[refreshCatalogue]);
 const trackerSelectionPending = useRef(false);
-useEffect(()=>{let live=true;const control=new AbortController();const load=async()=>{try{const r=await fetch("/api/site-tracker",{cache:"no-store",signal:control.signal});const d=await r.json();if(r.ok&&live&&!trackerSelectionPending.current)setTrackerHuntId(d.activeHuntId||"");}catch{}};void load();const timer=setInterval(load,5000);return()=>{live=false;control.abort();clearInterval(timer);};},[]);
-const selectTrackerHunt = async (id:string)=>{trackerSelectionPending.current=true;try{const r=await slotFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"select",huntId:id})});const d=await r.json();if(!r.ok)throw new Error(d.error);setTrackerHuntId(id);}catch(e){alert(e instanceof Error?e.message:"Could not select hunt");}finally{trackerSelectionPending.current=false;}};
-const resolvePickedCall=async(game:SlotOption)=>{if(!pickedSlotCall)return;setTrackerBusy(true);try{const r=await slotFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resolve",callId:pickedSlotCall.id,identifier:game.identifier})});const d=await r.json();if(!r.ok)throw new Error(d.error);if(d.ignored){setPickedSlotCall(null);setTrackerEntryOpen(false);alert("Slot already in the active hunt. Call ignored.");}else setPickedSlotCall(c=>c?{...c,slotName:game.name,needsReview:false}:null);await loadSlotCalls();}finally{setTrackerBusy(false);}};
-async function recordPickedCall(status:"collected"|"failed",payout?:string) {if(!pickedSlotCall||trackerBusy)return;if(!trackerHuntId){alert("Choose a site hunt in the tracker controls first.");return;}setTrackerBusy(true);try{const response=await fetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await getAccessToken()},body:JSON.stringify({action:"collect",huntId:trackerHuntId,callId:pickedSlotCall.id,status,bet:trackerBet,cost:"0",payout})});const d=await response.json();if(!response.ok)throw new Error(d.error);setPickedSlotCall(null);setTrackerEntryOpen(false);setSlotWheelRotation(0);setSlotPayoutInput("");await loadSlotCalls();await loadHunts();}catch(e){alert(e instanceof Error?e.message:"Could not save result")}finally{setTrackerBusy(false)}}
+useEffect(()=>{let live=true;const control=new AbortController();const load=async()=>{try{const r=await siteFetch("/api/site-tracker",{cache:"no-store",signal:control.signal});const d=await r.json();if(r.ok&&live&&!trackerSelectionPending.current)setTrackerHuntId(d.activeHuntId||"");}catch{}};void load();const timer=setInterval(load,5000);return()=>{live=false;control.abort();clearInterval(timer);};},[]);
+const selectTrackerHunt = async (id:string)=>{trackerSelectionPending.current=true;try{const r=await slotFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"select",huntId:id})});const d=await r.json();if(!r.ok)throw new Error(d.error);setTrackerHuntId(id);}catch(e){setSiteNotice(e instanceof Error?e.message:"Could not select hunt");}finally{trackerSelectionPending.current=false;}};
+const resolvePickedCall=async(game:SlotOption)=>{if(!pickedSlotCall)return;setTrackerBusy(true);try{const r=await slotFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resolve",callId:pickedSlotCall.id,identifier:game.identifier})});const d=await r.json();if(!r.ok)throw new Error(d.error);if(d.ignored){setPickedSlotCall(null);setTrackerEntryOpen(false);setSiteNotice("Slot already in the active hunt. Call ignored.");}else setPickedSlotCall(c=>c?{...c,slotName:game.name,needsReview:false}:null);await loadSlotCalls();}catch(e){setSiteNotice(e instanceof Error?e.message:"Could not confirm this slot.");throw e;}finally{setTrackerBusy(false);}};
+async function recordPickedCall(status:"collected"|"failed",payout?:string) {if(!pickedSlotCall||trackerBusy)return;if(!trackerHuntId){setSiteNotice("Choose a site hunt in the tracker controls first.");return;}setTrackerBusy(true);try{const response=await siteFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await getAccessToken()},body:JSON.stringify({action:"collect",huntId:trackerHuntId,callId:pickedSlotCall.id,status,bet:trackerBet,cost:"0",payout})});const d=await response.json();if(!response.ok)throw new Error(d.error);setPickedSlotCall(null);setTrackerEntryOpen(false);setSlotWheelRotation(0);setSlotPayoutInput("");await loadSlotCalls();await loadHunts();}catch(e){setSiteNotice(e instanceof Error?e.message:"Could not save result")}finally{setTrackerBusy(false)}}
 const loadSlotCalls = async () => {
   try {
     const res = await slotFetch("/api/slot-calls", {
@@ -2771,8 +2756,8 @@ const handleTwitchLogin = async () => {
   const handleLogout = async () => {
   try {
     await Promise.allSettled([
-      supabaseBrowser.auth.signOut(),
-      fetch("/api/kick/logout", { method: "POST", credentials: "include" }),
+      supabaseBrowser.auth.signOut({scope:"local"}),
+      siteFetch("/api/kick/logout", { method: "POST", credentials: "include" }),
     ]);
 
     setIsTwitchConnected(false);
@@ -2825,7 +2810,7 @@ const handleTwitchLogin = async () => {
       authorizationHeader = { Authorization: `Bearer ${token}` };
     }
 
-    const res = await fetch("/api/predictions", {
+    const res = await siteFetch("/api/predictions", {
       method: "POST",
       credentials: "include",
       headers: {
@@ -2894,7 +2879,7 @@ await loadPredictions(currentPredictionHunt.localId);
   const patchPredictionHunt = useCallback(
     async (huntId: string, action: "open" | "lock" | "complete", finalAmount?: number) => {
       const token = await getAccessToken();
-      const res = await fetch(`/api/admin/hunts/${huntId}`, {
+      const res = await siteFetch(`/api/admin/hunts/${huntId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -2914,7 +2899,13 @@ await loadPredictions(currentPredictionHunt.localId);
     [getAccessToken]
   );
 
-  const handleSelectPredictionHunt = useCallback(
+  const handleSelectPredictionHunt = useCallback((hunt:HuntItem)=>{
+    setActivePredictionHuntId(hunt.localId);
+    setPredictionStatus(hunt.prediction_status==="open"?"open":"locked");
+    setPredictions([]);setLatestWinners([]);setFinalResult("");
+    try {localStorage.setItem(STORAGE_KEYS.activeHuntId,hunt.localId);} catch {}
+  },[]);
+  const handleOpenPredictionHunt = useCallback(
     async (hunt: HuntItem) => {
       if (!isAdmin) {
         setActivePredictionHuntId(hunt.localId);
@@ -3047,7 +3038,7 @@ const handleCompleteHunt = async () => {
 const handleStartGiveaway = async () => {
   setGiveawayMessage("Starting giveaway...");
 
-  const res = await fetch("/api/chat-giveaway", { method: "POST" });
+  const res = await siteFetch("/api/chat-giveaway", { method: "POST" });
   const data = await res.json();
 
   setGiveawayMessage(data?.ok ? "Giveaway started." : data?.error || "Failed to start giveaway.");
@@ -3056,7 +3047,7 @@ const handleStartGiveaway = async () => {
 const handleAddTestEntry = async () => {
   setGiveawayMessage("Adding test entry...");
 
-  const res = await fetch("/api/chat-giveaway/enter", {
+  const res = await siteFetch("/api/chat-giveaway/enter", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username: `testuser${Date.now()}` }),
@@ -3070,7 +3061,7 @@ const handleAddTestEntry = async () => {
 const handleDrawGiveawayWinner = async () => {
   setGiveawayMessage("Drawing winner...");
 
-  const res = await fetch(`/api/chat-giveaway/draw?amount=0`, {
+  const res = await siteFetch(`/api/chat-giveaway/draw?amount=0`, {
     method: "POST",
   });
 
@@ -3094,7 +3085,7 @@ setWinnerFollowAge("");
 setGiveawayRespondedTime(null);
 
 try {
-  const followRes = await fetch(
+  const followRes = await siteFetch(
     `/api/twitch/follow-age?user=${encodeURIComponent(winnerName)}`
   );
 
@@ -3115,14 +3106,14 @@ if (followData?.ok) {
 
 const handleAwardGiveawayPrize = async () => {
   if (!currentGiveawayWinner) {
-    alert("Draw a winner first.");
+    setSiteNotice("Draw a winner first.");
     return;
   }
 
   const amount = Number(giveawayPrizeAmount || 0);
 
   if (!amount || Number.isNaN(amount)) {
-    alert("Enter a valid prize amount.");
+    setSiteNotice("Enter a valid prize amount.");
     return;
   }
 
@@ -3134,12 +3125,12 @@ const handleAwardGiveawayPrize = async () => {
   );
 
   if (!latestReward?.id) {
-    alert("Reward not found yet. Try clicking Refresh Rewards, then award again.");
+    setSiteNotice("Reward not found yet. Try clicking Refresh Rewards, then award again.");
     loadAdminRewards();
     return;
   }
 
-  const res = await fetch(`/api/admin/rewards?id=${latestReward.id}`, {
+  const res = await siteFetch(`/api/admin/rewards?id=${latestReward.id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -3151,7 +3142,7 @@ const handleAwardGiveawayPrize = async () => {
   const data = await res.json();
 
   if (!res.ok || !data.ok) {
-    alert(data.error || "Award failed.");
+    setSiteNotice(data.error || "Award failed.");
     return;
   }
 
@@ -3159,7 +3150,7 @@ const handleAwardGiveawayPrize = async () => {
   loadAdminRewards();
   loadViewerRewards();
 
-  alert(`Awarded $${amount} to ${currentGiveawayWinner}`);
+  setSiteNotice(`Awarded $${amount} to ${currentGiveawayWinner}`);
 };
 
 function cleanSnakeNames(text: string) {
@@ -3601,19 +3592,19 @@ const handleCreateManualReward = async () => {
     rewardTitles[manualRewardType] || "🎁 Discord Giveaway";
 
   if (!username) {
-    alert("Enter the viewer's username.");
+    setSiteNotice("Enter the viewer's username.");
     return;
   }
 
   if (!amount || Number.isNaN(amount) || amount <= 0) {
-    alert("Enter a valid prize amount.");
+    setSiteNotice("Enter a valid prize amount.");
     return;
   }
 
   try {
     setAdminRewardsMessage("Adding prize...");
 
-    const res = await fetch("/api/rewards", {
+    const res = await siteFetch("/api/rewards", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -3635,7 +3626,7 @@ const handleCreateManualReward = async () => {
     try {
       data = text ? JSON.parse(text) : null;
     } catch {
-      alert(`Server returned invalid data: ${text || "Empty response"}`);
+      setSiteNotice(`Server returned invalid data: ${text || "Empty response"}`);
       setAdminRewardsMessage("Manual prize failed.");
       return;
     }
@@ -3644,7 +3635,7 @@ const handleCreateManualReward = async () => {
       const message =
         data?.error || `Manual prize failed with status ${res.status}.`;
 
-      alert(message);
+      setSiteNotice(message);
       setAdminRewardsMessage(message);
       return;
     }
@@ -3661,7 +3652,7 @@ const handleCreateManualReward = async () => {
       `${title} added for ${username}.`
     );
 
-    alert(`Prize added for ${username}: $${amount}`);
+    setSiteNotice(`Prize added for ${username}: $${amount}`);
 
     await loadAdminRewards();
   } catch (error) {
@@ -3669,13 +3660,13 @@ const handleCreateManualReward = async () => {
       error instanceof Error ? error.message : "Manual prize failed.";
 
     console.error("Manual reward error:", error);
-    alert(message);
+    setSiteNotice(message);
     setAdminRewardsMessage(message);
   }
 };
 
 const handleClaimReward = async (rewardId: string) => {
-  const res = await fetch("/api/prize-portal/claim", {
+  const res = await siteFetch("/api/prize-portal/claim", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -3704,7 +3695,7 @@ const handleClaimReward = async (rewardId: string) => {
 };
 
 const handleMarkRewardPaid = async (id: string) => {
-  await fetch(`/api/rewards?id=${id}`, {
+  await siteFetch(`/api/rewards?id=${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status: "paid" }),
@@ -3714,7 +3705,7 @@ const handleMarkRewardPaid = async (id: string) => {
 };
 
 const handleMarkRewardPending = async (id: string) => {
-  await fetch(`/api/rewards?id=${id}`, {
+  await siteFetch(`/api/rewards?id=${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status: "pending" }),
@@ -3726,7 +3717,7 @@ const handleMarkRewardPending = async (id: string) => {
 const Reward = async (id: string) => {
   if (!confirm("Delete this reward?")) return;
 
-  await fetch(`/api/rewards?id=${id}`, {
+  await siteFetch(`/api/rewards?id=${id}`, {
     method: "DELETE",
   });
 
@@ -3735,7 +3726,7 @@ const Reward = async (id: string) => {
 
 const loadAdminRewards = async () => {
   try {
-    const res = await fetch("/api/rewards", { cache: "no-store" });
+    const res = await siteFetch("/api/rewards", { cache: "no-store" });
     const data = await res.json();
 
     if (!data.ok) {
@@ -3753,7 +3744,7 @@ const loadAdminRewards = async () => {
 const handleAdminMarkRewardPaid = async (id: string) => {
   if (!id) return;
 
-  const res = await fetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
+  const res = await siteFetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action: "paid" }),
@@ -3762,7 +3753,7 @@ const handleAdminMarkRewardPaid = async (id: string) => {
   const data = await res.json();
 
   if (!res.ok || !data.ok) {
-    alert(data.error || "Failed to mark reward paid.");
+    setSiteNotice(data.error || "Failed to mark reward paid.");
     return;
   }
 
@@ -3773,7 +3764,7 @@ const handleAdminMarkRewardPaid = async (id: string) => {
 const handleAdminMarkRewardPending = async (id: string) => {
   if (!id) return;
 
-  const res = await fetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
+  const res = await siteFetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action: "unpaid" }),
@@ -3782,7 +3773,7 @@ const handleAdminMarkRewardPending = async (id: string) => {
   const data = await res.json();
 
   if (!res.ok || !data.ok) {
-    alert(data.error || "Failed to mark reward unpaid.");
+    setSiteNotice(data.error || "Failed to mark reward unpaid.");
     return;
   }
 
@@ -3795,7 +3786,7 @@ const handleAdminDeleteReward = async (id: string) => {
   if (!confirm("Delete this reward?")) return;
 
   try {
-    const res = await fetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
+    const res = await siteFetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "delete" }),
@@ -3804,7 +3795,7 @@ const handleAdminDeleteReward = async (id: string) => {
     const data = await res.json();
 
     if (!res.ok || !data.ok) {
-      alert(data.error || "Delete failed.");
+      setSiteNotice(data.error || "Delete failed.");
       return;
     }
 
@@ -3819,7 +3810,7 @@ const handleAdminDeleteReward = async (id: string) => {
     await loadAdminRewards();
     await loadViewerRewards();
   } catch {
-    alert("Delete failed.");
+    setSiteNotice("Delete failed.");
   }
 };
 
@@ -3949,7 +3940,7 @@ const handleGenerateBracket = () => {
 
       const token = sessionData.session.access_token;
 
-      const res = await fetch("/api/tournaments", {
+      const res = await siteFetch("/api/tournaments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -4008,9 +3999,13 @@ return (
   liveStatus={liveStatus}
 />
 
-<main className="mx-auto max-w-[1500px] px-3 py-3 sm:px-6 sm:py-10">
+<main id="main-content" tabIndex={-1} className="site-content mx-auto max-w-[1500px] px-3 py-4 sm:px-6 sm:py-8">
+<LocalReviewBanner />
+<SiteNotice message={siteNotice} close={()=>setSiteNotice("")} />
+<PageGuidance section={activeSection} />
 {activeSection === "home" && (
   <section className="space-y-4 sm:space-y-5">
+    <HomeGuidance navigate={setActiveSection} signedIn={isTwitchConnected} />
 
     {/* =========================================================
         TOP DASHBOARD
@@ -4326,7 +4321,7 @@ return (
               "
             >
               <div className="divide-y divide-white/[0.05]">
-                {giveaways.map((giveaway, index) => {
+                {giveaways.slice(0,visibleWinnerCount).map((giveaway, index) => {
                   const giveawayLabelSource = [
                     giveaway.title,
                     giveaway.reward_title,
@@ -4475,6 +4470,7 @@ return (
               </div>
             </div>
           )}
+          {giveaways.length>20&&!giveawayLoading&&<div className="winner-pagination"><span>Showing {Math.min(visibleWinnerCount,giveaways.length)} of {giveaways.length} winners</span>{visibleWinnerCount<giveaways.length?<button type="button" onClick={()=>setVisibleWinnerCount(n=>n+20)}>Show 20 more</button>:<button type="button" onClick={()=>setVisibleWinnerCount(20)}>Show recent winners</button>}</div>}
         </div>
       </div>
     </div>
@@ -5465,14 +5461,15 @@ return (
 
 {activeSection === "hunts" && (
   <section className="space-y-3 sm:space-y-5">
-    <GlowTabTitle label="BONUS HUNTS" />
 
+
+    <div className="hunt-history-controls"><label>Choose a hunt from the full history<select aria-label="Choose bonus hunt from history" value={currentPredictionHunt?.localId||""} onChange={e=>{const hunt=huntsData.find(h=>String(h.localId||h.id)===e.target.value);if(hunt)handleSelectPredictionHunt(hunt);}}><option value="" disabled>Choose a bonus hunt</option>{huntsData.map(h=><option key={h.id} value={String(h.localId||h.id)}>{h.title||"Bonus hunt"} · Start ${Number(h.startCost||0).toFixed(2)}</option>)}</select></label><p>Recent hunts are below. Older hunts stay available in the history selector.</p></div>
     {/* =========================================================
         HUNT TABS
     ========================================================= */}
 
     <div className="flex gap-2 overflow-x-auto pb-2 sm:gap-3 sm:pb-3">
-      {huntsData.map((hunt) => {
+      {huntsData.slice(0,8).map((hunt) => {
         const huntLocalId = (hunt as any)?.localId || hunt.id;
         const active = currentPredictionHunt?.localId === huntLocalId;
 
@@ -5825,19 +5822,20 @@ return (
           >
             {isAdmin && (
               <div className="rounded-xl border border-purple-300/[0.12] bg-black/30 p-2.5 sm:p-3">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <ActionButton onClick={()=>{if(currentPredictionHunt)void handleOpenPredictionHunt(currentPredictionHunt);}} disabled={!currentPredictionHunt||predictionStatus==="open"} variant="purple">Open predictions</ActionButton>
                   <ActionButton
                     onClick={handleLockPredictions}
                     variant="purple"
                   >
-                    Close
+                    Close predictions
                   </ActionButton>
 
                   <ActionButton
                     onClick={handleCompleteHunt}
                     variant="gold"
                   >
-                    Complete
+                    Complete hunt
                   </ActionButton>
                 </div>
 
@@ -6316,13 +6314,13 @@ animation: `predictionWheelIdleScroll ${Math.max(
   </section>
 )}
 
-{activeSection === "community" && <CommunityHunt />}
+<Activity mode={activeSection === "community" ? "visible" : "hidden"}><CommunityHunt key={viewerPlatform+":"+viewerName}/></Activity>
 
 {activeSection === "slotwheel" && (
   <section className="space-y-3 sm:space-y-5">
     {/* TITLE */}
     <div className="mx-auto max-w-5xl text-center">
-      <GlowTabTitle label="SLOT CALL OF THE DAY" />
+
     </div>
 
     {/* IDLE SCROLL ANIMATION */}
@@ -6849,7 +6847,7 @@ animation: `predictionWheelIdleScroll ${Math.max(
     ========================================================= */}
 
     <div className="mx-auto max-w-7xl text-center">
-      <GlowTabTitle label="TOURNAMENTS" />
+
     </div>
 
     {/* =========================================================
@@ -7538,12 +7536,13 @@ animation: `predictionWheelIdleScroll ${Math.max(
 
 {activeSection === "slotpicker" && (
   <section className="space-y-3 sm:space-y-4">
+    <CatalogueLookup />
     {/* =========================================================
         TITLE
     ========================================================= */}
 
     <div className="mx-auto max-w-7xl text-center">
-      <GlowTabTitle label="SLOT PICKER" />
+
     </div>
 
     {/* =========================================================
@@ -8462,7 +8461,7 @@ onClick={() => {
     ========================================================= */}
 
     <div className="mx-auto max-w-7xl text-center">
-      <GlowTabTitle label="PROFILE" />
+
     </div>
 
     {!isTwitchConnected ? (
@@ -9098,7 +9097,7 @@ onClick={() => {
                     </div>
 
                     <div className="mt-1 grid grid-cols-[minmax(0,1fr)_auto] gap-1.5 sm:mt-2 sm:gap-2">
-                      <input
+                      <input aria-label="RouloBets username"
                         value={rouloUsernameInput}
                         onChange={(e) =>
                           setRouloUsernameInput(e.target.value)
@@ -9532,13 +9531,13 @@ onClick={() => {
 
       <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-purple-300/15 bg-black/85 p-2.5 shadow-[0_0_24px_rgba(168,85,247,0.08)] backdrop-blur-sm sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
         <div className="rounded-xl border border-purple-300/15 bg-purple-400/5 px-3 py-2 text-[11px] font-semibold leading-5 text-purple-100/75 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
-          {viewerDisplayName} control center is active.
+          Signed in as {viewerDisplayName}. Choose a workspace below to manage the stream.
         </div>
       </div>
 
       {/* ADMIN NAVIGATION */}
       <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-purple-300/15 bg-black/70 p-1.5 shadow-[0_0_18px_rgba(168,85,247,0.06)] backdrop-blur-sm sm:mt-4">
-        <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-7">
+        <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-4">
           {[
             { id: "giveaway", label: "Giveaways" },
             { id: "trashClaw", label: "Trash Claw" },
@@ -9554,6 +9553,7 @@ onClick={() => {
             return (
               <button
                 key={tab.id}
+                aria-pressed={active}
                 type="button"
                 onClick={() =>
                   setActiveAdminTab(
@@ -9567,7 +9567,7 @@ onClick={() => {
                       | "bonusTracker" | "community"
                   )
                 }
-                className={`min-w-0 whitespace-normal break-words rounded-lg border px-1.5 py-2 text-[9px] font-black uppercase leading-tight tracking-[0.04em] transition sm:px-3 sm:text-xs sm:tracking-[0.08em] ${
+                className={`min-w-0 whitespace-normal break-words rounded-xl border px-3 py-3 text-sm font-bold leading-snug transition ${
                   active
                     ? "border-purple-300/40 bg-purple-400/15 text-purple-100 shadow-[0_0_16px_rgba(168,85,247,0.18)]"
                     : "border-white/10 bg-white/[0.03] text-white/55 hover:border-purple-300/20 hover:bg-purple-400/[0.06] hover:text-white"
@@ -9582,6 +9582,7 @@ onClick={() => {
 
 <div className="mt-2 grid w-full min-w-0 max-w-full gap-2 overflow-x-hidden sm:mt-3 sm:gap-3">
   {/* GIVEAWAY ADMIN */}
+  <AdminGuidance tab={activeAdminTab} />
   <details
     open={activeAdminTab === "giveaway"}
     className={`${
@@ -9591,7 +9592,7 @@ onClick={() => {
     <summary className="hidden">Giveaway System</summary>
 
     <div className="rounded-xl border border-purple-300/10 bg-purple-500/[0.025] p-1">
-      <GiveawayAdmin isAdmin={isAdmin} />
+      <Activity mode={activeAdminTab === "giveaway" ? "visible" : "hidden"}><GiveawayAdmin isAdmin={isAdmin} /></Activity>
     </div>
   </details>
 
@@ -9776,7 +9777,7 @@ onClick={() => {
               </ActionButton>
             </div>
 
-            <input
+            <input aria-label="Search rewards by viewer, platform or title"
               value={adminRewardsSearch}
               onChange={(e) => setAdminRewardsSearch(e.target.value)}
               placeholder="Search username, platform, title..."
@@ -9817,14 +9818,14 @@ onClick={() => {
                   <option value="kick">Kick</option>
                 </select>
 
-                <input
+                <input aria-label="Viewer username"
                   value={manualRewardUsername}
                   onChange={(e) => setManualRewardUsername(e.target.value)}
                   placeholder="username"
                   className="rounded-lg border border-purple-300/15 bg-black/60 px-3 py-2 text-xs text-white outline-none placeholder:text-white/25 focus:border-purple-300/40"
                 />
 
-                <input
+                <input aria-label="Prize amount"
                   value={manualRewardAmount}
                   onChange={(e) => setManualRewardAmount(e.target.value)}
                   placeholder="$ amount"
@@ -10079,6 +10080,7 @@ onClick={() => {
                 <div className="max-h-[420px] divide-y divide-white/5 overflow-y-auto">
                   {filteredAdminRewards
                     .filter((reward) => reward.paid)
+                    .slice(0,visiblePaidCount)
                     .map((reward) => (
                       <div
                         key={reward.id}
@@ -10107,18 +10109,20 @@ onClick={() => {
                           </div>
 
                           <button
+                            aria-label={"Mark prize unpaid for "+(reward.display_name||reward.twitch_username||reward.kick_username)}
                             onClick={() =>
                               handleAdminMarkRewardPending(reward.id)
                             }
                             className="mt-1 text-[10px] font-black text-white/40 transition hover:text-purple-200"
                           >
-                            Undo
+                            Mark unpaid
                           </button>
                         </div>
                       </div>
                     ))}
                 </div>
               )}
+              {filteredAdminRewards.filter(r=>r.paid).length>visiblePaidCount&&<div className="winner-pagination p-3"><span>Showing {visiblePaidCount} of {filteredAdminRewards.filter(r=>r.paid).length} paid prizes</span><button type="button" onClick={()=>setVisiblePaidCount(n=>n+20)}>Show 20 more paid prizes</button></div>}
             </div>
           </div>
         </details>
@@ -10148,7 +10152,7 @@ onClick={() => {
                     Title
                   </span>
 
-                  <input
+                  <input aria-label="Tournament name"
                     value={bracket.title}
                     onChange={(e) =>
                       updateBracketTitle(e.target.value)
@@ -10206,8 +10210,7 @@ onClick={() => {
                         {round.name}
                       </div>
 
-                      <input
-                        value={round.name}
+                      <input aria-label="Tournament round name" value={round.name}
                         onChange={(e) =>
                           updateRoundName(
                             round.id,
@@ -10238,7 +10241,7 @@ onClick={() => {
                           </div>
 
                           <div className="grid grid-cols-[1fr_72px] gap-1.5 sm:grid-cols-[1fr_80px_1fr_80px]">
-                            <input
+                            <input aria-label="Player 1 username"
                               value={match.player1}
                               onChange={(e) =>
                                 updateMatchField(
@@ -10256,7 +10259,7 @@ onClick={() => {
                               className="h-8 min-w-0 rounded-md border border-white/10 bg-black/45 px-2 text-[11px] text-white outline-none transition focus:border-purple-300/35 disabled:opacity-40"
                             />
 
-                            <input
+                            <input aria-label="Player 1 winnings"
                               value={match.player1Amount || ""}
                               onChange={(e) =>
                                 updateMatchField(
@@ -10277,7 +10280,7 @@ onClick={() => {
                               className="h-8 rounded-md border border-white/10 bg-black/30 px-2 text-[11px] text-white outline-none focus:border-yellow-300/35 disabled:opacity-40"
                             />
 
-                            <input
+                            <input aria-label="Player 2 username"
                               value={match.player2}
                               onChange={(e) =>
                                 updateMatchField(
@@ -10295,7 +10298,7 @@ onClick={() => {
                               className="h-8 min-w-0 rounded-md border border-white/10 bg-black/45 px-2 text-[11px] text-white outline-none transition focus:border-purple-300/35 disabled:opacity-40"
                             />
 
-                            <input
+                            <input aria-label="Player 2 winnings"
                               value={match.player2Amount || ""}
                               onChange={(e) =>
                                 updateMatchField(
@@ -10428,7 +10431,7 @@ onClick={() => {
                   Captains
                 </div>
 
-                <input
+                <input aria-label="Number of draft captains"
                   value={snakeCaptainCount}
                   onChange={(e) =>
                     setSnakeCaptainCount(
@@ -10444,7 +10447,7 @@ onClick={() => {
                   Captain Names
                 </div>
 
-                <textarea
+                <textarea aria-label="Draft captain names, one per line"
                   value={snakeCaptainsText}
                   onChange={(e) =>
                     setSnakeCaptainsText(e.target.value)
@@ -10459,7 +10462,7 @@ onClick={() => {
                   Player Pool
                 </div>
 
-                <textarea
+                <textarea aria-label="Draft player pool, one name per line"
                   value={snakePlayersText}
                   onChange={(e) =>
                     setSnakePlayersText(e.target.value)
@@ -10626,8 +10629,7 @@ onClick={() => {
                         Slot Rounds
                       </div>
 
-                      <input
-                        value={snakeSlotRounds}
+                      <input aria-label="Number of slot rounds" value={snakeSlotRounds}
                         onChange={(e) =>
                           setSnakeSlotRounds(
                             e.target.value.replace(
@@ -10682,7 +10684,7 @@ onClick={() => {
                             Team {teamCaptain}
                           </div>
 
-                          <input
+                          <input aria-label="Slot call name"
                             value={snakeSlotCalls[key] || ""}
                             onChange={(e) =>
                               setSnakeSlotCalls(
@@ -10696,7 +10698,7 @@ onClick={() => {
                             className="mt-3 w-full rounded-lg border border-purple-300/15 bg-black/70 px-3 py-2 text-sm text-white outline-none transition focus:border-purple-300/35"
                           />
 
-                          <input
+                          <input aria-label="Bonus winnings"
                             value={
                               snakeSlotAmounts[key] || ""
                             }
@@ -10744,7 +10746,7 @@ onClick={() => {
           </div>
         </details>
 
-        {activeAdminTab === "community" && <CommunityHunt admin />}
+        <Activity mode={activeAdminTab === "community" ? "visible" : "hidden"}><CommunityHunt admin key={viewerPlatform+":"+viewerName}/></Activity>
         {activeAdminTab === "bonusTracker" && <section className="rounded-xl border border-purple-300/20 bg-black/80 p-4">
           <h2 className="text-xl font-black text-purple-100">Bonus Hunt Tracker</h2>
           <p className="mt-1 text-sm text-white/50">Choose the same hunt as the wheel, or create one here. Search slots, add bonuses and manage opening results.</p>
@@ -11051,7 +11053,7 @@ onClick={() => {
                         await res.json();
 
                       if (!res.ok || !data.ok) {
-                        alert(
+                        setSiteNotice(
                           data.error ||
                             "Failed to clear slot calls."
                         );

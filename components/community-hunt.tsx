@@ -3,6 +3,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import SlotSearch, { type SlotOption } from "./slot-search";
 import TrackerAdmin from "./tracker-admin";
+import PendingRegistration from "./pending-registration";
+import {
+  ScheduleFields,
+  ScheduleCard,
+  CommunitySettings,
+} from "./community-schedule";
+import { localScheduleToUtc } from "@/lib/community-schedule";
 import { supabaseBrowser } from "@/lib/supabase/client";
 type Member = {
   id: string;
@@ -23,6 +30,8 @@ type Hunt = {
   id: string;
   title: string;
   phase: string;
+  scheduledAt: string | null;
+  timeZone: string;
   startCost: number;
   limit: number;
   members: Member[];
@@ -40,6 +49,10 @@ const button =
   "rounded-lg bg-purple-400/20 px-4 py-2 text-sm font-bold disabled:opacity-40";
 export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
   const [confirmTitle, setConfirmTitle] = useState("");
+  const [scheduled, setScheduled] = useState("");
+  const [timeZone, setTimeZone] = useState("Europe/London");
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [hunts, setHunts] = useState<Hunt[]>([]),
     [id, setId] = useState(""),
     [me, setMe] = useState(""),
@@ -67,6 +80,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
       });
       const d = await r.json();
       if (!r.ok) throw Error(d.error);
+      setLoadError("");
       setHunts(d.hunts);
       setId((old) =>
         admin
@@ -78,12 +92,16 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
       const { data } = await supabaseBrowser.auth.getSession();
       setMe(data.session?.user.id || "");
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Could not load hunts");
+      setLoadError(e instanceof Error ? e.message : "Could not load hunts");
+    } finally {
+      setLoading(false);
     }
   }, [admin, headers]);
   useEffect(() => {
     const initial = setTimeout(load, 0);
-    const timer = setInterval(load, 3000);
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") void load();
+    }, 5000);
     return () => {
       clearTimeout(initial);
       clearInterval(timer);
@@ -110,13 +128,33 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
       const d = await r.json();
       if (!r.ok) throw Error(d.error);
       pendingRequest.current = null;
-      if (action === "create") setId(d.result);
+      if (action === "create") {
+        setId(d.result);
+        setTitle("");
+        setScheduled("");
+      }
       if (action === "submit" || action === "hostCall") {
         setChoice(null);
         setReset((n) => n + 1);
       }
       await load();
-      setMessage("Saved");
+      const labels: Record<string, string> = {
+        create: "Community hunt created.",
+        register: "Request sent. Your place will be confirmed after approval.",
+        approve: "Contribution approved. The starting bankroll has updated.",
+        decline: "Registration declined.",
+        submit: "Your slot call has been queued.",
+        hostCall: "Host call added to the queue.",
+        random: "A new slot call has been selected.",
+        result: "Call result saved.",
+        edit: "Hunt details saved.",
+        delete: "Hunt hidden from the public list.",
+        withdraw: "Your call has been withdrawn.",
+        updateContribution:
+          "Your contribution has been updated. It is still waiting for approval.",
+        cancelRegistration: "Your registration request has been withdrawn.",
+      };
+      setMessage(labels[action] || "Changes saved.");
       return true;
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Could not save");
@@ -179,8 +217,9 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
         </p>
         <h1 className="mt-2 text-3xl font-black">Community Hunt</h1>
         <p className="mt-2 text-sm text-white/60">
-          Join with your contribution, wait for approval, then call your
-          favourite Rainbet slots. Follow the bonuses and results together.
+          {admin
+            ? "Set the hunt date, review player contributions and collect Rainbet bonuses. The active hunt also powers the shared tracker and OBS overlay."
+            : "Join with your contribution, wait for approval, then call your favourite Rainbet slots. Follow the bonuses and results together."}
         </p>
       </div>
       {message && (
@@ -191,46 +230,85 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
           {message}
         </p>
       )}
-      {admin && (
-        <form
-          className="flex flex-wrap gap-3 rounded-xl border border-white/10 bg-black/75 p-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void command("create", { title, limit: Number(limit) });
-          }}
-        >
-          <input
-            className={field + " flex-1"}
-            aria-label="Community hunt title"
-            placeholder="New community hunt name"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <label className="text-xs">
-            Call spaces
-            <input
-              className={field + " ml-2 w-16"}
-              aria-label="Call spaces per player"
-              type="number"
-              min="1"
-              max="10"
-              value={limit}
-              onChange={(e) => setLimit(e.target.value)}
-            />
-          </label>
-          <button className={button} disabled={busy || !title.trim()}>
-            Create community hunt
+      {loadError && (
+        <p role="alert" className="form-error">
+          {loadError}{" "}
+          <button type="button" onClick={() => void load()}>
+            Try again
           </button>
-          <p className="w-full text-xs text-white/50">
-            Starting bankroll comes from approved contributions. No recovery
-            target needed.
-          </p>
-        </form>
+        </p>
+      )}
+      {admin && (
+        <details className="community-create" open={hunts.length === 0}>
+          <summary>Create a community hunt</summary>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              try {
+                void command("create", {
+                  title,
+                  limit: Number(limit),
+                  scheduledAt: localScheduleToUtc(scheduled, timeZone),
+                  timeZone,
+                });
+              } catch (e) {
+                setMessage(
+                  e instanceof Error ? e.message : "Check the schedule.",
+                );
+              }
+            }}
+          >
+            <div className="hunt-create-row">
+              <label>
+                Hunt name
+                <input
+                  aria-label="Community hunt title"
+                  required
+                  maxLength={160}
+                  placeholder="e.g. Friday community hunt"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </label>
+              <label>
+                Call spaces per player
+                <input
+                  aria-label="Call spaces per player"
+                  type="number"
+                  required
+                  min="1"
+                  max="10"
+                  value={limit}
+                  onChange={(e) => setLimit(e.target.value)}
+                />
+              </label>
+            </div>
+            <ScheduleFields
+              value={scheduled}
+              zone={timeZone}
+              onValue={setScheduled}
+              onZone={setTimeZone}
+            />
+            <div className="form-footer">
+              <p>
+                Starting bankroll is the total of approved player contributions.
+              </p>
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={busy || !title.trim()}
+              >
+                {busy ? "Creating…" : "Create community hunt"}
+              </button>
+            </div>
+          </form>
+        </details>
       )}
       <label className="block text-sm font-bold">
         Hunt
         <select
-          className={field + " ml-3"}
+          aria-label="Choose community hunt"
+          className={field + " mt-2 block w-full max-w-xl"}
           value={id}
           onChange={(e) => {
             setId(e.target.value);
@@ -240,17 +318,124 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
           <option value="">Select a hunt</option>
           {hunts.map((h) => (
             <option key={h.id} value={h.id}>
-              {h.title} · {h.phase}
+              {h.title} ·{" "}
+              {(
+                {
+                  collecting: "Registration & collection",
+                  opening: "Opening bonuses",
+                  finished: "Finished",
+                } as Record<string, string>
+              )[h.phase] || h.phase}
             </option>
           ))}
         </select>
       </label>
       {!h ? (
-        <p className="rounded-xl bg-black/70 p-5">
-          No community hunt yet. An admin can create one in the Admin hub.
-        </p>
+        <div className="empty-state">
+          <h2>
+            {loading
+              ? "Loading community hunts…"
+              : hunts.length
+                ? "Choose a community hunt"
+                : "No community hunt scheduled yet"}
+          </h2>
+          <p>
+            {loading
+              ? "Getting the latest hunt details."
+              : hunts.length
+                ? "Choose a community hunt from the selector above. Selecting it will also make it active in the tracker and OBS."
+                : admin
+                  ? "Create a hunt above to open registration."
+                  : "Check back here for the next hunt. Its date and registration details will appear here."}
+          </p>
+        </div>
       ) : (
         <>
+          <ScheduleCard
+            scheduledAt={h.scheduledAt}
+            timeZone={h.timeZone}
+            phase={h.phase}
+          />
+          {admin && (
+            <CommunitySettings
+              key={[h.id, h.title, h.scheduledAt, h.timeZone, h.limit].join(
+                ":",
+              )}
+              hunt={h}
+              busy={busy}
+              save={(body) => command("edit", body)}
+            />
+          )}
+          {!admin && (
+            <div className="rounded-xl border border-white/10 bg-black/75 p-4">
+              {!me ? (
+                <p>
+                  Use the Twitch sign-in button at the top to join and submit
+                  slot calls. Everyone can follow the hunt.
+                </p>
+              ) : !member ||
+                ["declined", "withdrawn"].includes(member.status) ? (
+                <form
+                  className="flex flex-wrap items-center gap-3"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void command("register", { amount });
+                  }}
+                >
+                  <label>
+                    Your contribution ($)
+                    <input
+                      aria-label="Your contribution"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      required
+                      className={field + " mt-2 block w-full"}
+                      value={amount}
+                      inputMode="decimal"
+                      onChange={(e) => setAmount(e.target.value)}
+                    />
+                  </label>
+                  <button
+                    className={button}
+                    disabled={busy || h.phase !== "collecting" || !amount}
+                  >
+                    Request to join
+                  </button>
+                </form>
+              ) : member.status === "pending" ? (
+                <PendingRegistration
+                  key={member.amount}
+                  amount={member.amount}
+                  busy={busy}
+                  closed={h.phase !== "collecting"}
+                  save={(action, body) => command(action, body)}
+                />
+              ) : (
+                <p>
+                  {member.status === "pending"
+                    ? "Your registration is waiting for admin approval."
+                    : `You’re approved · ${Math.max(0, h.limit - h.calls.filter((c) => c.userId === me && ["queued", "selected"].includes(c.status)).length)} of ${h.limit} call spaces available · $${Number(member.amount).toFixed(2)} contribution`}
+                </p>
+              )}
+            </div>
+          )}
+          {!admin && member?.status !== "accepted" && (
+            <ol className="join-steps" aria-label="How to join">
+              <li>
+                <b>1. Request your place</b>
+                <span>Sign in with Twitch and enter your contribution.</span>
+              </li>
+              <li>
+                <b>2. Wait for approval</b>
+                <span>The streamer confirms your place and bankroll.</span>
+              </li>
+              <li>
+                <b>3. Call your slots</b>
+                <span>Choose Rainbet games and follow the results.</span>
+              </li>
+            </ol>
+          )}
           <div className="grid gap-3 rounded-xl border border-purple-300/20 bg-black/75 p-4 sm:grid-cols-4">
             <div>
               <span className="text-xs text-white/50">Approved bankroll</span>
@@ -275,53 +460,14 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
               </p>
             </div>
           </div>
-          {!admin && (
-            <div className="rounded-xl border border-white/10 bg-black/75 p-4">
-              {!me ? (
-                <p>
-                  Sign in with Twitch using the menu to join or submit calls.
-                  Everyone can follow the hunt.
-                </p>
-              ) : !member || member.status === "declined" ? (
-                <form
-                  className="flex flex-wrap items-center gap-3"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void command("register", { amount });
-                  }}
-                >
-                  <label>
-                    Your contribution
-                    <input
-                      aria-label="Your contribution"
-                      className={field + " ml-3"}
-                      value={amount}
-                      inputMode="decimal"
-                      onChange={(e) => setAmount(e.target.value)}
-                    />
-                  </label>
-                  <button
-                    className={button}
-                    disabled={busy || h.phase !== "collecting" || !amount}
-                  >
-                    Request to join
-                  </button>
-                </form>
-              ) : (
-                <p>
-                  {member.status === "pending"
-                    ? "Your registration is waiting for admin approval."
-                    : `You’re in · ${h.limit} active call spaces · $${Number(member.amount).toFixed(2)} contribution`}
-                </p>
-              )}
-            </div>
-          )}
+
           {admin && (
             <section className="rounded-xl border border-white/10 bg-black/75 p-4">
               <h2 className="mb-3 text-lg font-bold">Registration approval</h2>
               {h.members.filter((m) => m.status === "pending").length === 0 && (
                 <p className="text-sm text-white/50">
-                  No pending registrations.
+                  All registrations have been reviewed. New requests appear
+                  here.
                 </p>
               )}
               {h.members
@@ -446,6 +592,8 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
               {["queued", "collected", "failed"].map((t) => (
                 <button
                   key={t}
+                  type="button"
+                  aria-pressed={tab === t}
                   className={
                     button + (tab === t ? " ring-1 ring-purple-300" : "")
                   }
@@ -454,11 +602,24 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                   {t === "queued"
                     ? "Calls"
                     : t === "collected"
-                      ? "Passed"
-                      : "Failed"}
+                      ? "Bonuses collected"
+                      : "No bonus"}
                 </button>
               ))}
             </div>
+            {!h.calls.some((c) =>
+              tab === "queued"
+                ? ["queued", "selected"].includes(c.status)
+                : c.status === tab,
+            ) && (
+              <p className="empty-list">
+                {tab === "queued"
+                  ? "No calls waiting. Approved players can choose a Rainbet slot above."
+                  : tab === "collected"
+                    ? "Collected bonuses will appear here when the streamer records a successful call."
+                    : "Calls without a bonus will appear here."}
+              </p>
+            )}
             {h.calls
               .filter((c) =>
                 tab === "queued"
@@ -472,7 +633,15 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                 >
                   {game(c)}
                   <span className="text-sm text-white/60">
-                    {c.username} · {c.status}
+                    {c.username} ·{" "}
+                    {(
+                      {
+                        queued: "Waiting",
+                        selected: "Selected",
+                        collected: "Bonus collected",
+                        failed: "No bonus",
+                      } as Record<string, string>
+                    )[c.status] || c.status}
                   </span>
                   {!admin && c.userId === me && c.status === "queued" && (
                     <button
@@ -487,7 +656,16 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
               ))}
           </section>
           <section className="rounded-xl border border-white/10 bg-black/75 p-4">
-            <h2 className="font-bold">Players</h2>
+            <h2 className="font-bold">
+              Approved players ·{" "}
+              {h.members.filter((m) => m.status === "accepted").length}
+            </h2>
+            {!h.members.some((m) => m.status === "accepted") && (
+              <p className="empty-list">
+                Approved players will be listed here after registration is
+                reviewed.
+              </p>
+            )}
             <div className="mt-3 flex flex-wrap gap-2">
               {h.members
                 .filter((m) => m.status === "accepted")

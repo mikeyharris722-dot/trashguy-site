@@ -5,6 +5,8 @@ import {
 } from "@/lib/community-local";
 import { siteDb, requireTrackerAdmin, apiError } from "@/lib/site-db";
 import { catalogue } from "@/lib/roulo-catalogue";
+import { trackerHunts } from "@/lib/site-tracker";
+import { saveReviewNativeSelection } from "@/lib/review-selection";
 import { money } from "@/lib/tracker-math";
 export async function POST(request: Request) {
   try {
@@ -24,6 +26,20 @@ export async function POST(request: Request) {
         b,
       );
       return Response.json({ ok: true, result });
+    }
+    if (process.env.NEXT_PUBLIC_LOCAL_REVIEW === "1") {
+      if (b.action !== "select")
+        throw Error(
+          "Local review: existing hunt records are read-only. Use a local community hunt to test saving bonuses.",
+        );
+      const id = String(b.huntId || "");
+      if (id && !(await trackerHunts()).some((h) => h.id === id))
+        throw Error("Choose an existing hunt.");
+      await saveReviewNativeSelection(id);
+      await communityCommand({ id: actor, name: "Host" }, true, {
+        action: "clearSelection",
+      });
+      return Response.json({ ok: true, result: id });
     }
     let result;
     if (b.action === "openingFocus") {

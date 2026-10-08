@@ -8,10 +8,12 @@ import {
 import { randomUUID, randomInt } from "node:crypto";
 import { money, trackerStats } from "./tracker-math";
 import games from "@/data/rainbet-community.json";
+import { matchSlot, normaliseSlot } from "./slot-matching";
+import { validateSchedule } from "./community-schedule";
 export type CommunityActor = { id: string; name: string };
 type Member = CommunityActor & {
   amount: string;
-  status: "pending" | "accepted" | "declined";
+  status: "pending" | "accepted" | "declined" | "withdrawn";
 };
 type Call = {
   id: string;
@@ -51,6 +53,9 @@ type Hunt = {
   entries: Entry[];
   openingQueue: string[];
   createdAt: string;
+  updatedAt?: string;
+  scheduledAt?: string | null;
+  timeZone?: string;
   deleted: boolean;
 };
 type State = { hunts: Hunt[]; activeHuntId: string };
@@ -89,7 +94,9 @@ export function communityTracker(h: Hunt) {
     isOpening: h.phase === "opening",
     prediction_status: h.phase === "collecting" ? "open" : "locked",
     createdAt: h.createdAt,
-    updatedAt: h.createdAt,
+    updatedAt: h.updatedAt || h.createdAt,
+    scheduledAt: h.scheduledAt || null,
+    timeZone: h.timeZone || "Europe/London",
     entries,
     openingQueue: h.openingQueue,
     stats: trackerStats((Number(start(h)) / 1e6).toFixed(6), entries),
@@ -112,10 +119,20 @@ export function communityTracker(h: Hunt) {
 }
 export async function rainbetGames(q: string) {
   const games = await localCatalogue();
-  const query = q.trim().toLowerCase();
-  return games
-    .filter((g) => !query || g.name.toLowerCase().includes(query))
-    .slice(0, 30);
+  const query = normaliseSlot(q);
+  if (!query) return [];
+  const matched = matchSlot(q, games);
+  const contained = games.filter((g) =>
+    normaliseSlot(g.name + " " + g.provider).includes(query),
+  );
+  return [
+    ...new Map(
+      [...contained, ...(matched.suggestions || [])].map((g) => [
+        g.identifier,
+        g,
+      ]),
+    ).values(),
+  ].slice(0, 30);
 }
 // A process-wide queue survives development hot reload and serializes local edits.
 const key = Symbol.for("trashguy.community.write");
@@ -165,6 +182,7 @@ export async function communityCommand(
           h = {
             id: randomUUID(),
             title,
+            ...validateSchedule(b.scheduledAt, b.timeZone),
             phase: "collecting",
             limit,
             members: [],
@@ -193,7 +211,9 @@ export async function communityCommand(
               throw Error("Registration is closed.");
             if (
               h.members.some(
-                (m) => m.id === actor.id && m.status !== "declined",
+                (m) =>
+                  m.id === actor.id &&
+                  ["pending", "accepted"].includes(m.status),
               )
             )
               throw Error("You are already registered.");
@@ -205,6 +225,29 @@ export async function communityCommand(
               throw Error("Enter a positive contribution.");
             h.members = h.members.filter((m) => m.id !== actor.id);
             h.members.push({ ...actor, amount, status: "pending" });
+          } else if (
+            action === "updateContribution" ||
+            action === "cancelRegistration"
+          ) {
+            if (h.phase !== "collecting")
+              throw Error("Registration is closed.");
+            const m = h.members.find(
+              (m) => m.id === actor.id && m.status === "pending",
+            );
+            if (!m)
+              throw Error(
+                "Only a pending registration can be changed. Contact the streamer about an approved contribution.",
+              );
+            if (action === "cancelRegistration") m.status = "withdrawn";
+            else {
+              const amount = String(b.amount);
+              if (
+                money(amount) <= BigInt(0) ||
+                money(amount) > BigInt("1000000000000000000")
+              )
+                throw Error("Enter a positive contribution.");
+              m.amount = amount;
+            }
           } else if (action === "approve" || action === "decline") {
             staff();
             if (h.phase !== "collecting")
@@ -262,6 +305,8 @@ export async function communityCommand(
               status: "queued",
             });
           } else if (action === "withdraw") {
+            if (h.phase !== "collecting")
+              throw Error("Calls are closed during opening.");
             const c = h.calls.find((c) => c.id === b.callId);
             if (!c || c.userId !== actor.id || c.status !== "queued")
               throw Error("Only your queued call can be withdrawn.");
@@ -439,6 +484,30 @@ export async function communityCommand(
               const title = String(b.title || "").trim();
               if (!title || title.length > 160) throw Error("Enter a title");
               h.title = title;
+              if (b.scheduledAt !== undefined || b.timeZone !== undefined)
+                Object.assign(
+                  h,
+                  validateSchedule(
+                    b.scheduledAt,
+                    b.timeZone,
+                    b.scheduledAt !== h.scheduledAt,
+                  ),
+                );
+              if (b.limit !== undefined) {
+                const limit = Number(b.limit);
+                if (!Number.isInteger(limit) || limit < 1 || limit > 10)
+                  throw Error("Call spaces must be between 1 and 10.");
+                const counts = new Map<string, number>();
+                for (const c of h.calls.filter((c) =>
+                  ["queued", "selected"].includes(c.status),
+                ))
+                  counts.set(c.userId, (counts.get(c.userId) || 0) + 1);
+                if ([...counts.values()].some((count) => count > limit))
+                  throw Error(
+                    "A player has more queued calls than that limit. Resolve their calls first.",
+                  );
+                h.limit = limit;
+              }
             } else if (action === "manual") {
               const game = games.find((g) => g.identifier === b.identifier);
               if (
@@ -494,6 +563,7 @@ export async function communityCommand(
             } else throw Error("Unknown action");
           }
         }
+        if (h) h.updatedAt = new Date().toISOString();
         const saved = await commitDocument(
           "hunts",
           s,

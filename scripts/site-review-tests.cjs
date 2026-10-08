@@ -1,0 +1,60 @@
+const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),vm=require('node:vm'),assert=require('node:assert/strict'),crypto=require('node:crypto');
+const repo=path.resolve(__dirname,'..'),ts=require(repo+'/node_modules/typescript');
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),'trash-site-review-'));
+function factory(env={},mocks={},globals={}){const cache={};function load(name){if(mocks[name])return mocks[name];if(cache[name])return cache[name].exports;const file=path.join(repo,'lib',name+'.ts'),module={exports:{}};cache[name]=module;const js=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,esModuleInterop:true}}).outputText;vm.runInNewContext(js,{module,exports:module.exports,require:n=>n==='server-only'?{}:n==='@/data/rainbet-community.json'?require(repo+'/data/rainbet-community.json'):n.startsWith('./')?load(n.slice(2)):n.startsWith('@/lib/')?load(n.slice(6)):require(n),process:{...process,env:{...process.env,NODE_ENV:'development',COMMUNITY_HUNT_LOCAL:'1',...env},cwd:()=>dir},URL,AbortSignal,fetch,Response,Request,Headers,TextDecoder,console,structuredClone,...globals},{filename:file});return module.exports;}return load;}
+(async()=>{
+ const load=factory(),schedule=load('community-schedule');
+ assert.equal(schedule.localScheduleToUtc('2027-07-15T20:00','Europe/London'),'2027-07-15T19:00:00.000Z');
+ assert.equal(schedule.localScheduleToUtc('2027-12-15T20:00','Europe/London'),'2027-12-15T20:00:00.000Z');
+ assert.throws(()=>schedule.localScheduleToUtc('2027-02-30T20:00','Europe/London'),/valid/);
+ assert.throws(()=>schedule.localScheduleToUtc('2027-03-28T01:30','Europe/London'),/does not exist/);
+ assert.throws(()=>schedule.localScheduleToUtc('2027-10-31T01:30','Europe/London'),/occurs twice/);
+ assert.throws(()=>schedule.validateSchedule('2020-01-01T00:00:00.000Z','Europe/London'),/future/);
+ const c=load('community-local'),admin={id:crypto.randomUUID(),name:'TEST admin'},player={id:crypto.randomUUID(),name:'TEST viewer'};
+ const when=schedule.localScheduleToUtc('2099-10-09T20:00','Europe/London');
+ const id=await c.communityCommand(admin,true,{action:'create',title:'TEST REVIEW',scheduledAt:when,timeZone:'Europe/London'});
+ await c.communityCommand(player,false,{action:'register',huntId:id,amount:'25'});
+ await c.communityCommand(player,false,{action:'updateContribution',huntId:id,amount:'40'});
+ let h=(await c.communityState()).hunts[0];assert.equal(h.members[0].amount,'40');assert.equal(c.communityTracker(h).scheduledAt,when);assert.equal(c.communityTracker(h).startCost,0);
+ await assert.rejects(c.communityCommand(admin,true,{action:'updateContribution',huntId:id,amount:'500'}),/pending registration/);
+ await c.communityCommand(player,false,{action:'cancelRegistration',huntId:id});
+ await c.communityCommand(player,false,{action:'register',huntId:id,amount:'50'});
+ await c.communityCommand(admin,true,{action:'approve',huntId:id,userId:player.id});
+ h=(await c.communityState()).hunts[0];assert.equal(c.communityTracker(h).startCost,50);
+ await assert.rejects(c.communityCommand(player,false,{action:'updateContribution',huntId:id,amount:'60'}),/pending registration/);
+ for(const name of ['Wanted Dead','Gates of Olympus']){const game=(await c.rainbetGames(name))[0];await c.communityCommand(admin,true,{action:'manual',huntId:id,identifier:game.identifier,bet:'1'});}
+ const game=(await c.rainbetGames('Nut Job'))[0];assert(game);await c.communityCommand(admin,true,{action:'hostCall',huntId:id,identifier:game.identifier});
+ h=(await c.communityState()).hunts[0];await c.communityCommand(admin,true,{action:'result',huntId:id,callId:h.calls[0].id,status:'failed'});
+ h=(await c.communityState()).hunts[0];const ids=h.entries.filter(e=>e.status==='collected').map(e=>e.id).reverse();await c.communityCommand(admin,true,{action:'reorder',huntId:id,entryIds:ids});
+ h=(await c.communityState()).hunts[0];assert.deepEqual(h.entries.filter(e=>e.status==='collected').map(e=>e.id),ids);
+ await c.communityCommand(admin,true,{action:'phase',huntId:id,phase:'opening'});
+ await assert.rejects(c.communityCommand(player,false,{action:'withdraw',huntId:id,callId:'any'}),/closed/);
+ await assert.rejects(c.communityCommand(admin,true,{action:'phase',huntId:id,phase:'finished'}),/all payouts/);
+ assert.equal((await c.rainbetGames('Wanted Dead'))[0].name,'Wanted Dead or a Wild');
+ assert((await c.rainbetGames('ntu job')).some(g=>g.name.toLowerCase()==='nut job'));
+ let sent=0;const guard=factory({NEXT_PUBLIC_LOCAL_REVIEW:'1'})('review-client').reviewFetch(async()=>{sent++;return Response.json({ok:true});});
+ for(const method of ['POST','PATCH','DELETE']){const result=await guard('https://example.supabase.co/rest/v1/rewards',{method});assert.equal(result.status,403);}
+ assert.equal((await guard(new Request('https://example.supabase.co/rest/v1/rpc/community_commit',{method:'POST'}))).status,403);
+ assert.equal(sent,0);await guard('https://example.supabase.co/rest/v1/rewards?select=id');assert.equal(sent,1);
+ const policy=load('api-access');assert(policy.requiresAdmin('/api/admin/rewards','GET'));assert(policy.requiresAdmin('/api/rewards','PATCH'));assert(!policy.requiresAdmin('/api/slot-calls','POST'));assert(!policy.requiresAdmin('/api/community','POST'));
+ const viewerMock={auth:{async getUser(token){
+  if(token!=='trusted')return {data:{user:null},error:{message:'invalid'}};
+  return {data:{user:{id:'trusted-id',user_metadata:{name:'Someone Else'},identities:[{provider:'twitch',identity_data:{preferred_username:'Real_Viewer'}}]}},error:null};
+ }}};
+ const viewerLoad=factory({}, {'site-db':{siteDb:()=>viewerMock},'kick-session':{KICK_SESSION_COOKIE:'kick-session',verifyKickSessionToken:()=>null}});
+ const auth=viewerLoad('viewer-auth');await assert.rejects(auth.requireViewer(new Request('http://localhost')),/Sign in/);
+ await assert.rejects(auth.requireViewer(new Request('http://localhost',{headers:{Authorization:'Bearer forged'}})),/invalid/);
+ const who=await auth.requireViewer(new Request('http://localhost',{headers:{Authorization:'Bearer trusted'}}));assert.equal(who.name,'real_viewer');
+ const adminSdk={auth:{getUser:async(token)=>({data:{user:{id:token==='trusted-admin'?'allowed-id':'attacker-id',user_metadata:{is_admin:true},identities:[{provider:'twitch',identity_data:{name:'Same_Username'}}]}},error:null})},from(){let owner;return{select(){return this;},eq(key,value){assert.equal(key,'id');owner=value;return this;},async maybeSingle(){return{data:{is_admin:owner==='allowed-id'},error:null};}}}};
+ const adminLoad=factory({}, {'review-client':{createClient:()=>adminSdk},'kick-session':{KICK_SESSION_COOKIE:'kick-session',verifyKickSessionToken:()=>null}});
+ assert.equal(await adminLoad('site-db').requireTrackerAdmin(new Request('http://localhost',{headers:{Authorization:'Bearer trusted-admin'}})),'allowed-id');
+ await assert.rejects(adminLoad('site-db').requireTrackerAdmin(new Request('http://localhost',{headers:{Authorization:'Bearer other-user'}})),/Admin access/);
+ const calls=[];
+ const apiLoad=factory({}, {'supabase/client':{supabaseBrowser:{auth:{getSession:async()=>({data:{session:{access_token:'TEST_ACCESS_TOKEN'}}})}}}}, {fetch:async(input,init)=>{calls.push({input,init});return Response.json({ok:true});}});
+ await apiLoad('site-fetch').siteFetch('/api/rewards');assert.equal(calls[0].init.headers.get('Authorization'),'Bearer TEST_ACCESS_TOKEN');
+ await apiLoad('site-fetch').siteFetch('https://external.example/image');assert.equal(calls[1].init,undefined);
+ const selection=factory({NEXT_PUBLIC_LOCAL_REVIEW:'1'})('review-selection');await selection.saveReviewNativeSelection('TEST-HUNT-ID');assert.equal(await selection.reviewNativeSelection(),'TEST-HUNT-ID');assert.equal(await factory({NEXT_PUBLIC_LOCAL_REVIEW:'0'})('review-selection').reviewNativeSelection(),'');
+ const parser=load('community-request');await assert.rejects(parser.communityJson(new Request('http://localhost',{method:'POST',body:'x'.repeat(40)}),20),/too large/);
+ console.log('PASS: UTC/DST schedules, invalid/past dates, pending contribution edits/cancellation, approved equity lock, mixed failed/collected reorder, closed-call guard, typo search, local write isolation, admin policy and verified viewer identity.');
+ const resolved=path.resolve(dir);if(!resolved.startsWith(path.resolve(os.tmpdir())+path.sep)||!path.basename(resolved).startsWith("trash-site-review-"))throw Error("Unsafe temporary cleanup path");fs.rmSync(resolved,{recursive:true});
+})().catch(e=>{console.error(e);process.exitCode=1});

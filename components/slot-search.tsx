@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { providerName } from "@/lib/slot-providers";
 export type SlotOption = {
@@ -25,25 +25,37 @@ export default function SlotSearch({
   suggestions?: SlotOption[];
   endpoint?: string;
 }) {
-  const [query, setQuery] = useState(initialQuery),
+  const id = useId(),
+    container = useRef<HTMLDivElement>(null),
+    input = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState(selected?.name || initialQuery),
     [results, setResults] = useState<SlotOption[]>(suggestions),
     [error, setError] = useState(""),
-    [open, setOpen] = useState(!selected);
+    [open, setOpen] = useState(!selected),
+    [loading, setLoading] = useState(false),
+    [active, setActive] = useState(0);
   useEffect(() => {
-    if (!open) return;
+    if (!open || !query.trim()) return;
     const controller = new AbortController();
     const timer = setTimeout(async () => {
+      setLoading(true);
+      setError("");
       try {
         const r = await fetch(endpoint + "?q=" + encodeURIComponent(query), {
           signal: controller.signal,
+          cache: "no-store",
         });
         const d = await r.json();
-        if (!r.ok) throw new Error(d.error || "Search unavailable");
+        if (!r.ok) throw Error(d.error || "Search is unavailable. Try again.");
         setResults(d.games || []);
-        setError("");
+        setActive(0);
       } catch (e) {
-        if (!controller.signal.aborted)
-          setError(e instanceof Error ? e.message : "Search unavailable");
+        if (!controller.signal.aborted) {
+          setResults([]);
+          setError(e instanceof Error ? e.message : "Search is unavailable.");
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
       }
     }, 180);
     return () => {
@@ -61,72 +73,145 @@ export default function SlotSearch({
         ]),
     ).values(),
   ].slice(0, 8);
+  const show = open && !!query.trim(),
+    select = (g: SlotOption) => {
+      onSelect(g);
+      setQuery(g.name);
+      setOpen(false);
+    };
   return (
-    <div className="space-y-2">
-      <label className="block text-xs font-bold text-white/60">
-        {label}
+    <div
+      ref={container}
+      className="slot-search"
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false);
+      }}
+    >
+      <label htmlFor={id}>{label}</label>
+      <div className="search-input-wrap">
         <input
+          id={id}
+          ref={input}
+          role="combobox"
           aria-label={label}
+          aria-expanded={show}
+          aria-controls={id + "-results"}
+          aria-autocomplete="list"
+          aria-activedescendant={
+            show && !loading && unique[active]
+              ? id + "-option-" + active
+              : undefined
+          }
           autoComplete="off"
-          className="mt-2 w-full rounded-xl border border-purple-300/20 bg-black/70 px-4 py-3 text-sm text-white outline-none focus:border-purple-300/60"
           value={query}
           placeholder="Start typing a slot name…"
           onFocus={() => setOpen(true)}
           onChange={(e) => {
             setQuery(e.target.value);
             onSelect(null);
+            setResults([]);
             setOpen(true);
+            setLoading(!!e.target.value.trim());
+            setActive(0);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              if (show) {
+                e.stopPropagation();
+                setOpen(false);
+              }
+            } else if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setOpen(true);
+              setActive((i) => Math.min(i + 1, unique.length - 1));
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setActive((i) => Math.max(0, i - 1));
+            } else if (e.key === "Enter" && show) {
+              e.preventDefault();
+              if (!loading && unique[active]) select(unique[active]);
+            }
           }}
         />
-      </label>
-      {open && query.trim() && (
-        <div className="max-h-64 space-y-1 overflow-auto rounded-xl border border-white/10 bg-black/75 p-1">
-          {unique.map((g) => (
-            <button
-              type="button"
-              key={g.identifier}
-              className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-purple-400/15 focus:bg-purple-400/15"
-              onClick={() => {
-                onSelect(g);
-                setQuery(g.name);
-                setOpen(false);
-              }}
-            >
-              {g.artwork_url && (
-                <Image
-                  unoptimized
-                  width={40}
-                  height={40}
-                  src={g.artwork_url}
-                  alt=""
-                  className="h-10 w-10 rounded object-cover"
-                />
-              )}
-              <span className="min-w-0">
-                <span className="block text-sm font-bold text-white">
-                  {g.name}
+        {query && (
+          <button
+            type="button"
+            aria-label={"Clear " + label}
+            onClick={() => {
+              setQuery("");
+              onSelect(null);
+              setResults([]);
+              setOpen(false);
+              setLoading(false);
+              input.current?.focus();
+            }}
+          >
+            ×
+          </button>
+        )}
+      </div>
+      {show && (
+        <div
+          className="search-results"
+          id={id + "-results"}
+          role="listbox"
+          aria-label="Matching slots"
+        >
+          {loading ? (
+            <p role="status">Searching for matching slots…</p>
+          ) : unique.length ? (
+            unique.map((g, index) => (
+              <button
+                type="button"
+                role="option"
+                aria-selected={index === active}
+                tabIndex={-1}
+                id={id + "-option-" + index}
+                key={g.identifier}
+                className={index === active ? "is-highlighted" : ""}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => select(g)}
+              >
+                {g.artwork_url ? (
+                  <Image
+                    unoptimized
+                    src={g.artwork_url}
+                    alt=""
+                    width={44}
+                    height={44}
+                  />
+                ) : (
+                  <span aria-hidden="true" className="search-artwork-fallback">
+                    ♠
+                  </span>
+                )}
+                <span>
+                  <b>{g.name}</b>
+                  <small>{providerName(g.provider, g.producer)}</small>
                 </span>
-                <span className="block text-xs text-white/45">
-                  {providerName(g.provider, g.producer)}
-                </span>
-              </span>
-            </button>
-          ))}
-          {!unique.length && (
-            <p className="p-3 text-xs text-white/50">
-              No close matches. Try another name.
+              </button>
+            ))
+          ) : (
+            <p>
+              {error ||
+                "No matching slots found. Try fewer words or a different spelling."}
             </p>
           )}
         </div>
       )}
-      {selected && (
-        <p className="text-xs text-emerald-300">
-          Selected: {selected.name} ·{" "}
+      {selected ? (
+        <p className="search-selected" role="status">
+          ✓ {selected.name} ·{" "}
           {providerName(selected.provider, selected.producer)}
         </p>
+      ) : (
+        <p className="search-hint">
+          Choose a result to confirm the game. Use ↑ ↓ and Enter, or click a
+          result.
+        </p>
       )}
-      {error && (
-        <p role="status" className="text-xs text-red-300">
+      {error && !show && (
+        <p role="alert" className="form-error">
           {error}
         </p>
       )}

@@ -2,6 +2,7 @@ import { communityEnabled, communityState } from "@/lib/community-local";
 import { GET as communityOverlay } from "@/app/api/community/overlay/route";
 import { apiError, siteDb } from "@/lib/site-db";
 import { trackerHunts } from "@/lib/site-tracker";
+import { reviewNativeSelection } from "@/lib/review-selection";
 export async function GET() {
   try {
     if (communityEnabled() && (await communityState()).activeHuntId)
@@ -15,9 +16,14 @@ export async function GET() {
         .maybeSingle(),
     ]);
     if (settings.error) throw new Error(settings.error.message);
-    const h = hunts.find((h) => h.id === settings.data?.active_hunt_id);
+    const selected =
+      (await reviewNativeSelection()) || settings.data?.active_hunt_id;
+    const h = hunts.find((h) => h.id === selected);
     if (!h) return Response.json({ hunt: null });
-    const queue: string[] = settings.data?.opening_queue || [];
+    const queue: string[] =
+      h.id === settings.data?.active_hunt_id
+        ? settings.data?.opening_queue || []
+        : [];
     const rows = h.entries.filter((e) => e.status === "collected");
     const summary = (e: (typeof rows)[number]) => ({
       id: e.id,

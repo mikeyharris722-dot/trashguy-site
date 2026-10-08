@@ -1,6 +1,6 @@
 import { KICK_SESSION_COOKIE, verifyKickSessionToken } from "./kick-session";
 import "server-only";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/review-client";
 export function siteDb() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,18 +32,12 @@ export async function requireTrackerAdmin(request: Request) {
   const { data, error } = await siteDb().auth.getUser(token);
   if (error || !data.user) throw new Error("AUTH: Invalid login session.");
   const identity = data.user.identities?.find((i) => i.provider === "twitch");
-  const trustedName = String(
-    identity?.identity_data?.name ||
-      identity?.identity_data?.preferred_username ||
-      "",
-  ).toLowerCase();
-  const profile = trustedName
-    ? await siteDb()
-        .from("profiles")
-        .select("is_admin")
-        .eq("username", trustedName)
-        .maybeSingle()
-    : null;
+  if (!identity) throw Error("AUTH: Sign in with Twitch as an admin.");
+  const profile = await siteDb()
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", data.user.id)
+    .maybeSingle();
   if (profile?.error || !profile?.data?.is_admin)
     throw new Error("AUTH: Admin access required.");
   return data.user.id;

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/review-client";
+import { requireViewer } from "@/lib/viewer-auth";
+import { apiError } from "@/lib/site-db";
 
 export const runtime = "nodejs";
 
@@ -16,7 +18,9 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json();
 
   const id = String(body?.id || "").trim();
-  const viewer = normalize(body?.viewer || "");
+  let who;
+  try { who=await requireViewer(req,body?.platform=== "kick"?"kick":"twitch"); } catch(e) {return apiError(e);}
+  const viewer = who.name;
   const platform = body?.platform === "kick" ? "kick" : "twitch";
   const usernameColumn = platform === "kick" ? "kick_username" : "twitch_username";
 

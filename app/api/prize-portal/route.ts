@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/review-client";
+import { requireViewer } from "@/lib/viewer-auth";
+import { apiError } from "@/lib/site-db";
 
 export const runtime = "nodejs";
 
@@ -315,7 +317,8 @@ export async function GET(
   req: NextRequest
 ) {
   try {
-    const rawViewer = normalize(
+    const who = await requireViewer(req,req.nextUrl.searchParams.get("platform")==="kick"?"kick":"twitch");
+    const requestedViewer = normalize(
       req.nextUrl.searchParams.get(
         "viewer"
       ) ||
@@ -325,6 +328,8 @@ export async function GET(
         ""
     );
 
+    if(requestedViewer&&requestedViewer!==who.name)return apiError(Error("AUTH: You can only view your own rewards."));
+    const rawViewer=who.name;
     const platform =
       req.nextUrl.searchParams.get(
         "platform"
@@ -627,7 +632,7 @@ export async function GET(
      */
     if (
       identityRow?.id &&
-      hasRoulo
+      hasRoulo && process.env.NEXT_PUBLIC_LOCAL_REVIEW !== "1"
     ) {
       const weight =
         1 +
@@ -872,6 +877,7 @@ export async function GET(
         : {}),
     });
   } catch (error: any) {
+    if (error instanceof Error && error.message.startsWith("AUTH:")) return apiError(error);
     console.error(
       "Prize portal GET failed:",
       error

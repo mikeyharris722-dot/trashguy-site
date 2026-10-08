@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test:tracker": "node scripts/tracker-tests.cjs",
     "test:community": "node scripts/community-tests.cjs",
-    "test:community:production": "node scripts/community-production-tests.cjs"
+    "test:community:production": "node scripts/community-production-tests.cjs",
+    "test:review": "node scripts/site-review-tests.cjs",
+    "review:demo": "node scripts/seed-review-demo.cjs"
   },
   "dependencies": {
     "@retconned/kick-js": "^0.5.4",

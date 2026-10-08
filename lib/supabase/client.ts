@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/review-client";
 
 export const supabaseBrowser = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
