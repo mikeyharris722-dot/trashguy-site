@@ -144,7 +144,10 @@ export async function communityCommand(
       const staff = () => {
         if (!admin) throw Error("AUTH: Admin access required.");
       };
-      if (action === "create") {
+      if (action === "clearSelection") {
+        staff();
+        s.activeHuntId = "";
+      } else if (action === "create") {
         staff();
         const title = String(b.title || "").trim();
         const limit = Number(b.limit || 3);

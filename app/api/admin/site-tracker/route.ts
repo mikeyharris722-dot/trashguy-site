@@ -1,3 +1,8 @@
+import {
+  communityEnabled,
+  communityState,
+  communityCommand,
+} from "@/lib/community-local";
 import { siteDb, requireTrackerAdmin, apiError } from "@/lib/site-db";
 import { catalogue } from "@/lib/roulo-catalogue";
 import { money } from "@/lib/tracker-math";
@@ -6,6 +11,20 @@ export async function POST(request: Request) {
     const actor = await requireTrackerAdmin(request),
       b = await request.json(),
       db = siteDb();
+    const local = communityEnabled() ? await communityState() : null;
+    const localHunt = local?.hunts.find((h) => h.id === b.huntId && !h.deleted);
+    if (localHunt) {
+      if (b.action !== "select")
+        throw Error(
+          "Manage community calls from Community Hunt, or use its tracker controls.",
+        );
+      const result = await communityCommand(
+        { id: actor, name: "Host" },
+        true,
+        b,
+      );
+      return Response.json({ ok: true, result });
+    }
     let result;
     if (b.action === "openingFocus") {
       result = await db.rpc("site_tracker_opening_focus", {
@@ -173,6 +192,10 @@ export async function POST(request: Request) {
       });
     } else throw new Error("Unknown action");
     if (result.error) throw new Error(result.error.message);
+    if (local && ["select", "create"].includes(b.action))
+      await communityCommand({ id: actor, name: "Host" }, true, {
+        action: "clearSelection",
+      });
     return Response.json({ ok: true, result: result.data });
   } catch (e) {
     return apiError(e);

@@ -1,6 +1,12 @@
+import {
+  communityEnabled,
+  communityState,
+  communityTracker,
+} from "@/lib/community-local";
+import { requireTrackerAdmin } from "@/lib/site-db";
 import { apiError, siteDb } from "@/lib/site-db";
 import { trackerHunts } from "@/lib/site-tracker";
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const [hunts, settings] = await Promise.all([
       trackerHunts(),
@@ -11,15 +17,35 @@ export async function GET() {
         .maybeSingle(),
     ]);
     if (settings.error) throw new Error(settings.error.message);
+    const local = communityEnabled() ? await communityState() : null;
+    let admin = false;
+    try {
+      await requireTrackerAdmin(request);
+      admin = true;
+    } catch {}
+    const communityHunts = (local?.hunts || [])
+      .filter((h) => !h.deleted)
+      .map((h) => {
+        const dto = communityTracker(h);
+        return {
+          ...dto,
+          entries: admin
+            ? dto.entries
+            : dto.entries.map((e) => ({ ...e, notes: "" })),
+        };
+      });
     return Response.json({
-      hunts: hunts.map((h) => ({
-        ...h,
-        openingQueue:
-          h.id === settings.data?.active_hunt_id
-            ? settings.data?.opening_queue || []
-            : [],
-      })),
-      activeHuntId: settings.data?.active_hunt_id || "",
+      hunts: [
+        ...communityHunts,
+        ...hunts.map((h) => ({
+          ...h,
+          openingQueue:
+            h.id === settings.data?.active_hunt_id
+              ? settings.data?.opening_queue || []
+              : [],
+        })),
+      ],
+      activeHuntId: local?.activeHuntId || settings.data?.active_hunt_id || "",
     });
   } catch (e) {
     return apiError(e);

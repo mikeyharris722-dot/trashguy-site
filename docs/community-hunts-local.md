@@ -16,7 +16,7 @@ The ignored local environment file contains `COMMUNITY_HUNT_LOCAL=1` and `NEXT_P
 5. Admins select Random call, open the artwork/name on Rainbet, and record Passed with bet size or Failed. Game navigation never records a result or places a bet.
 6. Passed bonuses appear in the same tracker component used by ordinary hunts. Edit bets, tiers and notes, reorder, remove, or undo results during collection. Duplicate slots are rejected.
 7. Start opening. The existing payout dialog advances in saved order; Skip moves a pending bonus to the end. Contributions and calls are frozen while opening.
-8. The local OBS URL is http://localhost:3200/overlay?community=1, at 435 × 285. The selected community hunt supplies its totals and opening order. Ordinary `/overlay` is unchanged.
+8. The main Bonus Hunt Tracker selector now includes ordinary and community hunts. The standard local OBS URL http://localhost:3200/overlay follows that selected hunt, at 435 × 285. Community records use Rainbet catalogue and local commands; ordinary records retain their existing Roulobets commands. The explicit community-only /overlay?community=1 URL remains available.
 
 ## Catalogue
 

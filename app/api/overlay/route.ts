@@ -1,7 +1,11 @@
+import { communityEnabled, communityState } from "@/lib/community-local";
+import { GET as communityOverlay } from "@/app/api/community/overlay/route";
 import { apiError, siteDb } from "@/lib/site-db";
 import { trackerHunts } from "@/lib/site-tracker";
 export async function GET() {
   try {
+    if (communityEnabled() && (await communityState()).activeHuntId)
+      return communityOverlay();
     const [hunts, settings] = await Promise.all([
       trackerHunts(),
       siteDb()

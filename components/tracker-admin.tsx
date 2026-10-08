@@ -29,6 +29,7 @@ export type Entry = {
 type Hunt = {
   openingQueue?: string[];
   id: string;
+  source?: string;
   title: string;
   phase: string;
   startCost: number;
@@ -53,10 +54,6 @@ export default function TrackerAdmin({
   manual?: boolean;
   community?: boolean;
 }) {
-  const trackerApi = community
-    ? "/api/community/tracker"
-    : "/api/admin/site-tracker";
-  const catalogueApi = community ? "/api/community" : "/api/catalogue";
   const [hunts, setHunts] = useState<Hunt[]>([]),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
@@ -68,13 +65,19 @@ export default function TrackerAdmin({
     [aliases, setAliases] = useState(""),
     [correctedName, setCorrectedName] = useState(""),
     [imageUrl, setImageUrl] = useState("");
+  const communityMode =
+    community || hunts.find((h) => h.id === huntId)?.source === "community";
+  const trackerApi = communityMode
+    ? "/api/community/tracker"
+    : "/api/admin/site-tracker";
+  const catalogueApi = communityMode ? "/api/community" : "/api/catalogue";
   const load = useCallback(async () => {
     const { data: session } = await supabaseBrowser.auth.getSession();
     const h = await fetch(
       community ? "/api/community/tracker" : "/api/site-tracker",
       {
         cache: "no-store",
-        headers: community
+        headers: true
           ? { Authorization: "Bearer " + (session.session?.access_token || "") }
           : {},
       },
@@ -120,7 +123,7 @@ export default function TrackerAdmin({
           "Content-Type": "application/json",
           Authorization: "Bearer " + (data.session?.access_token || ""),
         },
-        body: JSON.stringify(community ? { huntId, ...body } : body),
+        body: JSON.stringify(communityMode ? { huntId, ...body } : body),
       });
       const value = await response.json();
       if (!response.ok) throw new Error(value.error || "Request failed");
@@ -287,7 +290,8 @@ export default function TrackerAdmin({
             </option>
             {hunts.map((h) => (
               <option key={h.id} value={h.id}>
-                {h.title} · {h.phase}
+                {h.title} · {h.source === "community" ? "Community · " : ""}
+                {h.phase}
               </option>
             ))}
           </select>
@@ -297,7 +301,7 @@ export default function TrackerAdmin({
           choose or create another hunt.
         </p>
       </div>
-      {!community && (
+      {!communityMode && (
         <details className="rounded-xl border border-white/10 p-3">
           <summary className="cursor-pointer text-sm font-bold text-purple-200">
             Create a new hunt
@@ -350,13 +354,12 @@ export default function TrackerAdmin({
             className={input + " mt-2 w-full"}
             value={
               typeof window !== "undefined"
-                ? window.location.origin +
-                  (community ? "/overlay?community=1" : "/overlay")
+                ? window.location.origin + "/overlay"
                 : "/overlay"
             }
           />
           <a
-            href={community ? "/overlay?community=1" : "/overlay"}
+            href="/overlay"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-2 inline-block text-xs text-teal-200"
@@ -367,7 +370,7 @@ export default function TrackerAdmin({
       )}
       {current && (
         <>
-          {!community && (
+          {!communityMode && (
             <HuntSettings
               key={current.id + ":" + current.title + ":" + current.startCost}
               hunt={current}
