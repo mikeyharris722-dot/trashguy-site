@@ -73,6 +73,13 @@ function factory(env={},mocks={},globals={}){const cache={};function load(name){
  const adminLoad=factory({}, {'review-client':{createClient:()=>adminSdk},'kick-session':{KICK_SESSION_COOKIE:'kick-session',verifyKickSessionToken:()=>null}});
  assert.equal(await adminLoad('site-db').requireTrackerAdmin(new Request('http://localhost',{headers:{Authorization:'Bearer trusted-admin'}})),'allowed-id');
  await assert.rejects(adminLoad('site-db').requireTrackerAdmin(new Request('http://localhost',{headers:{Authorization:'Bearer other-user'}})),/Admin access/);
+ let legacyMode='legacy';
+ const legacySdk={auth:{getUser:async()=>({data:{user:{id:'new-auth-id',user_metadata:{name:'owner'},identities:[{provider:'twitch',identity_data:{preferred_username:'Owner',provider_id:'12345'}}]}},error:null})},from(){let key,value;return{select(){return this;},eq(k,v){key=k;value=v;return this;},async maybeSingle(){if(key==='id')return{data:null,error:null};if(key==='twitch_user_id')return{data:legacyMode==='numeric'?{id:'legacy-profile',is_admin:true,twitch_user_id:'12345'}:null,error:null};return{data:{id:'legacy-profile',is_admin:true,twitch_user_id:legacyMode==='mismatch'?'99999':'owner',username:'owner'},error:null};}}}};
+ const legacyLoad=factory({}, {'review-client':{createClient:()=>legacySdk},'kick-session':{KICK_SESSION_COOKIE:'kick-session',verifyKickSessionToken:()=>null}})('site-db');
+ const legacyRequest=new Request('http://localhost',{headers:{Authorization:'Bearer verified-owner'}});
+ assert.equal(await legacyLoad.requireTrackerAdmin(legacyRequest),'legacy-profile');
+ legacyMode='numeric';assert.equal(await legacyLoad.requireTrackerAdmin(legacyRequest),'legacy-profile');
+ legacyMode='mismatch';await assert.rejects(legacyLoad.requireTrackerAdmin(legacyRequest),/Admin access/);
  const calls=[];
  const apiLoad=factory({}, {'supabase/client':{supabaseBrowser:{auth:{getSession:async()=>({data:{session:{access_token:'TEST_ACCESS_TOKEN'}}})}}}}, {fetch:async(input,init)=>{calls.push({input,init});return Response.json({ok:true});}});
  await apiLoad('site-fetch').siteFetch('/api/rewards');assert.equal(calls[0].init.headers.get('Authorization'),'Bearer TEST_ACCESS_TOKEN');
