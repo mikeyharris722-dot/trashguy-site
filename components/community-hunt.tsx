@@ -213,7 +213,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
     );
   }
   return (
-    <section className={`community-layout w-full space-y-5 text-white ${admin ? "max-w-none" : "mx-auto max-w-6xl"}`}>
+    <section className={`community-layout w-full space-y-5 text-white ${admin ? "max-w-none" : "mx-auto max-w-7xl"}`}>
       <div className="rounded-2xl border border-purple-300/20 bg-black/80 p-5">
         <p className="text-xs font-bold uppercase tracking-widest text-amber-200">
           Community · Rainbet slots

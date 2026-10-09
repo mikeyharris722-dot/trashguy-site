@@ -3940,7 +3940,7 @@ return (
   liveStatus={liveStatus}
 />
 
-<main id="main-content" tabIndex={-1} className="site-content mx-auto max-w-[1500px] px-3 py-4 sm:px-6 sm:py-8">
+<main id="main-content" tabIndex={-1} className="site-content mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-8">
 <LocalReviewBanner />
 <SiteNotice message={siteNotice} close={()=>setSiteNotice("")} />
 <PageGuidance section={activeSection} />
@@ -5590,7 +5590,7 @@ return (
 {activeSection === "slotwheel" && (
   <section className="space-y-3 sm:space-y-5">
     {/* TITLE */}
-    <div className="mx-auto max-w-5xl text-center">
+    <div className="mx-auto w-full max-w-7xl text-center">
 
     </div>
 
@@ -5613,7 +5613,7 @@ return (
 
     <div
       className="
-        mx-auto max-w-5xl
+        mx-auto w-full max-w-7xl
         rounded-2xl
         border border-purple-300/20
         bg-[linear-gradient(180deg,rgba(13,5,20,0.76),rgba(4,2,8,0.66))]
@@ -5863,7 +5863,7 @@ return (
 
       <div
         className="
-          mx-auto mt-3 max-w-5xl
+          mx-auto mt-3 w-full max-w-7xl
           overflow-hidden
           rounded-xl
           border border-yellow-300/25
@@ -5942,7 +5942,7 @@ return (
 
     <div
       className="
-        mx-auto max-w-5xl
+        mx-auto w-full max-w-7xl
         overflow-hidden
         rounded-2xl
         border border-purple-300/15
@@ -6021,7 +6021,7 @@ return (
 
     <div
       className="
-        mx-auto max-w-5xl
+        mx-auto w-full max-w-7xl
         overflow-hidden
         rounded-2xl
         border border-purple-300/15
@@ -7742,7 +7742,7 @@ onClick={() => {
 
       <div
         className="
-          mx-auto max-w-5xl
+          mx-auto w-full max-w-7xl
           overflow-hidden
           rounded-2xl
           border border-purple-300/20
