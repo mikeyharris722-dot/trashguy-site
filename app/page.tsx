@@ -872,6 +872,7 @@ const [slotCallResults, setSlotCallResults] = useState<
     username: string;
     slotName: string;
     payout: number | null;
+    status?: "collected" | "failed";
     createdAt: number;
   }[]
 >([]);
@@ -2625,6 +2626,7 @@ const loadSlotCalls = async () => {
           id: result.id,
           username: result.username,
           slotName: result.slot_name,
+          status: result.status,
           payout:
             result.payout === null || result.payout === undefined
               ? null
@@ -6087,14 +6089,14 @@ return (
                 </div>
 
                 <div
-                  className={`truncate text-right text-[9px] font-black sm:text-xs ${
-                    result.payout === null
+                  className={`text-right text-[9px] font-black leading-tight sm:text-xs ${
+                    result.status === "failed" ? "text-red-300" : result.payout === null
                       ? "text-amber-300"
                       : "text-emerald-300"
                   }`}
                 >
-                  {result.payout === null
-                    ? "PENDING"
+                  {result.status === "failed" ? "DIDN’T GET IN" : result.payout === null
+                    ? (result.status === "collected" ? "GOT IN · PENDING" : "PENDING")
                     : `$${result.payout.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,

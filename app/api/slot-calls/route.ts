@@ -378,8 +378,9 @@ export async function POST(req: NextRequest) {
 
     const { data: existingUser, error: existingUserError } = await supabase
       .from("slot_calls")
-      .select("id")
+      .select("id,slot_name,platform")
       .ilike("username", username)
+      .eq("platform", platform)
       .maybeSingle();
 
     if (existingUserError) {
@@ -389,17 +390,6 @@ export async function POST(req: NextRequest) {
         },
         {
           status: 500,
-        },
-      );
-    }
-
-    if (existingUser) {
-      return NextResponse.json(
-        {
-          error: `${username} already has a slot on the wheel.`,
-        },
-        {
-          status: 400,
         },
       );
     }
@@ -426,7 +416,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (existingSlot) {
+    if (existingSlot && existingSlot.id !== existingUser?.id) {
       return NextResponse.json(
         {
           error: `${slotName} is already on the wheel.`,
@@ -441,15 +431,10 @@ export async function POST(req: NextRequest) {
       Create the active wheel entry.
     */
 
-    const { data, error } = await supabase
-      .from("slot_calls")
-      .insert({
-        username,
-        slot_name: slotName,
-        platform,
-      })
-      .select()
-      .single();
+    const write = existingUser
+      ? supabase.from("slot_calls").update({ slot_name: slotName, platform }).eq("id", existingUser.id)
+      : supabase.from("slot_calls").insert({ username, slot_name: slotName, platform });
+    const { data, error } = await write.select().single();
 
     if (error) {
       return NextResponse.json(
@@ -472,7 +457,11 @@ export async function POST(req: NextRequest) {
         suggestions: matched.suggestions,
       });
     if (metadata.error) {
-      await supabase.from("slot_calls").delete().eq("id", data.id);
+      if (existingUser) {
+        await supabase.from("slot_calls").update({slot_name: existingUser.slot_name, platform: existingUser.platform}).eq("id", data.id);
+      } else {
+        await supabase.from("slot_calls").delete().eq("id", data.id);
+      }
       return NextResponse.json(
         { error: "Catalogue migration is not installed; call was not queued." },
         { status: 503 },
@@ -481,6 +470,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       call: data,
+      replaced: Boolean(existingUser),
       needsReview: matched.status === "review",
     });
   } catch (error: any) {
