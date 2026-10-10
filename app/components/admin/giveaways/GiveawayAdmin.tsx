@@ -1,5 +1,5 @@
 "use client";
-import UserBadges from "@/components/user-badges";
+
 
 import { siteFetch } from "@/lib/site-fetch";
 
@@ -678,7 +678,7 @@ export default function GiveawayAdmin({ isAdmin }: { isAdmin: boolean }) {
               </div>
 
               <div className="mt-2 break-words text-xl font-black text-purple-100 drop-shadow-[0_0_12px_rgba(168,85,247,0.35)] sm:text-3xl">
-                {state.winnerUsername || "No winner drawn yet"}<UserBadges name={state.winnerUsername || ""} />
+                {state.winnerUsername || "No winner drawn yet"}
               </div>
 
               {state.winnerUsername && (
@@ -852,7 +852,7 @@ export default function GiveawayAdmin({ isAdmin }: { isAdmin: boolean }) {
                   >
                     <div className="flex min-w-0 items-center gap-2">
                       <div className="truncate text-sm font-black text-white">
-                        {entry.display_name || entry.username}<UserBadges name={entry.username || entry.display_name || ""} />
+                        {entry.display_name || entry.username}
                       </div>
 
                       <div className="flex shrink-0 gap-1 text-[11px]">
