@@ -28,6 +28,7 @@ export async function GET() {
     const summary = (e: (typeof rows)[number]) => ({
       id: e.id,
       slotName: e.slot_name,
+      username: e.username,
       betSize: Number(e.bet_size),
       payout: e.payout === null ? null : Number(e.payout),
       multiplier: e.payout === null ? 0 : Number(e.payout) / Number(e.bet_size),

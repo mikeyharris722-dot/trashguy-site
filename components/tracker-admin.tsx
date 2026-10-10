@@ -1,4 +1,5 @@
 "use client";
+import { useRememberedBet } from "@/lib/use-remembered-bet";
 import UserBadges from "@/components/user-badges";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -182,7 +183,7 @@ export default function TrackerAdmin({
   const [manualNotes, setManualNotes] = useState("");
   const [searchReset, setSearchReset] = useState(0);
   const manualRequest = useRef<string | null>(null);
-  const [manualBet, setManualBet] = useState("0.20");
+  const [manualBet, setManualBet] = useRememberedBet();
   const [opening, setOpening] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const current = hunts.find((h) => h.id === huntId);

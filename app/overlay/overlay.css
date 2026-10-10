@@ -215,3 +215,5 @@ body:has(.hunt-overlay) nextjs-portal {
 .overlay-latest > span { grid-column: 1 / -1; }
 .overlay-latest b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .overlay-latest strong { white-space: nowrap; }
+
+.overlay-caller { color: #9ce3dd; font-size: inherit; font-weight: normal; }

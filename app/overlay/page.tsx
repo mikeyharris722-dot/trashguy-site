@@ -4,6 +4,7 @@ import "./overlay.css";
 type Bonus = {
   id: string;
   slotName: string;
+  username?: string;
   betSize: number;
   payout: number | null;
   multiplier: number;
@@ -95,6 +96,7 @@ export default function Overlay() {
     >
       <span className="overlay-slot">
         #{index + 1} &nbsp;{b.slotName}
+        {b.username && <small className="overlay-caller"> · {b.username}</small>}
         {b.tier !== "standard" && <em>{b.tier.replaceAll("_", " ")}</em>}
       </span>
       <span>{cash(b.betSize)}</span>
@@ -149,7 +151,7 @@ export default function Overlay() {
       {hunt.phase === "opening" && hunt.latest && (
         <section className="overlay-latest">
           <span>LATEST RESULT</span>
-          <b>{hunt.latest.slotName}</b>
+          <b>{hunt.latest.slotName}{hunt.latest.username && <small className="overlay-caller"> · {hunt.latest.username}</small>}</b>
           <strong>
             {cash(hunt.latest.payout || 0)}{" "}
             <small>({hunt.latest.multiplier.toFixed(2)}×)</small>

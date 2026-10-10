@@ -1,4 +1,5 @@
 "use client";
+import { useRememberedBet } from "@/lib/use-remembered-bet";
 
 import { siteFetch } from "@/lib/site-fetch";
 import React, { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -666,7 +667,7 @@ export default function Home() {
  const [trackerHuntId,setTrackerHuntId]=useState("");
  const [communityPredictionId,setCommunityPredictionId]=useState("");
  const [trackerEntryOpen,setTrackerEntryOpen]=useState(false);
- const [trackerBet,setTrackerBet]=useState("0.20");
+ const [trackerBet,setTrackerBet]=useRememberedBet();
 
  const [trackerBusy,setTrackerBusy]=useState(false);
 
