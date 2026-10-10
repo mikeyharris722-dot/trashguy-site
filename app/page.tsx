@@ -2596,6 +2596,7 @@ useEffect(()=>{let live=true;const control=new AbortController();const load=asyn
 const selectTrackerHunt = async (id:string)=>{trackerSelectionPending.current=true;try{const r=await slotFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"select",huntId:id})});const d=await r.json();if(!r.ok)throw new Error(d.error);setTrackerHuntId(id);}catch(e){setSiteNotice(e instanceof Error?e.message:"Could not select hunt");}finally{trackerSelectionPending.current=false;}};
 const resolvePickedCall=async(game:SlotOption)=>{if(!pickedSlotCall)return;setTrackerBusy(true);try{const r=await slotFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resolve",callId:pickedSlotCall.id,identifier:game.identifier})});const d=await r.json();if(!r.ok)throw new Error(d.error);if(d.ignored){setPickedSlotCall(null);setTrackerEntryOpen(false);setSiteNotice("Slot already in the active hunt. Call ignored.");}else setPickedSlotCall(c=>c?{...c,slotName:game.name,needsReview:false}:null);await loadSlotCalls();}catch(e){setSiteNotice(e instanceof Error?e.message:"Could not confirm this slot.");throw e;}finally{setTrackerBusy(false);}};
 async function recordPickedCall(status:"collected"|"failed",payout?:string) {if(!pickedSlotCall||trackerBusy)return;if(!trackerHuntId){setSiteNotice("Choose a site hunt in the tracker controls first.");return;}setTrackerBusy(true);try{const response=await siteFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await getAccessToken()},body:JSON.stringify({action:"collect",huntId:trackerHuntId,callId:pickedSlotCall.id,status,bet:trackerBet,cost:"0",payout})});const d=await response.json();if(!response.ok)throw new Error(d.error);setPickedSlotCall(null);setTrackerEntryOpen(false);setSlotWheelRotation(0);setSlotPayoutInput("");await loadSlotCalls();await loadHunts();}catch(e){setSiteNotice(e instanceof Error?e.message:"Could not save result")}finally{setTrackerBusy(false)}}
+const [slotCallConnection, setSlotCallConnection] = useState("Connecting");
 const loadSlotCalls = async () => {
   try {
     const res = await slotFetch("/api/slot-calls", {
@@ -2603,6 +2604,8 @@ const loadSlotCalls = async () => {
     });
 
     const data = await res.json();
+    if (!res.ok) throw new Error("Calls could not refresh");
+    setSlotCallConnection("Live updates");
 
     if (Array.isArray(data.calls)) {
       setSlotCalls(
@@ -2642,6 +2645,7 @@ const loadSlotCalls = async () => {
       "Failed to load slot calls",
       err
     );
+    setSlotCallConnection("Reconnecting · showing last update");
   }
 };
 
@@ -5929,9 +5933,9 @@ return (
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-emerald-300">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_7px_rgba(110,231,183,1)]" />
-          Live
+        <div role="status" className={`wheel-connection flex items-center gap-1.5 ${slotCallConnection === "Live updates" ? "text-emerald-300" : "text-amber-200"}`}>
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
+          {slotCallConnection}
         </div>
       </div>
     </div>
@@ -6186,6 +6190,7 @@ return (
           </div>
         </div>
 
+        {tournamentView === "bracket" && <p className="bracket-hint">Swipe across the bracket on smaller screens. Empty places are waiting for players; results appear as matches are recorded.</p>}
         {/* VIEW SWITCHER */}
 
         <div className="mt-3 grid grid-cols-2 gap-2">

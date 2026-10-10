@@ -42,7 +42,7 @@ const guides: Record<string, { description: string; steps: string[] }> = {
       "Pick a game from the RouloBets collection using your preferred providers.",
     steps: [
       "Choose one or more providers, or keep the featured selection.",
-      "Search for a game or use the random picker.",
+      "Use the random picker to choose a game from those providers.",
       "View more reveals the rest of the provider collection. Picking a game does not submit a Twitch call.",
     ],
   },

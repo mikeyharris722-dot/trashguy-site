@@ -54,6 +54,8 @@ export default function TrackerAdmin({
   manual?: boolean;
   community?: boolean;
 }) {
+  const [huntFilter, setHuntFilter] = useState("");
+  const [loaded, setLoaded] = useState(false);
   const [hunts, setHunts] = useState<Hunt[]>([]),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
@@ -87,6 +89,7 @@ export default function TrackerAdmin({
       if (!response.ok)
         throw Error(data.error || "The tracker could not load. Try again.");
       setHunts(data.hunts || []);
+      setLoaded(true);
     } catch (e) {
       setMessage(
         e instanceof Error ? e.message : "The tracker could not load.",
@@ -295,6 +298,7 @@ export default function TrackerAdmin({
         </details>
       )}
       <div className="rounded-xl border border-purple-300/20 bg-purple-500/5 p-4">
+        <label className="hunt-filter">Find a hunt<input type="search" className={input + " w-full"} placeholder="Search hunt names" value={huntFilter} onChange={(e) => setHuntFilter(e.target.value)} /></label>
         <label className="block text-xs font-bold uppercase tracking-wider text-purple-200">
           Active hunt
           <select
@@ -307,9 +311,9 @@ export default function TrackerAdmin({
             }}
           >
             <option value="" disabled={Boolean(huntId)}>
-              Select a hunt
+              {loaded ? "Select a hunt" : "Loading hunts…"}
             </option>
-            {hunts.map((h) => (
+            {[...hunts].filter((h) => h.id === huntId || h.title.toLowerCase().includes(huntFilter.toLowerCase())).sort((a,b) => Number(b.id === huntId) - Number(a.id === huntId)).map((h) => (
               <option key={h.id} value={h.id}>
                 {h.title} · {h.source === "community" ? "Community · " : ""}
                 {(

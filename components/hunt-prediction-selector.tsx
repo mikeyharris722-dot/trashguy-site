@@ -20,6 +20,7 @@ export default function HuntPredictionSelector({
   admin: boolean;
   onSelect: (id: string, community: boolean) => void;
 }) {
+  const [historyQuery, setHistoryQuery] = useState("");
   const [community, setCommunity] = useState<Community[]>([]),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -79,6 +80,7 @@ export default function HuntPredictionSelector({
   return (
     <>
       <div className="hunt-history-controls">
+        <label className="hunt-filter">Find a hunt<input type="search" placeholder="Search hunt names" value={historyQuery} onChange={(e) => setHistoryQuery(e.target.value)} /></label>
         <label>
           Choose a bonus hunt
           <select
@@ -95,7 +97,7 @@ export default function HuntPredictionSelector({
               Choose a hunt
             </option>
             <optgroup label="Wheel and manual hunts">
-              {hunts.map((h) => (
+              {[...hunts].filter((h) => h.localId === selectedId || h.localId === activeId || h.title.toLowerCase().includes(historyQuery.toLowerCase())).sort((a,b) => Number(b.localId === activeId) - Number(a.localId === activeId)).map((h) => (
                 <option key={h.localId} value={h.localId}>
                   {h.title}
                   {h.localId === activeId ? " · Active" : ""}
@@ -103,7 +105,7 @@ export default function HuntPredictionSelector({
               ))}
             </optgroup>
             <optgroup label="Community hunts">
-              {community.map((h) => (
+              {[...community].filter((h) => h.id === selectedId || h.id === activeId || h.title.toLowerCase().includes(historyQuery.toLowerCase())).sort((a,b) => Number(b.id === activeId) - Number(a.id === activeId)).map((h) => (
                 <option key={h.id} value={h.id}>
                   {h.title}
                   {h.id === activeId ? " · Active" : ""}
