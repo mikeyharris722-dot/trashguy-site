@@ -397,8 +397,8 @@ export default function TrackerAdmin({
             rel="noopener noreferrer"
             className="mt-2 inline-block text-xs text-teal-200"
           >
-            Preview overlay ↗
-          </a>
+            Preview overlay ↗</a>
+            <div className="mt-3 border-t border-purple-300/15 pt-3"><strong className="text-sm text-purple-200">Community Boss Battle</strong><p className="mt-1 text-xs text-white/60">Five bosses follow these same payouts. Add a separate 435 × 285 Browser Source for the battle.</p><input readOnly aria-label="Boss Battle OBS overlay URL" className={input + " mt-2 w-full"} value={typeof window!=="undefined"?window.location.origin+"/boss-battle/overlay?source=active":"/boss-battle/overlay?source=active"}/><a className="mt-2 inline-block text-xs text-purple-200" href="/boss-battle/overlay?source=active" target="_blank" rel="noopener noreferrer">Preview Boss Battle overlay ↗</a></div>
         </details>
       )}
       {current && (

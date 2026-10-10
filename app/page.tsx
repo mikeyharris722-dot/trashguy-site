@@ -2,6 +2,7 @@
 import { useRememberedBet } from "@/lib/use-remembered-bet";
 
 import { siteFetch } from "@/lib/site-fetch";
+import BossBattlePreview from "@/components/boss-battle-preview";
 import React, { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
@@ -7745,6 +7746,7 @@ onClick={() => {
 )}
 
 {activeSection === "stats" && <CommunityStats />}
+{activeSection === "bossbattle" && <BossBattlePreview embedded initialSource="active" />}
 
 {activeSection === "profile" && (
   <section className="space-y-3 sm:space-y-4">
@@ -8831,6 +8833,7 @@ onClick={() => {
         </div>
       </div>
 
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-purple-300/20 bg-black/70 px-4 py-3 text-sm"><span>⚔️ Community Boss Battle · Follows the active hunt</span><div className="flex gap-4"><button className="font-bold text-purple-200" onClick={()=>setActiveSection("bossbattle")}>Open battle →</button><a className="font-bold text-purple-200" href="/boss-battle/overlay?source=active" target="_blank" rel="noreferrer">OBS overlay ↗</a></div></div>
       {/* ADMIN NAVIGATION */}
       <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-purple-300/15 bg-black/70 p-1.5 shadow-[0_0_18px_rgba(168,85,247,0.06)] backdrop-blur-sm sm:mt-4">
         <div className="admin-workspaces">

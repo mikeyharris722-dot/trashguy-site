@@ -33,6 +33,7 @@ export async function GET() {
       payout: e.payout === null ? null : Number(e.payout),
       multiplier: e.payout === null ? 0 : Number(e.payout) / Number(e.bet_size),
       tier: e.bonus_tier,
+      openedAt: e.payout === null ? undefined : e.updated_at,
     });
     const latest = rows
       .filter((e) => e.payout !== null)
