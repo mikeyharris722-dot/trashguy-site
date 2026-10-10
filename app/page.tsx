@@ -35,6 +35,7 @@ import PrizeSettingsEditor from "@/components/prize-settings";
 import RewardAmountEditor from "@/components/reward-amount-editor";
 import { defaultPrizeSettings, type PrizeSettings } from "@/lib/prize-settings";
 import TrackerAdmin from "@/components/tracker-admin";
+import ClawMusicControls from "@/components/claw-music-controls";
 import { slotData as originalSlotData, providerLogos, type SlotItem } from "./slotData";
 import { Russo_One } from "next/font/google";
 
@@ -8906,6 +8907,7 @@ onClick={() => {
     } min-w-0 overflow-hidden rounded-xl border border-purple-300/25 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.13),rgba(0,0,0,0.92)_48%)] p-2.5 shadow-[0_0_28px_rgba(168,85,247,0.12)] sm:p-4`}
   >
     <summary className="hidden">Trash Claw</summary>
+    {activeAdminTab === "trashClaw" && <ClawMusicControls />}
 
     <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
       <div>
