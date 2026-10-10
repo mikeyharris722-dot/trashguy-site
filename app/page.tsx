@@ -1650,7 +1650,13 @@ useEffect(() => {
     }));
 
 if (normalized.length > 0) {
-      setHuntsData(normalized);
+      setHuntsData(normalized.sort((a, b) => {
+        const sourceOrder = Number(b.source === "site") - Number(a.source === "site");
+        if (sourceOrder) return sourceOrder;
+        const dateA = Date.parse(a.createdAt || "") || 0;
+        const dateB = Date.parse(b.createdAt || "") || 0;
+        return dateB - dateA;
+      }));
     } else if (!data?.success) {
       console.warn("Hunts API returned no usable data", data?.error || data?.note);
     }
@@ -4927,7 +4933,7 @@ return (
     ========================================================= */}
 
     <div className="flex gap-2 overflow-x-auto pb-2 sm:gap-3 sm:pb-3">
-      {huntsData.slice(0,8).map((hunt) => {
+      {huntsData.filter((hunt, index) => index < 8 || hunt.localId === currentPredictionHunt?.localId).map((hunt) => {
         const huntLocalId = (hunt as any)?.localId || hunt.id;
         const active = currentPredictionHunt?.localId === huntLocalId;
 
