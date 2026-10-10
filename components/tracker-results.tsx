@@ -1,4 +1,5 @@
 "use client";
+import UserBadges from "@/components/user-badges";
 import { useEffect, useState } from "react";
 type Entry = {
   id: string;
@@ -69,7 +70,7 @@ export default function TrackerResults({ huntId }: { huntId: string }) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold">{e.slot_name}</p>
                 <p className="text-xs text-white/45">
-                  {e.username} · Bet ${Number(e.bet_size).toFixed(2)}
+                  {e.username}<UserBadges name={e.username} /> · Bet ${Number(e.bet_size).toFixed(2)}
                 </p>
               </div>
               <span

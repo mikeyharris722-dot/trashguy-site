@@ -1,3 +1,4 @@
+import {withLeaderboardBadges} from "@/lib/leaderboard-badges";
 import { NextResponse } from "next/server";
 import { communityState } from "@/lib/community-local";
 import { resolvedPrizeSettings } from "@/lib/prize-settings";
@@ -43,9 +44,11 @@ export async function GET() {
       ? data
       : [];
 
+    let displayed = affiliates;
+    try { displayed = await withLeaderboardBadges(affiliates); } catch { /* Badge failure must not hide standings. */ }
     return NextResponse.json({
       success: true,
-      affiliates,
+      affiliates: displayed,
     });
   } catch (error: any) {
     return NextResponse.json({

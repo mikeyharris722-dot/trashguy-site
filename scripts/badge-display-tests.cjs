@@ -1,0 +1,12 @@
+const fs=require('fs'),ts=require('typescript'),vm=require('node:vm'),assert=require('node:assert/strict');
+function load(path,mocks){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.ReactJSX}}).outputText,{exports,require:(id)=>Object.hasOwn(mocks,id)?mocks[id]:require(id),Intl,Date,Set,Map,Response});return exports;}
+(async()=>{
+const math=load('lib/community-stats.ts',{});const privateName='PrivateTwitchIdentity';
+const db={from:()=>({select:()=>({in:()=>Promise.resolve({error:null,data:[{roulo_username:'publicplayer',twitch_username:privateName,role:'vip'}]})})})};
+const badge=load('lib/leaderboard-badges.ts',{'server-only':{},'./site-db':{siteDb:()=>db},'./site-tracker':{trackerHunts:async()=>[]},'./community-local':{communityState:async()=>({hunts:[]}),communityTracker:()=>({})},'./community-stats':math});
+const players=await badge.withLeaderboardBadges([{username:'PublicPlayer',weighted_wagered_amount:15},{username:'Unlinked'}]);assert.equal(players[0].badges[0].id,'vip');assert.equal(players[1].badges.length,0);assert.equal(JSON.stringify(players).includes(privateName),false);assert.equal(JSON.stringify(players).includes('twitch_username'),false);assert.equal(players[0].username,'PublicPlayer');
+let selected='',role='';const minimal={from:()=>({select:(s)=>{selected=s;return{eq:(_column,v)=>{role=v;return{order:()=>({range:async()=>({error:null,data:[{twitch_username:'SiteViewer'}]})})}}}}})};
+const route=load('app/api/vip-badges/route.ts',{'@/lib/site-db':{siteDb:()=>minimal,apiError:()=>new Response('',{status:500})}});const response=await route.GET();const data=await response.json();assert.equal(selected,'twitch_username');assert.equal(role,'vip');assert.equal(JSON.stringify(data),JSON.stringify({users:['SiteViewer']}));assert.equal(response.status,200);
+const badges=load('components/user-badges.tsx',{'@/lib/community-stats':math});const React=require('react'),render=require('react-dom/server').renderToStaticMarkup;const html=render(React.createElement(badges.default,{name:'PublicPlayer',platform:'roulo',badges:players[0].badges}));assert.match(html,/aria-label="VIP"/);assert.equal(html.includes(privateName),false);
+console.log('PASS: stored VIP status only, minimal site-name payload, private leaderboard account matching, unlinked viewers, VIP rendering and no account mapping in output.');
+})().catch(e=>{console.error(e);process.exitCode=1});

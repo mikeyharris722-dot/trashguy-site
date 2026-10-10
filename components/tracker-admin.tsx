@@ -1,4 +1,5 @@
 "use client";
+import UserBadges from "@/components/user-badges";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import OpeningSession from "./tracker-opening";
@@ -757,7 +758,7 @@ function BonusRow({
                 : "text-white/45")
             }
           >
-            {entry.username} ·{" "}
+            {entry.username}<UserBadges name={entry.username} /> ·{" "}
             {entry.bonus_tier === "super_super"
               ? "Super Super"
               : entry.bonus_tier === "super"

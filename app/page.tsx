@@ -4,6 +4,8 @@ import { siteFetch } from "@/lib/site-fetch";
 import React, { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
+import UserBadges, {UserBadgeProvider} from "@/components/user-badges";
+import CommunityStats from "@/components/community-stats";
 import { useSiteNavigation, sectionTitles } from "@/lib/site-navigation";
 import { PageGuidance, AdminGuidance, LocalReviewBanner, SiteNotice } from "@/components/site-guidance";
 import GiveawayAdmin from "./components/admin/giveaways/GiveawayAdmin";
@@ -110,6 +112,7 @@ const STORAGE_KEYS = {
 const ADMIN_USERS = ["trashguy__", "trashguy", "parz", "parzwz", "gettyyy_"];
 
 type LeaderboardPlayer = {
+  badges?: import("@/components/user-badges").Badge[];
   rank: number;
   username: string;
   wagered: number;
@@ -610,7 +613,7 @@ function MatchCard({
               : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-white"
           }`}
         >
-          <div className="truncate">{match.player1 || ""}</div>
+          <div className="truncate">{match.player1 || ""}<UserBadges name={match.player1 || ""} /></div>
 {match.player1Amount && (
   <div
   className={`mt-1 text-xs font-semibold ${
@@ -635,7 +638,7 @@ function MatchCard({
               : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-white"
           }`}
         >
-          <div className="truncate">{match.player2 || ""}</div>
+          <div className="truncate">{match.player2 || ""}<UserBadges name={match.player2 || ""} /></div>
 {match.player2Amount && (
   <div
   className={`mt-1 text-xs font-semibold ${
@@ -1022,6 +1025,7 @@ useEffect(() => {
   localStorage.setItem("active_admin_tab", activeAdminTab);
 }, [activeAdminTab]);
 
+  const [profileActivity, setProfileActivity] = useState(false);
   const [huntsData, setHuntsData] = useState<HuntItem[]>([]);
   const [huntsLoading, setHuntsLoading] = useState(true);
 
@@ -1679,6 +1683,7 @@ if (normalized.length > 0) {
       const normalized: LeaderboardPlayer[] = affiliates
         .map((player: any, index: number): LeaderboardPlayer => ({
           rank: index + 1,
+          badges: player.badges || [],
           username:
             player.username ||
             player.name ||
@@ -3932,6 +3937,7 @@ const rankedWinners = useMemo(() => {
 }, [latestWinners]);
 
 return (
+<UserBadgeProvider>
 <div className="min-h-screen text-white">
   <div className="min-h-screen">
     <div className="min-h-screen bg-[linear-gradient(to_bottom,rgba(4,1,8,0.10),rgba(4,1,8,0.28))]">
@@ -4387,7 +4393,7 @@ return (
                             sm:text-[15px]
                           "
                         >
-                          {giveaway.winner_name}
+                          {giveaway.winner_name}<UserBadges name={giveaway.winner_name || ""} />
                         </div>
 
                         <div
@@ -5335,7 +5341,7 @@ return (
                     </div>
 
                     <div className="mt-1 truncate text-[9px] font-black text-white sm:text-[12px]">
-                      {winner.username}
+                      {winner.username}<UserBadges name={winner.username} />
                     </div>
 
                     <div className="mt-1 text-[11px] font-black text-purple-200 sm:text-[16px]">
@@ -5779,7 +5785,7 @@ return (
                 }}
               >
                 <div className="truncate text-[10px] font-black text-white sm:text-[12px]">
-                  {call.username}
+                  {call.username}<UserBadges name={call.username} />
                 </div>
 
                 <div className="truncate text-right text-[10px] font-black text-purple-200 sm:text-[12px]">
@@ -5818,7 +5824,7 @@ return (
                   }}
                 >
                   <div className="truncate text-[10px] font-black text-white sm:text-[12px]">
-                    {call.username}
+                    {call.username}<UserBadges name={call.username} />
                   </div>
 
                   <div className="truncate text-right text-[10px] font-black text-purple-200 sm:text-[12px]">
@@ -5855,7 +5861,7 @@ return (
                 }}
               >
                 <div className="truncate text-[10px] font-black text-white sm:text-[12px]">
-                  {call.username}
+                  {call.username}<UserBadges name={call.username} />
                 </div>
 
                 <div className="truncate text-right text-[10px] font-black text-purple-200 sm:text-[12px]">
@@ -5898,7 +5904,7 @@ return (
               </div>
 
               <div className="truncate text-[10px] font-black text-white sm:text-sm">
-                {topSlotCallWinner.username}
+                {topSlotCallWinner.username}<UserBadges name={topSlotCallWinner.username} />
               </div>
             </div>
 
@@ -6012,7 +6018,7 @@ return (
                 </div>
 
                 <div className="truncate text-[10px] font-black text-white sm:text-xs">
-                  {call.username}
+                  {call.username}<UserBadges name={call.username} />
                 </div>
 
                 <div className="truncate text-right text-[9px] text-white/50 sm:text-xs">
@@ -6091,7 +6097,7 @@ return (
                 </div>
 
                 <div className="truncate text-[9px] font-black text-white sm:text-xs">
-                  {result.username}
+                  {result.username}<UserBadges name={result.username} />
                 </div>
 
                 <div className="truncate text-[9px] text-white/50 sm:text-xs">
@@ -6447,7 +6453,7 @@ return (
                                   `}
                                 >
                                   <div className="truncate">
-                                    {match.player1 || ""}
+                                    {match.player1 || ""}<UserBadges name={match.player1 || ""} />
                                   </div>
 
                                   {match.player1Amount && (
@@ -6490,7 +6496,7 @@ return (
                                   `}
                                 >
                                   <div className="truncate">
-                                    {match.player2 || ""}
+                                    {match.player2 || ""}<UserBadges name={match.player2 || ""} />
                                   </div>
 
                                   {match.player2Amount && (
@@ -6584,7 +6590,7 @@ return (
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="truncate text-[13px] font-black text-white sm:text-[16px]">
-                            {captain}
+                            {captain}<UserBadges name={captain} />
                           </div>
 
                           <div className="mt-0.5 text-[11px] font-black text-yellow-300 sm:text-[13px]">
@@ -6718,7 +6724,7 @@ return (
                               </div>
 
                               <div className="truncate text-[11px] font-black text-white sm:text-[13px]">
-                                {name}
+                                {name}<UserBadges name={name} />
                               </div>
                             </div>
 
@@ -7736,8 +7742,13 @@ onClick={() => {
   </section>
 )}
 
+{activeSection === "stats" && <CommunityStats />}
+
 {activeSection === "profile" && (
   <section className="space-y-3 sm:space-y-4">
+    {isTwitchConnected && <div className="stats-tabs" role="group" aria-label="Profile views"><button className="stats-button" aria-pressed={!profileActivity} onClick={()=>setProfileActivity(false)}>Account & rewards</button><button className="stats-button" aria-pressed={profileActivity} onClick={()=>setProfileActivity(true)}>My activity & badges</button></div>}
+    {isTwitchConnected && profileActivity && <CommunityStats viewer={viewerName} />}
+    <div className={isTwitchConnected && profileActivity ? "hidden" : "space-y-3 sm:space-y-4"}>
     {/* =========================================================
         TITLE
     ========================================================= */}
@@ -8801,6 +8812,7 @@ onClick={() => {
         </div>
       </div>
     )}
+  </div>
   </section>
 )}
 
@@ -9199,7 +9211,7 @@ onClick={() => {
                             <div className="truncate text-sm font-black text-white">
                               {reward.display_name ||
                                 reward.twitch_username ||
-                                reward.kick_username}
+                                reward.kick_username}<UserBadges name={reward.twitch_username || ""} />
                             </div>
 
                             <div
@@ -9286,7 +9298,7 @@ onClick={() => {
                             <div className="truncate text-sm font-black text-white">
                               {reward.display_name ||
                                 reward.twitch_username ||
-                                reward.kick_username}
+                                reward.kick_username}<UserBadges name={reward.twitch_username || ""} />
                             </div>
 
                             <div
@@ -9380,7 +9392,7 @@ onClick={() => {
                           <div className="truncate text-sm font-black text-white">
                             {reward.display_name ||
                               reward.twitch_username ||
-                              reward.kick_username}
+                              reward.kick_username}<UserBadges name={reward.twitch_username || ""} />
                           </div>
 
                           <div className="mt-1 text-[11px] text-white/40">
@@ -9864,7 +9876,7 @@ onClick={() => {
                       className="rounded-xl border border-purple-300/15 bg-black/60 p-3"
                     >
                       <div className="text-base font-black text-purple-200">
-                        {captain}
+                        {captain}<UserBadges name={captain} />
                       </div>
 
                       <div className="mt-1 text-sm font-black text-[#f5c451]">
@@ -9966,7 +9978,7 @@ onClick={() => {
                             </div>
 
                             <div className="truncate text-base font-black text-white">
-                              {name}
+                              {name}<UserBadges name={name} />
                             </div>
                           </div>
 
@@ -10151,7 +10163,7 @@ onClick={() => {
                           }}
                         >
                           <div className="truncate text-[11px] font-black text-white sm:text-xs">
-                            {call.username}
+                            {call.username}<UserBadges name={call.username} />
                           </div>
 
                           <div className="truncate text-right text-[11px] font-black text-purple-100 sm:text-xs">
@@ -10183,7 +10195,7 @@ onClick={() => {
                           }}
                         >
                           <div className="truncate text-[11px] font-black text-white sm:text-xs">
-                            {call.username}
+                            {call.username}<UserBadges name={call.username} />
                           </div>
 
                           <div className="truncate text-right text-[11px] font-black text-purple-100 sm:text-xs">
@@ -10218,7 +10230,7 @@ onClick={() => {
                           }}
                         >
                           <div className="truncate text-[11px] font-black text-white sm:text-xs">
-                            {call.username}
+                            {call.username}<UserBadges name={call.username} />
                           </div>
 
                           <div className="truncate text-right text-[11px] font-black text-purple-100 sm:text-xs">
@@ -10290,7 +10302,7 @@ onClick={() => {
 
                     <div className="mt-0.5 truncate text-[11px] text-white/45">
                       called by{" "}
-                      {pickedSlotCall.username}
+                      {pickedSlotCall.username}<UserBadges name={pickedSlotCall.username} />
                     </div>
 
                     <ActionButton onClick={()=>setTrackerEntryOpen(true)} variant="purple" className="mt-3">Enter result</ActionButton>
@@ -10394,7 +10406,7 @@ onClick={() => {
                               </div>
 
                               <div className="truncate text-[9px] text-white/35">
-                                {call.username}
+                                {call.username}<UserBadges name={call.username} />
                               </div>
                             </div>
 
@@ -10559,5 +10571,6 @@ onClick={() => {
         </div>
       </div>
     </div>
+  </UserBadgeProvider>
   );
 }

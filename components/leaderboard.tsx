@@ -1,7 +1,9 @@
 "use client";
+import UserBadges from "@/components/user-badges";
 import type { PrizeSettings } from "@/lib/prize-settings";
 import { prizeTotal } from "@/lib/prize-settings";
 type Player = {
+  badges?: import("./user-badges").Badge[];
   rank: number;
   username: string;
   wagered: number;
@@ -75,7 +77,7 @@ export default function Leaderboard({
               >
                 <span className="podium-rank">#{player.rank}</span>
                 <div>
-                  <h2 title={player.username}>{player.username}</h2>
+                  <h2 title={player.username}>{player.username}<UserBadges name={player.username} platform="roulo" badges={player.badges || []} /></h2>
                   <p>
                     Weighted wager <strong>{money(player.wagered)}</strong>
                   </p>
@@ -110,7 +112,7 @@ export default function Leaderboard({
                       <span className="table-rank">{player.rank}</span>
                     </td>
                     <th scope="row">
-                      <span title={player.username}>{player.username}</span>
+                      <span title={player.username}>{player.username}<UserBadges name={player.username} platform="roulo" badges={player.badges || []} /></span>
                     </th>
                     <td>{money(player.wagered)}</td>
 

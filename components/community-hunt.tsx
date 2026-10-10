@@ -1,4 +1,5 @@
 "use client";
+import UserBadges from "@/components/user-badges";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import SlotSearch, { type SlotOption } from "./slot-search";
@@ -481,7 +482,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                     key={m.id}
                     className="flex flex-wrap items-center gap-3 border-t border-white/10 py-3"
                   >
-                    <b className="flex-1">{m.name}</b>
+                    <b className="flex-1">{m.name}<UserBadges name={m.name} /></b>
                     <span>${Number(m.amount).toFixed(2)}</span>
                     <button
                       className={button}
@@ -540,7 +541,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                 <div className="mt-4 space-y-3">
                   {game(selected)}
                   <p className="text-sm text-white/60">
-                    Called by {selected.username}
+                    Called by {selected.username}<UserBadges name={selected.username} />
                   </p>
                   <label className="block text-sm">
                     Bet size
@@ -637,7 +638,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                 >
                   {game(c)}
                   <span className="text-sm text-white/60">
-                    {c.username} ·{" "}
+                    {c.username}<UserBadges name={c.username} /> ·{" "}
                     {(
                       {
                         queued: "Waiting",
@@ -678,7 +679,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                     key={m.id}
                     className="rounded-full bg-purple-400/10 px-3 py-2 text-sm"
                   >
-                    {m.name}
+                    {m.name}<UserBadges name={m.name} />
                   </span>
                 ))}
             </div>

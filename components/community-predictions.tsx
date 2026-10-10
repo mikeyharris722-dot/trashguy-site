@@ -1,4 +1,5 @@
 "use client";
+import UserBadges from "@/components/user-badges";
 import { useState } from "react";
 type Prediction = {
   username: string;
@@ -95,7 +96,7 @@ export default function CommunityPredictions({
       {finished && ranked.length > 0 && (
         <div className="prediction-winner">
           <span>Closest prediction</span>
-          <strong>{ranked[0].username}</strong>
+          <strong>{ranked[0].username}<UserBadges name={ranked[0].username} /></strong>
           <p>
             {money(Number(ranked[0].amount))} · off by{" "}
             {money(
@@ -162,7 +163,7 @@ export default function CommunityPredictions({
                 <li key={prediction.username + prediction.createdAt}>
                   <span className="table-rank">{index + 1}</span>
                   <span>
-                    {prediction.username}
+                    {prediction.username}<UserBadges name={prediction.username} />
                     {prediction.mine && <small> You</small>}
                   </span>
                   <strong>{money(Number(prediction.amount))}</strong>

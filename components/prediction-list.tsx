@@ -1,4 +1,5 @@
 "use client";
+import UserBadges from "@/components/user-badges";
 import { useState } from "react";
 type Prediction = {
   id: string;
@@ -59,7 +60,7 @@ export default function PredictionList({
             >
               <span className="table-rank">{index + 1}</span>
               <span>
-                {entry.username}
+                {entry.username}<UserBadges name={entry.username} />
                 {entry.username.toLowerCase() === viewer.toLowerCase() && (
                   <small> You</small>
                 )}

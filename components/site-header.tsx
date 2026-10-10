@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import UserBadges from "@/components/user-badges";
 import Image from "next/image";
 type Props = {
   activeSection: string;
@@ -57,6 +58,12 @@ const navigation = [
     label: "Slot picker",
     icon: "🎰",
     detail: "Browse the RouloBets collection",
+  },
+  {
+    id: "stats",
+    label: "Community Stats",
+    icon: "📊",
+    detail: "Viewer calls, slot history and monthly recaps",
   },
   {
     id: "profile",
@@ -169,7 +176,7 @@ export default function SiteHeader(props: Props) {
                 </span>
               )}
               <span>
-                <b>{props.viewerDisplayName}</b>
+                <b>{props.viewerDisplayName}<UserBadges name={props.viewerName} /></b>
                 <small>@{props.viewerName}</small>
               </span>
             </button>
