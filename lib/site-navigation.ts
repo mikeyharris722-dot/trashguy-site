@@ -8,6 +8,7 @@ export const sectionTitles: Record<string, string> = {
   slotwheel: "Slot calls",
   tournaments: "Tournaments",
   slotpicker: "Slot picker",
+  trashbosses: "Trash Bosses",
   profile: "Your profile",
   admin: "Admin workspace",
 };

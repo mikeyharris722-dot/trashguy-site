@@ -1,4 +1,6 @@
 "use client";
+import {defaultBossTargets} from "@/lib/trash-bosses";
+
 import { useState } from "react";
 import { siteFetch } from "@/lib/site-fetch";
 import {
@@ -19,12 +21,16 @@ export default function PrizeSettingsEditor({
   const [prediction, setPrediction] = useState(
     String(settings.predictionPrize),
   );
+  const [bossEnabled,setBossEnabled]=useState(settings.trashBossesEnabled===true);
+  const [bosses,setBosses]=useState((settings.trashBosses||defaultBossTargets).map(b=>({target:String(b.target),reward:String(b.reward)})));
   const [start, setStart] = useState(settings.leaderboardStart);
   const [end, setEnd] = useState(settings.leaderboardEnd);
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const preview = {
     leaderboard: amounts.map(Number),
+    trashBossesEnabled:bossEnabled,
+    trashBosses:bosses.map(b=>({target:Number(b.target),reward:Number(b.reward)})),
     predictionPrize: Number(prediction),
     leaderboardStart: start,
     leaderboardEnd: end,
@@ -33,7 +39,7 @@ export default function PrizeSettingsEditor({
     event.preventDefault();
     setMessage("");
     try {
-      if ([...amounts, prediction].some((value) => !value.trim()))
+      if ([...amounts, prediction,...bosses.flatMap(b=>[b.target,b.reward])].some((value) => !value.trim()))
         throw Error("Fill every prize amount. Use 0 for places with no prize.");
       const next = validatePrizeSettings(preview);
       setBusy(true);
@@ -135,6 +141,7 @@ export default function PrizeSettingsEditor({
             ))}
           </div>
         </fieldset>
+        <fieldset disabled={busy}><legend>Trash Bosses</legend><label className="boss-activation"><input type="checkbox" checked={bossEnabled} onChange={e=>setBossEnabled(e.target.checked)}/> Activate Trash Bosses for viewers</label><small>{bossEnabled?"Public page and reward claims enabled after saving.":"Hidden from non-admins. Admins can preview and configure values. Claims are disabled."}</small><p>Targets use total viewer slot-call winnings in the leaderboard period above. Rewards are display amounts; saving does not issue a payment.</p><div className="prize-fields boss-prize-fields">{bosses.map((boss,index)=><div key={index}><label>Boss {index+1} target ($)<input required type="number" min="0.01" max="1000000" step="0.01" value={boss.target} onChange={e=>setBosses(old=>old.map((b,i)=>i===index?{...b,target:e.target.value}:b))}/></label><label>Boss {index+1} reward ($)<input required type="number" min="0" max="1000000" step="0.01" value={boss.reward} onChange={e=>setBosses(old=>old.map((b,i)=>i===index?{...b,reward:e.target.value}:b))}/></label></div>)}</div></fieldset>
         <label className="prediction-prize-field">
           Closest prediction prize ($)
           <input

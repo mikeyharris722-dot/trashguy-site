@@ -12,6 +12,7 @@ export async function proxy(request: NextRequest) {
       (localCommunity &&
         [
           "/api/prize-settings",
+          "/api/trash-bosses/claim",
           "/api/community",
           "/api/community/tracker",
           "/api/community/catalogue",

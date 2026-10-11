@@ -6,6 +6,8 @@ type Props = {
   activeSection: string;
   setActiveSection: (section: string) => void;
   adminAllowed: boolean;
+  trashBossesEnabled?: boolean;
+  bossAdminPreview?: boolean;
   isTwitchConnected: boolean;
   viewerAvatar: string;
   viewerDisplayName: string;
@@ -60,6 +62,9 @@ const navigation = [
     detail: "Browse the RouloBets collection",
   },
   {
+    id: "trashbosses", label: "Trash Bosses", icon: "👹", detail: "Your slot-call winnings unlock three monsters",
+  },
+  {
     id: "profile",
     label: "Your profile",
     icon: "👤",
@@ -97,9 +102,10 @@ export default function SiteHeader(props: Props) {
     props.setActiveSection(id);
     if (details.current) details.current.open = false;
   };
+  const visibleNavigation=navigation.filter(item=>item.id!=="trashbosses"||props.bossAdminPreview===true||props.trashBossesEnabled===true);
   const items = props.adminAllowed
     ? [
-        ...navigation,
+        ...visibleNavigation,
         {
           id: "admin",
           label: "Admin workspace",
@@ -107,7 +113,7 @@ export default function SiteHeader(props: Props) {
           detail: "Manage hunts, calls and stream events",
         },
       ]
-    : navigation;
+    : visibleNavigation;
   return (
     <header className="site-header">
       <a

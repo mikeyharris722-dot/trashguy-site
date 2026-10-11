@@ -1,6 +1,9 @@
+import {defaultBossTargets,type BossTarget} from "./trash-bosses";
 import { leaderboardPeriod } from "./leaderboard-period";
 export type PrizeSettings = {
   leaderboard: number[];
+  trashBosses?: BossTarget[];
+  trashBossesEnabled?: boolean;
   predictionPrize: number;
   leaderboardStart: string;
   leaderboardEnd: string;
@@ -8,6 +11,8 @@ export type PrizeSettings = {
 export const defaultPrizeSettings: PrizeSettings = {
   leaderboard: [525, 425, 325, 250, 175, 125, 100, 75, 0, 0],
   predictionPrize: 15,
+  trashBosses: defaultBossTargets,
+  trashBossesEnabled: false,
   leaderboardStart: leaderboardPeriod.start,
   leaderboardEnd: leaderboardPeriod.end,
 };
@@ -39,7 +44,14 @@ export function validatePrizeSettings(value: unknown): PrizeSettings {
     new Date(value).toISOString().slice(0, 10) === value;
   if (!validDate(start) || !validDate(end) || end <= start)
     throw Error("Choose a valid leaderboard end date after its start date.");
+  if(input.trashBossesEnabled!==undefined&&typeof input.trashBossesEnabled!=="boolean")throw Error("Trash Bosses activation must be on or off.");
+  const bosses=input.trashBosses??defaultBossTargets;
+  if(!Array.isArray(bosses)||bosses.length!==3)throw Error("Configure exactly three Trash Bosses.");
+  const checked=bosses.map(b=>({target:amount(b.target),reward:amount(b.reward)}));
+  if(checked.some((b,i)=>b.target<=0||(i>0&&b.target<=checked[i-1].target)))throw Error("Boss targets must be positive and increase from Boss 1 to Boss 3.");
   return {
+    trashBosses: checked,
+    trashBossesEnabled: input.trashBossesEnabled===true,
     leaderboardStart: start,
     leaderboardEnd: end,
     leaderboard: input.leaderboard.map(amount),

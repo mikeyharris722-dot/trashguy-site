@@ -6,6 +6,7 @@ import React, { Activity, useCallback, useEffect, useMemo, useRef, useState } fr
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
 import UserBadges, {UserBadgeProvider} from "@/components/user-badges";
+import TrashBosses from "@/components/trash-bosses";
 import CommunityStats from "@/components/community-stats";
 import { useSiteNavigation, sectionTitles } from "@/lib/site-navigation";
 import { PageGuidance, AdminGuidance, LocalReviewBanner, SiteNotice } from "@/components/site-guidance";
@@ -929,16 +930,16 @@ const [leaderboardData, setLeaderboardData] = useState<LeaderboardPlayer[]>([]);
 const [leaderboardLoading, setLeaderboardLoading] = useState(true);
 const [leaderboardError, setLeaderboardError] = useState("");
 const [prizeSettings, setPrizeSettings] = useState<PrizeSettings>(defaultPrizeSettings);
+const [prizeSettingsLoaded,setPrizeSettingsLoaded]=useState(false);
+const [bossAccess,setBossAccess]=useState({loaded:false,admin:false,enabled:false,viewer:""});
+const hideTrashBosses=useCallback(()=>{setBossAccess(old=>({...old,loaded:true,admin:false,enabled:false}));setPrizeSettings(old=>({...old,trashBossesEnabled:false}));},[]);
+useEffect(()=>{let stopped=false;const controller=new AbortController();async function refreshAccess(){try{const r=await siteFetch('/api/trash-bosses/access',{signal:controller.signal,cache:'no-store'});if(!r.ok)throw Error('Could not check availability');const data=await r.json();if(!stopped)setBossAccess({loaded:true,admin:data.admin===true,enabled:data.enabled===true,viewer:viewerName});}catch{if(!stopped)setBossAccess({loaded:true,admin:false,enabled:false,viewer:viewerName});}}void refreshAccess();const timer=setInterval(refreshAccess,15000);return()=>{stopped=true;controller.abort();clearInterval(timer);};},[authLoaded,isTwitchConnected,viewerName,prizeSettings.trashBossesEnabled]);
 const [prizeSettingsError, setPrizeSettingsError] = useState("");
-useEffect(() => {
-  let cancelled = false;
-  void siteFetch("/api/prize-settings", { cache: "no-store" }).then(async (response) => {
-    const data = await response.json();
-    if (!response.ok) throw Error(data.error || "Could not load prize settings.");
-    if (!cancelled) { setPrizeSettings(data.settings); setPrizeSettingsError(""); }
-  }).catch(() => { if (!cancelled) setPrizeSettingsError("Could not load the saved prize settings. Refresh before editing amounts."); });
-  return () => { cancelled = true; };
-}, []);
+useEffect(()=>{
+ let stopped=false;const controller=new AbortController();
+ async function refreshSettings(){try{const r=await siteFetch('/api/prize-settings',{cache:'no-store',signal:controller.signal});const data=await r.json();if(!r.ok)throw Error(data.error||'Could not load settings');if(!stopped){setPrizeSettings(data.settings);setPrizeSettingsLoaded(true);setPrizeSettingsError('');}}catch{if(!stopped){setPrizeSettingsLoaded(true);setPrizeSettingsError('Could not load the saved prize settings. Refresh before editing amounts.');}}}
+ void refreshSettings();const timer=setInterval(refreshSettings,30000);return()=>{stopped=true;controller.abort();clearInterval(timer);};
+},[]);
 
 const [giveaways, setGiveaways] = useState<any[]>([]);
 const [giveawayTotal, setGiveawayTotal] = useState(0);
@@ -1051,6 +1052,8 @@ useEffect(() => {
 
   const normalizedViewer = viewerName.trim().toLowerCase();
   const adminAllowed = ADMIN_USERS.includes(normalizedViewer);
+  const canPreviewTrashBosses=bossAccess.loaded&&bossAccess.admin&&bossAccess.viewer===viewerName&&isTwitchConnected;
+  useEffect(()=>{if(authLoaded&&bossAccess.loaded&&bossAccess.viewer===viewerName&&activeSection==="trashbosses"&&!canPreviewTrashBosses&&!bossAccess.enabled)setActiveSection("home");},[authLoaded,bossAccess.loaded,bossAccess.viewer,bossAccess.enabled,viewerName,canPreviewTrashBosses,activeSection,setActiveSection]);
 
 const currentPredictionEntry = useMemo(() => {
   return predictions.find(
@@ -3946,6 +3949,8 @@ return (
   activeSection={activeSection}
   setActiveSection={setActiveSection}
   adminAllowed={adminAllowed}
+  trashBossesEnabled={bossAccess.loaded&&bossAccess.enabled}
+  bossAdminPreview={canPreviewTrashBosses}
   isTwitchConnected={isTwitchConnected}
   viewerAvatar={viewerAvatar}
   viewerDisplayName={viewerDisplayName}
@@ -7744,6 +7749,8 @@ onClick={() => {
 )}
 
 
+
+{activeSection === "trashbosses" && authLoaded && prizeSettingsLoaded && bossAccess.loaded && (canPreviewTrashBosses||bossAccess.enabled) && <TrashBosses settings={prizeSettings} viewer={isTwitchConnected?viewerName:""} onUnavailable={hideTrashBosses}/>}
 
 {activeSection === "profile" && (
   <section className="space-y-3 sm:space-y-4">

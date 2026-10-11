@@ -10,9 +10,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
 
-function normalize(value: string) {
-  return String(value || "").replace("@", "").trim().toLowerCase();
-}
 
 export async function PATCH(req: NextRequest) {
   const body = await req.json();
@@ -28,7 +25,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Missing reward id or viewer." });
   }
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("rewards")
     .update({
       claimed: true,
@@ -38,8 +35,16 @@ export async function PATCH(req: NextRequest) {
     })
     .eq("id", id)
     .eq(usernameColumn, viewer)
+    .not("claimed", "is", true)
+    .not("paid", "is", true)
     .select()
-    .single();
+    .maybeSingle();
+
+  if (!error && !data) {
+    const existing = await supabase.from("rewards").select("*").eq("id", id).eq(usernameColumn, viewer).maybeSingle();
+    data = existing.data; error = existing.error;
+    if (!data && !error) return NextResponse.json({ok:false,error:"Reward not found."},{status:404});
+  }
 
   if (error) {
     return NextResponse.json({ ok: false, error: error.message });
