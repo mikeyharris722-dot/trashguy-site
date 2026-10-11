@@ -59,13 +59,6 @@ const navigation = [
     icon: "🎰",
     detail: "Browse the RouloBets collection",
   },
-  {id:"bossbattle",label:"Community Boss Battle",icon:"⚔️",detail:"Take on five bosses with the active hunt"},
-  {
-    id: "stats",
-    label: "Community Stats",
-    icon: "📊",
-    detail: "Viewer calls, slot history and monthly recaps",
-  },
   {
     id: "profile",
     label: "Your profile",
