@@ -1,4 +1,5 @@
 "use client";
+import {trackerCaller} from "@/lib/tracker-caller";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -154,7 +155,7 @@ export default function OpeningSession({
               <div>
                 <h3 className="text-2xl font-black">{entry.slot_name}</h3>
                 <p className="text-white/60">
-                  Bet ${Number(entry.bet_size).toFixed(2)} · {entry.username}
+                  Bet ${Number(entry.bet_size).toFixed(2)}{trackerCaller(entry) && <> · {trackerCaller(entry)}</>}
                 </p>
                 <p className="font-black uppercase text-amber-300">
                   {entry.bonus_tier.replaceAll("_", " ")}

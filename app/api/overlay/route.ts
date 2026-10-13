@@ -1,3 +1,4 @@
+import {trackerCaller} from "@/lib/tracker-caller";
 import { communityEnabled, communityState } from "@/lib/community-local";
 import { GET as communityOverlay } from "@/app/api/community/overlay/route";
 import { apiError, siteDb } from "@/lib/site-db";
@@ -28,7 +29,7 @@ export async function GET() {
     const summary = (e: (typeof rows)[number]) => ({
       id: e.id,
       slotName: e.slot_name,
-      username: e.username,
+      username: trackerCaller(e),
       betSize: Number(e.bet_size),
       payout: e.payout === null ? null : Number(e.payout),
       multiplier: e.payout === null ? 0 : Number(e.payout) / Number(e.bet_size),

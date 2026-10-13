@@ -10,4 +10,10 @@ assert.equal(trashBossProgress([hunt([row('1','A',1000,date),row('1','A',1000,da
 assert.equal(validatePrizeSettings({...defaultPrizeSettings,trashBosses:defaultBossTargets}).trashBosses[2].target,3000);
 assert.throws(()=>validatePrizeSettings({...defaultPrizeSettings,trashBosses:[{target:2000,reward:10},{target:1000,reward:20},{target:3000,reward:30}]}));
 assert.equal(validatePrizeSettings({...defaultPrizeSettings}).trashBossesEnabled,false);assert.equal(validatePrizeSettings({...defaultPrizeSettings,trashBossesEnabled:true}).trashBossesEnabled,true);assert.throws(()=>validatePrizeSettings({...defaultPrizeSettings,trashBossesEnabled:'true'}));
+const assigned={...row('assigned','Gettyyy_',900,date),call_id:'manual:viewer:12345678-1234-1234-1234-123456789012'};
+assert.equal(trashBossProgress([hunt([assigned])],from,to,defaultBossTargets)[0].total,900);
+assert.equal(trashBossProgress([hunt([assigned],'community')],from,to,defaultBossTargets).length,0);
+assert.equal(trashBossProgress([hunt([{...assigned,call_id:'manual:12345678-1234-1234-1234-123456789012'}])],from,to,defaultBossTargets).length,0);
+assert.equal(trashBossProgress([hunt([{...assigned,call_id:'manual:viewer:invalid'}])],from,to,defaultBossTargets).length,0);
+const {trackerCaller}=load('tracker-caller');assert.equal(trackerCaller({call_id:'manual:abc',username:'Manual'}),'');assert.equal(trackerCaller(assigned),'Gettyyy_');assert.equal(trackerCaller({call_id:'call:abc',username:'Manual'}),'Manual');
 console.log('PASS: wheel-only results, payouts by leaderboard date, case matching, ranking, duplicate exclusion, date edits and target validation.');

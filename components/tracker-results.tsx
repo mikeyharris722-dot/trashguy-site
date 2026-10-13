@@ -1,10 +1,12 @@
 "use client";
+import {trackerCaller} from "@/lib/tracker-caller";
 import UserBadges from "@/components/user-badges";
 import { useEffect, useState } from "react";
 type Entry = {
   id: string;
   slot_name: string;
   username: string;
+  call_id?: string;
   status: string;
   bet_size: string;
   payout: string | null;
@@ -70,7 +72,7 @@ export default function TrackerResults({ huntId }: { huntId: string }) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold">{e.slot_name}</p>
                 <p className="text-xs text-white/45">
-                  {e.username}<UserBadges name={e.username} /> · Bet ${Number(e.bet_size).toFixed(2)}
+                  {trackerCaller(e) && <>{trackerCaller(e)}<UserBadges name={trackerCaller(e)} /> · </>}Bet ${Number(e.bet_size).toFixed(2)}
                 </p>
               </div>
               <span

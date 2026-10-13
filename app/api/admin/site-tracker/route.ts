@@ -78,6 +78,7 @@ export async function POST(request: Request) {
           ...game,
           bonus_tier: b.tier || "standard",
           notes: b.notes || "",
+          caller_profile_id: b.callerProfileId || null,
         },
         p_bet: b.bet,
       });

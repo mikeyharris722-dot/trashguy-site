@@ -1,9 +1,11 @@
 "use client";
+import {trackerCaller} from "@/lib/tracker-caller";
 import { useRememberedBet } from "@/lib/use-remembered-bet";
 import UserBadges from "@/components/user-badges";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import OpeningSession from "./tracker-opening";
+import TrackerCallerSearch from "./tracker-caller-search";
 import SlotSearch, { type SlotOption } from "./slot-search";
 import { supabaseBrowser } from "@/lib/supabase/client";
 type Game = {
@@ -181,6 +183,7 @@ export default function TrackerAdmin({
   const [manualSlot, setManualSlot] = useState<SlotOption | null>(null);
   const [manualTier, setManualTier] = useState("standard");
   const [manualNotes, setManualNotes] = useState("");
+  const [manualCaller, setManualCaller] = useState<{id:string;username:string} | null>(null);
   const [searchReset, setSearchReset] = useState(0);
   const manualRequest = useRef<string | null>(null);
   const [manualBet, setManualBet] = useRememberedBet();
@@ -504,6 +507,7 @@ export default function TrackerAdmin({
                   manualRequest.current = null;
                 }}
               />
+              {!communityMode && <TrackerCallerSearch selected={manualCaller} onSelect={(user) => { setManualCaller(user); manualRequest.current = null; }} />}
               <div className="grid gap-3 sm:grid-cols-[140px_1fr_auto]">
                 <label className="text-xs text-white/60">
                   Bet size
@@ -543,6 +547,7 @@ export default function TrackerAdmin({
                         bet: manualBet,
                         tier: manualTier,
                         notes: manualNotes,
+                        callerProfileId: communityMode ? undefined : manualCaller?.id,
                         requestId: (manualRequest.current ??=
                           crypto.randomUUID()),
                       })
@@ -550,6 +555,7 @@ export default function TrackerAdmin({
                       manualRequest.current = null;
                       setManualSlot(null);
                       setManualNotes("");
+                      setManualCaller(null);
                       setSearchReset((n) => n + 1);
                     }
                   }}
@@ -759,7 +765,7 @@ function BonusRow({
                 : "text-white/45")
             }
           >
-            {entry.username}<UserBadges name={entry.username} /> ·{" "}
+            {trackerCaller(entry) && <>{trackerCaller(entry)}<UserBadges name={trackerCaller(entry)} /> · </>}
             {entry.bonus_tier === "super_super"
               ? "Super Super"
               : entry.bonus_tier === "super"
