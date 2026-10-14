@@ -1,7 +1,9 @@
+import {defaultWeeklyWager,validateWeeklyWager,type WeeklyWagerSettings} from "./weekly-wager";
 import {defaultBossTargets,type BossTarget} from "./trash-bosses";
 import { leaderboardPeriod } from "./leaderboard-period";
 export type PrizeSettings = {
   leaderboard: number[];
+  weeklyWager?: WeeklyWagerSettings;
   leaderboardArchives?: {start:string;end:string;prizes:number[]}[];
   leaderboardWeighting?: string;
   trashBosses?: BossTarget[];
@@ -13,6 +15,7 @@ export type PrizeSettings = {
 export const defaultPrizeSettings: PrizeSettings = {
   leaderboard: [525, 425, 325, 250, 175, 125, 100, 75, 0, 0],
   leaderboardArchives: [{start:"2026-09-05",end:"2026-10-05",prizes:[400,350,300,200,150,100,0,0,0,0]}],
+  weeklyWager:defaultWeeklyWager,
   predictionPrize: 15,
   leaderboardWeighting: "RTP ≤97% → 100% contribution\nRTP >97% and <98% → 50% contribution\nRTP ≥98% → 10% contribution",
   trashBosses: defaultBossTargets,
@@ -60,6 +63,7 @@ export function validatePrizeSettings(value: unknown): PrizeSettings {
   const weighting=input.leaderboardWeighting??defaultPrizeSettings.leaderboardWeighting??'';
   if(typeof weighting!=='string'||weighting.length>2000)throw Error('Weighting rules must be under 2,000 characters.');
   return {
+    weeklyWager:validateWeeklyWager(input.weeklyWager??defaultWeeklyWager),
     leaderboardArchives:checkedArchives,
     leaderboardWeighting:weighting.trim(),
     trashBosses: checked,

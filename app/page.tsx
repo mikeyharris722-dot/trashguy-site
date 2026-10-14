@@ -1,4 +1,5 @@
 "use client";
+import WeeklyWager from "@/components/weekly-wager";
 import { useRememberedBet } from "@/lib/use-remembered-bet";
 
 import { siteFetch } from "@/lib/site-fetch";
@@ -925,9 +926,9 @@ const Winner = async (id: string) => {
 
 const [prizeSettings, setPrizeSettings] = useState<PrizeSettings>(defaultPrizeSettings);
 const [prizeSettingsLoaded,setPrizeSettingsLoaded]=useState(false);
-const [bossAccess,setBossAccess]=useState({loaded:false,admin:false,enabled:false,viewer:""});
+const [bossAccess,setBossAccess]=useState({loaded:false,admin:false,enabled:false,weeklyEnabled:false,viewer:""});
 const hideTrashBosses=useCallback(()=>{setBossAccess(old=>({...old,loaded:true,admin:false,enabled:false}));setPrizeSettings(old=>({...old,trashBossesEnabled:false}));},[]);
-useEffect(()=>{let stopped=false;const controller=new AbortController();async function refreshAccess(){try{const r=await siteFetch('/api/trash-bosses/access',{signal:controller.signal,cache:'no-store'});if(!r.ok)throw Error('Could not check availability');const data=await r.json();if(!stopped)setBossAccess({loaded:true,admin:data.admin===true,enabled:data.enabled===true,viewer:viewerName});}catch{if(!stopped)setBossAccess({loaded:true,admin:false,enabled:false,viewer:viewerName});}}void refreshAccess();const timer=setInterval(refreshAccess,15000);return()=>{stopped=true;controller.abort();clearInterval(timer);};},[authLoaded,isTwitchConnected,viewerName,prizeSettings.trashBossesEnabled]);
+useEffect(()=>{let stopped=false;const controller=new AbortController();async function refreshAccess(){try{const r=await siteFetch('/api/trash-bosses/access',{signal:controller.signal,cache:'no-store'});if(!r.ok)throw Error('Could not check availability');const data=await r.json();if(!stopped)setBossAccess({loaded:true,admin:data.admin===true,enabled:data.enabled===true,weeklyEnabled:data.weeklyEnabled===true,viewer:viewerName});}catch{if(!stopped)setBossAccess({loaded:true,admin:false,enabled:false,weeklyEnabled:false,viewer:viewerName});}}void refreshAccess();const timer=setInterval(refreshAccess,15000);return()=>{stopped=true;controller.abort();clearInterval(timer);};},[authLoaded,isTwitchConnected,viewerName,prizeSettings.trashBossesEnabled,prizeSettings.weeklyWager?.enabled]);
 const [prizeSettingsError, setPrizeSettingsError] = useState("");
 useEffect(()=>{
  let stopped=false;const controller=new AbortController();
@@ -1046,6 +1047,8 @@ useEffect(() => {
 
   const normalizedViewer = viewerName.trim().toLowerCase();
   const adminAllowed = ADMIN_USERS.includes(normalizedViewer);
+  const hideWeeklyWager=useCallback(()=>{setBossAccess(old=>({...old,weeklyEnabled:false}));setActiveSection("home");},[setActiveSection]);
+  useEffect(()=>{if(authLoaded&&bossAccess.loaded&&bossAccess.viewer===viewerName&&activeSection==="weeklywager"&&!bossAccess.admin&&!bossAccess.weeklyEnabled)setActiveSection("home");},[authLoaded,bossAccess,viewerName,activeSection,setActiveSection]);
   const canPreviewTrashBosses=bossAccess.loaded&&bossAccess.admin&&bossAccess.viewer===viewerName&&isTwitchConnected;
   useEffect(()=>{if(authLoaded&&bossAccess.loaded&&bossAccess.viewer===viewerName&&activeSection==="trashbosses"&&!canPreviewTrashBosses&&!bossAccess.enabled)setActiveSection("home");},[authLoaded,bossAccess.loaded,bossAccess.viewer,bossAccess.enabled,viewerName,canPreviewTrashBosses,activeSection,setActiveSection]);
 
@@ -3885,6 +3888,7 @@ return (
   activeSection={activeSection}
   setActiveSection={setActiveSection}
   adminAllowed={adminAllowed}
+  weeklyWagerEnabled={bossAccess.loaded&&bossAccess.weeklyEnabled}
   trashBossesEnabled={bossAccess.loaded&&bossAccess.enabled}
   bossAdminPreview={canPreviewTrashBosses}
   isTwitchConnected={isTwitchConnected}
@@ -7162,6 +7166,7 @@ onClick={() => {
 
 
 
+{activeSection === "weeklywager" && authLoaded && prizeSettingsLoaded && bossAccess.loaded && bossAccess.viewer===viewerName && (canPreviewTrashBosses||bossAccess.weeklyEnabled) && <WeeklyWager key={isTwitchConnected?viewerName:"anonymous"} settings={prizeSettings} viewer={isTwitchConnected?viewerName:""} onUnavailable={hideWeeklyWager}/>}
 {activeSection === "trashbosses" && authLoaded && prizeSettingsLoaded && bossAccess.loaded && (canPreviewTrashBosses||bossAccess.enabled) && <TrashBosses settings={prizeSettings} viewer={isTwitchConnected?viewerName:""} onUnavailable={hideTrashBosses}/>}
 
 {activeSection === "profile" && (

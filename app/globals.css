@@ -1818,3 +1818,90 @@ textarea::placeholder {
  .lb-compact-table caption{font-size:10px;padding:7px 0}
  .leaderboard-layout{gap:10px}
 }
+
+.weekly-page{display:grid;gap:16px}.weekly-heading{display:flex;justify-content:space-between;align-items:center;gap:18px}.weekly-heading h1{font-size:30px;font-weight:900}.weekly-heading p{color:#b9a8c8;font-size:12px;margin-top:6px}.weekly-preview{border:1px solid #c084fc35;border-radius:10px;padding:10px 14px;color:#e9d5ff;background:#21102f;font-size:12px}.weekly-target{display:grid;grid-template-columns:220px minmax(0,1fr);gap:30px;align-items:center;background:radial-gradient(ellipse at 0% 100%,#22d3ee1a,transparent 65%),#10091cdd}.weekly-vault{width:190px;position:relative;padding:25px 10px;text-align:center;filter:drop-shadow(0 0 20px #a855f740)}.weekly-vault-lid{height:20px;margin:0 -5px 5px;border:2px solid #a78bfa;border-radius:7px;background:linear-gradient(#5b377c,#211434);transform:rotate(-4deg)}.weekly-vault-body{height:180px;border:2px solid #a78bfa;border-radius:9px 9px 28px 28px;background:linear-gradient(to top,#7c3aed var(--weekly-fill),#170d2c var(--weekly-fill));box-shadow:inset 0 0 24px #0007;display:grid;place-items:center}.weekly-vault-body span{font-size:68px;color:#e9d5ff;text-shadow:0 0 15px #fff5}.weekly-vault>b{position:relative;display:inline-block;margin-top:-17px;padding:8px 20px;border-radius:8px;background:#11091c;border:1px solid #c084fc;font-size:20px;font-weight:850;color:#e9d5ff}.weekly-target-details h2{font-size:48px;color:#fef3c7;font-weight:950;margin:5px 0}.weekly-target-details p{color:#c2b1d0;font-size:13px}.weekly-meter{height:12px;border-radius:8px;background:#06030c;margin-top:20px;overflow:hidden;border:1px solid #a78bfa33}.weekly-meter i{display:block;height:100%;background:linear-gradient(90deg,#8b5cf6,#67e8f9);transition:width .5s}.weekly-progress-values{display:flex;justify-content:space-between;gap:18px;margin:15px 0 20px}.weekly-progress-values span{font-size:11px;color:#b8a5ca}.weekly-progress-values strong{display:block;font-size:23px;font-weight:800;color:#faf5ff;margin-top:4px}.weekly-footnote{font-size:11px;color:#baa8c7}.weekly-history h2{font-size:16px;font-weight:800;margin-bottom:10px}.weekly-history>div{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #ffffff10;font-size:12px}.weekly-history small{color:#b9a7c7}.weekly-admin-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:600px){.weekly-page{gap:12px}.weekly-heading{align-items:flex-start;gap:10px;padding:14px!important}.weekly-heading h1{font-size:19px;line-height:1.2}.weekly-heading .deadline-chip{min-width:95px;padding:8px}.weekly-heading .deadline-chip strong{font-size:12px}.weekly-target{grid-template-columns:90px minmax(0,1fr);gap:12px;padding:14px!important}.weekly-vault{width:88px;padding:12px 4px}.weekly-vault-lid{height:11px}.weekly-vault-body{height:95px;border-radius:6px 6px 15px 15px}.weekly-vault-body span{font-size:35px}.weekly-vault>b{font-size:12px;padding:5px 12px;margin-top:-12px}.weekly-target-details h2{font-size:29px}.weekly-target-details p{font-size:10px}.weekly-target-details .eyebrow{font-size:8px}.weekly-progress-values{gap:10px;flex-wrap:wrap;margin:10px 0}.weekly-progress-values span{font-size:9px}.weekly-progress-values strong{font-size:15px}.weekly-meter{margin-top:12px;height:9px}.weekly-target .primary-button{font-size:10px;padding:9px;width:100%}.weekly-footnote{font-size:10px}.weekly-admin-fields{gap:10px}}
+
+.weekly-summary{display:flex;align-items:center;gap:24px;flex-wrap:wrap}.weekly-summary>span{font-size:11px;color:#bda9cf}.weekly-summary>span>strong{display:block;color:#fef3c7;font-size:25px;font-weight:850;margin-top:4px}.weekly-table-controls{display:flex;gap:14px;align-items:end;flex-wrap:wrap;margin-bottom:16px}.weekly-table-controls h2{margin-right:auto;font-size:19px;font-weight:850}.weekly-table-controls label{display:grid;gap:5px;font-size:11px;color:#baa8c7}.weekly-table-controls input,.weekly-table-controls select{background:#0c0615;color:white;border:1px solid #c084fc35;border-radius:8px;padding:9px;max-width:100%}.weekly-progress-table{width:100%;border-collapse:collapse;table-layout:fixed;font-variant-numeric:tabular-nums}.weekly-progress-table caption{font-size:11px;color:#bca9cf;text-align:left;margin-bottom:12px}.weekly-progress-table th,.weekly-progress-table td{padding:12px 9px;border-bottom:1px solid #ffffff10;text-align:right;font-size:13px}.weekly-progress-table th:nth-child(1),.weekly-progress-table td:nth-child(1){width:5%;text-align:left}.weekly-progress-table th:nth-child(2){width:27%;text-align:left;overflow-wrap:anywhere}.weekly-progress-table th:nth-child(3){width:25%}.weekly-progress-table th:nth-child(4){width:28%}.weekly-progress-table th:nth-child(5){width:15%}.weekly-progress-table thead th{font-size:10px;color:#cbb5dc}.weekly-row-meter{height:8px;border-radius:8px;background:#07030d;overflow:hidden;display:inline-block;width:70%;margin-right:8px}.weekly-row-meter i{display:block;height:100%;background:linear-gradient(90deg,#8b5cf6,#6ee7b7)}.weekly-progress-table small{font-size:10px;color:#cbb5dc}.weekly-own-row{background:#a855f715}.weekly-eligible{color:#6ee7b7;font-weight:850}.weekly-pagination{display:flex;justify-content:center;align-items:center;gap:16px;margin-top:16px;font-size:12px}.weekly-pagination button{border:1px solid #c084fc35;padding:7px 12px;border-radius:7px}.weekly-pagination button:disabled{opacity:.4}.weekly-claim-strip{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;font-size:12px}
+@media(max-width:600px){.weekly-heading{flex-direction:column}.weekly-summary{gap:14px;width:100%;justify-content:space-between}.weekly-summary>span{font-size:8px}.weekly-summary>span>strong{font-size:18px}.weekly-standings{padding:10px!important}.weekly-table-controls{gap:9px;margin-bottom:10px}.weekly-table-controls h2{font-size:16px;flex-basis:100%}.weekly-table-controls label{font-size:9px;flex:1;min-width:0}.weekly-table-controls input{width:100%;font-size:16px;padding:6px}.weekly-progress-table th,.weekly-progress-table td{font-size:9px;padding:10px 4px}.weekly-progress-table thead th{font-size:7px}.weekly-progress-table th:nth-child(2){white-space:nowrap;font-size:8px}.weekly-progress-table td:nth-child(3){white-space:nowrap;font-size:8px}.weekly-progress-table th:nth-child(3){width:24%}.weekly-row-meter{width:60%;height:6px;margin-right:4px}.weekly-progress-table small{font-size:8px}.weekly-progress-table td:last-child{font-size:8px;white-space:nowrap}.weekly-claim-strip{padding:12px!important;font-size:11px}.weekly-claim-strip .primary-button{font-size:11px}}
+
+/* Shared weekly standings: evenly spaced, larger progress indicators. */
+.weekly-progress-table th,.weekly-progress-table td{padding:15px 14px;vertical-align:middle}
+.weekly-progress-table th:nth-child(2){width:25%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.weekly-progress-table th:nth-child(3){width:22%}
+.weekly-progress-table th:nth-child(4){width:32%}
+.weekly-progress-table th:nth-child(5){width:16%}
+.weekly-row-meter{display:block;width:100%;height:14px;margin:0 0 5px}
+.weekly-progress-table td:nth-child(4){text-align:left}
+.weekly-row-claim{border:1px solid #a78bfa70;border-radius:7px;padding:8px 16px;background:#6d28d9;color:#fff;font-size:11px;font-weight:800;white-space:nowrap}
+.weekly-row-claim:disabled{background:#21192b;border-color:#ffffff18;color:#a99ab8;cursor:default}
+@media(max-width:600px){
+.weekly-progress-table th,.weekly-progress-table td{padding:11px 5px;font-size:9px}
+.weekly-progress-table thead th{font-size:7px}
+.weekly-progress-table th:nth-child(2){width:25%;font-size:8px}
+.weekly-progress-table th:nth-child(3){width:23%}
+.weekly-progress-table th:nth-child(4){width:29%}
+.weekly-progress-table th:nth-child(5){width:18%}
+.weekly-row-meter{width:100%;height:11px;margin:0 0 4px}
+.weekly-row-claim{padding:6px 5px;font-size:8px;max-width:100%}
+.weekly-progress-table td:last-child{white-space:nowrap}
+}
+
+/* Balance wager figures against the following progress/prize columns. */
+.weekly-progress-table th:nth-child(3),.weekly-progress-table td:nth-child(3),
+.lb-compact-table th:nth-child(4),.lb-compact-table td:nth-child(4){text-align:left;padding-left:18px}
+@media(max-width:600px){
+.weekly-progress-table th:nth-child(3),.weekly-progress-table td:nth-child(3){text-align:left;padding-left:8px;padding-right:6px}
+.lb-compact-table th:nth-child(4),.lb-compact-table td:nth-child(4),.lb-compact-table tbody td:nth-child(4)[data-label]{text-align:left;padding-left:8px!important;padding-right:5px!important}
+}
+
+/* Compact weekly summary on phones, matching the leaderboard density. */
+@media(max-width:600px){
+.weekly-heading{padding:10px!important;gap:8px;border-radius:12px}
+.weekly-heading>div:first-child{width:100%}
+.weekly-heading .eyebrow{display:none}
+.weekly-heading h1{font-size:16px;line-height:1.15;letter-spacing:.01em}
+.weekly-heading p{font-size:8px;margin-top:4px}
+.weekly-summary{display:grid;grid-template-columns:1fr .8fr 1.2fr;gap:8px;align-items:center;width:100%}
+.weekly-summary>span{font-size:7px;line-height:1.4}
+.weekly-summary>span>strong{font-size:17px;margin-top:3px;white-space:nowrap}
+.weekly-heading .deadline-chip{min-width:0;padding:6px 7px;border-radius:7px;gap:3px}
+.weekly-heading .deadline-chip>span{font-size:7px}
+.weekly-heading .deadline-chip strong{font-size:11px;white-space:nowrap}
+}
+
+/* Compact admin settings, grouped by the task the admin wants to perform. */
+.prize-editor .workspace-heading{align-items:center;margin-bottom:16px}
+.prize-editor .workspace-heading h2{font-size:22px}
+.prize-editor .workspace-heading p{font-size:11px;line-height:1.5}
+.settings-sections,.settings-tools{display:grid;gap:10px}
+.settings-tools{margin-top:16px}
+.settings-section,.settings-tools>details{border:1px solid #c084fc28;background:#0d0716aa;border-radius:10px;overflow:hidden}
+.settings-section>summary,.settings-tools>details>summary{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;list-style:none;font-size:12px;font-weight:750}
+.settings-section>summary::-webkit-details-marker,.settings-tools>details>summary::-webkit-details-marker{display:none}
+.settings-section summary strong{display:block;font-size:12px}.settings-section summary small{display:block;color:#baa8c9;font-size:10px;font-weight:400;margin-top:3px;line-height:1.4}
+.settings-chevron{font-size:18px;color:#c4a4de;transition:transform .15s}.settings-section[open]>summary .settings-chevron{transform:rotate(180deg)}
+.settings-section[open]>summary{border-bottom:1px solid #c084fc20;background:#a855f70a}
+.settings-section-body{padding:14px;display:grid;gap:14px}
+.prize-editor .settings-section fieldset{margin:0;padding:0;border:0;min-width:0}
+.prize-editor .settings-section legend{font-size:12px;margin-bottom:9px}
+.prize-editor .settings-section fieldset+fieldset{border-top:1px solid #c084fc20;padding-top:14px}
+.prize-editor .settings-section p,.prize-editor .settings-section small{font-size:10px;line-height:1.5;color:#c3b1cf}
+.prize-editor .settings-section p{margin:5px 0 10px}
+.prize-editor .settings-section label{font-size:11px;gap:5px;min-width:0}
+.prize-editor .settings-section input:not([type=checkbox]),.prize-editor .settings-section select,.prize-editor .settings-section textarea{width:100%;min-width:0;border:1px solid #c084fc35;border-radius:7px;background:#07040e;color:#fff;padding:8px;font-size:13px;color-scheme:dark}
+.prize-editor .settings-section .money-field{padding:0 7px;border-radius:7px}.prize-editor .settings-section .money-field input{border:0;background:transparent;padding:8px 0}
+.prize-editor .settings-section .prize-fields{gap:10px}.prize-editor .settings-section .boss-activation{font-size:11px;min-height:36px;padding:8px;margin-bottom:7px}
+.prize-editor .settings-section .prediction-prize-field{margin-top:0;max-width:450px}
+.prize-editor .settings-section button{font-size:11px;padding:8px 12px;border:1px solid #c084fc35;border-radius:7px;justify-self:start}
+.prize-editor .form-footer{margin-top:14px;padding-top:12px;border-top:1px solid #c084fc20;gap:12px}.prize-editor .form-footer p{font-size:10px}.prize-editor .form-footer button{font-size:12px;padding:10px 16px}
+.settings-tools .lb-admin-totals{margin:0}.settings-tools>.lb-admin-totals{padding:0}.settings-tools>.lb-admin-totals>p,.settings-tools>.lb-admin-totals>label,.settings-tools>.lb-admin-totals>a{margin:10px 14px;display:block;font-size:11px}.settings-tools .settings-section-body .lb-admin-totals{padding:0;border:0;background:none}.settings-tools h3{font-size:12px}.settings-tools p,.settings-tools label{font-size:11px}
+.settings-section summary:focus-visible{outline:2px solid #c084fc;outline-offset:-3px}
+@media(max-width:600px){
+.prize-editor{padding:10px!important}.prize-editor .workspace-heading{gap:10px;margin-bottom:10px}.prize-editor .workspace-heading h2{font-size:16px}.prize-editor .workspace-heading p{font-size:9px}.prize-editor .prize-pool{padding:7px;min-width:0}.prize-editor .prize-pool span{font-size:8px}.prize-editor .prize-pool strong{font-size:18px}
+.settings-sections,.settings-tools{gap:8px}.settings-section>summary,.settings-tools>details>summary{padding:10px}.settings-section summary strong{font-size:11px}.settings-section summary small{font-size:9px}
+.settings-section-body{padding:10px;gap:12px}.prize-editor .settings-section label{font-size:10px}.prize-editor .settings-section legend{font-size:11px}
+.prize-editor .settings-section input:not([type=checkbox]),.prize-editor .settings-section select,.prize-editor .settings-section textarea{font-size:16px;padding:6px;min-height:34px}
+.prize-editor .settings-section .prize-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.prize-editor .settings-section .boss-prize-fields{grid-template-columns:1fr}.prize-editor .weekly-admin-fields{gap:8px}.prize-editor .settings-section .boss-activation{font-size:10px}
+.prize-editor .form-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap}.prize-editor .form-footer p{font-size:9px;flex:1;min-width:140px}.prize-editor .form-footer button{font-size:11px;padding:9px 12px}
+}

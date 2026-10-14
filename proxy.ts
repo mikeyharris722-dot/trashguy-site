@@ -13,6 +13,7 @@ export async function proxy(request: NextRequest) {
         [
           "/api/prize-settings",
           "/api/trash-bosses/claim",
+          "/api/weekly-wager/claim",
           "/api/community",
           "/api/community/tracker",
           "/api/community/catalogue",

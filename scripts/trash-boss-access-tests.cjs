@@ -1,7 +1,7 @@
 const fs=require('fs'),ts=require('typescript'),vm=require('vm'),assert=require('assert/strict');let enabled=false,reads=0,broken=false;
 function load(file){const module={exports:{}};const source=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText;const mocks={
  '@/lib/community-local':{communityState:async()=>{if(broken)throw Error('Settings unavailable');return {prizeSettings:{trashBossesEnabled:enabled,leaderboardStart:'2026-10-05'}};}},
- '@/lib/prize-settings':{resolvedPrizeSettings:s=>s},'@/lib/site-tracker':{trackerHunts:async()=>{reads++;return[];}},'@/lib/trash-boss-claims':{bossClaims:async()=>[]},
+ '@/lib/trash-bosses':{isBossCall:()=>true},'@/lib/prize-settings':{resolvedPrizeSettings:s=>s},'@/lib/site-tracker':{trackerHunts:async()=>{reads++;return[];}},'@/lib/trash-boss-claims':{bossClaims:async()=>[]},
  '@/lib/site-db':{requireTrackerAdmin:async req=>{if(req.headers.get('authorization')!=='verified-admin')throw Error('AUTH: denied');},apiError:e=>Response.json({error:e.message},{status:400})}
 };vm.runInNewContext(source,{module,exports:module.exports,require:n=>mocks[n]||require(n),Response,Request,console});return module.exports;}
 (async()=>{const data=load('app/api/trash-bosses/route.ts'),access=load('app/api/trash-bosses/access/route.ts');const anonymous=new Request('http://local/api/trash-bosses'),admin=new Request('http://local/api/trash-bosses',{headers:{authorization:'verified-admin'}});

@@ -1,4 +1,5 @@
 "use client";
+import {defaultWeeklyWager} from "@/lib/weekly-wager";
 import {defaultBossTargets} from "@/lib/trash-bosses";
 
 import ObsSettings from "./obs-settings";
@@ -25,6 +26,8 @@ export default function PrizeSettingsEditor({
   const [prediction, setPrediction] = useState(
     String(settings.predictionPrize),
   );
+  const [weekly,setWeekly]=useState(settings.weeklyWager||defaultWeeklyWager);
+  const [weeklyAmounts,setWeeklyAmounts]=useState((settings.weeklyWager||defaultWeeklyWager).targets.map(t=>({id:t.id,target:String(t.target),reward:String(t.reward)})));
   const [bossEnabled,setBossEnabled]=useState(settings.trashBossesEnabled===true);
   const [bosses,setBosses]=useState((settings.trashBosses||defaultBossTargets).map(b=>({target:String(b.target),reward:String(b.reward)})));
   const [weighting,setWeighting]=useState(settings.leaderboardWeighting||'');
@@ -38,6 +41,7 @@ export default function PrizeSettingsEditor({
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const preview = {
+    weeklyWager:{...weekly,targets:weeklyAmounts.map(t=>({id:t.id,target:Number(t.target),reward:Number(t.reward)}))},
     leaderboard: amounts.map(Number),
     leaderboardWeighting:weighting,
     leaderboardArchives:archives,
@@ -51,7 +55,7 @@ export default function PrizeSettingsEditor({
     event.preventDefault();
     setMessage("");
     try {
-      if ([...amounts, prediction,...bosses.flatMap(b=>[b.target,b.reward])].some((value) => !value.trim()))
+      if ([...amounts, prediction,...weeklyAmounts.flatMap(t=>[t.target,t.reward]),...bosses.flatMap(b=>[b.target,b.reward])].some((value) => !value.trim()))
         throw Error("Fill every prize amount. Use 0 for places with no prize.");
       const next = validatePrizeSettings(preview);
       setBusy(true);
@@ -68,7 +72,7 @@ export default function PrizeSettingsEditor({
         throw Error(data.error || "Could not save prize settings.");
       saved(data.settings);
       setMessage(
-        "Prize settings saved. The public leaderboard has updated. New community hunts will use this prediction prize.",
+        "Settings saved. Public pages now use the updated values.",
       );
     } catch (error) {
       setMessage(
@@ -82,11 +86,10 @@ export default function PrizeSettingsEditor({
     <section className="workspace-panel prize-editor">
       <div className="workspace-heading">
         <div>
-          <p className="eyebrow">Public prize amounts</p>
-          <h2>Prizes & payouts</h2>
+          <p className="eyebrow">Admin settings</p>
+          <h2>Rewards & settings</h2>
           <p>
-            Set the amounts visitors see. Existing rewards, claims and community
-            hunt prizes keep their recorded values.
+            Open a section to edit its settings, then save your changes below.
           </p>
         </div>
         <div className="prize-pool">
@@ -94,12 +97,9 @@ export default function PrizeSettingsEditor({
           <strong>{dollars(prizeTotal(preview))}</strong>
         </div>
       </div>
-      <ObsSettings />
-      <LeaderboardTotals settings={settings} />
-      <form onSubmit={submit}>
-        <fieldset disabled={busy}><legend>RTP contribution guide</legend><p>Display only. Roulo’s weighted wager determines the standings.</p><label>Weighting rules<textarea rows={3} value={weighting} maxLength={2000} onChange={e=>setWeighting(e.target.value)} /></label></fieldset>
-        {pastPeriods.length>0&&<fieldset disabled={busy}><legend>Completed leaderboard prizes</legend><p>Confirm actual prizes won for previous periods. Changing current prizes will not change a saved historical prize schedule.</p><label>Completed period<select aria-label="Historical prize period" value={archivePeriod} onChange={e=>{setArchivePeriod(e.target.value);setArchivePrizes((archives.find(p=>p.start===e.target.value)?.prizes||Array(10).fill('')).map(String));setArchiveMessage('');}}>{pastPeriods.map(p=><option key={p.start} value={p.start}>{periodLabel(p)}</option>)}</select></label><div className="prize-fields">{archivePrizes.map((amount,index)=><label key={index}>Place {index+1}<input type="number" min="0" max="1000000" step="0.01" value={amount} placeholder="Unconfirmed" onChange={e=>setArchivePrizes(old=>old.map((p,i)=>i===index?e.target.value:p))}/></label>)}</div><button type="button" onClick={()=>{try{if(archivePrizes.some(v=>!v.trim()))throw Error('Enter every historical prize. Use 0 for no prize.');const period=pastPeriods.find(p=>p.start===archivePeriod)!;const next=[...archives.filter(p=>p.start!==period.start),{start:period.start,end:period.end,prizes:archivePrizes.map(Number)}];validatePrizeSettings({...preview,leaderboardArchives:next});setArchives(next);setArchiveMessage('Historical prizes ready. Save settings below to confirm.');}catch(error){setArchiveMessage(error instanceof Error?error.message:'Check prize amounts.');}}}>Confirm historical prizes</button>{archiveMessage&&<p role="status">{archiveMessage}</p>}</fieldset>}
-        <fieldset disabled={busy} className="competition-settings">
+
+      <form onSubmit={submit} onInvalidCapture={event=>{let parent=(event.target as HTMLElement).parentElement;while(parent){if(parent instanceof HTMLDetailsElement)parent.open=true;parent=parent.parentElement;}}}>
+<div className="settings-sections"><details className="settings-section"><summary><span><strong>Monthly leaderboard</strong><small>Competition dates, place prizes and RTP guide</small></span><span className="settings-chevron" aria-hidden="true">⌄</span></summary><div className="settings-section-body"><fieldset disabled={busy} className="competition-settings">
           <legend>Site leaderboard schedule</legend>
           <p>
             Choose Trashguy’s own competition period. The dates control both the
@@ -128,8 +128,7 @@ export default function PrizeSettingsEditor({
             </label>
           </div>
           <small>The period starts and ends at 00:00 UTC on these dates.</small>
-        </fieldset>
-        <fieldset disabled={busy}>
+        </fieldset><fieldset disabled={busy}>
           <legend>Leaderboard places</legend>
           <div className="prize-fields">
             {amounts.map((amount, index) => (
@@ -156,9 +155,7 @@ export default function PrizeSettingsEditor({
               </label>
             ))}
           </div>
-        </fieldset>
-        <fieldset disabled={busy}><legend>Trash Bosses</legend><label className="boss-activation"><input type="checkbox" checked={bossEnabled} onChange={e=>setBossEnabled(e.target.checked)}/> Activate Trash Bosses for viewers</label><small>{bossEnabled?"Public page and reward claims enabled after saving.":"Hidden from non-admins. Admins can preview and configure values. Claims are disabled."}</small><p>Targets use total viewer slot-call winnings in the leaderboard period above. Rewards are display amounts; saving does not issue a payment.</p><div className="prize-fields boss-prize-fields">{bosses.map((boss,index)=><div key={index}><label>Boss {index+1} target ($)<input required type="number" min="0.01" max="1000000" step="0.01" value={boss.target} onChange={e=>setBosses(old=>old.map((b,i)=>i===index?{...b,target:e.target.value}:b))}/></label><label>Boss {index+1} reward ($)<input required type="number" min="0" max="1000000" step="0.01" value={boss.reward} onChange={e=>setBosses(old=>old.map((b,i)=>i===index?{...b,reward:e.target.value}:b))}/></label></div>)}</div></fieldset>
-        <label className="prediction-prize-field">
+        </fieldset><fieldset disabled={busy}><legend>RTP contribution guide</legend><p>Display only. Roulo’s weighted wager determines the standings.</p><label>Weighting rules<textarea rows={3} value={weighting} maxLength={2000} onChange={e=>setWeighting(e.target.value)} /></label></fieldset></div></details><details className="settings-section"><summary><span><strong>Previous leaderboard prizes</strong><small>Review the prize amounts for a completed month</small></span><span className="settings-chevron" aria-hidden="true">⌄</span></summary><div className="settings-section-body">{pastPeriods.length>0&&<fieldset disabled={busy}><legend>Completed leaderboard prizes</legend><p>Confirm actual prizes won for previous periods. Changing current prizes will not change a saved historical prize schedule.</p><label>Completed period<select aria-label="Historical prize period" value={archivePeriod} onChange={e=>{setArchivePeriod(e.target.value);setArchivePrizes((archives.find(p=>p.start===e.target.value)?.prizes||Array(10).fill('')).map(String));setArchiveMessage('');}}>{pastPeriods.map(p=><option key={p.start} value={p.start}>{periodLabel(p)}</option>)}</select></label><div className="prize-fields">{archivePrizes.map((amount,index)=><label key={index}>Place {index+1}<input type="number" min="0" max="1000000" step="0.01" value={amount} placeholder="Unconfirmed" onChange={e=>setArchivePrizes(old=>old.map((p,i)=>i===index?e.target.value:p))}/></label>)}</div><button type="button" onClick={()=>{try{if(archivePrizes.some(v=>!v.trim()))throw Error('Enter every historical prize. Use 0 for no prize.');const period=pastPeriods.find(p=>p.start===archivePeriod)!;const next=[...archives.filter(p=>p.start!==period.start),{start:period.start,end:period.end,prizes:archivePrizes.map(Number)}];validatePrizeSettings({...preview,leaderboardArchives:next});setArchives(next);setArchiveMessage('Historical prizes ready. Save settings below to confirm.');}catch(error){setArchiveMessage(error instanceof Error?error.message:'Check prize amounts.');}}}>Confirm historical prizes</button>{archiveMessage&&<p role="status">{archiveMessage}</p>}</fieldset>}</div></details><details className="settings-section"><summary><span><strong>Weekly wager rewards</strong><small>Visibility, weekly dates, target and payout</small></span><span className="settings-chevron" aria-hidden="true">⌄</span></summary><div className="settings-section-body"><fieldset disabled={busy}><legend>Weekly Trash Cashback</legend><label className="boss-activation"><input type="checkbox" checked={weekly.enabled} onChange={e=>setWeekly({...weekly,enabled:e.target.checked})}/> Activate weekly wager rewards for viewers</label><small>{weekly.enabled?'Page, menu and claims become available after saving.':'Hidden from regular viewers. Admin preview remains available; claims are disabled.'}</small><div className="weekly-admin-fields"><label>Start date (UTC)<input required type="date" value={weekly.start} onChange={e=>setWeekly({...weekly,start:e.target.value})}/></label><label>End date (UTC)<input required type="date" value={weekly.end} onChange={e=>setWeekly({...weekly,end:e.target.value})}/></label>{weeklyAmounts.map((t,i)=><div key={t.id} className="weekly-admin-fields" style={{gridColumn:'1/-1'}}><label>Weighted wager target ($)<input required type="number" min="0.01" max="1000000" step="0.01" value={t.target} onChange={e=>setWeeklyAmounts(old=>old.map((t,n)=>n===i?{...t,target:e.target.value}:t))}/></label><label>Reward payout ($)<input required type="number" min="0.01" max="1000000" step="0.01" value={t.reward} onChange={e=>setWeeklyAmounts(old=>old.map((t,n)=>n===i?{...t,reward:e.target.value}:t))}/></label></div>)}</div><p>Dates are independent of the monthly leaderboard. Every qualifying viewer can claim once per target and start date. Extending an end date does not reset claims. Set the next period’s dates to start a new week.</p></fieldset></div></details><details className="settings-section"><summary><span><strong>Slot call rewards</strong><small>Visibility, boss targets and payouts</small></span><span className="settings-chevron" aria-hidden="true">⌄</span></summary><div className="settings-section-body"><fieldset disabled={busy}><legend>Boss targets</legend><label className="boss-activation"><input type="checkbox" checked={bossEnabled} onChange={e=>setBossEnabled(e.target.checked)}/> Activate slot call rewards for viewers</label><small>{bossEnabled?"Public page and reward claims enabled after saving.":"Hidden from non-admins. Admins can preview and configure values. Claims are disabled."}</small><p>Targets use total viewer slot-call winnings in the leaderboard period above. Rewards are display amounts; saving does not issue a payment.</p><div className="prize-fields boss-prize-fields">{bosses.map((boss,index)=><div key={index}><label>Boss {index+1} target ($)<input required type="number" min="0.01" max="1000000" step="0.01" value={boss.target} onChange={e=>setBosses(old=>old.map((b,i)=>i===index?{...b,target:e.target.value}:b))}/></label><label>Boss {index+1} reward ($)<input required type="number" min="0" max="1000000" step="0.01" value={boss.reward} onChange={e=>setBosses(old=>old.map((b,i)=>i===index?{...b,reward:e.target.value}:b))}/></label></div>)}</div></fieldset></div></details><details className="settings-section"><summary><span><strong>Bonus hunt predictions</strong><small>Prize for the closest prediction</small></span><span className="settings-chevron" aria-hidden="true">⌄</span></summary><div className="settings-section-body">        <label className="prediction-prize-field">
           Closest prediction prize ($)
           <input
             type="number"
@@ -175,13 +172,14 @@ export default function PrizeSettingsEditor({
             created community hunts. Set 0 to show no cash prize.
           </small>
         </label>
+</div></details></div>
         <div className="form-footer">
           <p>
             Leaderboard total is calculated automatically. Saving these settings
             does not issue a payment.
           </p>
           <button className="primary-button" disabled={busy}>
-            {busy ? "Saving…" : "Save prize amounts"}
+            {busy ? "Saving…" : "Save settings"}
           </button>
         </div>
         {message && (
@@ -190,6 +188,7 @@ export default function PrizeSettingsEditor({
           </p>
         )}
       </form>
+      <div className="settings-tools"><ObsSettings /><details className="settings-section"><summary><span><strong>Affiliate totals</strong><small>Monthly totals for every player on the code</small></span><span className="settings-chevron" aria-hidden="true">⌄</span></summary><div className="settings-section-body"><LeaderboardTotals settings={settings} /></div></details></div>
     </section>
   );
 }

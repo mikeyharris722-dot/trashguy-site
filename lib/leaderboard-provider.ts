@@ -5,7 +5,7 @@ import {leaderboardPeriods,affiliateStandings} from './leaderboard-data';
 const cacheKey=Symbol.for('trashguy.leaderboard.affiliates');
 type ProviderRows=Record<string,unknown>[];
 const holder=globalThis as typeof globalThis&{[cacheKey]?:Map<string,{expires:number;rows:Promise<ProviderRows>}>};
-async function providerRows(start:string,end:string):Promise<ProviderRows>{
+export async function providerRows(start:string,end:string):Promise<ProviderRows>{
  const cache=holder[cacheKey]??=new Map(),key=start+':'+end,old=cache.get(key);
  if(old&&old.expires>Date.now())return old.rows;
  const rows=(async()=>{let last:unknown;for(let attempt=0;attempt<2;attempt++){try{const url=new URL('https://api.roulobets.com/v1/external/affiliates');url.search=new URLSearchParams({start_at:start,end_at:end,key:process.env.ROULO_API_KEY!,weighted:'true'}).toString();const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(15000)});if(response.status===429)throw Error('PROVIDER_RATE_LIMIT');if(!response.ok)throw Error('The provider leaderboard is temporarily unavailable.');const data=await response.json(),rows=Array.isArray(data)?data:data.affiliates;if(!Array.isArray(rows))throw Error('The provider returned an unrecognised leaderboard.');return rows as ProviderRows;}catch(error){last=error;if(error instanceof Error&&error.message==='PROVIDER_RATE_LIMIT')throw error;if(attempt===0)await new Promise(resolve=>setTimeout(resolve,500));}}throw last;})();
