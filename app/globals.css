@@ -1770,3 +1770,51 @@ textarea::placeholder {
  .lb-compact-table tbody td[data-label]{text-align:left}
  .lb-compact-table tbody td[data-label]::before{content:attr(data-label);display:block;font-size:8px;line-height:1.4;font-weight:500;color:#baa8ca;margin-bottom:6px;white-space:normal}
 }
+
+/* Phone leaderboard: compact summary and strictly single-line standings. */
+@media(max-width:600px){
+ .lb-header-visual{padding:10px!important;gap:8px!important;border-radius:12px}
+ .lb-header-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 10px;align-items:center}
+ .lb-header-main h1{font-size:16px!important;line-height:1.1;letter-spacing:.02em}
+ .lb-grand-prize{margin:0!important;gap:2px;text-align:right}
+ .lb-grand-prize>span{font-size:6px;letter-spacing:.08em}
+ .lb-grand-prize>strong{font-size:24px!important;line-height:1}
+ .lb-period-row{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+ .lb-period-row .lb-period-label{min-width:0;max-width:none;gap:3px;font-size:7px}
+ .lb-period-label select{padding:5px 7px;border-radius:6px;font-size:11px!important;height:29px}
+ .lb-period-row .deadline-chip{min-width:0;padding:5px 8px;gap:3px;border-radius:7px}
+ .lb-period-row .deadline-chip>span{font-size:7px}
+ .lb-period-row .deadline-chip strong{font-size:13px!important;line-height:1.1;white-space:nowrap}
+ .lb-header-main .competition-period{grid-column:1/-1;margin:0;font-size:7px;line-height:1.3}
+ .lb-rtp-art{padding:6px!important;border-radius:8px;display:grid;grid-template-columns:50px minmax(0,1fr);gap:6px;align-items:center}
+ .lb-rtp-watermark,.lb-rtp-title>span,.lb-rtp-title strong,.lb-rtp-band>small{display:none}
+ .lb-rtp-title{margin:0;display:block}
+ .lb-rtp-title small{font-size:7px;line-height:1.4;letter-spacing:.04em}
+ .lb-rtp-bands{gap:5px;grid-template-columns:repeat(3,minmax(0,1fr))}
+ .lb-rtp-band{padding:5px 2px!important;gap:3px;border-radius:5px}
+ .lb-rtp-band>span{font-size:6px;min-height:0;line-height:1.3;white-space:nowrap}
+ .lb-rtp-band>strong{font-size:14px!important}
+ .lb-compact-table{padding:6px!important}
+ .lb-compact-table table{table-layout:fixed;width:100%}
+ .lb-compact-table thead{position:static;width:auto;height:auto;overflow:visible;clip-path:none;white-space:normal}
+ .lb-compact-table tbody{display:table-row-group}
+ .lb-compact-table tbody tr{display:table-row;padding:0;border:0}
+ .lb-compact-table th,.lb-compact-table td,.lb-compact-table tbody th,.lb-compact-table tbody td{padding:9px 4px!important;vertical-align:middle;border-bottom:1px solid #ffffff0c!important;white-space:nowrap}
+ .lb-compact-table th:first-child,.lb-compact-table td:first-child,.lb-compact-table tbody td:first-child{width:5%!important;padding-left:0!important;padding-right:2px!important}
+ .lb-compact-table th:nth-child(2),.lb-compact-table tbody th{width:31%!important;padding-left:3px!important;padding-right:5px!important;text-align:left}
+ .lb-compact-table th:nth-child(3),.lb-compact-table td:nth-child(3){width:23%!important}
+ .lb-compact-table th:nth-child(4),.lb-compact-table td:nth-child(4){width:25%!important;border-left:0!important}
+ .lb-compact-table th:nth-child(5),.lb-compact-table td:nth-child(5){width:16%!important;padding-right:0!important}
+ .lb-compact-table tbody th>span{display:inline-flex;align-items:center;flex-wrap:nowrap;white-space:nowrap;overflow-wrap:normal;font-size:8px;font-weight:750}
+ .lb-compact-table .user-badges{margin-left:2px;gap:1px;font-size:7px;flex-shrink:0}
+ .lb-compact-table .user-badge{min-width:8px;width:8px;height:10px;border-radius:2px}
+ .lb-compact-table .lb-total{font-size:8px!important;font-weight:400}
+ .lb-compact-table .lb-weighted{font-size:9px!important;font-weight:850}
+ .lb-compact-table .table-prize{font-size:8px!important}
+ .lb-compact-table tbody td[data-label]{text-align:right}
+ .lb-compact-table tbody td[data-label]::before{display:none}
+ .lb-compact-table thead th{font-size:6px;line-height:1.4;letter-spacing:0;white-space:normal}
+ .lb-compact-table .table-rank{width:14px;height:17px;font-size:8px;border-radius:4px}
+ .lb-compact-table caption{font-size:10px;padding:7px 0}
+ .leaderboard-layout{gap:10px}
+}
