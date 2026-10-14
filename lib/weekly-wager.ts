@@ -12,3 +12,6 @@ export function validateWeeklyWager(value:unknown):WeeklyWagerSettings{
  return {enabled:v.enabled,start:v.start,end:v.end,targets};
 }
 export function weeklyProgress(weighted:number,target:number){if(!Number.isFinite(weighted)||weighted<0)throw Error('Invalid weighted wager.');return {percentage:Math.min(100,weighted/target*100),remaining:Math.max(0,target-weighted),eligible:Math.round(weighted*100)>=Math.round(target*100)};}
+
+/** The displayed end date is inclusive; the provider receives the next UTC midnight. */
+export function weeklyEndExclusive(end:string){return new Date(Date.parse(end+'T00:00:00Z')+86400000).toISOString().slice(0,10);}

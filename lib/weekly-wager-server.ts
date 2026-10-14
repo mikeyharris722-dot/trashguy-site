@@ -6,7 +6,7 @@ import {siteDb} from './site-db';
 import {localCommunity} from './community-store';
 import {communityState} from './community-local';
 import {resolvedPrizeSettings} from './prize-settings';
-import {defaultWeeklyWager,weeklyProgress} from './weekly-wager';
+import {defaultWeeklyWager,weeklyProgress,weeklyEndExclusive} from './weekly-wager';
 import {providerRows} from './leaderboard-provider';
 export type WeeklyClaim={id:string;username:string;tier_id:string;period_start:string;period_end:string;target:number;amount:number;weighted_wager:number;created_at:string};
 const file=path.join(process.cwd(),'.local','weekly-wager-claims.json'),lock=Symbol.for('trashguy.weekly.claims'),holder=globalThis as typeof globalThis&{[lock]?:Promise<unknown>};
@@ -28,7 +28,7 @@ export async function weeklyWeighted(username:string,start:string,end:string){
 export async function claimWeekly(username:string,tierId:string){
  const run=async()=>{const settings=await weeklySettings();if(!settings.enabled)throw Error('Weekly wager rewards are deactivated.');if(Date.now()<Date.parse(settings.start+'T00:00:00Z'))throw Error('This weekly period has not started.');const target=settings.targets.find(t=>t.id===tierId);if(!target)throw Error('Choose a valid weekly target.');
  const existing=(await weeklyClaims(username)).find(c=>c.period_start===settings.start&&c.tier_id===tierId);if(existing)return existing.id;
- const progress=await weeklyWeighted(username,settings.start,settings.end);if(!progress.linked)throw Error('Link your Roulo account in Your profile first.');if(!weeklyProgress(progress.weighted,target.target).eligible)throw Error('Your weighted wager has not reached this target.');
+ const progress=await weeklyWeighted(username,settings.start,weeklyEndExclusive(settings.end));if(!progress.linked)throw Error('Link your Roulo account in Your profile first.');if(!weeklyProgress(progress.weighted,target.target).eligible)throw Error('Your weighted wager has not reached this target.');
  if(!localCommunity()){const {data,error}=await siteDb().rpc('claim_weekly_wager',{p_username:username,p_tier:tierId,p_start:settings.start,p_end:settings.end,p_target:target.target,p_amount:target.reward,p_weighted:progress.weighted});if(error)throw Error(error.code==='PGRST202'?'Weekly reward setup is not ready yet.':error.message);return String(data);}
  const latest=await weeklySettings();if(JSON.stringify(latest)!==JSON.stringify(settings))throw Error('Weekly settings changed. Refresh and retry.');const claims=await localClaims(),id=randomUUID();claims.push({id,username,tier_id:tierId,period_start:settings.start,period_end:settings.end,target:target.target,amount:target.reward,weighted_wager:progress.weighted,created_at:new Date().toISOString()});await fs.mkdir(path.dirname(file),{recursive:true});const tmp=file+'.'+id+'.tmp';await fs.writeFile(tmp,JSON.stringify(claims));await fs.rename(tmp,file);return id;};
  if(!localCommunity())return run();const job=(holder[lock]||Promise.resolve()).catch(()=>{}).then(run);holder[lock]=job;return job;
