@@ -25,7 +25,7 @@ export function artworkIndex(source: string) {
       .replace(/[^a-z0-9]/g, "");
     const asset = modules.get(String(module));
     if (asset)
-      index.set(parts[0] + ":" + stem, "https://roulobets.com/" + asset);
+      index.set(parts[0].toLowerCase().replace(/[^a-z0-9]/g, "") + ":" + stem, "https://roulobets.com/" + asset);
   }
   return index;
 }
