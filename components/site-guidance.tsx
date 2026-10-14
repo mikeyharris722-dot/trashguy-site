@@ -1,84 +1,8 @@
 "use client";
 import { sectionTitles } from "@/lib/site-navigation";
-const guides: Record<string, { description: string; steps: string[] }> = {
-  leaderboard: {
-    description:
-      "Follow the current standings and see how previous competitions finished.",
-    steps: [
-      "Check the competition end time and current standings.",
-      "Check your RouloBets account is linked in Your profile.",
-      "Compare your position and the published prize places.",
-    ],
-  },
-  hunts: {
-    description:
-      "Follow the streamer's bonus hunts and enter an end-balance prediction when entries are open.",
-    steps: [
-      "Select a hunt.",
-      "Sign in before entering a prediction.",
-      "Check the entry status and return for the final results. This is separate from joining a Community Hunt.",
-    ],
-  },
-  slotwheel: {
-    description:
-      "Follow viewer slot calls, the latest selected call and recorded bonus results.",
-    steps: [
-      "Use !slot followed by the game name in the streamer's Twitch chat.",
-      "Your call joins the queue when slot calls are open.",
-      "The streamer rolls a call and records whether a bonus was collected.",
-    ],
-  },
-  tournaments: {
-    description:
-      "Follow the players, teams and match results from the current stream.",
-    steps: [
-      "Switch between the bracket and team draft views.",
-      "Read the current round or team lineup.",
-      "Results update when the streamer records them.",
-    ],
-  },
-  slotpicker: {
-    description:
-      "Pick a game from the RouloBets collection using your preferred providers.",
-    steps: [
-      "Choose one or more providers, or keep the featured selection.",
-      "Use the random picker to choose a game from those providers.",
-      "View more reveals the rest of the provider collection. Picking a game does not submit a Twitch call.",
-    ],
-  },
-  profile: {
-    description:
-      "Keep your linked accounts, eligibility and available prizes in one place.",
-    steps: [
-      "Sign in with Twitch or Kick.",
-      "Check the linked RouloBets and Discord account details.",
-      "Review your rewards and follow each prize's claim instructions.",
-    ],
-  },
-};
-export function PageGuidance({ section }: { section: string }) {
-  const g = guides[section];
-  if (!g || section === "leaderboard") return null;
-  return (
-    <section
-      className="page-intro"
-      aria-label={sectionTitles[section] + " introduction"}
-    >
-      <div>
-        <p className="eyebrow">Trashguy community</p>
-        <h1>{sectionTitles[section]}</h1>
-        <p className="intro-description">{g.description}</p>
-      </div>
-      <details className="page-help">
-        <summary>How to use this page</summary>
-        <ol>
-          {g.steps.map((step) => (
-            <li key={step}>{step}</li>
-          ))}
-        </ol>
-      </details>
-    </section>
-  );
+export function PageGuidance({section}:{section:string}) {
+ if(!['hunts','tournaments','slotpicker','profile'].includes(section))return null;
+ return <header className="simple-page-heading"><h1>{sectionTitles[section].toUpperCase()}</h1></header>;
 }
 export function HomeGuidance({
   navigate,
@@ -95,14 +19,6 @@ export function HomeGuidance({
       description:
         "See the date, request a place with your contribution, then call Rainbet slots after approval.",
       action: "View community hunts",
-    },
-    {
-      id: "slotwheel",
-      icon: "🎡",
-      title: "Follow the viewer wheel",
-      description:
-        "Call a game in Twitch chat and follow the queue, selected slot and bonus results.",
-      action: "See slot calls",
     },
     {
       id: "profile",
@@ -186,9 +102,9 @@ export function AdminGuidance({ tab }: { tab: string }) {
   const g = adminGuides[tab];
   return g && !["community", "prizes", "bonusTracker"].includes(tab) ? (
     <div className="admin-guidance">
-      <span className="eyebrow">Current workspace</span>
-      <h2>{g[0]}</h2>
-      <p>{g[1]}</p>
+
+      <h2>{g[0].toUpperCase()}</h2>
+
     </div>
   ) : null;
 }

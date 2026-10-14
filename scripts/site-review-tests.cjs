@@ -86,6 +86,14 @@ function factory(env={},mocks={},globals={}){const cache={};function load(name){
  await apiLoad('site-fetch').siteFetch('https://external.example/image');assert.equal(calls[1].init,undefined);
  const selection=factory({NEXT_PUBLIC_LOCAL_REVIEW:'1'})('review-selection');await selection.saveReviewNativeSelection('TEST-HUNT-ID');assert.equal(await selection.reviewNativeSelection(),'TEST-HUNT-ID');assert.equal(await factory({NEXT_PUBLIC_LOCAL_REVIEW:'0'})('review-selection').reviewNativeSelection(),'');
  const parser=load('community-request');await assert.rejects(parser.communityJson(new Request('http://localhost',{method:'POST',body:'x'.repeat(40)}),20),/too large/);
+ const oldSettings=(await c.communityState()).prizeSettings;
+ await c.communityCommand(admin,true,{action:'prizeSettings',settings:{...oldSettings,leaderboardStart:'2026-11-05',leaderboardEnd:'2026-12-05'},requestId:crypto.randomUUID()});
+ let archive=(await c.communityState()).prizeSettings.leaderboardArchives;
+ assert.deepEqual(Array.from(archive.find(p=>p.start===oldSettings.leaderboardStart).prizes),Array.from(oldSettings.leaderboard));
+ assert.equal(archive.find(p=>p.start==='2026-09-05').prizes[0],400);
+ await c.communityCommand(admin,true,{action:'prizeSettings',settings:{...(await c.communityState()).prizeSettings,leaderboard:Array(10).fill(1)},requestId:crypto.randomUUID()});
+ archive=(await c.communityState()).prizeSettings.leaderboardArchives;
+ assert.deepEqual(Array.from(archive.find(p=>p.start===oldSettings.leaderboardStart).prizes),Array.from(oldSettings.leaderboard));
  console.log('PASS: prize validation/admin guards, prediction updates/locks/prize snapshots, UTC/DST schedules, invalid/past dates, pending contribution edits/cancellation, approved equity lock, mixed failed/collected reorder, closed-call guard, typo search, local write isolation, admin policy and verified viewer identity.');
  const resolved=path.resolve(dir);if(!resolved.startsWith(path.resolve(os.tmpdir())+path.sep)||!path.basename(resolved).startsWith("trash-site-review-"))throw Error("Unsafe temporary cleanup path");fs.rmSync(resolved,{recursive:true});
 })().catch(e=>{console.error(e);process.exitCode=1});

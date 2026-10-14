@@ -1,133 +1,18 @@
 "use client";
-import UserBadges from "@/components/user-badges";
-import type { PrizeSettings } from "@/lib/prize-settings";
-import { prizeTotal } from "@/lib/prize-settings";
-type Player = {
-  badges?: import("./user-badges").Badge[];
-  rank: number;
-  username: string;
-  wagered: number;
-  totalWagered: number;
-};
-const money = (value: number) =>
-  value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  });
-export default function Leaderboard({
-  players,
-  settings,
-  loading,
-  error,
-  countdown,
-  retry,
-}: {
-  players: Player[];
-  settings: PrizeSettings;
-  loading: boolean;
-  error: string;
-  countdown: string;
-  retry: () => void;
-}) {
-  return (
-    <div className="leaderboard-layout">
-      <header className="workspace-panel leaderboard-intro">
-        <div>
-          <p className="eyebrow">Roulo community leaderboard</p>
-          <h1>{money(prizeTotal(settings))} prize pool</h1>
-          <p className="competition-period">
-            {settings.leaderboardStart} to {settings.leaderboardEnd} · Ends at
-            00:00 UTC
-          </p>
-          <p>Places are ranked by weighted wager.</p>
-        </div>
-        <div className="deadline-chip">
-          <span>Time remaining</span>
-          <strong>{countdown}</strong>
-        </div>
-      </header>
-      {error && (
-        <div className="form-error" role="alert">
-          {error}{" "}
-          <button onClick={retry} type="button">
-            Refresh leaderboard
-          </button>
-        </div>
-      )}
-      {loading && !players.length ? (
-        <p className="empty-state" role="status">
-          Loading the latest leaderboard…
-        </p>
-      ) : !players.length ? (
-        <div className="empty-state">
-          <h2>No leaderboard entries available</h2>
-          <p>
-            Players will appear here when the provider supplies the current
-            leaderboard.
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="leaderboard-podium">
-            {players.slice(0, 3).map((player) => (
-              <article
-                className={`podium-place podium-${player.rank}`}
-                key={player.username}
-              >
-                <span className="podium-rank">#{player.rank}</span>
-                <div>
-                  <h2 title={player.username}>{player.username}<UserBadges name={player.username} platform="roulo" badges={player.badges || []} /></h2>
-                  <p>
-                    Weighted wager <strong>{money(player.wagered)}</strong>
-                  </p>
-                </div>
-                <strong className="podium-prize">
-                  {settings.leaderboard[player.rank - 1] > 0
-                    ? money(settings.leaderboard[player.rank - 1])
-                    : "No cash prize"}
-                </strong>
-              </article>
-            ))}
-          </div>
-          <div className="workspace-panel leaderboard-table">
-            <table>
-              <caption>Current standings · top ten players</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Place</th>
-                  <th scope="col">Player</th>
-                  <th scope="col">Weighted wager</th>
-
-                  <th scope="col">Prize</th>
-                </tr>
-              </thead>
-              <tbody>
-                {players.map((player) => (
-                  <tr
-                    key={player.username}
-                    className={player.rank <= 3 ? "leaderboard-leading" : ""}
-                  >
-                    <td>
-                      <span className="table-rank">{player.rank}</span>
-                    </td>
-                    <th scope="row">
-                      <span title={player.username}>{player.username}<UserBadges name={player.username} platform="roulo" badges={player.badges || []} /></span>
-                    </th>
-                    <td>{money(player.wagered)}</td>
-
-                    <td className="table-prize">
-                      {settings.leaderboard[player.rank - 1] > 0
-                        ? money(settings.leaderboard[player.rank - 1])
-                        : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-    </div>
-  );
+import {useEffect,useState} from 'react';
+import UserBadges from './user-badges';
+import type {PrizeSettings} from '@/lib/prize-settings';
+import {leaderboardPeriods,type LeaderboardPeriod} from '@/lib/leaderboard-data';
+type Player={rank:number;username:string;wagered:number;totalWagered:number;badges?:import('./user-badges').Badge[]};
+const money=(n:number)=>n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
+export const periodLabel=(p:{start:string;end:string})=>{const date=(s:string)=>new Date(s+'T00:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});return date(p.start)+' – '+date(p.end);};
+export default function Leaderboard({settings}:{settings:PrizeSettings}){
+ const [selected,setSelected]=useState(settings.leaderboardStart),[data,setData]=useState<{players:Player[];period:LeaderboardPeriod;periods:LeaderboardPeriod[];weighting:string}|null>(null),[busy,setBusy]=useState(true),[error,setError]=useState(''),[retry,setRetry]=useState(0),[now,setNow]=useState(0);
+ useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[]);
+ useEffect(()=>{let stopped=false;const controller=new AbortController();async function load(){try{const r=await fetch('/api/leaderboard?period='+encodeURIComponent(selected),{cache:'no-store',signal:controller.signal}),body=await r.json();if(!r.ok)throw Error(body.error||'Leaderboard unavailable.');if(!stopped){setData(body);setError('');setBusy(false);}}catch(e){if(!stopped){setError(e instanceof Error?e.message:'Leaderboard unavailable.');setBusy(false);}}}void load();const timer=setInterval(load,60000);return()=>{stopped=true;controller.abort();clearInterval(timer);};},[selected,retry,settings]);
+ const period=data?.period,ended=!!period&&Date.parse(period.end+'T00:00:00Z')<=now,remaining=period?Math.max(0,Date.parse(period.end+'T00:00:00Z')-now):0,prizes=period?.prizes,pool=prizes?.reduce((n,p)=>n+p,0);
+ return <div className="leaderboard-layout"><header className="workspace-panel leaderboard-intro lb-header-visual"><div className="lb-header-main"><h1>LEADERBOARD</h1><div className="lb-grand-prize"><span>Total prize pool</span><strong>{pool===undefined?'—':money(pool)}</strong></div><div className="lb-period-row"><label className="lb-period-label">Leaderboard period<select aria-label="Leaderboard period" value={selected} onChange={e=>{setSelected(e.target.value);setData(null);setBusy(true);setError('');}}>{(data?.periods||leaderboardPeriods(settings,Date.parse(settings.leaderboardEnd+"T00:00:00Z")-1)).map(p=><option key={p.start} value={p.start}>{periodLabel(p)}</option>)}</select></label><div className="deadline-chip"><span>{ended?'Completed':'Time remaining'}</span><strong>{ended?period?.end:Math.floor(remaining/86400000)+'d '+Math.floor(remaining/3600000)%24+'h '+Math.floor(remaining/60000)%60+'m'}</strong></div></div><p className="competition-period">Ranked by weighted wager · Dates use 00:00 UTC.</p></div><aside className="lb-rtp-art" aria-label="RTP contribution guide"><span className="lb-rtp-watermark" aria-hidden="true">%</span><div className="lb-rtp-title"><span aria-hidden="true">◈</span><div><small>RTP CONTRIBUTION</small><strong>Every wager counts differently</strong></div></div><div className="lb-rtp-bands">{(data?.weighting||settings.leaderboardWeighting||'').split("\n").filter(Boolean).map((rule,i)=>{const [band,contribution]=rule.split('→');return <div className={'lb-rtp-band lb-band-'+i} key={rule}><span>{band.trim()}</span>{contribution?<strong>{contribution.trim().replace(/ contribution$/i,'')}</strong>:null}<small>{contribution?'contribution':''}</small></div>;})}</div></aside></header>
+ {error&&<div role="alert" className="form-error">{error} <button type="button" onClick={()=>{setRetry(n=>n+1);setBusy(true);}}>Retry</button></div>}
+ {busy&&!data?<p role="status" className="empty-state">Loading leaderboard…</p>:data&&<div className="workspace-panel leaderboard-table lb-compact-table"><table><caption>{ended?'Final standings':'Current standings'} · Top 10{!prizes&&' · Historical prizes awaiting confirmation'}</caption><thead><tr><th><span className="lb-place-desktop">Place</span><span className="lb-place-mobile">#</span></th><th>Player</th><th>Total wager</th><th>Weighted wager</th><th>{ended?'Prize won':'Prize'}</th></tr></thead><tbody>{data.players.map(p=><tr key={p.username}><td><span className="table-rank">{p.rank}</span></td><th scope="row"><span>{p.username}<UserBadges name={p.username} platform="roulo" badges={p.badges||[]}/></span></th><td className="lb-total" data-label="Total wager"><span className="lb-amount-value">{money(p.totalWagered)}</span></td><td className="lb-weighted" data-label="Weighted wager"><span className="lb-amount-value">{money(p.wagered)}</span></td><td className="table-prize" data-label={ended?"Prize won":"Prize"}>{prizes?prizes[p.rank-1]>0?money(prizes[p.rank-1]):'—':'Unconfirmed'}</td></tr>)}</tbody></table>{!data.players.length&&<p className="empty-state">No recorded wagers for this period.</p>}</div>}
+ </div>;
 }

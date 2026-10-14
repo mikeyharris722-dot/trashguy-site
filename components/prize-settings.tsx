@@ -1,6 +1,10 @@
 "use client";
 import {defaultBossTargets} from "@/lib/trash-bosses";
 
+import ObsSettings from "./obs-settings";
+import LeaderboardTotals from "./leaderboard-totals";
+import {leaderboardPeriods} from "@/lib/leaderboard-data";
+import {periodLabel} from "./leaderboard";
 import { useState } from "react";
 import { siteFetch } from "@/lib/site-fetch";
 import {
@@ -23,12 +27,20 @@ export default function PrizeSettingsEditor({
   );
   const [bossEnabled,setBossEnabled]=useState(settings.trashBossesEnabled===true);
   const [bosses,setBosses]=useState((settings.trashBosses||defaultBossTargets).map(b=>({target:String(b.target),reward:String(b.reward)})));
+  const [weighting,setWeighting]=useState(settings.leaderboardWeighting||'');
+  const [archives,setArchives]=useState(settings.leaderboardArchives||[]);
+  const pastPeriods=leaderboardPeriods(settings,Date.parse(settings.leaderboardStart+'T00:00:00Z')).filter(p=>p.start!==settings.leaderboardStart&&p.end<=settings.leaderboardStart);
+  const [archivePeriod,setArchivePeriod]=useState(pastPeriods[0]?.start||'');
+  const [archivePrizes,setArchivePrizes]=useState((archives.find(p=>p.start===archivePeriod)?.prizes||Array(10).fill('')).map(String));
+  const [archiveMessage,setArchiveMessage]=useState('');
   const [start, setStart] = useState(settings.leaderboardStart);
   const [end, setEnd] = useState(settings.leaderboardEnd);
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const preview = {
     leaderboard: amounts.map(Number),
+    leaderboardWeighting:weighting,
+    leaderboardArchives:archives,
     trashBossesEnabled:bossEnabled,
     trashBosses:bosses.map(b=>({target:Number(b.target),reward:Number(b.reward)})),
     predictionPrize: Number(prediction),
@@ -82,7 +94,11 @@ export default function PrizeSettingsEditor({
           <strong>{dollars(prizeTotal(preview))}</strong>
         </div>
       </div>
+      <ObsSettings />
+      <LeaderboardTotals settings={settings} />
       <form onSubmit={submit}>
+        <fieldset disabled={busy}><legend>RTP contribution guide</legend><p>Display only. Roulo’s weighted wager determines the standings.</p><label>Weighting rules<textarea rows={3} value={weighting} maxLength={2000} onChange={e=>setWeighting(e.target.value)} /></label></fieldset>
+        {pastPeriods.length>0&&<fieldset disabled={busy}><legend>Completed leaderboard prizes</legend><p>Confirm actual prizes won for previous periods. Changing current prizes will not change a saved historical prize schedule.</p><label>Completed period<select aria-label="Historical prize period" value={archivePeriod} onChange={e=>{setArchivePeriod(e.target.value);setArchivePrizes((archives.find(p=>p.start===e.target.value)?.prizes||Array(10).fill('')).map(String));setArchiveMessage('');}}>{pastPeriods.map(p=><option key={p.start} value={p.start}>{periodLabel(p)}</option>)}</select></label><div className="prize-fields">{archivePrizes.map((amount,index)=><label key={index}>Place {index+1}<input type="number" min="0" max="1000000" step="0.01" value={amount} placeholder="Unconfirmed" onChange={e=>setArchivePrizes(old=>old.map((p,i)=>i===index?e.target.value:p))}/></label>)}</div><button type="button" onClick={()=>{try{if(archivePrizes.some(v=>!v.trim()))throw Error('Enter every historical prize. Use 0 for no prize.');const period=pastPeriods.find(p=>p.start===archivePeriod)!;const next=[...archives.filter(p=>p.start!==period.start),{start:period.start,end:period.end,prizes:archivePrizes.map(Number)}];validatePrizeSettings({...preview,leaderboardArchives:next});setArchives(next);setArchiveMessage('Historical prizes ready. Save settings below to confirm.');}catch(error){setArchiveMessage(error instanceof Error?error.message:'Check prize amounts.');}}}>Confirm historical prizes</button>{archiveMessage&&<p role="status">{archiveMessage}</p>}</fieldset>}
         <fieldset disabled={busy} className="competition-settings">
           <legend>Site leaderboard schedule</legend>
           <p>

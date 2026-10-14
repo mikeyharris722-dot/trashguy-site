@@ -7,11 +7,9 @@ import TrackerAdmin from "./tracker-admin";
 import { type PredictionHunt } from "./community-predictions";
 import PendingRegistration from "./pending-registration";
 import {
-  ScheduleFields,
   ScheduleCard,
   CommunitySettings,
 } from "./community-schedule";
-import { localScheduleToUtc } from "@/lib/community-schedule";
 import { supabaseBrowser } from "@/lib/supabase/client";
 type Member = {
   id: string;
@@ -51,8 +49,6 @@ const button =
   "rounded-lg bg-purple-400/20 px-4 py-2 text-sm font-bold disabled:opacity-40";
 export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
   const [confirmTitle, setConfirmTitle] = useState("");
-  const [scheduled, setScheduled] = useState("");
-  const [timeZone, setTimeZone] = useState("Europe/London");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [hunts, setHunts] = useState<Hunt[]>([]),
@@ -133,7 +129,6 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
       if (action === "create") {
         setId(d.result);
         setTitle("");
-        setScheduled("");
       }
       if (action === "submit" || action === "hostCall") {
         setChoice(null);
@@ -219,12 +214,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
         <p className="text-xs font-bold uppercase tracking-widest text-amber-200">
           Community · Rainbet slots
         </p>
-        <h1 className="mt-2 text-3xl font-black">Community Hunt</h1>
-        <p className="mt-2 text-sm text-white/60">
-          {admin
-            ? "Set the hunt date, review player contributions and collect Rainbet bonuses. The active hunt also powers the shared tracker and OBS overlay."
-            : "Join with your contribution, wait for approval, then call your favourite Rainbet slots. Follow the bonuses and results together."}
-        </p>
+        <h1 className="mt-2 text-3xl font-black">COMMUNITY HUNTS</h1>
       </div>
       {message && (
         <p
@@ -252,8 +242,8 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                 void command("create", {
                   title,
                   limit: Number(limit),
-                  scheduledAt: localScheduleToUtc(scheduled, timeZone),
-                  timeZone,
+                  scheduledAt: null,
+                  timeZone: "UTC",
                 });
               } catch (e) {
                 setMessage(
@@ -287,12 +277,6 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                 />
               </label>
             </div>
-            <ScheduleFields
-              value={scheduled}
-              zone={timeZone}
-              onValue={setScheduled}
-              onZone={setTimeZone}
-            />
             <div className="form-footer">
               <p>
                 Starting bankroll is the total of approved player contributions.
@@ -355,11 +339,11 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
         </div>
       ) : (
         <>
-          <ScheduleCard
+          {!admin && h.scheduledAt && <ScheduleCard
             scheduledAt={h.scheduledAt}
             timeZone={h.timeZone}
             phase={h.phase}
-          />
+          />}
 
           {admin && (
             <CommunitySettings

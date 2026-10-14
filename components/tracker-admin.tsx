@@ -374,36 +374,6 @@ export default function TrackerAdmin({
           </div>
         </details>
       )}
-      {manual && (
-        <details className="rounded-lg border border-teal-300/20 p-3">
-          <summary className="cursor-pointer font-bold text-teal-200">
-            OBS overlay
-          </summary>
-          <p className="mt-2 text-xs text-white/60">
-            Add a Browser Source in OBS. Use this overlay URL, width 435 and
-            height 285. It follows the active hunt. Collection scrolls; opening
-            stays still and follows skips.
-          </p>
-          <input
-            readOnly
-            aria-label="OBS overlay URL"
-            className={input + " mt-2 w-full"}
-            value={
-              typeof window !== "undefined"
-                ? window.location.origin + "/overlay"
-                : "/overlay"
-            }
-          />
-          <a
-            href="/overlay"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-block text-xs text-teal-200"
-          >
-            Preview overlay ↗
-          </a>
-        </details>
-      )}
       {current && (
         <>
           {!communityMode && (

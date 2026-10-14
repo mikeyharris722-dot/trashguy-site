@@ -1,60 +1,8 @@
-import {withLeaderboardBadges} from "@/lib/leaderboard-badges";
-import { NextResponse } from "next/server";
-import { communityState } from "@/lib/community-local";
-import { resolvedPrizeSettings } from "@/lib/prize-settings";
-
-export const runtime = "nodejs";
-
-export async function GET() {
-  try {
-    const apiKey = process.env.ROULO_API_KEY;
-    const settings = resolvedPrizeSettings((await communityState()).prizeSettings);
-
-    if (!apiKey) {
-      return NextResponse.json({
-        success: true,
-        affiliates: [],
-        note: "Missing ROULO_API_KEY",
-      });
-    }
-
-    const url = new URL("https://api.roulobets.com/v1/external/affiliates");
-    url.searchParams.set("start_at", settings.leaderboardStart);
-    url.searchParams.set("end_at", settings.leaderboardEnd);
-    url.searchParams.set("key", apiKey);
-    url.searchParams.set("weighted", "true");
-
-    const res = await fetch(url.toString(), { cache: "no-store" });
-
-    if (!res.ok) {
-      const text = await res.text();
-
-      return NextResponse.json({
-        success: true,
-        affiliates: [],
-        note: `Roulo API error: ${text}`,
-      });
-    }
-
-    const data = await res.json();
-
-    const affiliates = Array.isArray(data?.affiliates)
-      ? data.affiliates
-      : Array.isArray(data)
-      ? data
-      : [];
-
-    let displayed = affiliates;
-    try { displayed = await withLeaderboardBadges(affiliates); } catch { /* Badge failure must not hide standings. */ }
-    return NextResponse.json({
-      success: true,
-      affiliates: displayed,
-    });
-  } catch (error: any) {
-    return NextResponse.json({
-      success: true,
-      affiliates: [],
-      note: error?.message || "Failed to load leaderboard",
-    });
-  }
-}
+import {withLeaderboardBadges} from '@/lib/leaderboard-badges';
+import {leaderboardResults} from '@/lib/leaderboard-provider';
+export const runtime='nodejs';
+export async function GET(request:Request){try{
+ const result=await leaderboardResults(new URL(request.url).searchParams.get('period'));
+ let affiliates=result.affiliates;try{affiliates=await withLeaderboardBadges(affiliates);}catch{}
+ return Response.json({success:true,affiliates,players:result.players.slice(0,10).map(p=>({...p,badges:affiliates.find((a:{username?:string})=>a.username===p.username)?.badges||[]})),period:result.period,periods:result.periods,weighting:result.weighting,updatedAt:result.updatedAt},{headers:{'Cache-Control':'no-store'}});
+}catch(error){const limited=error instanceof Error&&error.message==='PROVIDER_RATE_LIMIT';return Response.json({success:false,error:limited?'Roulo is limiting requests. The leaderboard will retry automatically within a minute.':'The provider leaderboard is temporarily unavailable. Please retry.'},{status:limited?429:503,headers:{'Cache-Control':'no-store'}});}}

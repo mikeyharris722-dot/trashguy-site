@@ -1,0 +1,3 @@
+import {requireTrackerAdmin,apiError} from '@/lib/site-db';
+import {leaderboardResults} from '@/lib/leaderboard-provider';
+export async function GET(request:Request){try{await requireTrackerAdmin(request);const result=await leaderboardResults(new URL(request.url).searchParams.get('period'));return Response.json({totals:result.totals,period:result.period,periods:result.periods,updatedAt:result.updatedAt},{headers:{'Cache-Control':'private, no-store'}});}catch(error){if(error instanceof Error&&error.message==='PROVIDER_RATE_LIMIT')return Response.json({error:"Roulo is limiting requests. Monthly totals will retry automatically within a minute."},{status:429,headers:{"Cache-Control":"private, no-store"}});return apiError(error);}}

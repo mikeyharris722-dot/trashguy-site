@@ -2,8 +2,6 @@
 import { useState } from "react";
 import {
   huntTimeZones,
-  localScheduleToUtc,
-  scheduleInput,
   scheduleLabel,
 } from "@/lib/community-schedule";
 export function ScheduleFields({
@@ -110,12 +108,10 @@ export function CommunitySettings({
 }) {
   const [title, setTitle] = useState(hunt.title),
     [limit, setLimit] = useState(String(hunt.limit)),
-    [zone, setZone] = useState(hunt.timeZone),
-    [when, setWhen] = useState(scheduleInput(hunt.scheduledAt, hunt.timeZone)),
     [error, setError] = useState("");
   return (
     <details className="community-settings">
-      <summary>Edit hunt details and schedule</summary>
+      <summary>Edit hunt details</summary>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -124,8 +120,6 @@ export function CommunitySettings({
             await save({
               title,
               limit: Number(limit),
-              timeZone: zone,
-              scheduledAt: localScheduleToUtc(when, zone),
             });
           } catch (e) {
             setError(e instanceof Error ? e.message : "Check the schedule.");
@@ -156,12 +150,7 @@ export function CommunitySettings({
             />
           </label>
         </div>
-        <ScheduleFields
-          value={when}
-          zone={zone}
-          onValue={setWhen}
-          onZone={setZone}
-        />
+
         {error && (
           <p role="alert" className="form-error">
             {error}

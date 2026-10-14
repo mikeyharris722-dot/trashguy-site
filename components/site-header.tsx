@@ -33,37 +33,21 @@ const navigation = [
   },
   {
     id: "hunts",
-    label: "Bonus hunt predictions",
+    label: "Bonus Hunts",
     icon: "🎁",
     detail: "Follow the hunt and predict the finish",
   },
   {
     id: "community",
-    label: "Community Hunt",
+    label: "Community Hunts",
     icon: "👻",
     detail: "Join a hunt and submit Rainbet calls",
   },
   {
-    id: "slotwheel",
-    label: "Viewer wheel",
-    icon: "🎡",
-    detail: "Twitch calls and collected bonuses",
+    id: "tournaments",label:"Tournaments",icon:"🏅",detail:"Brackets, teams and match results",
   },
-  {
-    id: "tournaments",
-    label: "Tournaments",
-    icon: "🏅",
-    detail: "Brackets, teams and match results",
-  },
-  {
-    id: "slotpicker",
-    label: "Slot picker",
-    icon: "🎰",
-    detail: "Browse the RouloBets collection",
-  },
-  {
-    id: "trashbosses", label: "Trash Bosses", icon: "👹", detail: "Your slot-call winnings unlock three monsters",
-  },
+  {id:"slotpicker",label:"Slot picker",icon:"🎰",detail:"Browse the RouloBets collection"},
+  {id:"trashbosses",label:"Slot Call Rewards",icon:"👹",detail:"Your slot-call winnings unlock three monsters"},
   {
     id: "profile",
     label: "Your profile",

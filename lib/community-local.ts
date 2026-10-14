@@ -171,7 +171,12 @@ export async function communityCommand(
         };
         if (action === "prizeSettings") {
           staff();
-          s.prizeSettings = validatePrizeSettings(b.settings);
+          const previous=s.prizeSettings||defaultPrizeSettings,next=validatePrizeSettings(b.settings);
+          next.leaderboardArchives=[...(previous.leaderboardArchives||defaultPrizeSettings.leaderboardArchives||[]).filter(p=>!next.leaderboardArchives?.some(n=>n.start===p.start)),...(next.leaderboardArchives||[])];
+          if(previous.leaderboardStart!==next.leaderboardStart||previous.leaderboardEnd!==next.leaderboardEnd){
+            next.leaderboardArchives=[...(next.leaderboardArchives||[]).filter(p=>p.start!==previous.leaderboardStart),{start:previous.leaderboardStart,end:previous.leaderboardEnd,prizes:[...previous.leaderboard]}];
+          }
+          s.prizeSettings = next;
         } else if (action === "clearSelection") {
           staff();
           s.activeHuntId = "";

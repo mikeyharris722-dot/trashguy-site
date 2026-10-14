@@ -3,12 +3,11 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 export const sectionTitles: Record<string, string> = {
   home: "Home",
   leaderboard: "Leaderboard",
-  hunts: "Bonus hunt predictions",
-  community: "Community Hunt",
-  slotwheel: "Slot calls",
+  hunts: "Bonus Hunts",
+  community: "Community Hunts",
   tournaments: "Tournaments",
   slotpicker: "Slot picker",
-  trashbosses: "Trash Bosses",
+  trashbosses: "Slot Call Rewards",
   profile: "Your profile",
   admin: "Admin workspace",
 };

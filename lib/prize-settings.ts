@@ -2,6 +2,8 @@ import {defaultBossTargets,type BossTarget} from "./trash-bosses";
 import { leaderboardPeriod } from "./leaderboard-period";
 export type PrizeSettings = {
   leaderboard: number[];
+  leaderboardArchives?: {start:string;end:string;prizes:number[]}[];
+  leaderboardWeighting?: string;
   trashBosses?: BossTarget[];
   trashBossesEnabled?: boolean;
   predictionPrize: number;
@@ -10,7 +12,9 @@ export type PrizeSettings = {
 };
 export const defaultPrizeSettings: PrizeSettings = {
   leaderboard: [525, 425, 325, 250, 175, 125, 100, 75, 0, 0],
+  leaderboardArchives: [{start:"2026-09-05",end:"2026-10-05",prizes:[400,350,300,200,150,100,0,0,0,0]}],
   predictionPrize: 15,
+  leaderboardWeighting: "RTP ≤97% → 100% contribution\nRTP >97% and <98% → 50% contribution\nRTP ≥98% → 10% contribution",
   trashBosses: defaultBossTargets,
   trashBossesEnabled: false,
   leaderboardStart: leaderboardPeriod.start,
@@ -49,7 +53,15 @@ export function validatePrizeSettings(value: unknown): PrizeSettings {
   if(!Array.isArray(bosses)||bosses.length!==3)throw Error("Configure exactly three Trash Bosses.");
   const checked=bosses.map(b=>({target:amount(b.target),reward:amount(b.reward)}));
   if(checked.some((b,i)=>b.target<=0||(i>0&&b.target<=checked[i-1].target)))throw Error("Boss targets must be positive and increase from Boss 1 to Boss 3.");
+  const archives=input.leaderboardArchives??defaultPrizeSettings.leaderboardArchives??[];
+  if(!Array.isArray(archives)||archives.length>120)throw Error('Invalid leaderboard history.');
+  const checkedArchives=archives.map(p=>{if(!validDate(p.start)||!validDate(p.end)||p.end<=p.start||!Array.isArray(p.prizes)||p.prizes.length!==10)throw Error('Invalid archived leaderboard prizes.');return {start:p.start,end:p.end,prizes:p.prizes.map(amount)};});
+  if(new Set(checkedArchives.map(p=>p.start)).size!==checkedArchives.length)throw Error('Duplicate leaderboard archive.');
+  const weighting=input.leaderboardWeighting??defaultPrizeSettings.leaderboardWeighting??'';
+  if(typeof weighting!=='string'||weighting.length>2000)throw Error('Weighting rules must be under 2,000 characters.');
   return {
+    leaderboardArchives:checkedArchives,
+    leaderboardWeighting:weighting.trim(),
     trashBosses: checked,
     trashBossesEnabled: input.trashBossesEnabled===true,
     leaderboardStart: start,

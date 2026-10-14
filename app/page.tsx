@@ -113,13 +113,7 @@ const STORAGE_KEYS = {
 
 const ADMIN_USERS = ["trashguy__", "trashguy", "parz", "parzwz", "gettyyy_"];
 
-type LeaderboardPlayer = {
-  badges?: import("@/components/user-badges").Badge[];
-  rank: number;
-  username: string;
-  wagered: number;
-  totalWagered: number;
-};
+
 
 type HuntBonusItem = {
   id: string;
@@ -926,9 +920,9 @@ const Winner = async (id: string) => {
   loadGiveawayEntries(); // refresh list
 };
 
-const [leaderboardData, setLeaderboardData] = useState<LeaderboardPlayer[]>([]);
-const [leaderboardLoading, setLeaderboardLoading] = useState(true);
-const [leaderboardError, setLeaderboardError] = useState("");
+
+
+
 const [prizeSettings, setPrizeSettings] = useState<PrizeSettings>(defaultPrizeSettings);
 const [prizeSettingsLoaded,setPrizeSettingsLoaded]=useState(false);
 const [bossAccess,setBossAccess]=useState({loaded:false,admin:false,enabled:false,viewer:""});
@@ -1092,19 +1086,7 @@ const currentPredictionAvgX =
     ? ((currentPredictionHunt.totalWinnings || 0) / currentPredictionHunt.startCost).toFixed(2)
     : "0.00";
 
-    const leaderboardCountdown = useMemo(() => {
-  const end = new Date(`${prizeSettings.leaderboardEnd}T00:00:00Z`).getTime();
-  const diff = end - countdownTick;
 
-  if (diff <= 0) return "Ended";
-
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-  const minutes = Math.floor((diff / (1000 * 60)) % 60);
-  const seconds = Math.floor((diff / 1000) % 60);
-
-  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-}, [countdownTick, prizeSettings.leaderboardEnd]);
 
 const giveawayResponseTimer = useMemo(() => {
   if (!giveawayDrawTime) return "0m 00s";
@@ -1675,53 +1657,7 @@ if (normalized.length > 0) {
   }
 }, []);
 
-  const loadLeaderboard = useCallback(async () => {
-    setLeaderboardLoading(true);
-    try {
-      const res = await siteFetch("/api/leaderboard", { cache: "no-store" });
-      const data = await res.json();
 
-      if (!res.ok || data?.success === false || data?.note) throw Error("The provider leaderboard is temporarily unavailable. Please try refreshing.");
-      const affiliates = Array.isArray(data?.affiliates) ? data.affiliates : [];
-
-      const normalized: LeaderboardPlayer[] = affiliates
-        .map((player: any, index: number): LeaderboardPlayer => ({
-          rank: index + 1,
-          badges: player.badges || [],
-          username:
-            player.username ||
-            player.name ||
-            player.display_name ||
-            `Player ${index + 1}`,
-wagered: Number(
-  player.weighted_wagered_amount ??
-    player.weightedWageredAmount ??
-    player.weighted_wagered ??
-    0
-),
-totalWagered: Number(
-  player.wagered_amount ??
-    player.wageredAmount ??
-    player.total_wagered ??
-    player.totalWagered ??
-    0
-),
-        }))
-        .sort((a: LeaderboardPlayer, b: LeaderboardPlayer) => b.wagered - a.wagered)
-        .slice(0, 10)
-        .map((player: LeaderboardPlayer, index: number): LeaderboardPlayer => ({
-          ...player,
-          rank: index + 1,
-        }));
-
-      setLeaderboardData(normalized);
-      setLeaderboardError("");
-    } catch (error) {
-      setLeaderboardError(error instanceof Error ? error.message : "Could not load the leaderboard.");
-    } finally {
-      setLeaderboardLoading(false);
-    }
-  }, []);
 
 const loadViewerRewards = useCallback(async () => {
   try {
@@ -2308,7 +2244,7 @@ useEffect(() => {
 
 // INITIAL LOAD + POLLING
 useEffect(() => {
-  loadLeaderboard();
+
   loadGiveaways();
   loadHunts();
   loadLiveStatus();
@@ -2330,7 +2266,7 @@ useEffect(() => {
   loadBracket,
   loadGiveaways,
   loadHunts,
-  loadLeaderboard,
+
   loadLiveStatus,
 ]);
 
@@ -4860,7 +4796,7 @@ return (
 {activeSection === "leaderboard" && (
   <section className="w-full min-w-0 max-w-full space-y-4 overflow-x-hidden sm:space-y-5">
 
-    <Leaderboard players={leaderboardData} settings={prizeSettings} loading={leaderboardLoading} error={leaderboardError || prizeSettingsError} countdown={leaderboardCountdown} retry={() => void loadLeaderboard()} />
+    <Leaderboard settings={prizeSettings} />
     <div>
       {/* =========================================================
           ADMIN VIP SNAPSHOT
@@ -5608,530 +5544,6 @@ return (
 )}
 
 <Activity mode={activeSection === "community" ? "visible" : "hidden"}><CommunityHunt key={viewerPlatform+":"+viewerName}/></Activity>
-
-{activeSection === "slotwheel" && (
-  <section className="space-y-3 sm:space-y-5">
-    {/* TITLE */}
-    <div className="mx-auto w-full max-w-7xl text-center">
-
-    </div>
-
-    {/* IDLE SCROLL ANIMATION */}
-    <style>{`
-      @keyframes viewerWheelIdleScroll {
-        from {
-          transform: translateY(0);
-        }
-
-        to {
-          transform: translateY(-${slotCalls.length * SLOT_WHEEL_ITEM_HEIGHT}px);
-        }
-      }
-    `}</style>
-
-    {/* =========================================================
-        MAIN VIEWER WHEEL
-    ========================================================= */}
-
-    <div
-      className="
-        mx-auto w-full max-w-7xl
-        rounded-2xl
-        border border-purple-300/20
-        bg-[linear-gradient(180deg,rgba(13,5,20,0.76),rgba(4,2,8,0.66))]
-        p-3
-        shadow-[0_18px_55px_rgba(0,0,0,0.28),0_0_30px_rgba(168,85,247,0.07)]
-        backdrop-blur-[9px]
-        sm:rounded-3xl
-        sm:p-5
-      "
-    >
-      {/* HEADER */}
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-[8px] font-black uppercase tracking-[0.20em] text-purple-200/50 sm:text-[11px]">
-            Live Viewer Wheel
-          </div>
-
-          <div className="mt-0.5 text-[13px] font-black text-white sm:mt-1 sm:text-[19px]">
-            Slot Calls
-          </div>
-        </div>
-
-        <div
-          className="
-            rounded-full
-            border border-purple-300/20
-            bg-purple-400/[0.08]
-            px-2.5 py-1
-            text-[8px] font-black
-            text-purple-100
-            sm:px-4
-            sm:py-1.5
-            sm:text-[11px]
-          "
-        >
-          {slotCalls.length} entries
-        </div>
-      </div>
-
-      {/* =========================================================
-          WHEEL
-      ========================================================= */}
-
-      <div
-        className="
-          relative
-          mx-auto mt-3
-          overflow-hidden
-          rounded-xl
-          border border-purple-300/25
-          bg-black/75
-          shadow-[inset_0_0_30px_rgba(168,85,247,0.07),0_0_24px_rgba(168,85,247,0.07)]
-        "
-        style={{
-          height: `${SLOT_WHEEL_VIEWPORT_HEIGHT}px`,
-        }}
-      >
-        {/* TOP FADE */}
-        <div
-          className="
-            pointer-events-none
-            absolute inset-x-0 top-0 z-20
-            h-16
-            bg-gradient-to-b
-            from-black
-            via-black/85
-            to-transparent
-          "
-        />
-
-        {/* BOTTOM FADE */}
-        <div
-          className="
-            pointer-events-none
-            absolute inset-x-0 bottom-0 z-20
-            h-16
-            bg-gradient-to-t
-            from-black
-            via-black/85
-            to-transparent
-          "
-        />
-
-        {/* CENTER SELECTOR */}
-        <div
-          className="
-            pointer-events-none
-            absolute inset-x-2 top-1/2 z-30
-            h-11
-            -translate-y-1/2
-            rounded-lg
-            border border-purple-300/45
-            bg-purple-400/[0.10]
-            shadow-[0_0_26px_rgba(168,85,247,0.16)]
-          "
-        />
-
-        {/* LEFT ARROW */}
-        <div
-          className="
-            pointer-events-none
-            absolute left-0 top-1/2 z-40
-            -translate-y-1/2
-            border-y-[8px]
-            border-l-[12px]
-            border-y-transparent
-            border-l-purple-300
-          "
-        />
-
-        {/* RIGHT ARROW */}
-        <div
-          className="
-            pointer-events-none
-            absolute right-0 top-1/2 z-40
-            -translate-y-1/2
-            border-y-[8px]
-            border-r-[12px]
-            border-y-transparent
-            border-r-purple-300
-          "
-        />
-
-        {/* =====================================================
-            WHEEL CONTENT
-        ===================================================== */}
-
-        {slotCalls.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-[10px] font-semibold text-white/35 sm:text-sm">
-            No entries yet
-          </div>
-        ) : isSlotWheelSpinning ? (
-          /* ACTUAL SPIN */
-          <div
-            className="transition-transform duration-[4200ms] ease-[cubic-bezier(0.12,0.72,0.08,1)]"
-            style={{
-              transform: `translateY(-${slotWheelRotation}px)`,
-            }}
-          >
-            {slotWheelLoop.map((call, index) => (
-              <div
-                key={`spin-${call.id || call.username}-${call.slotName}-${index}`}
-                className="
-                  grid
-                  grid-cols-[minmax(0,1fr)_minmax(0,1fr)]
-                  items-center
-                  gap-3
-                  border-b border-white/[0.05]
-                  px-3
-                "
-                style={{
-                  height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
-                }}
-              >
-                <div className="truncate text-[10px] font-black text-white sm:text-[12px]">
-                  {call.username}<UserBadges name={call.username} />
-                </div>
-
-                <div className="truncate text-right text-[10px] font-black text-purple-200 sm:text-[12px]">
-                  {call.slotName}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : pickedSlotCall ? (
-          /* LOCKED WINNER */
-          <div>
-            {slotWheelRestingRows.map(
-              ({ call, isCenter, rowKey }) => (
-                <div
-                  key={rowKey}
-                  className={`
-                    grid
-                    grid-cols-[minmax(0,1fr)_minmax(0,1fr)]
-                    items-center
-                    gap-3
-                    border-b border-white/[0.05]
-                    px-3
-                    ${
-                      isCenter
-                        ? `
-                          bg-purple-400/[0.10]
-                          opacity-100
-                        `
-                        : `
-                          opacity-45
-                        `
-                    }
-                  `}
-                  style={{
-                    height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
-                  }}
-                >
-                  <div className="truncate text-[10px] font-black text-white sm:text-[12px]">
-                    {call.username}<UserBadges name={call.username} />
-                  </div>
-
-                  <div className="truncate text-right text-[10px] font-black text-purple-200 sm:text-[12px]">
-                    {call.slotName}
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-        ) : (
-          /* SLOW CONTINUOUS IDLE SCROLL */
-          <div
-            style={{
-              animation: `viewerWheelIdleScroll ${Math.max(
-                slotCalls.length * 2.5,
-                8
-              )}s linear infinite`,
-              willChange: "transform",
-            }}
-          >
-            {slotWheelLoop.map((call, index) => (
-              <div
-                key={`idle-main-${call.id || call.username}-${call.slotName}-${index}`}
-                className="
-                  grid
-                  grid-cols-[minmax(0,1fr)_minmax(0,1fr)]
-                  items-center
-                  gap-3
-                  border-b border-white/[0.05]
-                  px-3
-                "
-                style={{
-                  height: `${SLOT_WHEEL_ITEM_HEIGHT}px`,
-                }}
-              >
-                <div className="truncate text-[10px] font-black text-white sm:text-[12px]">
-                  {call.username}<UserBadges name={call.username} />
-                </div>
-
-                <div className="truncate text-right text-[10px] font-black text-purple-200 sm:text-[12px]">
-                  {call.slotName}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* =========================================================
-          TOP WINNER
-      ========================================================= */}
-
-      <div
-        className="
-          mx-auto mt-3 w-full max-w-7xl
-          overflow-hidden
-          rounded-xl
-          border border-yellow-300/25
-          bg-[linear-gradient(135deg,rgba(120,85,0,0.24),rgba(8,4,12,0.72))]
-          p-2.5
-          shadow-[0_0_24px_rgba(250,204,21,0.07)]
-          backdrop-blur-md
-          sm:mt-4
-          sm:rounded-2xl
-          sm:p-4
-        "
-      >
-        {topSlotCallWinner ? (
-          <div className="grid grid-cols-[auto_minmax(0,0.8fr)_minmax(0,1fr)_auto] items-center gap-2 sm:gap-4">
-            <div className="text-[16px] sm:text-2xl">
-              👑
-            </div>
-
-            <div className="min-w-0">
-              <div className="text-[7px] font-black uppercase tracking-[0.16em] text-yellow-200/55 sm:text-[10px]">
-                Top Winner
-              </div>
-
-              <div className="truncate text-[10px] font-black text-white sm:text-sm">
-                {topSlotCallWinner.username}<UserBadges name={topSlotCallWinner.username} />
-              </div>
-            </div>
-
-            <div className="min-w-0 truncate text-right text-[8px] text-white/50 sm:text-xs">
-              {topSlotCallWinner.slotName}
-            </div>
-
-            <div className="whitespace-nowrap text-right text-[10px] font-black text-yellow-300 sm:text-base">
-              $
-              {Number(topSlotCallWinner.payout).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="py-2 text-center text-[9px] text-white/35 sm:text-xs">
-            No top winner yet.
-          </div>
-        )}
-      </div>
-
-      {/* STATUS */}
-      <div className="mt-3 flex items-center justify-center gap-4 text-[8px] font-black uppercase tracking-[0.14em] sm:text-[11px]">
-        <div className="text-white/40">
-          Entries{" "}
-          <span
-            className="
-              ml-1
-              rounded-full
-              border border-purple-300/20
-              bg-purple-400/[0.08]
-              px-2 py-1
-              text-purple-100
-            "
-          >
-            {slotCalls.length}
-          </span>
-        </div>
-
-        <div role="status" className={`wheel-connection flex items-center gap-1.5 ${slotCallConnection === "Live updates" ? "text-emerald-300" : "text-amber-200"}`}>
-          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
-          {slotCallConnection}
-        </div>
-      </div>
-    </div>
-
-    {/* =========================================================
-        ENTRIES
-    ========================================================= */}
-
-    <div
-      className="
-        mx-auto w-full max-w-7xl
-        overflow-hidden
-        rounded-2xl
-        border border-purple-300/15
-        bg-[linear-gradient(180deg,rgba(10,4,16,0.68),rgba(3,1,6,0.58))]
-        shadow-[0_14px_40px_rgba(0,0,0,0.22),0_0_24px_rgba(168,85,247,0.05)]
-        backdrop-blur-[8px]
-      "
-    >
-      <div className="flex items-center justify-between border-b border-purple-300/[0.08] px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="text-[11px] font-black uppercase tracking-[0.12em] text-white sm:text-[15px]">
-          Entries
-        </div>
-
-        <div
-          className="
-            rounded-full
-            border border-purple-300/20
-            bg-purple-400/[0.08]
-            px-2.5 py-1
-            text-[8px] font-black
-            text-purple-100
-            sm:text-[11px]
-          "
-        >
-          {slotCalls.length}
-        </div>
-      </div>
-
-      <div className="max-h-[360px] overflow-y-auto p-2 sm:p-3">
-        {slotCalls.length === 0 ? (
-          <div className="py-6 text-center text-[9px] text-white/35 sm:text-sm">
-            No entries yet.
-          </div>
-        ) : (
-          <div className="grid gap-1">
-            {slotCalls.map((call, index) => (
-              <div
-                key={`${call.id}-${index}`}
-                className="
-                  grid
-                  grid-cols-[28px_minmax(0,0.9fr)_minmax(0,1.1fr)]
-                  items-center
-                  gap-2
-                  rounded-lg
-                  border border-purple-300/[0.07]
-                  bg-black/20
-                  px-2.5 py-2
-                  transition
-                  hover:border-purple-300/15
-                  hover:bg-purple-400/[0.035]
-                  sm:grid-cols-[40px_minmax(0,1fr)_minmax(0,1.3fr)]
-                  sm:px-3
-                "
-              >
-                <div className="truncate text-[8px] font-black text-purple-300/55 sm:text-[10px]">
-                  {index + 1}.
-                </div>
-
-                <div className="truncate text-[10px] font-black text-white sm:text-xs">
-                  {call.username}<UserBadges name={call.username} />
-                </div>
-
-                <div className="truncate text-right text-[9px] text-white/50 sm:text-xs">
-                  {call.slotName}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-
-    {/* =========================================================
-        ROLLED / PAYOUT
-    ========================================================= */}
-
-    <div
-      className="
-        mx-auto w-full max-w-7xl
-        overflow-hidden
-        rounded-2xl
-        border border-purple-300/15
-        bg-[linear-gradient(180deg,rgba(10,4,16,0.68),rgba(3,1,6,0.58))]
-        shadow-[0_14px_40px_rgba(0,0,0,0.22),0_0_24px_rgba(168,85,247,0.05)]
-        backdrop-blur-[8px]
-      "
-    >
-      <div className="flex items-center justify-between border-b border-purple-300/[0.08] px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="text-[11px] font-black uppercase tracking-[0.12em] text-white sm:text-[15px]">
-          Rolled / Payout
-        </div>
-
-        <div
-          className="
-            rounded-full
-            border border-purple-300/20
-            bg-purple-400/[0.08]
-            px-2.5 py-1
-            text-[8px] font-black
-            text-purple-100
-            sm:text-[11px]
-          "
-        >
-          {slotCallResults.length}
-        </div>
-      </div>
-
-      <div className="max-h-[360px] overflow-y-auto p-2 sm:p-3">
-        {slotCallResults.length === 0 ? (
-          <div className="py-6 text-center text-[9px] text-white/35 sm:text-sm">
-            No rolled slots yet.
-          </div>
-        ) : (
-          <div className="grid gap-1">
-            {slotCallResults.map((result, index) => (
-              <div
-                key={`${result.id}-${index}`}
-                className="
-                  grid
-                  grid-cols-[24px_minmax(0,0.75fr)_minmax(0,1fr)_70px]
-                  items-center
-                  gap-2
-                  rounded-lg
-                  border border-purple-300/[0.07]
-                  bg-black/20
-                  px-2 py-2
-                  transition
-                  hover:border-purple-300/15
-                  hover:bg-purple-400/[0.035]
-                  sm:grid-cols-[40px_minmax(0,0.9fr)_minmax(0,1.3fr)_100px]
-                  sm:px-3
-                "
-              >
-                <div className="truncate text-[8px] font-black text-purple-300/55 sm:text-[10px]">
-                  {index + 1}.
-                </div>
-
-                <div className="truncate text-[9px] font-black text-white sm:text-xs">
-                  {result.username}<UserBadges name={result.username} />
-                </div>
-
-                <div className="truncate text-[9px] text-white/50 sm:text-xs">
-                  {result.slotName}
-                </div>
-
-                <div
-                  className={`text-right text-[9px] font-black leading-tight sm:text-xs ${
-                    result.status === "failed" ? "text-red-300" : result.payout === null
-                      ? "text-amber-300"
-                      : "text-emerald-300"
-                  }`}
-                >
-                  {result.status === "failed" ? "DIDN’T GET IN" : result.payout === null
-                    ? (result.status === "collected" ? "GOT IN · PENDING" : "PENDING")
-                    : `$${result.payout.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}`}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  </section>
-)}
 
 {activeSection === "tournaments" && (
   <section className="space-y-3 sm:space-y-4">
@@ -8890,7 +8302,7 @@ onClick={() => {
 <div className="mt-2 grid w-full min-w-0 max-w-full gap-2 overflow-x-hidden sm:mt-3 sm:gap-3">
   {/* GIVEAWAY ADMIN */}
   <AdminGuidance tab={activeAdminTab} />
-  {activeAdminTab === "prizes" && (prizeSettingsError ? <p className="form-error" role="alert">{prizeSettingsError}</p> : <PrizeSettingsEditor key={JSON.stringify(prizeSettings)} settings={prizeSettings} saved={(settings) => { setPrizeSettings(settings); void loadLeaderboard(); setSiteNotice("Prize amounts saved locally. The leaderboard total and prediction banner have updated."); }} />)}
+  {activeAdminTab === "prizes" && (prizeSettingsError ? <p className="form-error" role="alert">{prizeSettingsError}</p> : <PrizeSettingsEditor key={JSON.stringify(prizeSettings)} settings={prizeSettings} saved={(settings) => { setPrizeSettings(settings); setSiteNotice("Prize amounts saved locally. The leaderboard total and prediction banner have updated."); }} />)}
   <details
     open={activeAdminTab === "giveaway"}
     className={`${
@@ -10059,7 +9471,7 @@ onClick={() => {
         <Activity mode={activeAdminTab === "community" ? "visible" : "hidden"}><CommunityHunt admin key={viewerPlatform+":"+viewerName}/></Activity>
         {activeAdminTab === "bonusTracker" && <section className="rounded-xl border border-purple-300/20 bg-black/80 p-4">
           <h2 className="text-xl font-black text-purple-100">Bonus Hunt Tracker</h2>
-          <p className="mt-1 text-sm text-white/50">Choose the same hunt as the wheel, or create one here. Search slots, add bonuses and manage opening results.</p>
+
           <TrackerAdmin manual huntId={trackerHuntId} onHunt={selectTrackerHunt} onChange={()=>{void loadSlotCalls();void loadHunts();}} />
         </section>}
         {/* =====================================================
