@@ -19,6 +19,16 @@ export async function trackerHunts() {
     .order("sort_order")
     .order("created_at");
   if (entryError) throw new Error(entryError.message);
+  // Prediction controls persist on hunts; phase is only a legacy fallback.
+  const ids = (settings || []).map(h => h.hunt_id);
+  const predictionStates = new Map<string, string>();
+  if (ids.length) {
+    const { data: hunts, error: predictionError } = await db
+      .from("hunts").select("id,prediction_status").in("id", ids);
+    if (predictionError) throw new Error(predictionError.message);
+    for (const hunt of hunts || [])
+      predictionStates.set(hunt.id, hunt.prediction_status === "open" ? "open" : "locked");
+  }
   return (settings || []).map((h) => {
     const rows = (entries || []).filter((e) => e.hunt_id === h.hunt_id),
       stats = trackerStats(h.start_amount, rows);
@@ -32,7 +42,7 @@ export async function trackerHunts() {
       casino: "Roulobets",
       startCost: Number(h.start_amount),
       status: h.phase === "finished" ? "completed" : "open",
-      prediction_status: h.phase === "collecting" ? "open" : "locked",
+      prediction_status: predictionStates.get(h.hunt_id) ?? (h.phase === "collecting" ? "open" : "locked"),
       isOpening: h.phase === "opening",
       createdAt: h.created_at,
       updatedAt: h.updated_at,
