@@ -1,15 +1,15 @@
+import {serverPrizeSettings} from '@/lib/server-prize-settings';
 import {ensureWeeklySetup} from "@/lib/weekly-wager-server";
 import { communityState, communityCommand } from "@/lib/community-local";
 import {ensureBossRewardSetup} from "@/lib/trash-boss-claims";
 import {validatePrizeSettings,type PrizeSettings} from "@/lib/prize-settings";
-import { resolvedPrizeSettings } from "@/lib/prize-settings";
 import { requireTrackerAdmin, apiError } from "@/lib/site-db";
 import { communityJson } from "@/lib/community-request";
 export async function GET() {
   try {
     return Response.json(
       {
-        settings: resolvedPrizeSettings((await communityState()).prizeSettings),
+        settings: await serverPrizeSettings(),
       },
       { headers: { "Cache-Control": "no-store" } },
     );

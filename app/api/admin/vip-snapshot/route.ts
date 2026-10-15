@@ -1,3 +1,4 @@
+import {providerRows} from "@/lib/leaderboard-provider";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
 
@@ -45,32 +46,9 @@ export async function POST() {
   const periodStart = "2026-09-05";
   const periodEnd = "2026-10-05";
 
-  const url = new URL("https://api.roulobets.com/v1/external/affiliates");
-  url.searchParams.set("start_at", periodStart);
-  url.searchParams.set("end_at", periodEnd);
-  url.searchParams.set("key", key);
-  url.searchParams.set("weighted", "true");
-
-  const res = await fetch(url.toString(), { cache: "no-store" });
-  const json = await res.json();
-
-const affiliates = Array.isArray(json)
-  ? json
-  : Array.isArray(json?.affiliates)
-  ? json.affiliates
-  : Array.isArray(json?.data)
-  ? json.data
-  : Array.isArray(json?.results)
-  ? json.results
-  : Array.isArray(json?.players)
-  ? json.players
-  : Array.isArray(json?.users)
-  ? json.users
-  : Array.isArray(json?.data?.affiliates)
-  ? json.data.affiliates
-  : Array.isArray(json?.data?.results)
-  ? json.data.results
-  : [];
+  let affiliates:Record<string,unknown>[];
+  try { affiliates=await providerRows(periodStart,periodEnd,{fresh:true}); }
+  catch { return NextResponse.json({ok:false,error:"Roulo data is unavailable or rate limited. The existing VIP snapshot was retained."},{status:503}); }
 
   const vipRows = affiliates
     .map((player: any) => ({

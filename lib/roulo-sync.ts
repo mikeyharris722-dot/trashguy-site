@@ -1,3 +1,4 @@
+import {providerRows} from "./leaderboard-provider";
 import { createClient } from "@/lib/review-client";
 
 const supabase = createClient(
@@ -78,18 +79,6 @@ function getPlayerWagered(player: any) {
   );
 }
 
-function getAffiliatesFromResponse(json: any) {
-  if (Array.isArray(json)) return json;
-  if (Array.isArray(json?.affiliates)) return json.affiliates;
-  if (Array.isArray(json?.data)) return json.data;
-  if (Array.isArray(json?.results)) return json.results;
-  if (Array.isArray(json?.players)) return json.players;
-  if (Array.isArray(json?.users)) return json.users;
-  if (Array.isArray(json?.data?.affiliates)) return json.data.affiliates;
-  if (Array.isArray(json?.data?.results)) return json.data.results;
-
-  return [];
-}
 
 export async function syncRouloLinks() {
   const key = process.env.ROULO_API_KEY;
@@ -112,28 +101,11 @@ export async function syncRouloLinks() {
 
   const { start_at, end_at } = getDateRange();
 
-  const res = await fetch(
-    `https://api.roulobets.com/v1/external/affiliates?start_at=${start_at}&end_at=${end_at}&key=${key}`,
-    { cache: "no-store" }
-  );
-
-  const json = await res.json();
-  const affiliates = getAffiliatesFromResponse(json);
-
   const currentRange = getCurrentLeaderboardRange();
-
-const currentRes = await fetch(
-  `https://api.roulobets.com/v1/external/affiliates?start_at=${currentRange.start_at}&end_at=${currentRange.end_at}&key=${key}`,
-  { cache: "no-store" }
-);
-
-const currentJson = await currentRes.json();
-const currentAffiliates = getAffiliatesFromResponse(currentJson);
-
-  console.log("Roulo sync response:", {
-    affiliateCount: affiliates.length,
-    firstAffiliate: affiliates[0] || null,
-  });
+  const [affiliates,currentAffiliates] = await Promise.all([
+    providerRows(start_at,end_at,{weighted:false,fresh:true}),
+    providerRows(currentRange.start_at,currentRange.end_at,{weighted:false,fresh:true}),
+  ]);
 
   let updated = 0;
   let matched = 0;

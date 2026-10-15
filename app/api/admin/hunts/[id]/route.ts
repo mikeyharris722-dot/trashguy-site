@@ -81,16 +81,10 @@ export async function PATCH(
     }
 
 if (action === "open") {
-  await supabase
-    .from("prediction_results")
-    .delete()
-    .eq("hunt_id", existingHunt.id);
-
-  await supabase
-    .from("predictions")
-    .delete()
-    .eq("hunt_id", existingHunt.id);
-
+  // Opening/reopening predictions must never erase viewers' existing guesses.
+  if (existingHunt.prediction_status === "open") {
+    return NextResponse.json({ success: true, hunt: existingHunt });
+  }
   const { data, error } = await supabase
     .from("hunts")
     .update({

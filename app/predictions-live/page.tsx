@@ -1,4 +1,5 @@
 "use client";
+import { startPolling } from "@/lib/polling";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -280,7 +281,7 @@ const activeHunt = useMemo(() => {
 
   const loadHunts = useCallback(async () => {
     try {
-      const res = await fetch("/api/hunts", { cache: "no-store" });
+      const res = await fetch("/api/hunts", { cache: "no-store", signal:AbortSignal.timeout(45000) });
       const data = await res.json();
 
       const rawHunts = Array.isArray(data?.hunts) ? data.hunts : [];
@@ -349,7 +350,7 @@ const loadPredictions = useCallback(async (huntId?: string) => {
   try {
     const res = await fetch(
       `/api/predictions?huntId=${encodeURIComponent(huntId)}`,
-      { cache: "no-store", signal: controller.signal }
+      { cache: "no-store", signal: AbortSignal.any([controller.signal,AbortSignal.timeout(20000)]) }
     );
 
     if (!res.ok) {
@@ -483,13 +484,11 @@ useEffect(() => {
     setViewerAvatar(twitchIdentity.avatarUrl);
   });
 
-  const huntTimer = setInterval(() => {
-    loadHunts();
-  }, 20000);
+  const huntTimer = startPolling(loadHunts, 20000, {immediate:false});
 
   return () => {
     subscription.unsubscribe();
-    clearInterval(huntTimer);
+    huntTimer();
   };
 }, [loadHunts]);
 
@@ -502,12 +501,10 @@ useEffect(() => {
   if (!huntId) return;
 
   // Realtime is primary; this is only a recovery poll.
-  const predictionTimer = setInterval(() => {
-    loadPredictions(huntId);
-  }, 60000);
+  const predictionTimer = startPolling(() => loadPredictions(huntId), 60000, {immediate:false});
 
   return () => {
-    clearInterval(predictionTimer);
+    predictionTimer();
   };
 }, [
   activeHunt?.id,

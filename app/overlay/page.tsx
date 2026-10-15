@@ -1,4 +1,5 @@
 "use client";
+import { startPolling } from "@/lib/polling";
 import {huntMoney} from "@/lib/hunt-currency";
 import { useEffect, useState } from "react";
 import "./overlay.css";
@@ -43,7 +44,7 @@ export default function Overlay() {
             : "/api/overlay",
           {
             cache: "no-store",
-            signal: abort.signal,
+            signal: AbortSignal.any([abort.signal, AbortSignal.timeout(15000)]),
           },
         );
         if (!r.ok) throw Error();
@@ -54,14 +55,14 @@ export default function Overlay() {
         }
       } catch {
         if (live) setError(true);
+        return false;
       }
     }
-    void load();
-    const t = setInterval(load, 2000);
+    const t = startPolling(load, 2000, {visibleOnly:false});
     return () => {
       live = false;
       abort.abort();
-      clearInterval(t);
+      t();
     };
   }, []);
   if (!hunt)

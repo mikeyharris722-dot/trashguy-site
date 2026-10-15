@@ -1,0 +1,35 @@
+const fs=require('fs'),cp=require('child_process');
+const container=process.argv[2],database=process.argv[3];
+if(!container||!/^trashguy_read_[a-z0-9_]+$/.test(database||''))throw Error('Supply an isolated trashguy_read_ database.');
+const migration=fs.readFileSync('supabase/migrations/20261015222816_independent_prediction_controls.sql','utf8').replace(/^begin;$/m,'').replace(/^commit;$/m,'');
+const fixture=`begin;
+create table public.hunts(id uuid primary key,external_hunt_id text,title text,casino text,start_amount numeric,status text,prediction_status text,created_at timestamptz,updated_at timestamptz,opened_at timestamptz,final_amount numeric);
+create table public.site_tracker_hunts(hunt_id uuid primary key,title text,start_amount numeric,phase text default 'collecting',deleted_at timestamptz,updated_at timestamptz);
+create table public.site_tracker_entries(hunt_id uuid,status text,deleted_at timestamptz,payout numeric);
+create table public.site_tracker_settings(active_hunt_id uuid,updated_at timestamptz);
+create table public.site_tracker_audit(actor uuid,action text,details jsonb);
+create function public.site_tracker_select(uuid,uuid) returns void language plpgsql as $$begin return;end;$$;
+create function public.site_tracker_create(uuid,text,numeric) returns uuid language sql as $$select gen_random_uuid()$$;
+create function public.site_tracker_phase(uuid,uuid,text) returns void language plpgsql as $$begin return;end;$$;
+create function public.site_tracker_delete(uuid,uuid,text) returns void language plpgsql as $$begin return;end;$$;
+revoke execute on function public.site_tracker_create(uuid,text,numeric),public.site_tracker_phase(uuid,uuid,text),public.site_tracker_delete(uuid,uuid,text) from public,anon,authenticated;
+grant execute on function public.site_tracker_create(uuid,text,numeric),public.site_tracker_phase(uuid,uuid,text),public.site_tracker_delete(uuid,uuid,text) to service_role;
+${migration}
+do $$declare h uuid;actor uuid:='11111111-1111-4111-8111-111111111111';begin
+h:=public.site_tracker_create(actor,'Independent predictions',100);
+if (select prediction_status from public.hunts where id=h)<>'locked' then raise exception 'New hunt auto-opened predictions';end if;
+update public.hunts set prediction_status='open' where id=h;
+perform public.site_tracker_phase(actor,h,'opening');
+if (select prediction_status from public.hunts where id=h)<>'open' then raise exception 'Opening phase closed predictions';end if;
+update public.hunts set prediction_status='locked' where id=h;
+perform public.site_tracker_phase(actor,h,'collecting');
+if (select prediction_status from public.hunts where id=h)<>'locked' then raise exception 'Collecting phase reopened predictions';end if;
+perform public.site_tracker_phase(actor,h,'finished');
+if (select prediction_status from public.hunts where id=h)<>'locked' then raise exception 'Finish changed prediction state';end if;
+update public.hunts set prediction_status='open' where id=h;
+perform public.site_tracker_delete(actor,h,'Independent predictions');
+if (select prediction_status from public.hunts where id=h)<>'open' then raise exception 'Delete changed prediction state';end if;
+if has_function_privilege('anon','public.site_tracker_phase(uuid,uuid,text)','EXECUTE') then raise exception 'Existing ACL changed';end if;
+end;$$;
+rollback;`;
+const r=cp.spawnSync('docker',['exec','-i',container,'psql','-U','postgres','-d',database,'-v','ON_ERROR_STOP=1'],{input:fixture,encoding:'utf8'});if(r.status!==0)throw Error(r.stderr);console.log('PASS local SQL: new hunts closed, phases preserve manual open/closed state, soft deletion preserves state and existing function grants retained; rolled back');

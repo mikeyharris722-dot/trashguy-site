@@ -3,9 +3,9 @@ import {siteDb} from './site-db';
 import {trackerHunts} from './site-tracker';
 import {communityState,communityTracker} from './community-local';
 import {achievementBadges,recordedCalls,viewerKey,type StatsHunt} from './community-stats';
-export async function withLeaderboardBadges(players:Record<string,unknown>[]) {
+export async function withLeaderboardBadges<T extends Record<string,unknown>>(players:T[]) {
  const name=(p:Record<string,unknown>)=>String(p.username||p.name||p.display_name||'');
- const names=players.map(name).filter(Boolean);if(!names.length)return players;
+ const names=players.map(name).filter(Boolean);if(!names.length)return players.map(p=>({...p,badges:[]}));
  const [links,native,state]=await Promise.all([siteDb().from('roulo_links').select('roulo_username,twitch_username,role').in('roulo_username',[...new Set(names.flatMap(n=>[n,n.toLowerCase()]))]),trackerHunts(),communityState()]);
  if(links.error)throw links.error;
  const community=state.hunts.filter(h=>!h.deleted),rows=recordedCalls([...native,...community.map(communityTracker)] as StatsHunt[]);

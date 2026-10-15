@@ -1,4 +1,5 @@
 "use client";
+import { startPolling } from "@/lib/polling";
 import {useEffect,useMemo,useState} from 'react';
 import {trashBossProgress,defaultBossTargets} from '@/lib/trash-bosses';
 import {viewerKey,type StatsHunt} from '@/lib/community-stats';
@@ -11,7 +12,7 @@ const dollar=(v:number)=>v.toLocaleString('en-US',{style:'currency',currency:'US
 export default function TrashBosses({settings,viewer,onUnavailable}:{settings:PrizeSettings;viewer:string;onUnavailable?:()=>void}){
  const [claims,setClaims]=useState<{username:string;boss:number;amount:number;id:string}[]>([]),[liveSettings,setLiveSettings]=useState<PrizeSettings|null>(null),[claiming,setClaiming]=useState(false),[claimMessage,setClaimMessage]=useState('');
  const [hunts,setHunts]=useState<StatsHunt[]>([]),[loaded,setLoaded]=useState(false),[error,setError]=useState(''),[selected,setSelected]=useState(0),[query,setQuery]=useState(''),[page,setPage]=useState(0),[tick,setTick]=useState(0),[now,setNow]=useState<number|null>(null);
- useEffect(()=>{let stopped=false;const controller=new AbortController();async function load(){try{const r=await siteFetch('/api/trash-bosses',{signal:controller.signal,cache:'no-store'}),data=await r.json();if(!r.ok){if(r.status===404)onUnavailable?.();throw Error(data.error||'Could not load progress.');}if(!stopped){setHunts(data.hunts||[]);setClaims(data.claims||[]);setLiveSettings(data.settings||null);setLoaded(true);setError('');setNow(Date.now());}}catch(e){if(!stopped)setError(e instanceof Error?e.message:'Could not load progress.');}}void load();const timer=setInterval(load,30000);return()=>{stopped=true;controller.abort();clearInterval(timer);};},[tick,onUnavailable]);
+ useEffect(()=>{let stopped=false;const controller=new AbortController();async function load(){try{const r=await siteFetch('/api/trash-bosses',{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)]),cache:'no-store'}),data=await r.json();if(!r.ok){if(r.status===404)onUnavailable?.();throw Error(data.error||'Could not load progress.');}if(!stopped){setHunts(data.hunts||[]);setClaims(data.claims||[]);setLiveSettings(data.settings||null);setLoaded(true);setError('');setNow(Date.now());}}catch(e){if(!stopped)setError(e instanceof Error?e.message:'Could not load progress.');return false;}}const timer = startPolling(load, 30000);return()=>{stopped=true;controller.abort();timer();};},[tick,onUnavailable]);
  const effective=liveSettings||settings;
  const targets=effective.trashBosses||defaultBossTargets;
  const players=useMemo(()=>trashBossProgress(hunts,effective.leaderboardStart,effective.leaderboardEnd,targets),[hunts,effective,targets]);

@@ -1,4 +1,5 @@
 "use client";
+import { startPolling } from "@/lib/polling";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
@@ -106,8 +107,8 @@ export default function ClawProductionOverlay() {
       if (disposed || busy || preview) return;
       busy = true;
       try {
-        const response = await fetch("/api/claw-production", { cache: "no-store", signal: abort.signal });
-        if (!response.ok) return;
+        const response = await fetch("/api/claw-production", { cache: "no-store", signal: AbortSignal.any([abort.signal, AbortSignal.timeout(12000)]) });
+        if (!response.ok) return false;
         const body = await response.json();
         if (disposed) return;
         const event = body.event as ProductionEvent | null;
@@ -115,12 +116,11 @@ export default function ClawProductionOverlay() {
         if (event.id === lastSeen.current) return;
         lastSeen.current = event.id;
         if (productionIsActive(event, body.serverNow)) void start(event, productionAge(event, body.serverNow));
-      } catch { /* Retry on the next poll without replaying a seen event. */ }
+      } catch { return false; /* Back off without replaying a seen event. */ }
       finally { busy = false; }
     }
-    void poll();
-    const timer = setInterval(poll, 500);
-    return () => { disposed = true; abort.abort(); clearInterval(timer); finish(); };
+    const stop = startPolling(poll, 500, {visibleOnly:false});
+    return () => { disposed = true; abort.abort(); stop(); finish(); };
   }, [finish, start, preview]);
 
   return <main className={"production-overlay" + (active ? " production-active" : "") + (preview ? " production-preview-mode" : "")} aria-label="Trash Claw production overlay">

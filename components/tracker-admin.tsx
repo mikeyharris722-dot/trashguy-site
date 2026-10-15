@@ -1,4 +1,5 @@
 "use client";
+import { startPolling } from "@/lib/polling";
 import HuntCurrencySelect from './hunt-currency-select';
 import {huntMoney,type HuntCurrency} from '@/lib/hunt-currency';
 import {trackerCaller} from "@/lib/tracker-caller";
@@ -81,13 +82,14 @@ export default function TrackerAdmin({
     ? "/api/community/tracker"
     : "/api/admin/site-tracker";
   const catalogueApi = communityMode ? "/api/community?huntId="+encodeURIComponent(huntId) : "/api/catalogue";
-  const load = useCallback(async () => {
+  const load = useCallback(async (signal?: AbortSignal) => {
     try {
       const { data: session } = await supabaseBrowser.auth.getSession();
       const response = await fetch(
         community ? "/api/community/tracker" : "/api/site-tracker",
         {
           cache: "no-store",
+          signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(20000)]) : AbortSignal.timeout(20000),
           headers: {
             Authorization: "Bearer " + (session.session?.access_token || ""),
           },
@@ -102,20 +104,13 @@ export default function TrackerAdmin({
       setMessage(
         e instanceof Error ? e.message : "The tracker could not load.",
       );
+      return false;
     }
   }, [community]);
   useEffect(() => {
-    let live = true;
-    const run = () => {
-      if (live && document.visibilityState === "visible") void load();
-    };
-    const initial = setTimeout(() => void load(), 0);
-    const timer = setInterval(run, 10000);
-    return () => {
-      live = false;
-      clearTimeout(initial);
-      clearInterval(timer);
-    };
+    const controller = new AbortController();
+    const stop = startPolling(() => load(controller.signal), 10000);
+    return () => { stop(); controller.abort(); };
   }, [load]);
   useEffect(() => {
     const control = new AbortController();

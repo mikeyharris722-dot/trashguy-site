@@ -20,16 +20,6 @@ export async function POST(req: NextRequest) {
   );
 }
 
-// close old open hunts before starting a new one
-await supabase
-  .from("hunts")
-  .update({
-    status: "completed",
-    prediction_status: "locked",
-    updated_at: new Date().toISOString(),
-  })
-  .eq("status", "open");
-
     const apiKey = process.env.BONUSHUNT_API_KEY;
 
     if (!apiKey) {
@@ -45,6 +35,7 @@ await supabase
         Authorization: `Bearer ${apiKey}`,
       },
       cache: "no-store",
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!externalRes.ok) {
@@ -98,31 +89,6 @@ await supabase
 
     // 3) If exists, reopen/update it instead of creating duplicate rows
     if (existingHunt) {
-  // clear old predictions tied to this reused hunt row
-  const { error: deletePredictionsError } = await supabase
-    .from("predictions")
-    .delete()
-    .eq("hunt_id", existingHunt.id);
-
-  if (deletePredictionsError) {
-    return NextResponse.json(
-      { error: deletePredictionsError.message },
-      { status: 500 }
-    );
-  }
-
-  const { error: deleteResultsError } = await supabase
-    .from("prediction_results")
-    .delete()
-    .eq("hunt_id", existingHunt.id);
-
-  if (deleteResultsError) {
-    return NextResponse.json(
-      { error: deleteResultsError.message },
-      { status: 500 }
-    );
-  }
-
   const { data: reopenedHunt, error: reopenError } = await supabase
     .from("hunts")
     .update({
@@ -131,7 +97,7 @@ await supabase
       start_amount: realStartAmount,
       final_amount: null,
       status: "open",
-      prediction_status: "open",
+      prediction_status: existingHunt.prediction_status || "locked",
       opened_at: new Date().toISOString(),
       locked_at: null,
       completed_at: null,
@@ -166,7 +132,7 @@ await supabase
         casino,
         start_amount: realStartAmount,
         status: "open",
-        prediction_status: "open",
+        prediction_status: "locked",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         opened_at: new Date().toISOString(),

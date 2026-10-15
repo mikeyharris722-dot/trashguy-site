@@ -1,34 +1,25 @@
 import "server-only";
 import { siteDb } from "./site-db";
 import { trackerStats } from "./tracker-math";
-export async function trackerHunts() {
+export async function trackerHunts(huntId?: string) {
   const db = siteDb();
-  const { data: settings, error } = await db
-    .from("site_tracker_hunts")
-    .select("*")
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+  let settingsQuery = db.from("site_tracker_hunts").select("*").is("deleted_at", null).order("created_at", { ascending: false });
+  if (huntId) settingsQuery = settingsQuery.eq("hunt_id", huntId);
+  const { data: settings, error } = await settingsQuery;
   if (error) {
     if (error.code === "PGRST205" || error.code === "42P01") return [];
     throw new Error(error.message);
   }
-  const { data: entries, error: entryError } = await db
-    .from("site_tracker_entries")
-    .select("*")
-    .is("deleted_at", null)
-    .order("sort_order")
-    .order("created_at");
-  if (entryError) throw new Error(entryError.message);
-  // Prediction controls persist on hunts; phase is only a legacy fallback.
   const ids = (settings || []).map(h => h.hunt_id);
-  const predictionStates = new Map<string, string>();
-  if (ids.length) {
-    const { data: hunts, error: predictionError } = await db
-      .from("hunts").select("id,prediction_status").in("id", ids);
-    if (predictionError) throw new Error(predictionError.message);
-    for (const hunt of hunts || [])
-      predictionStates.set(hunt.id, hunt.prediction_status === "open" ? "open" : "locked");
-  }
+  if (!ids.length) return [];
+  const [entryRead, predictionRead] = await Promise.all([
+    db.from("site_tracker_entries").select("*").in("hunt_id", ids).is("deleted_at", null).order("sort_order").order("created_at"),
+    db.from("hunts").select("id,prediction_status").in("id", ids),
+  ]);
+  if (entryRead.error) throw new Error(entryRead.error.message);
+  if (predictionRead.error) throw new Error(predictionRead.error.message);
+  const entries = entryRead.data || [];
+  const predictionStates = new Map<string, string>((predictionRead.data || []).map(h => [h.id, h.prediction_status === "open" ? "open" : "locked"]));
   return (settings || []).map((h) => {
     const rows = (entries || []).filter((e) => e.hunt_id === h.hunt_id),
       stats = trackerStats(h.start_amount, rows);
@@ -42,7 +33,7 @@ export async function trackerHunts() {
       casino: "Roulobets",
       startCost: Number(h.start_amount),
       status: h.phase === "finished" ? "completed" : "open",
-      prediction_status: predictionStates.get(h.hunt_id) ?? (h.phase === "collecting" ? "open" : "locked"),
+      prediction_status: predictionStates.get(h.hunt_id) ?? "locked",
       isOpening: h.phase === "opening",
       createdAt: h.created_at,
       updatedAt: h.updated_at,

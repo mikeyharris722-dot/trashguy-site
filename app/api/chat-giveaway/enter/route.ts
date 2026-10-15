@@ -1,3 +1,4 @@
+import {providerRows} from "@/lib/leaderboard-provider";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
 
@@ -84,66 +85,7 @@ async function getCurrentWeightedWager(
   }
 
   try {
-    const url = new URL(
-      "https://api.roulobets.com/v1/external/affiliates"
-    );
-
-    url.searchParams.set(
-      "start_at",
-      CURRENT_LB_START
-    );
-
-    url.searchParams.set(
-      "end_at",
-      CURRENT_LB_END
-    );
-
-    url.searchParams.set("key", key);
-
-    url.searchParams.set(
-      "weighted",
-      "true"
-    );
-
-    const res = await fetch(
-      url.toString(),
-      {
-        cache: "no-store",
-      }
-    );
-
-    if (!res.ok) {
-      console.error(
-        "Giveaway entry Roulo weighted lookup failed:",
-        res.status
-      );
-
-      return 0;
-    }
-
-    const json = await res.json();
-
-    const affiliates = Array.isArray(json)
-      ? json
-      : Array.isArray(json?.affiliates)
-      ? json.affiliates
-      : Array.isArray(json?.data)
-      ? json.data
-      : Array.isArray(json?.results)
-      ? json.results
-      : Array.isArray(json?.players)
-      ? json.players
-      : Array.isArray(json?.users)
-      ? json.users
-      : Array.isArray(
-          json?.data?.affiliates
-        )
-      ? json.data.affiliates
-      : Array.isArray(
-          json?.data?.results
-        )
-      ? json.data.results
-      : [];
+    const affiliates = await providerRows(CURRENT_LB_START,CURRENT_LB_END,{fresh:true});
 
     const match =
       affiliates.find(

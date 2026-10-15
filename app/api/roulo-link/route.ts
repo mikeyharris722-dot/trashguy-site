@@ -1,3 +1,4 @@
+import {providerRows} from "@/lib/leaderboard-provider";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
 
@@ -85,25 +86,6 @@ function getWeightedWager(player: any) {
   return Number.isFinite(number) ? number : 0;
 }
 
-function extractAffiliates(json: any) {
-  return Array.isArray(json)
-    ? json
-    : Array.isArray(json?.affiliates)
-    ? json.affiliates
-    : Array.isArray(json?.data)
-    ? json.data
-    : Array.isArray(json?.results)
-    ? json.results
-    : Array.isArray(json?.players)
-    ? json.players
-    : Array.isArray(json?.users)
-    ? json.users
-    : Array.isArray(json?.data?.affiliates)
-    ? json.data.affiliates
-    : Array.isArray(json?.data?.results)
-    ? json.data.results
-    : [];
-}
 
 async function fetchRouloAffiliates({
   startAt,
@@ -114,39 +96,7 @@ async function fetchRouloAffiliates({
   endAt: string;
   weighted: boolean;
 }) {
-  const key = process.env.ROULO_API_KEY;
-
-  if (!key) {
-    throw new Error("Missing ROULO_API_KEY");
-  }
-
-  const url = new URL(
-    "https://api.roulobets.com/v1/external/affiliates"
-  );
-
-  url.searchParams.set("start_at", startAt);
-  url.searchParams.set("end_at", endAt);
-  url.searchParams.set("key", key);
-  url.searchParams.set(
-    "weighted",
-    weighted ? "true" : "false"
-  );
-
-  const res = await fetch(url.toString(), {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-
-    throw new Error(
-      `Roulo API returned ${res.status}: ${text}`
-    );
-  }
-
-  const json = await res.json();
-
-  return extractAffiliates(json);
+  return providerRows(startAt,endAt,{weighted,fresh:true});
 }
 
 function findAffiliate(

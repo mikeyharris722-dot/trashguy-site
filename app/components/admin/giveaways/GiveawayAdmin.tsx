@@ -1,4 +1,5 @@
 "use client";
+import { startPolling } from "@/lib/polling";
 
 
 import { siteFetch } from "@/lib/site-fetch";
@@ -184,7 +185,7 @@ export default function GiveawayAdmin({ isAdmin }: { isAdmin: boolean }) {
             message: data?.error || `Could not load ${type} giveaway.`,
           });
 
-          return;
+          return false;
         }
 
         const winnerUsername = normalize(data?.giveaway?.winner_username);
@@ -224,6 +225,7 @@ export default function GiveawayAdmin({ isAdmin }: { isAdmin: boolean }) {
 
           error,
         );
+        return false;
       }
     },
 
@@ -296,14 +298,9 @@ export default function GiveawayAdmin({ isAdmin }: { isAdmin: boolean }) {
   );
 
   useEffect(() => {
-    loadGiveaway("regular");
-
-    loadGiveaway("vip");
-
-    const giveawayTimer = window.setInterval(() => {
-      loadGiveaway("regular");
-
-      loadGiveaway("vip");
+    const giveawayTimer = startPolling(async () => {
+      const results = await Promise.all([loadGiveaway("regular"), loadGiveaway("vip")]);
+      return results.every(result => result !== false);
     }, 2000);
 
     const clockTimer = window.setInterval(
@@ -313,22 +310,14 @@ export default function GiveawayAdmin({ isAdmin }: { isAdmin: boolean }) {
     );
 
     return () => {
-      window.clearInterval(giveawayTimer);
+      giveawayTimer();
 
       window.clearInterval(clockTimer);
     };
   }, [loadGiveaway]);
 
   useEffect(() => {
-    loadWinnerMessages(activeType);
-
-    const timer = window.setInterval(
-      () => loadWinnerMessages(activeType),
-
-      1500,
-    );
-
-    return () => window.clearInterval(timer);
+    return startPolling(() => loadWinnerMessages(activeType), 1500);
   }, [activeType, loadWinnerMessages]);
 
   const state = states[activeType];

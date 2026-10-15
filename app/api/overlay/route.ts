@@ -8,17 +8,11 @@ export async function GET() {
   try {
     if (communityEnabled() && (await communityState()).activeHuntId)
       return communityOverlay();
-    const [hunts, settings] = await Promise.all([
-      trackerHunts(),
-      siteDb()
-        .from("site_tracker_settings")
-        .select("active_hunt_id,opening_queue")
-        .eq("id", true)
-        .maybeSingle(),
-    ]);
+    const settings = await siteDb().from("site_tracker_settings").select("active_hunt_id,opening_queue").eq("id", true).maybeSingle();
     if (settings.error) throw new Error(settings.error.message);
-    const selected =
-      (await reviewNativeSelection()) || settings.data?.active_hunt_id;
+    const selected = (await reviewNativeSelection()) || settings.data?.active_hunt_id;
+    if (!selected) return Response.json({hunt:null});
+    const hunts = await trackerHunts(selected);
     const h = hunts.find((h) => h.id === selected);
     if (!h) return Response.json({ hunt: null });
     const queue: string[] =

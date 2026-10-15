@@ -1,4 +1,5 @@
 "use client";
+import { startPolling } from "@/lib/polling";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { siteFetch } from "@/lib/site-fetch";
 import CommunityPredictions, {
@@ -33,15 +34,15 @@ export default function HuntPredictionSelector({
   useEffect(() => {
     const c = new AbortController();
     const refresh = () => {
-      void load(c.signal).catch((e) => {
+      return load(c.signal).catch((e) => {
         if (!c.signal.aborted) setError(e.message);
+        return false;
       });
     };
-    refresh();
-    const timer = setInterval(refresh, 5000);
+    const timer = startPolling(refresh, 5000);
     return () => {
       c.abort();
-      clearInterval(timer);
+      timer();
     };
   }, [load, signedIn]);
   const initialSelection = useRef(false);
@@ -54,7 +55,10 @@ export default function HuntPredictionSelector({
     }
   }, [activeId, community, hunts, onSelect]);
   const selected = community.find((h) => h.id === selectedId);
+  const pendingCommand = useRef(false);
   async function command(action: string, extra: Record<string, unknown>) {
+    if (pendingCommand.current) return;
+    pendingCommand.current = true;
     setBusy(true);
     setError("");
     try {
@@ -74,6 +78,7 @@ export default function HuntPredictionSelector({
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save prediction");
     } finally {
+      pendingCommand.current = false;
       setBusy(false);
     }
   }

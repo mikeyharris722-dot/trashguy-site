@@ -20,5 +20,10 @@ export const siteFetch: typeof fetch = async (input, init) => {
     if (data.session?.access_token)
       headers.set("Authorization", "Bearer " + data.session.access_token);
   }
-  return fetch(input, { ...init, headers });
+  const method = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
+  const caller = init?.signal || (input instanceof Request ? input.signal : undefined);
+  const signal = ["GET", "HEAD"].includes(method)
+    ? (caller ? AbortSignal.any([caller, AbortSignal.timeout(20000)]) : AbortSignal.timeout(20000))
+    : caller;
+  return fetch(input, { ...init, headers, signal });
 };

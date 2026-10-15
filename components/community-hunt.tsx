@@ -1,4 +1,5 @@
 "use client";
+import { startPolling } from "@/lib/polling";
 import HuntCurrencySelect from './hunt-currency-select';
 import {huntMoney,type HuntCurrency} from '@/lib/hunt-currency';
 import UserBadges from "@/components/user-badges";
@@ -83,6 +84,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
       const r = await fetch("/api/community", {
         headers: await headers(),
         cache: "no-store",
+        signal: AbortSignal.timeout(20000),
       });
       const d = await r.json();
       if (!r.ok) throw Error(d.error);
@@ -99,20 +101,12 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
       setMe(data.session?.user.id || "");
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Could not load hunts");
+      return false;
     } finally {
       setLoading(false);
     }
   }, [admin, headers]);
-  useEffect(() => {
-    const initial = setTimeout(load, 0);
-    const timer = setInterval(() => {
-      if (document.visibilityState === "visible") void load();
-    }, 5000);
-    return () => {
-      clearTimeout(initial);
-      clearInterval(timer);
-    };
-  }, [load]);
+  useEffect(() => startPolling(load, 5000), [load]);
   const pendingRequest = useRef<{ body: string; id: string } | null>(null);
   async function command(action: string, extra: Record<string, unknown> = {}) {
     const body = JSON.stringify({ huntId: id, action, ...extra });

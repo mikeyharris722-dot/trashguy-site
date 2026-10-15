@@ -1,4 +1,5 @@
 "use client";
+import { startPolling } from "@/lib/polling";
 
 import { useEffect, useRef, useState } from "react";
 import { siteFetch } from "@/lib/site-fetch";
@@ -21,24 +22,23 @@ export default function ClawProductionControls() {
       polling = true;
       try {
         const response = await fetch("/api/claw-production", {
-          cache: "no-store", signal: controller.signal,
+          cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12000)]),
         });
-        if (!response.ok) return;
+        if (!response.ok) return false;
         const body = await response.json();
         if (!stopped) {
           setEvent(body.event);
           setNow(body.serverNow);
         }
-      } catch { /* The command reports actionable errors. */ }
+      } catch { return false; /* The command reports actionable errors. */ }
       finally { polling = false; }
     };
-    void load();
-    const poll = setInterval(load, 1000);
+    const poll = startPolling(load, 1000);
     const clock = setInterval(() => setNow(n => n + 250), 250);
     return () => {
       stopped = true;
       controller.abort();
-      clearInterval(poll);
+      poll();
       clearInterval(clock);
     };
   }, []);

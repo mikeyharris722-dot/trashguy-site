@@ -44,6 +44,8 @@ function factory(env={},mocks={},globals={}){const cache={};function load(name){
  assert.equal((await c.communityState()).prizeSettings.predictionPrize,25);
  const predictionHunt=await c.communityCommand(admin,true,{action:'create',title:'Prediction test'});
  assert.equal((await c.communityState()).hunts[0].predictionPrize,25);
+ await assert.rejects(c.communityCommand(player,false,{action:'predict',huntId:predictionHunt,amount:'1250.50'}),/closed/);
+ await c.communityCommand(admin,true,{action:'predictionStatus',huntId:predictionHunt,closed:false});
  await c.communityCommand(player,false,{action:'predict',huntId:predictionHunt,amount:'1250.50'});
  await c.communityCommand(player,false,{action:'predict',huntId:predictionHunt,amount:'1100.25'});
  let ph=(await c.communityState()).hunts[0];assert.equal(ph.predictions.length,1);assert.equal(ph.predictions[0].amount,'1100.25');
@@ -53,8 +55,10 @@ function factory(env={},mocks={},globals={}){const cache={};function load(name){
  await assert.rejects(c.communityCommand(player,false,{action:'predict',huntId:predictionHunt,amount:'10'}),/closed/);
  await c.communityCommand(admin,true,{action:'predictionStatus',huntId:predictionHunt,closed:false});
  await c.communityCommand(admin,true,{action:'phase',huntId:predictionHunt,phase:'opening'});
- await assert.rejects(c.communityCommand(player,false,{action:'predict',huntId:predictionHunt,amount:'10'}),/closed/);
- await assert.rejects(c.communityCommand(admin,true,{action:'predictionStatus',huntId:predictionHunt,closed:false}),/closed/);
+ await c.communityCommand(player,false,{action:'predict',huntId:predictionHunt,amount:'10'});
+ assert.equal(c.communityTracker((await c.communityState()).hunts[0]).prediction_status,'open');
+ await c.communityCommand(admin,true,{action:'predictionStatus',huntId:predictionHunt,closed:true});
+ await assert.rejects(c.communityCommand(player,false,{action:'predict',huntId:predictionHunt,amount:'20'}),/closed/);
  assert.equal(c.communityTracker((await c.communityState()).hunts[0]).prediction_status,'locked');
  let sent=0;const guard=factory({NEXT_PUBLIC_LOCAL_REVIEW:'1'})('review-client').reviewFetch(async()=>{sent++;return Response.json({ok:true});});
  for(const method of ['POST','PATCH','DELETE']){const result=await guard('https://example.supabase.co/rest/v1/rewards',{method});assert.equal(result.status,403);}

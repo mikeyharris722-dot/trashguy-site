@@ -5,6 +5,7 @@ import WeeklyWager from "@/components/weekly-wager";
 import { useRememberedBet } from "@/lib/use-remembered-bet";
 
 import { siteFetch } from "@/lib/site-fetch";
+import { startPolling } from "@/lib/polling";
 import React, { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
@@ -932,12 +933,12 @@ const [prizeSettings, setPrizeSettings] = useState<PrizeSettings>(defaultPrizeSe
 const [prizeSettingsLoaded,setPrizeSettingsLoaded]=useState(false);
 const [bossAccess,setBossAccess]=useState({loaded:false,admin:false,enabled:false,weeklyEnabled:false,viewer:""});
 const hideTrashBosses=useCallback(()=>{setBossAccess(old=>({...old,loaded:true,admin:false,enabled:false}));setPrizeSettings(old=>({...old,trashBossesEnabled:false}));},[]);
-useEffect(()=>{let stopped=false;const controller=new AbortController();async function refreshAccess(){try{const r=await siteFetch('/api/trash-bosses/access',{signal:controller.signal,cache:'no-store'});if(!r.ok)throw Error('Could not check availability');const data=await r.json();if(!stopped)setBossAccess({loaded:true,admin:data.admin===true,enabled:data.enabled===true,weeklyEnabled:data.weeklyEnabled===true,viewer:viewerName});}catch{if(!stopped)setBossAccess({loaded:true,admin:false,enabled:false,weeklyEnabled:false,viewer:viewerName});}}void refreshAccess();const timer=setInterval(refreshAccess,15000);return()=>{stopped=true;controller.abort();clearInterval(timer);};},[authLoaded,isTwitchConnected,viewerName,prizeSettings.trashBossesEnabled,prizeSettings.weeklyWager?.enabled]);
+useEffect(()=>{let stopped=false;const controller=new AbortController();async function refreshAccess(){try{const r=await siteFetch('/api/trash-bosses/access',{signal:controller.signal,cache:'no-store'});if(!r.ok)throw Error('Could not check availability');const data=await r.json();if(!stopped)setBossAccess({loaded:true,admin:data.admin===true,enabled:data.enabled===true,weeklyEnabled:data.weeklyEnabled===true,viewer:viewerName});}catch{if(!stopped)setBossAccess({loaded:true,admin:false,enabled:false,weeklyEnabled:false,viewer:viewerName});}}const timer=startPolling(refreshAccess,15000);return()=>{stopped=true;controller.abort();timer();};},[authLoaded,isTwitchConnected,viewerName,prizeSettings.trashBossesEnabled,prizeSettings.weeklyWager?.enabled]);
 const [prizeSettingsError, setPrizeSettingsError] = useState("");
 useEffect(()=>{
  let stopped=false;const controller=new AbortController();
  async function refreshSettings(){try{const r=await siteFetch('/api/prize-settings',{cache:'no-store',signal:controller.signal});const data=await r.json();if(!r.ok)throw Error(data.error||'Could not load settings');if(!stopped){setPrizeSettings(data.settings);setPrizeSettingsLoaded(true);setPrizeSettingsError('');}}catch{if(!stopped){setPrizeSettingsLoaded(true);setPrizeSettingsError('Could not load the saved prize settings. Refresh before editing amounts.');}}}
- void refreshSettings();const timer=setInterval(refreshSettings,30000);return()=>{stopped=true;controller.abort();clearInterval(timer);};
+ const timer=startPolling(refreshSettings,30000);return()=>{stopped=true;controller.abort();timer();};
 },[]);
 
 const [giveaways, setGiveaways] = useState<any[]>([]);
@@ -2201,11 +2202,8 @@ useEffect(() => {
 
   loadPredictions(huntId);
 
-  const timer = window.setInterval(() => {
-    loadPredictions(huntId);
-  }, 60000);
-
-  return () => window.clearInterval(timer);
+  const stop = startPolling(() => loadPredictions(huntId), 60000, {immediate:false});
+  return stop;
 }, [currentPredictionHunt?.localId, loadPredictions]);
 
   const loadLiveStatus = useCallback(async () => {
@@ -2254,33 +2252,15 @@ useEffect(() => {
     }
   }, []);
 
-// INITIAL LOAD + POLLING
+// Fetch shared homepage summaries once, then refresh only relevant screens.
+useEffect(() => { void loadGiveaways(); void loadHunts(); void loadLiveStatus(); void loadBracket(); }, [loadGiveaways, loadHunts, loadLiveStatus, loadBracket]);
 useEffect(() => {
-
-  loadGiveaways();
-  loadHunts();
-  loadLiveStatus();
-  loadBracket();
-  loadGiveawayEntries();
-
-  const liveTimer = setInterval(loadLiveStatus, 60000);
-  const huntTimer = setInterval(loadHunts, 30000);
-  const giveawayTimer = setInterval(loadGiveaways, 5000);
-  const giveawayEntriesTimer = setInterval(loadGiveawayEntries, 2000);
-
-  return () => {
-    clearInterval(liveTimer);
-    clearInterval(huntTimer);
-    clearInterval(giveawayTimer);
-    clearInterval(giveawayEntriesTimer);
-  };
-}, [
-  loadBracket,
-  loadGiveaways,
-  loadHunts,
-
-  loadLiveStatus,
-]);
+  const stops = [startPolling(loadLiveStatus, 60000, { immediate: false })];
+  if (["home", "hunts", "admin"].includes(activeSection)) stops.push(startPolling(loadHunts, 30000, { immediate: false }));
+  if (activeSection === "home") stops.push(startPolling(loadGiveaways, 30000, { immediate: false }));
+  if (activeSection === "tournaments") stops.push(startPolling(loadBracket, 30000, { immediate: false }));
+  return () => stops.forEach(stop => stop());
+}, [activeSection, loadLiveStatus, loadHunts, loadGiveaways, loadBracket]);
 
 // LOAD USER SESSION
 useEffect(() => {
@@ -2539,11 +2519,11 @@ useEffect(() => {
 
   loadWinnerMessages();
 
-  const timer = window.setInterval(loadWinnerMessages, 1500);
+  const timer = startPolling(loadWinnerMessages, 1500, {immediate:false});
 
   return () => {
     cancelled = true;
-    window.clearInterval(timer);
+    timer();
   };
 }, [currentGiveawayWinner]);
 
@@ -2555,7 +2535,17 @@ async function slotFetch(url:string,options:RequestInit={}){const headers=new He
 const refreshCatalogue=useCallback(async()=>{const r=await siteFetch("/api/catalogue?all=true");const d=await r.json();if(Array.isArray(d.games)&&d.games.length){const unique=new Map<string,SlotItem>();for(const g of d.games){if(g.enabled===false)continue;const displayProvider=providerName(g.provider,g.producer);const key=g.name.toLowerCase()+"|"+displayProvider.toLowerCase();if(!unique.has(key))unique.set(key,{name:g.name,provider:displayProvider,image:g.artwork_url||undefined});}setCatalogueSlots([...unique.values()]);}},[]);
 useEffect(()=>{void refreshCatalogue()},[refreshCatalogue]);
 const trackerSelectionPending = useRef(false);
-useEffect(()=>{let live=true;const control=new AbortController();const load=async()=>{try{const r=await siteFetch("/api/site-tracker",{cache:"no-store",signal:control.signal});const d=await r.json();if(r.ok&&live&&!trackerSelectionPending.current)setTrackerHuntId(d.activeHuntId||"");}catch{}};void load();const timer=setInterval(load,5000);return()=>{live=false;control.abort();clearInterval(timer);};},[]);
+useEffect(() => {
+  if (!["hunts", "slotpicker", "admin"].includes(activeSection)) return;
+  const control = new AbortController(); let live = true;
+  const stop = startPolling(async () => {
+    const r = await siteFetch("/api/site-tracker?selection=1", {cache:"no-store", signal:control.signal});
+    if (!r.ok) return false;
+    const d = await r.json();
+    if (live && !trackerSelectionPending.current) setTrackerHuntId(d.activeHuntId || "");
+  }, 10000);
+  return () => { live = false; stop(); control.abort(); };
+}, [activeSection]);
 const selectTrackerHunt = async (id:string)=>{trackerSelectionPending.current=true;try{const r=await slotFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"select",huntId:id})});const d=await r.json();if(!r.ok)throw new Error(d.error);setTrackerHuntId(id);}catch(e){setSiteNotice(e instanceof Error?e.message:"Could not select hunt");}finally{trackerSelectionPending.current=false;}};
 const resolvePickedCall=async(game:SlotOption)=>{if(!pickedSlotCall)return;setTrackerBusy(true);try{const r=await slotFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resolve",callId:pickedSlotCall.id,identifier:game.identifier})});const d=await r.json();if(!r.ok)throw new Error(d.error);if(d.ignored){setPickedSlotCall(null);setTrackerEntryOpen(false);setSiteNotice("Slot already in the active hunt. Call ignored.");}else setPickedSlotCall(c=>c?{...c,slotName:game.name,needsReview:false}:null);await loadSlotCalls();}catch(e){setSiteNotice(e instanceof Error?e.message:"Could not confirm this slot.");throw e;}finally{setTrackerBusy(false);}};
 async function recordPickedCall(status:"collected"|"failed",payout?:string) {if(!pickedSlotCall||trackerBusy)return;if(!trackerHuntId){setSiteNotice("Choose a site hunt in the tracker controls first.");return;}setTrackerBusy(true);try{const response=await siteFetch("/api/admin/site-tracker",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await getAccessToken()},body:JSON.stringify({action:"collect",huntId:trackerHuntId,callId:pickedSlotCall.id,status,bet:trackerBet,cost:"0",payout})});const d=await response.json();if(!response.ok)throw new Error(d.error);setPickedSlotCall(null);setTrackerEntryOpen(false);setSlotWheelRotation(0);setSlotPayoutInput("");await loadSlotCalls();await loadHunts();}catch(e){setSiteNotice(e instanceof Error?e.message:"Could not save result")}finally{setTrackerBusy(false)}}
@@ -2609,16 +2599,14 @@ const loadSlotCalls = async () => {
       err
     );
     setSlotCallConnection("Reconnecting · showing last update");
+    return false;
   }
 };
 
 useEffect(() => {
-  loadSlotCalls();
-
-  const timer = setInterval(loadSlotCalls, 3000);
-
-  return () => clearInterval(timer);
-}, []);
+  if (activeSection !== "slotpicker" && !(activeSection === "admin" && activeAdminTab === "slotWheel")) return;
+  return startPolling(loadSlotCalls, 3000);
+}, [activeSection, activeAdminTab]);
 
 const handleKickLogin = () => {
   localStorage.setItem("viewerPlatform", "kick");
@@ -2813,6 +2801,8 @@ await loadPredictions(currentPredictionHunt.localId);
     setPredictions([]);setLatestWinners([]);setFinalResult("");
     try {localStorage.setItem(STORAGE_KEYS.activeHuntId,hunt.localId);} catch {}
   },[]);
+  const predictionActionPending = useRef(false);
+  const [predictionActionBusy, setPredictionActionBusy] = useState(false);
   const handleOpenPredictionHunt = useCallback(
     async (hunt: HuntItem) => {
       if (!isAdmin) {
@@ -2827,6 +2817,9 @@ await loadPredictions(currentPredictionHunt.localId);
         return;
       }
 
+      if (predictionActionPending.current) return;
+      predictionActionPending.current = true;
+      setPredictionActionBusy(true);
       setAdminMessage(`Opening ${hunt.title}...`);
       setPredictions([]);
       setLatestWinners([]);
@@ -2861,6 +2854,9 @@ await loadPredictions(currentPredictionHunt.localId);
           error instanceof Error ? error.message : "Failed to open hunt."
         );
         await loadHunts();
+      } finally {
+        predictionActionPending.current = false;
+        setPredictionActionBusy(false);
       }
     },
     [
@@ -2880,6 +2876,8 @@ await loadPredictions(currentPredictionHunt.localId);
       return;
     }
 
+    if (predictionActionPending.current) return;
+    predictionActionPending.current = true; setPredictionActionBusy(true);
     try {
       await patchPredictionHunt(currentPredictionHunt.localId, "lock");
       setPredictionStatus("locked");
@@ -2895,7 +2893,7 @@ await loadPredictions(currentPredictionHunt.localId);
       setAdminMessage(
         error instanceof Error ? error.message : "Failed to close predictions."
       );
-    }
+    } finally { predictionActionPending.current = false; setPredictionActionBusy(false); }
   };
 
 const handleCompleteHunt = async () => {
@@ -2915,6 +2913,8 @@ const handleCompleteHunt = async () => {
     return;
   }
 
+  if (predictionActionPending.current) return;
+  predictionActionPending.current = true; setPredictionActionBusy(true);
   try {
     const data = await patchPredictionHunt(
       currentPredictionHunt.localId,
@@ -2940,7 +2940,7 @@ const handleCompleteHunt = async () => {
     setAdminMessage(
       error instanceof Error ? error.message : "Failed to complete hunt."
     );
-  }
+  } finally { predictionActionPending.current = false; setPredictionActionBusy(false); }
 };
 
 const handleStartGiveaway = async () => {
@@ -5248,9 +5248,10 @@ return (
             {isAdmin && (
               <div className="rounded-xl border border-purple-300/[0.12] bg-black/30 p-2.5 sm:p-3">
                 <div className="grid gap-2 sm:grid-cols-3">
-                  <ActionButton onClick={()=>{if(currentPredictionHunt)void handleOpenPredictionHunt(currentPredictionHunt);}} disabled={!currentPredictionHunt||predictionStatus==="open"} variant="purple">Open predictions</ActionButton>
+                  <ActionButton onClick={()=>{if(currentPredictionHunt)void handleOpenPredictionHunt(currentPredictionHunt);}} disabled={predictionActionBusy||!currentPredictionHunt||predictionStatus==="open"} variant="purple">Open predictions</ActionButton>
                   <ActionButton
                     onClick={handleLockPredictions}
+                    disabled={predictionActionBusy}
                     variant="purple"
                   >
                     Close predictions
@@ -5258,6 +5259,7 @@ return (
 
                   <ActionButton
                     onClick={handleCompleteHunt}
+                    disabled={predictionActionBusy}
                     variant="gold"
                   >
                     Complete hunt

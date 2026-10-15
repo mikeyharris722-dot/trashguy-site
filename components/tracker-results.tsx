@@ -1,4 +1,5 @@
 "use client";
+import { startPolling } from "@/lib/polling";
 import {huntMoney} from '@/lib/hunt-currency';
 import {trackerCaller} from "@/lib/tracker-caller";
 import UserBadges from "@/components/user-badges";
@@ -21,8 +22,8 @@ export default function TrackerResults({ huntId }: { huntId: string }) {
     const controller = new AbortController();
     const load = async () => {
       try {
-        const response = await fetch("/api/site-tracker", {
-          signal: controller.signal,
+        const response = await fetch("/api/site-tracker?huntId="+encodeURIComponent(huntId), {
+          signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]),
           cache: "no-store",
         });
         const data = await response.json();
@@ -39,14 +40,14 @@ export default function TrackerResults({ huntId }: { huntId: string }) {
       } catch (e) {
         if (live)
           setError(e instanceof Error ? e.message : "Could not load results");
+        return false;
       }
     };
-    void load();
-    const timer = setInterval(load, 3000);
+    const timer = startPolling(load, 3000);
     return () => {
       live = false;
       controller.abort();
-      clearInterval(timer);
+      timer();
     };
   }, [huntId]);
   return (

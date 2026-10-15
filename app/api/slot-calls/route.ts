@@ -2,7 +2,7 @@ import { communityEnabled, communityState } from "@/lib/community-local";
 import { reviewNativeSelection } from "@/lib/review-selection";
 import { catalogue } from "@/lib/roulo-catalogue";
 import { matchSlot } from "@/lib/slot-matching";
-import { requireTrackerAdmin } from "@/lib/site-db";
+import { apiError, requireTrackerAdmin } from "@/lib/site-db";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
 
@@ -21,6 +21,7 @@ const supabase = createClient(
 */
 
 export async function GET() {
+  try {
   if (communityEnabled()) {
     const state = await communityState();
     const hunt = state.hunts.find(
@@ -62,48 +63,36 @@ export async function GET() {
     }
   }
 
-  const [
-    { data: calls, error: callsError },
-    { data: results, error: resultsError },
-  ] = await Promise.all([
-    supabase
-      .from("slot_calls")
-      .select("*")
-      .order("created_at", { ascending: true }),
-
-    supabase
-      .from("slot_call_results")
-      .select("*")
-      .order("created_at", { ascending: false }),
+  const [callsRead, settingsRead] = await Promise.all([
+    supabase.from("slot_calls").select("*").order("created_at", { ascending: true }),
+    supabase.from("site_tracker_settings").select("active_hunt_id").eq("id", true).maybeSingle(),
   ]);
-
-  if (callsError) {
-    return NextResponse.json(
-      {
-        error: callsError.message,
-      },
-      {
-        status: 500,
-      },
-    );
-  }
-
-  if (resultsError) {
-    return NextResponse.json(
-      {
-        error: resultsError.message,
-      },
-      {
-        status: 500,
-      },
-    );
-  }
-
+  if (callsRead.error) throw new Error(callsRead.error.message);
+  if (settingsRead.error) throw new Error(settingsRead.error.message);
+  const calls = callsRead.data || [];
+  const activeId = (await reviewNativeSelection()) || settingsRead.data?.active_hunt_id;
+  const [metadataRead, resultsRead] = await Promise.all([
+    calls.length ? supabase.from("roulo_call_matches").select("*").in("call_id", calls.map(c => String(c.id))) : Promise.resolve({data: [], error: null}),
+    activeId
+      ? supabase.from("site_tracker_entries").select("id,identifier,username,slot_name,payout,status,created_at").eq("hunt_id", activeId).is("deleted_at", null).order("created_at", {ascending:false})
+      : supabase.from("slot_call_results").select("*").order("created_at", {ascending:false}),
+  ]);
+  if (metadataRead.error) throw new Error(metadataRead.error.message);
+  if (resultsRead.error) throw new Error(resultsRead.error.message);
+  const metadata = new Map((metadataRead.data || []).map(m => [String(m.call_id), m]));
+  const results = resultsRead.data || [];
+  const collected = activeId ? results.filter(e => e.status === "collected") : [];
+  const identifiers = new Set(collected.map(e => e.identifier));
+  const names = new Set(collected.map(e => e.slot_name.trim().toLowerCase()));
   return NextResponse.json({
-    calls: await eligibleCalls(calls || []),
-    reviewCalls: await reviewCalls(calls || []),
-    results: await activeHuntResults(results || []),
-  });
+    calls: calls.map(c => {
+      const m = metadata.get(String(c.id));
+      return {...c, needs_review:m?.status === "review", original_request:m?.original_request || c.slot_name, suggestions:m?.suggestions || []};
+    }).filter(c => !activeId || (!identifiers.has(metadata.get(String(c.id))?.identifier) && (c.needs_review || !names.has(c.slot_name.trim().toLowerCase())))),
+    reviewCalls: calls.flatMap(c => { const m = metadata.get(String(c.id)); return m?.status === "review" ? [{...c,...m}] : []; }),
+    results,
+  }, {headers:{"Cache-Control":"no-store"}});
+  } catch (error) { return apiError(error); }
 }
 
 /*
@@ -663,81 +652,4 @@ export async function DELETE(req: NextRequest) {
       },
     );
   }
-}
-async function callMetadata() {
-  const r = await supabase.from("roulo_call_matches").select("*");
-  return r.data || [];
-}
-async function enrichCalls(calls: Record<string, unknown>[]) {
-  const meta = await callMetadata();
-  return calls.map((c) => {
-    const m = meta.find((m) => m.call_id === String(c.id));
-    return {
-      ...c,
-      needs_review: m?.status === "review",
-      original_request: m?.original_request || c.slot_name,
-      suggestions: m?.suggestions || [],
-    };
-  });
-}
-async function reviewCalls(calls: Record<string, unknown>[]) {
-  const meta = await callMetadata();
-  return calls.flatMap((c) => {
-    const m = meta.find(
-      (m) => m.call_id === String(c.id) && m.status === "review",
-    );
-    return m ? [{ ...c, ...m }] : [];
-  });
-}
-
-async function eligibleCalls(calls: Record<string, unknown>[]) {
-  const enriched = await enrichCalls(calls);
-  const { data: setting, error } = await supabase
-    .from("site_tracker_settings")
-    .select("active_hunt_id")
-    .eq("id", true)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  const activeId = (await reviewNativeSelection()) || setting?.active_hunt_id;
-  if (!activeId) return enriched;
-  const { data: entries, error: entryError } = await supabase
-    .from("site_tracker_entries")
-    .select("identifier,slot_name")
-    .eq("hunt_id", activeId)
-    .eq("status", "collected")
-    .is("deleted_at", null);
-  if (entryError) throw new Error(entryError.message);
-  const identifiers = new Set((entries || []).map((e) => e.identifier));
-  const names = new Set(
-    (entries || []).map((e) => e.slot_name.trim().toLowerCase()),
-  );
-  const metadata = await callMetadata();
-  return enriched.filter(
-    (c, index) =>
-      !identifiers.has(
-        metadata.find((m) => m.call_id === String(calls[index].id))?.identifier,
-      ) &&
-      (c.needs_review ||
-        !names.has(String(calls[index].slot_name).trim().toLowerCase())),
-  );
-}
-
-// The viewer wheel and tracker share the explicitly selected hunt.
-async function activeHuntResults(legacyResults: Record<string, unknown>[]) {
-  const { data: settings, error } = await supabase
-    .from("site_tracker_settings")
-    .select("active_hunt_id")
-    .eq("id", true)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  const activeId = (await reviewNativeSelection()) || settings?.active_hunt_id;
-  if (!activeId) return legacyResults;
-  const { data: entries, error: entryError } = await supabase
-    .from("site_tracker_entries")
-    .select("id,username,slot_name,payout,status,created_at")
-    .eq("hunt_id", activeId)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
-  if (entryError) throw new Error(entryError.message);
-  return entries || [];
 }

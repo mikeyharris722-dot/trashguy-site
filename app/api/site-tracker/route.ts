@@ -9,8 +9,17 @@ import { trackerHunts } from "@/lib/site-tracker";
 import { reviewNativeSelection } from "@/lib/review-selection";
 export async function GET(request: Request) {
   try {
+    if (new URL(request.url).searchParams.get("selection") === "1") {
+      const [settings, local] = await Promise.all([
+        siteDb().from("site_tracker_settings").select("active_hunt_id").eq("id", true).maybeSingle(),
+        communityEnabled() ? communityState() : null,
+      ]);
+      if (settings.error) throw new Error(settings.error.message);
+      return Response.json({ activeHuntId: local?.activeHuntId || (await reviewNativeSelection()) || settings.data?.active_hunt_id || "" });
+    }
+    const requestedHunt = new URL(request.url).searchParams.get("huntId") || undefined;
     const [hunts, settings] = await Promise.all([
-      trackerHunts(),
+      trackerHunts(requestedHunt),
       siteDb()
         .from("site_tracker_settings")
         .select("active_hunt_id,opening_queue")
@@ -25,7 +34,7 @@ export async function GET(request: Request) {
       admin = true;
     } catch {}
     const communityHunts = (local?.hunts || [])
-      .filter((h) => !h.deleted)
+      .filter((h) => !h.deleted && (!requestedHunt || h.id === requestedHunt))
       .map((h) => {
         const dto = communityTracker(h);
         return {

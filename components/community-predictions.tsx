@@ -35,7 +35,7 @@ export default function CommunityPredictions({
   const mine = hunt.predictions.find((prediction) => prediction.mine);
   const [amount, setAmount] = useState(mine?.amount || ""),
     [expanded, setExpanded] = useState(false);
-  const open = hunt.phase === "collecting" && hunt.prediction_status === "open";
+  const open = hunt.prediction_status === "open";
   const finished = hunt.phase === "finished";
   const ranked = [...hunt.predictions].sort((a, b) =>
     finished
@@ -57,11 +57,7 @@ export default function CommunityPredictions({
           </p>
         </div>
         <span className={`status-chip ${open ? "status-open" : ""}`}>
-          {finished
-            ? "Results final"
-            : open
-              ? "Predictions open"
-              : "Predictions closed"}
+          {open ? "Predictions open" : finished ? "Results final" : "Predictions closed"}
         </span>
       </div>
       <div className="prediction-summary">
@@ -82,9 +78,9 @@ export default function CommunityPredictions({
           <strong>{money(hunt.stats.totalWinnings)}</strong>
         </div>
       </div>
-      {admin && hunt.phase === "collecting" && (
+      {admin && (
         <div className="prediction-admin">
-          <p>Close entries before revealing any bonus results.</p>
+          <p>Predictions stay open until you close them here.</p>
           <button
             type="button"
             className="secondary-button"

@@ -32,7 +32,10 @@ function load(name){if(name==='roulo-catalogue')return {catalogue:async()=>[{ide
  await c.communityCommand(a,true,{action:'phase',huntId:id,phase:'opening'});
  await assert.rejects(c.communityCommand(p,false,{action:'register',huntId:id,amount:'20'}),/closed/);
  h=(await c.communityState()).hunts[0];const entry=h.entries[0];await c.communityCommand(a,true,{action:'openingFocus',huntId:id,entryIds:[entry.id]});
+ await c.communityCommand(a,true,{action:'predictionStatus',huntId:id,closed:false});
  await c.communityCommand(a,true,{action:'payout',huntId:id,entryId:entry.id,bet:'0.20',payout:'75',tier:'super',notes:'TEST note'});
+ assert.equal(c.communityTracker((await c.communityState()).hunts[0]).prediction_status,'open','revealing a payout must not close predictions');
+ await c.communityCommand(a,true,{action:'predictionStatus',huntId:id,closed:true});
  h=(await c.communityState()).hunts[0];assert.equal(c.communityTracker(h).stats.totalWinnings,75);assert.equal(c.communityTracker(h).stats.averagePayoutRequired,0);
  assert(c.validLaunch(g.rainbet_launch_url));assert(!c.validLaunch('javascript:alert(1)'));assert(!c.validLaunch('https://rainbet.com.evil.test/casino/slots/a'));
  const cat=load('community-catalogue');assert.throws(()=>cat.normalizeImport([{id:1,name:'TEST',producer:'Test',type:'slots',url:'https://evil.test'}]),/Invalid/);
