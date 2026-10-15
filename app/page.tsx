@@ -1,4 +1,5 @@
 "use client";
+import ClawProductionControls from "@/components/claw-production-controls";
 import {huntMoney} from "@/lib/hunt-currency";
 import WeeklyWager from "@/components/weekly-wager";
 import { useRememberedBet } from "@/lib/use-remembered-bet";
@@ -8310,7 +8311,7 @@ onClick={() => {
 
 <div className="mt-2 grid w-full min-w-0 max-w-full gap-2 overflow-x-hidden sm:mt-3 sm:gap-3">
   {/* GIVEAWAY ADMIN */}
-  <AdminGuidance tab={activeAdminTab} />
+  <AdminGuidance tab={activeAdminTab} actions={activeAdminTab === "giveaway" ? <ClawProductionControls /> : undefined} />
   {activeAdminTab === "prizes" && (prizeSettingsError ? <p className="form-error" role="alert">{prizeSettingsError}</p> : <PrizeSettingsEditor key={JSON.stringify(prizeSettings)} settings={prizeSettings} saved={(settings) => { setPrizeSettings(settings); setSiteNotice("Prize amounts saved locally. The leaderboard total and prediction banner have updated."); }} />)}
   <details
     open={activeAdminTab === "giveaway"}
@@ -8356,6 +8357,8 @@ onClick={() => {
         {trashClawSaveStatus === "saved" ? "SAVED ✓" : trashClawHasUnsavedChanges ? "SAVE 10 OPTIONS" : "OPTIONS SAVED"}
       </button>
     </div>
+
+
 
     <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-5 sm:gap-2">
       {trashClawPrizes.map((prize, index) => (

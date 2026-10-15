@@ -1,6 +1,7 @@
 export function requiresAdmin(path: string, method: string) {
   return (
     path.startsWith("/api/admin/") ||
+    (path === "/api/claw-production" && !["GET", "HEAD"].includes(method)) ||
     (path === "/api/prize-settings" && !["GET", "HEAD"].includes(method)) ||
     (["/api/chat-giveaway", "/api/chat-giveaway/draw", "/api/chat-giveaway/delete"].includes(path) && !["GET", "HEAD"].includes(method)) ||
     path === "/api/rewards" ||

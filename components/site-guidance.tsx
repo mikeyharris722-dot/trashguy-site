@@ -1,4 +1,5 @@
 "use client";
+import type { ReactNode } from "react";
 import { sectionTitles } from "@/lib/site-navigation";
 export function PageGuidance({section}:{section:string}) {
  if(!['hunts','tournaments','slotpicker','profile'].includes(section))return null;
@@ -98,12 +99,13 @@ const adminGuides: Record<string, [string, string]> = {
     "Schedule a hunt, approve contributions, manage Rainbet calls and record the bonus results.",
   ],
 };
-export function AdminGuidance({ tab }: { tab: string }) {
+export function AdminGuidance({ tab, actions }: { tab: string; actions?: ReactNode }) {
   const g = adminGuides[tab];
   return g && !["community", "prizes", "bonusTracker"].includes(tab) ? (
-    <div className="admin-guidance">
+    <div className={"admin-guidance" + (actions ? " admin-guidance-with-actions" : "")}>
 
       <h2>{g[0].toUpperCase()}</h2>
+      {actions}
 
     </div>
   ) : null;
