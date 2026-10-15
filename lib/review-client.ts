@@ -34,10 +34,16 @@ export function reviewFetch(original: typeof fetch): typeof fetch {
     if (typeof window === "undefined" && ["GET", "HEAD"].includes(method) && url.pathname.startsWith("/rest/v1/")) {
       const callerSignal = init?.signal || (input instanceof Request ? input.signal : undefined);
       const timeout = AbortSignal.timeout(10_000);
-      return original(input, {
-        ...init,
-        signal: callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout,
-      });
+      try {
+        return await original(input, {
+          ...init,
+          signal: callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout,
+        });
+      } catch (error) {
+        // PostgREST retries TimeoutError but correctly stops on AbortError.
+        if (timeout.aborted) throw new DOMException("Database read timed out", "AbortError");
+        throw error;
+      }
     }
     return original(input, init);
   };

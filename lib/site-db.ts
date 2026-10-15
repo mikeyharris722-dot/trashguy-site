@@ -60,8 +60,9 @@ export async function requireTrackerAdmin(request: Request) {
 }
 export function apiError(error: unknown) {
   const message = error instanceof Error ? error.message : "Request failed";
+  const unavailable = /<!doctype|<html|connection timed out|fetch failed|timeout|timed out|temporarily unavailable/i.test(message);
   return Response.json(
-    { error: message },
-    { status: message.startsWith("AUTH:") ? 403 : 400 },
+    { error: unavailable ? "The database is temporarily unavailable. Please try again shortly." : message },
+    { status: message.startsWith("AUTH:") ? 403 : unavailable ? 503 : 400 },
   );
 }
