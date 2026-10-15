@@ -1,3 +1,5 @@
+import {huntCurrency} from '@/lib/hunt-currency';
+import {payoutFx} from '@/lib/hunt-fx';
 import {
   communityEnabled,
   communityState,
@@ -15,7 +17,7 @@ export async function POST(request: Request) {
       db = siteDb();
     const local = communityEnabled() ? await communityState() : null;
     const localHunt = local?.hunts.find((h) => h.id === b.huntId && !h.deleted);
-    if (localHunt) {
+    if (localHunt && b.action!=="create") {
       if (b.action !== "select")
         throw Error(
           "Manage community calls from Community Hunt, or use its tracker controls.",
@@ -41,6 +43,7 @@ export async function POST(request: Request) {
       });
       return Response.json({ ok: true, result: id });
     }
+    async function fxFor(huntId?:string,entryId?:string){let id=huntId;let entry:{hunt_id:string;payout:string|null;payout_usd:string|null}|null=null;if(entryId){const r=await db.from('site_tracker_entries').select('hunt_id,payout,payout_usd').eq('id',entryId).single();if(r.error)throw Error('Bonus not found.');entry=r.data;id=entry!.hunt_id;}const r=await db.from('site_tracker_hunts').select('currency').eq('hunt_id',id).single();if(r.error)throw Error('Hunt currency could not be loaded.');if(entry&&entry.payout_usd!==null&&Number(entry.payout)===Number(b.payout))return null;return b.payout===null?null:await payoutFx(r.data.currency);}
     let result;
     if (b.action === "openingFocus") {
       result = await db.rpc("site_tracker_opening_focus", {
@@ -110,10 +113,11 @@ export async function POST(request: Request) {
         b.title.length > 160
       )
         throw new Error("Enter a hunt title");
-      result = await db.rpc("site_tracker_create", {
+      result = await db.rpc("site_tracker_create_currency", {
         p_actor: actor,
         p_title: b.title.trim(),
         p_start: b.start,
+        p_currency:huntCurrency(b.currency),
       });
     } else if (b.action === "undo")
       result = await db.rpc("site_tracker_undo", {
@@ -133,13 +137,14 @@ export async function POST(request: Request) {
         money(b.payout);
         if (b.status !== "collected")
           throw new Error("Only collected bonuses can have a payout");
-        result = await db.rpc("site_tracker_record", {
+        result = await db.rpc("site_tracker_record_currency", {
           p_actor: actor,
           p_hunt: b.huntId,
           p_call: b.callId,
           p_bet: b.bet,
           p_cost: b.cost,
           p_payout: b.payout,
+          p_fx:await fxFor(b.huntId),
         });
       } else
         result = await db.rpc("site_tracker_collect", {
@@ -154,7 +159,7 @@ export async function POST(request: Request) {
       if (b.payout !== null) money(b.payout);
       money(b.bet);
       money(b.cost);
-      result = await db.rpc("site_tracker_bonus_edit", {
+      result = await db.rpc("site_tracker_bonus_edit_currency", {
         p_actor: actor,
         p_entry: b.entryId,
         p_payout: b.payout,
@@ -162,6 +167,7 @@ export async function POST(request: Request) {
         p_cost: b.cost,
         p_tier: b.tier ?? null,
         p_notes: b.notes ?? null,
+        p_fx:await fxFor(undefined,b.entryId),
       });
     } else if (b.action === "resolve") {
       const games = await catalogue(),

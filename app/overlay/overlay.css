@@ -217,3 +217,7 @@ body:has(.hunt-overlay) nextjs-portal {
 .overlay-latest strong { white-space: nowrap; }
 
 .overlay-caller { color: #9ce3dd; font-size: inherit; font-weight: normal; }
+
+.overlay-row>span:not(:first-child){white-space:nowrap;font-size:9px}.overlay-summary strong{white-space:nowrap}
+
+.overlay-columns,.overlay-row{grid-template-columns:minmax(0,1fr) 65px 83px}.overlay-stats b{font-size:10px;white-space:nowrap}

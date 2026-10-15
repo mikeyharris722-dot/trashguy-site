@@ -1,4 +1,5 @@
 export type StatsEntry = {
+    payout_usd?: string | number | null;
     id: string;
     username: string;
     slot_name: string;
@@ -12,6 +13,7 @@ export type StatsEntry = {
     updated_at?: string;
 };
 export type StatsHunt = {
+    currency?: string;
     id: string;
     title: string;
     source?: string;

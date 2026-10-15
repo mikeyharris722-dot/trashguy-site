@@ -41,7 +41,7 @@ export default function SlotSearch({
       setLoading(true);
       setError("");
       try {
-        const r = await fetch(endpoint + "?q=" + encodeURIComponent(query), {
+        const r = await fetch(endpoint + (endpoint.includes("?")?"&q=":"?q=") + encodeURIComponent(query), {
           signal: controller.signal,
           cache: "no-store",
         });

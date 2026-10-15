@@ -1,4 +1,6 @@
 "use client";
+import HuntCurrencySelect from './hunt-currency-select';
+import {huntMoney,type HuntCurrency} from '@/lib/hunt-currency';
 import UserBadges from "@/components/user-badges";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -18,6 +20,7 @@ type Member = {
   status: string;
 };
 type Call = {
+  identifier:string;
   id: string;
   userId: string;
   username: string;
@@ -27,6 +30,9 @@ type Call = {
   status: string;
 };
 type Hunt = PredictionHunt & {
+  currency?:HuntCurrency;
+  catalogue?:"rainbet"|"roulobets";
+  casino?:string;
   id: string;
   title: string;
   phase: string;
@@ -48,6 +54,8 @@ const field =
 const button =
   "rounded-lg bg-purple-400/20 px-4 py-2 text-sm font-bold disabled:opacity-40";
 export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
+  const [currency,setCurrency]=useState<HuntCurrency>("USD");
+  const [catalogue,setCatalogue]=useState("rainbet");
   const [confirmTitle, setConfirmTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -184,13 +192,14 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
     member = h?.members.find((m) => m.id === me),
     selected = h?.calls.find((c) => c.status === "selected");
   function game(c: Call) {
-    return c.launch ? (
+    const launch=c.launch||(h?.catalogue==="roulobets"?"https://roulobets.com/casino/slots/"+encodeURIComponent(c.identifier).replace(/%3A/gi,":"):null);
+    return launch ? (
       <a
-        href={c.launch}
-        target="slot-hub-rainbet"
+        href={launch}
+        target="slot-hub-casino"
         rel="noopener noreferrer"
         className="flex min-w-0 items-center gap-3 underline decoration-purple-400/40"
-        aria-label={"Open " + c.slot_name + " on Rainbet"}
+        aria-label={"Open " + c.slot_name + " on "+(h?.casino||"Rainbet")}
       >
         {c.artwork_url && (
           <Image
@@ -212,7 +221,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
     <section className={`community-layout w-full space-y-5 text-white ${admin ? "max-w-none" : "mx-auto max-w-7xl"}`}>
       <div className="rounded-2xl border border-purple-300/20 bg-black/80 p-5">
         <p className="text-xs font-bold uppercase tracking-widest text-amber-200">
-          Community · Rainbet slots
+          Community hunts
         </p>
         <h1 className="mt-2 text-3xl font-black">COMMUNITY HUNTS</h1>
       </div>
@@ -242,6 +251,8 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                 void command("create", {
                   title,
                   limit: Number(limit),
+                  currency,
+                  catalogue,
                   scheduledAt: null,
                   timeZone: "UTC",
                 });
@@ -277,6 +288,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                 />
               </label>
             </div>
+            <div className="hunt-create-row community-catalogue-row"><label className="hunt-currency-choice">Slot catalogue<select aria-label="Community slot catalogue" value={catalogue} onChange={e=>setCatalogue(e.target.value)}><option value="rainbet">Rainbet</option><option value="roulobets">Roulobets</option></select></label><HuntCurrencySelect value={currency} onChange={setCurrency}/></div>
             <div className="form-footer">
               <p>
                 Starting bankroll is the total of approved player contributions.
@@ -299,6 +311,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
           className={field + " mt-2 block w-full max-w-xl"}
           value={id}
           onChange={(e) => {
+            setChoice(null);
             setId(e.target.value);
             if (admin) void command("select", { huntId: e.target.value });
           }}
@@ -306,7 +319,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
           <option value="">Select a hunt</option>
           {hunts.map((h) => (
             <option key={h.id} value={h.id}>
-              {h.title} ·{" "}
+              {h.title} · {h.currency||"USD"} · {h.casino||"Rainbet"} ·{" "}
               {(
                 {
                   collecting: "Registration & collection",
@@ -372,7 +385,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                   }}
                 >
                   <label>
-                    Your contribution ($)
+                    Your contribution ({h.currency||"USD"})
                     <input
                       aria-label="Your contribution"
                       type="number"
@@ -404,7 +417,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                 <p>
                   {member.status === "pending"
                     ? "Your registration is waiting for admin approval."
-                    : `You’re approved · ${Math.max(0, h.limit - h.calls.filter((c) => c.userId === me && ["queued", "selected"].includes(c.status)).length)} of ${h.limit} call spaces available · $${Number(member.amount).toFixed(2)} contribution`}
+                    : `You’re approved · ${Math.max(0, h.limit - h.calls.filter((c) => c.userId === me && ["queued", "selected"].includes(c.status)).length)} of ${h.limit} call spaces available · ${huntMoney(Number(member.amount),h.currency)} contribution`}
                 </p>
               )}
             </div>
@@ -421,19 +434,19 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
               </li>
               <li>
                 <b>3. Call your slots</b>
-                <span>Choose Rainbet games and follow the results.</span>
+                <span>Choose games from this hunt’s catalogue and follow the results.</span>
               </li>
             </ol>
           )}
           <div className="community-stats grid gap-3 rounded-xl border border-purple-300/20 bg-black/75 p-4 sm:grid-cols-4">
             <div>
               <span className="text-xs text-white/50">Approved bankroll</span>
-              <p className="text-xl font-bold">${h.startCost.toFixed(2)}</p>
+              <p className="text-xl font-bold">{huntMoney(h.startCost,h.currency)}</p>
             </div>
             <div>
               <span className="text-xs text-white/50">Recorded returns</span>
               <p className="text-xl font-bold">
-                ${h.stats.totalWinnings.toFixed(2)}
+                {huntMoney(h.stats.totalWinnings,h.currency)}
               </p>
             </div>
             <div>
@@ -467,7 +480,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                     className="flex flex-wrap items-center gap-3 border-t border-white/10 py-3"
                   >
                     <b className="flex-1">{m.name}<UserBadges name={m.name} /></b>
-                    <span>${Number(m.amount).toFixed(2)}</span>
+                    <span>{huntMoney(Number(m.amount),h.currency)}</span>
                     <button
                       className={button}
                       disabled={busy || h.phase !== "collecting"}
@@ -491,7 +504,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
               <div className="rounded-xl border border-white/10 bg-black/75 p-4">
                 <SlotSearch
                   key={reset}
-                  endpoint="/api/community"
+                  endpoint={"/api/community?huntId="+encodeURIComponent(h.id)}
                   selected={choice}
                   onSelect={setChoice}
                   label={admin ? "Add a host call" : "Choose your slot call"}
@@ -565,7 +578,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                     </button>
                   </div>
                   <p className="text-xs text-white/50">
-                    Opening the artwork only opens Rainbet. Record the result
+                    Opening linked artwork opens the selected casino. Record the result
                     separately.
                   </p>
                 </div>
@@ -603,7 +616,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
             ) && (
               <p className="empty-list">
                 {tab === "queued"
-                  ? "No calls waiting. Approved players can choose a Rainbet slot above."
+                  ? "No calls waiting. Approved players can choose a slot above."
                   : tab === "collected"
                     ? "Collected bonuses will appear here when the streamer records a successful call."
                     : "Calls without a bonus will appear here."}

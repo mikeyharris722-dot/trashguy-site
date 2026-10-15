@@ -1,4 +1,6 @@
 "use client";
+import HuntCurrencySelect from './hunt-currency-select';
+import {huntMoney,type HuntCurrency} from '@/lib/hunt-currency';
 import {trackerCaller} from "@/lib/tracker-caller";
 import { useRememberedBet } from "@/lib/use-remembered-bet";
 import UserBadges from "@/components/user-badges";
@@ -31,6 +33,7 @@ export type Entry = {
   collection_cost: string;
 };
 type Hunt = {
+  currency?:HuntCurrency;
   openingQueue?: string[];
   id: string;
   source?: string;
@@ -58,6 +61,7 @@ export default function TrackerAdmin({
   manual?: boolean;
   community?: boolean;
 }) {
+  const [currency,setCurrency]=useState<HuntCurrency>("USD");
   const [huntFilter, setHuntFilter] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [hunts, setHunts] = useState<Hunt[]>([]),
@@ -76,7 +80,7 @@ export default function TrackerAdmin({
   const trackerApi = communityMode
     ? "/api/community/tracker"
     : "/api/admin/site-tracker";
-  const catalogueApi = communityMode ? "/api/community" : "/api/catalogue";
+  const catalogueApi = communityMode ? "/api/community?huntId="+encodeURIComponent(huntId) : "/api/catalogue";
   const load = useCallback(async () => {
     try {
       const { data: session } = await supabaseBrowser.auth.getSession();
@@ -116,7 +120,7 @@ export default function TrackerAdmin({
   useEffect(() => {
     const control = new AbortController();
     const timer = setTimeout(() => {
-      fetch(catalogueApi + "?q=" + encodeURIComponent(query), {
+      fetch(catalogueApi + (catalogueApi.includes("?")?"&q=":"?q=") + encodeURIComponent(query), {
         signal: control.signal,
       })
         .then((r) => r.json())
@@ -320,7 +324,7 @@ export default function TrackerAdmin({
             </option>
             {[...hunts].filter((h) => h.id === huntId || h.title.toLowerCase().includes(huntFilter.toLowerCase())).sort((a,b) => Number(b.id === huntId) - Number(a.id === huntId)).map((h) => (
               <option key={h.id} value={h.id}>
-                {h.title} · {h.source === "community" ? "Community · " : ""}
+                {h.title} · {h.currency||"USD"} · {h.source === "community" ? "Community · " : ""}
                 {(
                   {
                     collecting: "Collecting bonuses",
@@ -342,7 +346,7 @@ export default function TrackerAdmin({
           <summary className="cursor-pointer text-sm font-bold text-purple-200">
             Create a new hunt
           </summary>
-          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_160px_auto]">
+          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_160px_160px_auto]">
             <input
               aria-label="New hunt title"
               className={input}
@@ -358,14 +362,16 @@ export default function TrackerAdmin({
               inputMode="decimal"
               placeholder="Starting bankroll"
             />
+            <HuntCurrencySelect value={currency} onChange={setCurrency}/>
             <button
               className={button}
               disabled={busy || !title.trim() || !start.trim()}
               onClick={() =>
-                action(trackerApi, {
+                action("/api/admin/site-tracker", {
                   action: "create",
                   title,
                   start,
+                  currency,
                 })
               }
             >
@@ -425,6 +431,7 @@ export default function TrackerAdmin({
           )}
           {manual && opening && current.phase === "opening" && (
             <OpeningSession
+              currency={current.currency||"USD"}
               endpoint={trackerApi}
               key={current.id}
               huntId={current.id}
@@ -438,11 +445,11 @@ export default function TrackerAdmin({
           <dl className="tracker-stats">
             <div>
               <dt>Total returns</dt>
-              <dd>${current.stats.totalWinnings.toFixed(2)}</dd>
+              <dd>{huntMoney(current.stats.totalWinnings,current.currency)}</dd>
             </div>
             <div>
               <dt>Profit / loss</dt>
-              <dd>${current.stats.profitLoss.toFixed(2)}</dd>
+              <dd>{huntMoney(current.stats.profitLoss,current.currency)}</dd>
             </div>
             <div>
               <dt>Average result</dt>
@@ -480,7 +487,7 @@ export default function TrackerAdmin({
               {!communityMode && <TrackerCallerSearch selected={manualCaller} onSelect={(user) => { setManualCaller(user); manualRequest.current = null; }} />}
               <div className="grid gap-3 sm:grid-cols-[140px_1fr_auto]">
                 <label className="text-xs text-white/60">
-                  Bet size
+                  Bet size ({current.currency||"USD"})
                   <input
                     aria-label="Manual bonus bet size"
                     className={input + " mt-1 w-full"}
@@ -616,6 +623,7 @@ export default function TrackerAdmin({
                       entry.bonus_tier,
                       entry.notes,
                     ].join(":")}
+                    currency={current.currency||"USD"}
                     entry={entry}
                     nextId={
                       bonusEntries
@@ -640,6 +648,7 @@ export default function TrackerAdmin({
   );
 }
 function BonusRow({
+  currency,
   entry,
   disabled,
   save,
@@ -650,6 +659,7 @@ function BonusRow({
   canMoveUp,
   canMoveDown,
 }: {
+  currency:string;
   entry: Entry;
   disabled: boolean;
   nextId?: string;
@@ -743,7 +753,7 @@ function BonusRow({
                 : "Standard"}
           </p>
           <p className="mt-1 text-xs font-bold text-purple-200">
-            Bet ${Number(entry.bet_size).toFixed(2)}
+            Bet {huntMoney(Number(entry.bet_size),currency)}
           </p>
         </div>
         <span
@@ -792,7 +802,7 @@ function BonusRow({
             </summary>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <label className="text-xs text-white/60">
-                Bet size
+                Bet size ({currency})
                 <input
                   aria-label={`Bet for ${entry.slot_name}`}
                   className={field}
@@ -904,7 +914,7 @@ function HuntSettings({
           />
         </label>
         <label className="block text-xs">
-          Starting bankroll
+          Starting bankroll ({hunt.currency||"USD"})
           <input
             aria-label="Edit starting bankroll"
             inputMode="decimal"

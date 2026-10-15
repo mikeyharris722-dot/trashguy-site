@@ -12,6 +12,7 @@ export type WheelCall = {
   suggestions?: SlotOption[];
 };
 export default function WheelEntry({
+  currency="USD",
   call,
   bet,
   onBet,
@@ -21,6 +22,7 @@ export default function WheelEntry({
   onResolve,
   onRecord,
 }: {
+  currency?:string;
   call: WheelCall;
   bet: string;
   onBet: (s: string) => void;
@@ -114,7 +116,7 @@ export default function WheelEntry({
         ) : (
           <>
             <label className="mt-6 block text-sm text-white/70">
-              Bet size
+              Bet size ({currency})
               <input
                 aria-label="Selected call bet size"
                 className="mt-2 w-full rounded-xl border border-purple-300/20 bg-black p-3 text-xl text-white"

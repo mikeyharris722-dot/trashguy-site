@@ -1,4 +1,5 @@
 "use client";
+import {huntMoney} from "@/lib/hunt-currency";
 import UserBadges from "@/components/user-badges";
 import { useState } from "react";
 type Prediction = {
@@ -8,6 +9,7 @@ type Prediction = {
   createdAt: string;
 };
 export type PredictionHunt = {
+  currency?:string;
   id: string;
   phase: string;
   prediction_status: string;
@@ -15,8 +17,7 @@ export type PredictionHunt = {
   predictions: Prediction[];
   stats: { totalWinnings: number };
 };
-const money = (amount: number) =>
-  amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
+
 export default function CommunityPredictions({
   hunt,
   admin,
@@ -30,6 +31,7 @@ export default function CommunityPredictions({
   busy: boolean;
   command: (action: string, extra: Record<string, unknown>) => Promise<unknown>;
 }) {
+  const money=(amount:number)=>huntMoney(amount,hunt.currency||"USD");
   const mine = hunt.predictions.find((prediction) => prediction.mine);
   const [amount, setAmount] = useState(mine?.amount || ""),
     [expanded, setExpanded] = useState(false);
@@ -67,7 +69,7 @@ export default function CommunityPredictions({
           <span>Closest prediction prize</span>
           <strong>
             {hunt.predictionPrize > 0
-              ? money(hunt.predictionPrize)
+              ? huntMoney(hunt.predictionPrize,"USD")
               : "No cash prize"}
           </strong>
         </div>
@@ -120,7 +122,7 @@ export default function CommunityPredictions({
           }}
         >
           <label>
-            Your prediction ($)
+            Your prediction ({hunt.currency||"USD"})
             <input
               required
               type="number"

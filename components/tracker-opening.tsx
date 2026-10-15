@@ -1,4 +1,5 @@
 "use client";
+import {huntMoney} from '@/lib/hunt-currency';
 import {trackerCaller} from "@/lib/tracker-caller";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -6,6 +7,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import type { Entry } from "./tracker-admin";
 
 export default function OpeningSession({
+  currency="USD",
   endpoint = "/api/admin/site-tracker",
   entries,
   huntId,
@@ -14,6 +16,7 @@ export default function OpeningSession({
   onClose,
   save,
 }: {
+  currency?:string;
   endpoint?: string;
   entries: Entry[];
   huntId: string;
@@ -155,7 +158,7 @@ export default function OpeningSession({
               <div>
                 <h3 className="text-2xl font-black">{entry.slot_name}</h3>
                 <p className="text-white/60">
-                  Bet ${Number(entry.bet_size).toFixed(2)}{trackerCaller(entry) && <> · {trackerCaller(entry)}</>}
+                  Bet {huntMoney(Number(entry.bet_size),currency)}{trackerCaller(entry) && <> · {trackerCaller(entry)}</>}
                 </p>
                 <p className="font-black uppercase text-amber-300">
                   {entry.bonus_tier.replaceAll("_", " ")}
@@ -168,7 +171,7 @@ export default function OpeningSession({
               </p>
             )}
             <label className="block text-sm">
-              Winnings
+              Winnings ({currency})
               <input
                 ref={input}
                 aria-label="Bonus winnings"

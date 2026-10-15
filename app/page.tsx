@@ -1,4 +1,5 @@
 "use client";
+import {huntMoney} from "@/lib/hunt-currency";
 import WeeklyWager from "@/components/weekly-wager";
 import { useRememberedBet } from "@/lib/use-remembered-bet";
 
@@ -131,6 +132,7 @@ type HuntBonusItem = {
 };
 
 type HuntItem = {
+  currency?:string;
   source?: string;
   id: string;
   localId: string;
@@ -227,7 +229,8 @@ function playUiSound(type: "click" | "success" | "error" = "click") {
   audio.play().catch(() => {});
 }
 
-function formatMoney(value: number) {
+function formatMoney(value: number,currency?:string) {
+  if(currency)return huntMoney(Number(value||0),currency);
   return `$${Number(value || 0).toLocaleString()}`;
 }
 
@@ -1607,6 +1610,7 @@ useEffect(() => {
 
     const normalized: HuntItem[] = rawHunts.map((hunt: any, index: number) => ({
       source: hunt.source,
+      currency:hunt.currency||"USD",
       id: hunt.external_hunt_id || hunt.id || `hunt-${index}`,
       localId: hunt.local_id || hunt.db_id || hunt.uuid || hunt.hunt_id || hunt.id,
       externalHuntId: hunt.external_hunt_id || hunt.id,
@@ -4930,14 +4934,14 @@ return (
               <div>
                 Start:{" "}
                 <span className="font-black text-white/85">
-                  {formatMoney(hunt.startCost)}
+                  {formatMoney(hunt.startCost, hunt.currency)}
                 </span>
               </div>
 
               <div>
                 Won:{" "}
                 <span className="font-black text-purple-200">
-                  {formatMoney(hunt.totalWinnings)}
+                  {formatMoney(hunt.totalWinnings, hunt.currency)}
                 </span>
               </div>
 
@@ -4949,7 +4953,7 @@ return (
                 }
               >
                 P/L: {hunt.profitLoss >= 0 ? "+" : ""}
-                {formatMoney(hunt.profitLoss)}
+                {formatMoney(hunt.profitLoss, hunt.currency)}
               </div>
             </div>
           </button>
@@ -5052,7 +5056,7 @@ return (
                 </div>
 
                 <div className="mt-1 text-[17px] font-black tracking-tight text-white sm:text-[28px]">
-                  {formatMoney(currentPredictionHunt?.startCost || 0)}
+                  {formatMoney(currentPredictionHunt?.startCost || 0, currentPredictionHunt?.currency)}
                 </div>
               </div>
 
@@ -5074,7 +5078,7 @@ return (
                     currentPredictionHunt?.stats?.totalWinnings ||
                       currentPredictionHunt?.totalWinnings ||
                       0
-                  )}
+                  , currentPredictionHunt?.currency)}
                 </div>
               </div>
             </div>
@@ -5151,7 +5155,7 @@ return (
                               Number(b.payout || 0) - Number(a.payout || 0)
                           )[0]?.payout || 0
                         : 0
-                    )}
+                    , currentPredictionHunt?.currency)}
                   </div>
                 </div>
               </div>
@@ -5291,11 +5295,11 @@ return (
                     </div>
 
                     <div className="mt-1 text-[11px] font-black text-purple-200 sm:text-[16px]">
-                      {formatMoney(winner.guess)}
+                      {formatMoney(winner.guess, currentPredictionHunt?.currency)}
                     </div>
 
                     <div className="mt-1 text-[7px] text-white/40 sm:text-[9px]">
-                      Off by {formatMoney(winner.distance)}
+                      Off by {formatMoney(winner.distance, currentPredictionHunt?.currency)}
                     </div>
                   </div>
                 ))
@@ -5521,7 +5525,7 @@ return (
                           <span className="text-white/55">
                             Bet{" "}
                             <span className="text-white">
-                              {formatMoney(Number(bonus.betSize || 0))}
+                              {formatMoney(Number(bonus.betSize || 0), currentPredictionHunt?.currency)}
                             </span>
                           </span>
 
@@ -5530,7 +5534,7 @@ return (
                           </span>
 
                           <span className="text-purple-200">
-                            {formatMoney(Number(bonus.payout || 0))}
+                            {formatMoney(Number(bonus.payout || 0), currentPredictionHunt?.currency)}
                           </span>
                         </div>
                       </div>
@@ -9889,7 +9893,7 @@ onClick={() => {
 )}
           </main>
 
-{activeSection === "admin" && pickedSlotCall && trackerEntryOpen && <WheelEntry key={pickedSlotCall.id} call={pickedSlotCall} bet={trackerBet} onBet={setTrackerBet} busy={trackerBusy} huntId={trackerHuntId} onClose={()=>setTrackerEntryOpen(false)} onResolve={resolvePickedCall} onRecord={recordPickedCall} />}
+{activeSection === "admin" && pickedSlotCall && trackerEntryOpen && <WheelEntry currency={huntsData.find(h=>h.localId===trackerHuntId)?.currency||'USD'} key={pickedSlotCall.id} call={pickedSlotCall} bet={trackerBet} onBet={setTrackerBet} busy={trackerBusy} huntId={trackerHuntId} onClose={()=>setTrackerEntryOpen(false)} onResolve={resolvePickedCall} onRecord={recordPickedCall} />}
 
 <footer
   className="

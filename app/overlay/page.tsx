@@ -1,4 +1,5 @@
 "use client";
+import {huntMoney} from "@/lib/hunt-currency";
 import { useEffect, useState } from "react";
 import "./overlay.css";
 type Bonus = {
@@ -11,6 +12,7 @@ type Bonus = {
   tier: string;
 };
 type Hunt = {
+  currency?:string;
   id: string;
   title: string;
   phase: string;
@@ -27,12 +29,6 @@ type Hunt = {
     profitLoss: number;
   };
 };
-const cash = (n: number) =>
-  "$" +
-  n.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 export default function Overlay() {
   const [hunt, setHunt] = useState<Hunt | null>(null),
     [error, setError] = useState(false);
@@ -79,6 +75,7 @@ export default function Overlay() {
         </p>
       </main>
     );
+  const cash=(value:number)=>huntMoney(value,hunt.currency||"USD",true);
   const opened = hunt.bonuses.filter((b) => b.payout !== null),
     best = [...opened].sort((a, b) => b.multiplier - a.multiplier)[0],
     biggest = [...opened].sort((a, b) => (b.payout || 0) - (a.payout || 0))[0];
@@ -106,7 +103,7 @@ export default function Overlay() {
   return (
     <main className="hunt-overlay" aria-label="Bonus hunt stream overlay">
       <header>
-        <strong>{hunt.title}</strong>
+        <strong>{hunt.title} · {hunt.currency||"USD"}</strong>
         <span>
           {hunt.phase === "collecting"
             ? "COLLECTING"

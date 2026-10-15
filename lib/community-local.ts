@@ -1,3 +1,5 @@
+import {huntCurrency,type HuntCurrency} from './hunt-currency';
+async function rouloGames(){return (await import('./roulo-catalogue')).catalogue();}
 import "server-only";
 import {
   readDocument,
@@ -11,6 +13,7 @@ import games from "@/data/rainbet-community.json";
 import { matchSlot, normaliseSlot } from "./slot-matching";
 import { validatePrizeSettings, defaultPrizeSettings, type PrizeSettings } from "./prize-settings";
 import { validateSchedule } from "./community-schedule";
+type CommunityGame={identifier:string;name:string;provider:string;artwork_url:string|null;rainbet_launch_url?:string|null};
 export type CommunityActor = { id: string; name: string };
 type Member = CommunityActor & {
   amount: string;
@@ -46,6 +49,8 @@ type Entry = {
 };
 type Prediction = { userId: string; username: string; amount: string; createdAt: string };
 type Hunt = {
+  currency?: HuntCurrency;
+  catalogue?: "rainbet"|"roulobets";
   id: string;
   title: string;
   phase: string;
@@ -92,7 +97,9 @@ export function communityTracker(h: Hunt) {
     external_hunt_id: null,
     source: "community",
     title: h.title,
-    casino: "Rainbet",
+    casino: h.catalogue==='roulobets'?'Roulobets':'Rainbet',
+    currency:h.currency||'USD',
+    catalogue:h.catalogue||'rainbet',
     startCost: Number(start(h)) / 1e6,
     status: h.phase === "finished" ? "completed" : "open",
     phase: h.phase,
@@ -122,8 +129,10 @@ export function communityTracker(h: Hunt) {
       })),
   };
 }
-export async function rainbetGames(q: string) {
-  const games = await localCatalogue();
+export async function rainbetGames(q: string,huntId?:string) {
+  const h=huntId?(await communityState()).hunts.find(h=>h.id===huntId&&!h.deleted):undefined;
+  if(huntId&&!h)throw Error('Choose an existing community hunt.');
+  const games = h?.catalogue==='roulobets'?(await rouloGames()).filter(g=>g.enabled!==false):await localCatalogue();
   const query = normaliseSlot(q);
   if (!query) return [];
   const matched = matchSlot(q, games);
@@ -153,7 +162,6 @@ export async function communityCommand(
   const task = previous
     .catch(() => {})
     .then(async () => {
-      const games = await localCatalogue();
       const key = requestKey(b, actor.id, "hunts");
       for (let attempt = 0; attempt < 12; attempt++) {
         const replay = await receipt("hunts", actor.id, key);
@@ -165,6 +173,7 @@ export async function communityCommand(
         const s = snapshot.payload;
         const action = String(b.action);
         let h = s.hunts.find((h) => h.id === b.huntId && !h.deleted);
+        const games:CommunityGame[]=h?.catalogue==='roulobets'?(await rouloGames()).filter(g=>g.enabled!==false):await localCatalogue();
         let result = "";
         const staff = () => {
           if (!admin) throw Error("AUTH: Admin access required.");
@@ -192,9 +201,12 @@ export async function communityCommand(
             limit > 10
           )
             throw Error("Enter a title and a call limit from 1 to 10.");
+          if(b.catalogue!==undefined&&!['rainbet','roulobets'].includes(String(b.catalogue)))throw Error('Choose Rainbet or Roulobets.');
           h = {
             id: randomUUID(),
             title,
+            currency:huntCurrency(b.currency),
+            catalogue:b.catalogue==='roulobets'?'roulobets':'rainbet',
             ...validateSchedule(b.scheduledAt, b.timeZone),
             phase: "collecting",
             limit,
@@ -296,7 +308,7 @@ export async function communityCommand(
             else if (!member)
               throw Error("Join the hunt and wait for admin approval first.");
             const game = games.find((g) => g.identifier === b.identifier);
-            if (!game) throw Error("Select a Rainbet catalogue slot.");
+            if (!game) throw Error("Select a slot from this hunt’s catalogue.");
             if (
               h.calls.some(
                 (c) =>
@@ -329,7 +341,7 @@ export async function communityCommand(
               identifier: game.identifier,
               slot_name: game.name,
               artwork_url: game.artwork_url,
-              launch: validLaunch(game.rainbet_launch_url)
+              launch: h.catalogue==='roulobets'?'https://roulobets.com/casino/slots/'+encodeURIComponent(game.identifier).replace(/%3A/gi,':'):validLaunch(game.rainbet_launch_url)
                 ? game.rainbet_launch_url
                 : null,
               status: "queued",

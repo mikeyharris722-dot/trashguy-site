@@ -33,6 +33,7 @@ export async function GET() {
         hunt: {
           id: h.id,
           title: h.title,
+          currency:h.currency||"USD",
           phase: h.phase,
           startCost: dto.startCost,
           stats: dto.stats,

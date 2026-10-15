@@ -12,7 +12,7 @@ export function trashBossProgress(hunts:StatsHunt[],start:string,end:string,targ
   const id=hunt.id+':'+entry.id,key=viewerKey(entry.username||'');
   const date=Date.parse((entry as typeof entry&{payout_recorded_at?:string}).payout_recorded_at||entry.updated_at||'');
   if(seen.has(id)||!key||!isBossCall((entry as typeof entry&{call_id?:string}).call_id)||entry.status!=='collected'||entry.payout===null||entry.payout===''||!Number.isFinite(date)||date<from||date>=to)continue;
-  const amount=Number(entry.payout);if(!Number.isFinite(amount)||amount<0)continue;seen.add(id);
+  const raw=entry.payout_usd??((hunt.currency||"USD")==="USD"?entry.payout:null);if(raw===null)continue;const amount=Number(raw);if(!Number.isFinite(amount)||amount<0)continue;seen.add(id);
   const p=players.get(key)||{name:entry.username,cents:0,calls:0};p.cents+=Math.round(amount*100);p.calls++;players.set(key,p);
  }
  return [...players].map(([key,p])=>({key,name:p.name,total:p.cents/100,calls:p.calls,reached:targets.filter(t=>p.cents>=Math.round(t.target*100)).length,progress:Math.min(100,p.cents/Math.round(targets[targets.length-1].target*100)*100)})).sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name));

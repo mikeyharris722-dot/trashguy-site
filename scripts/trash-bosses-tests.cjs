@@ -17,3 +17,5 @@ assert.equal(trashBossProgress([hunt([{...assigned,call_id:'manual:12345678-1234
 assert.equal(trashBossProgress([hunt([{...assigned,call_id:'manual:viewer:invalid'}])],from,to,defaultBossTargets).length,0);
 const {trackerCaller}=load('tracker-caller');assert.equal(trackerCaller({call_id:'manual:abc',username:'Manual'}),'');assert.equal(trackerCaller(assigned),'Gettyyy_');assert.equal(trackerCaller({call_id:'call:abc',username:'Manual'}),'Manual');
 console.log('PASS: wheel-only results, payouts by leaderboard date, case matching, ranking, duplicate exclusion, date edits and target validation.');
+
+const cad={...hunt([{...row('cad','Gettyyy_',2000,date),payout_usd:1400}]),id:'cad',currency:'CAD'};assert.equal(trashBossProgress([cad],from,to,defaultBossTargets)[0].total,1400);delete cad.entries[0].payout_usd;assert.equal(trashBossProgress([cad],from,to,defaultBossTargets).length,0);cad.source='community';cad.entries[0].payout_usd=1400;assert.equal(trashBossProgress([cad],from,to,defaultBossTargets).length,0);console.log('PASS saved USD values, no foreign amount fallback and community exclusion');

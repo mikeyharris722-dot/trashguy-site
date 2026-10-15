@@ -52,6 +52,7 @@ export async function GET() {
         hunt: {
           id: h.id,
           title: h.title,
+          currency:h.currency||"USD",
           phase: h.phase,
           startCost: h.startCost,
           stats: h.stats,

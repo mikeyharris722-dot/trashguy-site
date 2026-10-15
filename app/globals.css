@@ -1905,3 +1905,7 @@ textarea::placeholder {
 .prize-editor .settings-section .prize-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.prize-editor .settings-section .boss-prize-fields{grid-template-columns:1fr}.prize-editor .weekly-admin-fields{gap:8px}.prize-editor .settings-section .boss-activation{font-size:10px}
 .prize-editor .form-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap}.prize-editor .form-footer p{font-size:9px;flex:1;min-width:140px}.prize-editor .form-footer button{font-size:11px;padding:9px 12px}
 }
+
+.hunt-currency-choice{display:grid;gap:5px;font-size:11px;min-width:0}.hunt-currency-choice select{width:100%;min-width:0;padding:8px;border:1px solid #c084fc35;border-radius:8px;background:#0b0612;color:#fff;font-size:13px;color-scheme:dark}@media(max-width:600px){.hunt-currency-choice{font-size:10px}.hunt-currency-choice select{font-size:16px;min-height:36px;padding:6px}}
+
+.community-catalogue-row{grid-template-columns:minmax(0,1fr) 210px;align-items:end}.community-catalogue-row .hunt-currency-choice{display:grid;gap:5px}.community-catalogue-row select{display:block;width:100%;margin:0;min-width:0;box-sizing:border-box}@media(max-width:600px){.community-catalogue-row{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}}

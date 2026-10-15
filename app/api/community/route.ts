@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     if (url.searchParams.has("q"))
       return Response.json({
-        games: await rainbetGames(url.searchParams.get("q") || ""),
+        games: await rainbetGames(url.searchParams.get("q") || "",url.searchParams.get("huntId")||undefined),
       });
     const s = await communityState();
     let who: null | { id: string; name: string } = null,

@@ -28,6 +28,7 @@ export async function trackerHunts() {
       external_hunt_id: null,
       source: "site",
       title: h.title,
+      currency:h.currency||"USD",
       casino: "Roulobets",
       startCost: Number(h.start_amount),
       status: h.phase === "finished" ? "completed" : "open",

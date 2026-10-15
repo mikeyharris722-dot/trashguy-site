@@ -1,4 +1,5 @@
 "use client";
+import {huntMoney} from '@/lib/hunt-currency';
 import {trackerCaller} from "@/lib/tracker-caller";
 import UserBadges from "@/components/user-badges";
 import { useEffect, useState } from "react";
@@ -12,6 +13,7 @@ type Entry = {
   payout: string | null;
 };
 export default function TrackerResults({ huntId }: { huntId: string }) {
+  const [currency,setCurrency]=useState("USD");
   const [entries, setEntries] = useState<Entry[]>([]);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -27,6 +29,7 @@ export default function TrackerResults({ huntId }: { huntId: string }) {
         if (!response.ok)
           throw new Error(data.error || "Could not load results");
         if (live) {
+          setCurrency(data.hunts?.find((h:{id:string;currency?:string})=>h.id===huntId)?.currency||'USD');
           setEntries(
             data.hunts?.find((h: { id: string }) => h.id === huntId)?.entries ||
               [],
@@ -72,7 +75,7 @@ export default function TrackerResults({ huntId }: { huntId: string }) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold">{e.slot_name}</p>
                 <p className="text-xs text-white/45">
-                  {trackerCaller(e) && <>{trackerCaller(e)}<UserBadges name={trackerCaller(e)} /> · </>}Bet ${Number(e.bet_size).toFixed(2)}
+                  {trackerCaller(e) && <>{trackerCaller(e)}<UserBadges name={trackerCaller(e)} /> · </>}Bet {huntMoney(Number(e.bet_size),currency)}
                 </p>
               </div>
               <span
@@ -90,7 +93,7 @@ export default function TrackerResults({ huntId }: { huntId: string }) {
               <p className="mt-2 text-xs font-bold text-purple-200">
                 {e.payout === null
                   ? "Awaiting opening"
-                  : "Payout $" + Number(e.payout).toFixed(2)}
+                  : "Payout " + huntMoney(Number(e.payout),currency)}
               </p>
             )}
           </div>
