@@ -29,6 +29,16 @@ export function reviewFetch(original: typeof fetch): typeof fetch {
         { status: 403, headers: { "Content-Type": "application/json" } },
       );
     }
+    // Bound server-side database reads during an outage. Do not retry writes:
+    // a timed-out write may already have committed.
+    if (typeof window === "undefined" && ["GET", "HEAD"].includes(method) && url.pathname.startsWith("/rest/v1/")) {
+      const callerSignal = init?.signal || (input instanceof Request ? input.signal : undefined);
+      const timeout = AbortSignal.timeout(10_000);
+      return original(input, {
+        ...init,
+        signal: callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout,
+      });
+    }
     return original(input, init);
   };
 }

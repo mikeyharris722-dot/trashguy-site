@@ -29,6 +29,7 @@ export async function GET() {
         Authorization: `Bearer ${apiKey}`,
       },
       cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
     });
 
     if (!res.ok) {

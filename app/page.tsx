@@ -1602,9 +1602,12 @@ useEffect(() => {
     return session?.access_token || "";
   }, []);
 
+  const huntsRequestPending = useRef(false);
   const loadHunts = useCallback(async () => {
+  if (huntsRequestPending.current) return;
+  huntsRequestPending.current = true;
   try {
-    const res = await siteFetch("/api/hunts", { cache: "no-store" });
+    const res = await siteFetch("/api/hunts", { cache: "no-store", signal: AbortSignal.timeout(45_000) });
     const data = await res.json();
 
     const rawHunts = Array.isArray(data?.hunts) ? data.hunts : [];
@@ -1661,6 +1664,7 @@ if (normalized.length > 0) {
   } catch (error) {
     console.error("Hunts failed to load", error);
   } finally {
+    huntsRequestPending.current = false;
     setHuntsLoading(false);
   }
 }, []);
