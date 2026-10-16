@@ -888,6 +888,7 @@ const [slotCallMessage, setSlotCallMessage] = useState("");
 const [isSlotWheelSpinning, setIsSlotWheelSpinning] = useState(false);
 
 const [pickedSlotCall, setPickedSlotCall] = useState<WheelCall | null>(null);
+const slotClaimPending = useRef(false);
 
 const [slotWheelRotation, setSlotWheelRotation] = useState(0);
 const [giveawayEntries, setGiveawayEntries] = useState<any[]>([]);
@@ -2559,7 +2560,11 @@ const loadSlotCalls = async () => {
     if (!res.ok) throw new Error("Calls could not refresh");
     setSlotCallConnection("Live updates");
 
-    if (Array.isArray(data.calls)) {
+    if (activeSection === 'admin' && adminAllowed && !slotClaimPending.current && data.pickedCalls?.length) {
+      const call=data.pickedCalls[0];
+      setPickedSlotCall(current=>current||{id:call.id,username:call.username,slotName:call.slot_name,needsReview:Boolean(call.needs_review),originalRequest:call.original_request,suggestions:call.suggestions||[],createdAt:new Date(call.created_at).getTime()});
+    }
+    if (Array.isArray(data.calls) && !slotClaimPending.current) {
       setSlotCalls(
         data.calls.map((call: any) => ({
           id: call.id,
@@ -3235,8 +3240,9 @@ const SLOT_WHEEL_VIEWPORT_HEIGHT = 220;
 const SLOT_WHEEL_LOOPS = 12;
 const SLOT_WHEEL_VISIBLE_ROWS = 5;
 
-const handleSpinSlotWheel = () => {
+const handleSpinSlotWheel = async () => {
   if (
+    slotClaimPending.current ||
     isSlotWheelSpinning ||
     pickedSlotCall ||
     slotCalls.length === 0
@@ -3293,14 +3299,27 @@ const handleSpinSlotWheel = () => {
       getRandomIndex(eligibleCalls.length)
     ];
 
+  slotClaimPending.current = true;
+  setIsSlotWheelSpinning(true);
+  try {
+    const response=await slotFetch('/api/slot-calls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'pick',callId:winner.id,slotName:winner.slotName})});
+    const data=await response.json();
+    if(!response.ok)throw Error(data.error||'Could not reserve the selected call.');
+  } catch(error) {
+    slotClaimPending.current=false;
+    setIsSlotWheelSpinning(false);
+    setSiteNotice(error instanceof Error?error.message:'Could not reserve this call.');
+    await loadSlotCalls();
+    return;
+  }
   const winnerIndex = slotCalls.findIndex(
     (call) => call.id === winner.id
   );
 
   if (winnerIndex < 0) {
-    console.error(
-      "Selected wheel winner was not found."
-    );
+    slotClaimPending.current=false;
+    setIsSlotWheelSpinning(false);
+    await loadSlotCalls();
     return;
   }
 
@@ -3359,6 +3378,8 @@ const handleSpinSlotWheel = () => {
     );
 
     setPickedSlotCall(winner);
+    slotClaimPending.current=false;
+    void loadSlotCalls();
     setTrackerEntryOpen(true);
     setSlotWheelRotation(0);
 

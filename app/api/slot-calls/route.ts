@@ -43,7 +43,8 @@ export async function GET() {
   const identifiers = new Set(collected.map(e => e.identifier));
   const names = new Set(collected.map(e => e.slot_name.trim().toLowerCase()));
   return NextResponse.json({
-    calls: calls.map(c => {
+    pickedCalls: calls.filter(c=>c.picked_at).map(c=>{const m=metadata.get(String(c.id));return {...c,needs_review:m?.status==='review',original_request:m?.original_request||c.slot_name,suggestions:m?.suggestions||[]};}),
+    calls: calls.filter(c=>!c.picked_at).map(c => {
       const m = metadata.get(String(c.id));
       return {...c, needs_review:m?.status === "review", original_request:m?.original_request || c.slot_name, suggestions:m?.suggestions || []};
     }).filter(c => !activeId || (!identifiers.has(metadata.get(String(c.id))?.identifier) && (c.needs_review || !names.has(c.slot_name.trim().toLowerCase())))),
@@ -68,7 +69,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     const action = String(body.action || "").trim();
-    if (action) await requireTrackerAdmin(req);
+    const adminActor = action ? await requireTrackerAdmin(req) : null;
+    if (action === 'pick') {
+      const {data,error}=await supabase.rpc('slot_call_pick',{p_actor:adminActor,p_call:body.callId,p_expected_slot:body.slotName});
+      if(error)return NextResponse.json({error:error.message},{status:409});
+      return NextResponse.json({ok:true,...data});
+    }
 
     /*
       ========================================================
@@ -318,108 +324,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    /*
-      Prevent the same viewer from having multiple
-      active calls on the wheel.
-    */
-
-    const { data: existingUser, error: existingUserError } = await supabase
-      .from("slot_calls")
-      .select("id,slot_name,platform")
-      .ilike("username", username)
-      .eq("platform", platform)
-      .maybeSingle();
-
-    if (existingUserError) {
-      return NextResponse.json(
-        {
-          error: existingUserError.message,
-        },
-        {
-          status: 500,
-        },
-      );
-    }
-
-    /*
-      Prevent the exact same slot from being entered
-      more than once on the current wheel.
-    */
-
-    const { data: existingSlot, error: existingSlotError } = await supabase
-      .from("slot_calls")
-      .select("id")
-      .ilike("slot_name", slotName)
-      .maybeSingle();
-
-    if (existingSlotError) {
-      return NextResponse.json(
-        {
-          error: existingSlotError.message,
-        },
-        {
-          status: 500,
-        },
-      );
-    }
-
-    if (existingSlot && existingSlot.id !== existingUser?.id) {
-      return NextResponse.json(
-        {
-          error: `${slotName} is already on the wheel.`,
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    /*
-      Create the active wheel entry.
-    */
-
-    const write = existingUser
-      ? supabase.from("slot_calls").update({ slot_name: slotName, platform }).eq("id", existingUser.id)
-      : supabase.from("slot_calls").insert({ username, slot_name: slotName, platform });
-    const { data, error } = await write.select().single();
-
-    if (error) {
-      return NextResponse.json(
-        {
-          error: error.message,
-        },
-        {
-          status: 500,
-        },
-      );
-    }
-
-    const metadata = await supabase
-      .from("roulo_call_matches")
-      .upsert({
-        call_id: String(data.id),
-        original_request: originalSlotName,
-        identifier: matched.game?.identifier || null,
-        status: matched.status,
-        suggestions: matched.suggestions,
-      });
-    if (metadata.error) {
-      if (existingUser) {
-        await supabase.from("slot_calls").update({slot_name: existingUser.slot_name, platform: existingUser.platform}).eq("id", data.id);
-      } else {
-        await supabase.from("slot_calls").delete().eq("id", data.id);
-      }
-      return NextResponse.json(
-        { error: "Catalogue migration is not installed; call was not queued." },
-        { status: 503 },
-      );
-    }
-    return NextResponse.json({
-      ok: true,
-      call: data,
-      replaced: Boolean(existingUser),
-      needsReview: matched.status === "review",
+    const {data,error}=await supabase.rpc('slot_call_queue',{
+      p_username:username,p_platform:platform,p_slot:slotName,
+      p_match:{original_request:originalSlotName,identifier:matched.game?.identifier||null,status:matched.status,suggestions:matched.suggestions||[]},
     });
+    if(error)return NextResponse.json({error:error.message},{status:/already/.test(error.message)?409:503});
+    return NextResponse.json({ok:true,...data});
   } catch (error: any) {
     if (error?.message?.startsWith("AUTH:"))
       return NextResponse.json({ error: error.message }, { status: 403 });
