@@ -32,6 +32,11 @@ type Call = {
 };
 type Hunt = PredictionHunt & {
   currency?:HuntCurrency;
+  equityRate?:string|null;
+  approvedEquityUsd?:number;
+  equityRateSavedAt?:string|null;
+  equityRateDate?:string|null;
+  equityRateSource?:string|null;
   catalogue?:"rainbet"|"roulobets";
   casino?:string;
   id: string;
@@ -283,9 +288,10 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
               </label>
             </div>
             <div className="hunt-create-row community-catalogue-row"><label className="hunt-currency-choice">Slot catalogue<select aria-label="Community slot catalogue" value={catalogue} onChange={e=>setCatalogue(e.target.value)}><option value="rainbet">Rainbet</option><option value="roulobets">Roulobets</option></select></label><HuntCurrencySelect value={currency} onChange={setCurrency}/></div>
+            {currency !== 'USD' && <p className="text-xs text-white/60">The latest available USD → {currency} rate is fetched automatically when you create the hunt, then saved for this hunt.</p>}
             <div className="form-footer">
               <p>
-                Starting bankroll is the total of approved player contributions.
+                Contributions are always USD. Approved equity is converted into the hunt currency using its saved rate.
               </p>
               <button
                 type="submit"
@@ -354,7 +360,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
 
           {admin && (
             <CommunitySettings
-              key={[h.id, h.title, h.scheduledAt, h.timeZone, h.limit].join(
+              key={[h.id, h.title, h.scheduledAt, h.timeZone, h.limit, h.equityRate, h.equityRateSavedAt].join(
                 ":",
               )}
               hunt={h}
@@ -379,7 +385,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                   }}
                 >
                   <label>
-                    Your contribution ({h.currency||"USD"})
+                    Your contribution (USD)
                     <input
                       aria-label="Your contribution"
                       type="number"
@@ -411,7 +417,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                 <p>
                   {member.status === "pending"
                     ? "Your registration is waiting for admin approval."
-                    : `You’re approved · ${Math.max(0, h.limit - h.calls.filter((c) => c.userId === me && ["queued", "selected"].includes(c.status)).length)} of ${h.limit} call spaces available · ${huntMoney(Number(member.amount),h.currency)} contribution`}
+                    : `You’re approved · ${Math.max(0, h.limit - h.calls.filter((c) => c.userId === me && ["queued", "selected"].includes(c.status)).length)} of ${h.limit} call spaces available · ${huntMoney(Number(member.amount),"USD")} contribution`}
                 </p>
               )}
             </div>
@@ -432,10 +438,15 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
               </li>
             </ol>
           )}
+          {(h.currency || 'USD') !== 'USD' && <p className="rounded-lg border border-purple-300/20 bg-black/75 p-3 text-xs text-white/70" role="status">
+            {h.equityRate ? `Equity is in USD · 1 USD = ${Number(h.equityRate).toLocaleString('en-US',{maximumFractionDigits:6})} ${h.currency} · Rate saved for this hunt${h.equityRateDate ? " · " + h.equityRateDate : ""}.` : 'USD equity conversion has not been set for this existing hunt. An admin must set the rate before accepting contributions or opening bonuses. Historical bankroll is unchanged.'}
+            {h.equityRateSource === 'ExchangeRate-API' && <> <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer" className="underline">Rates by ExchangeRate-API</a></>}
+          </p>}
           <div className="community-stats grid gap-3 rounded-xl border border-purple-300/20 bg-black/75 p-4 sm:grid-cols-4">
             <div>
               <span className="text-xs text-white/50">Approved bankroll</span>
               <p className="text-xl font-bold">{huntMoney(h.startCost,h.currency)}</p>
+              <span className="text-xs text-white/50">{huntMoney(h.approvedEquityUsd || 0,"USD")} approved equity</span>
             </div>
             <div>
               <span className="text-xs text-white/50">Recorded returns</span>
@@ -474,7 +485,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                     className="flex flex-wrap items-center gap-3 border-t border-white/10 py-3"
                   >
                     <b className="flex-1">{m.name}<UserBadges name={m.name} /></b>
-                    <span>{huntMoney(Number(m.amount),h.currency)}</span>
+                    <span>{huntMoney(Number(m.amount),"USD")}</span>
                     <button
                       className={button}
                       disabled={busy || h.phase !== "collecting"}
@@ -670,7 +681,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                     key={m.id}
                     className="rounded-full bg-purple-400/10 px-3 py-2 text-sm"
                   >
-                    {m.name}<UserBadges name={m.name} />
+                    {m.name}<UserBadges name={m.name} />{m.amount !== null && <span className="ml-2 text-white/60">{huntMoney(Number(m.amount),"USD")}</span>}
                   </span>
                 ))}
             </div>

@@ -1,4 +1,6 @@
 import {huntCurrency,type HuntCurrency} from './hunt-currency';
+import { communityBankroll } from './community-equity';
+import { communityFx } from './community-fx';
 async function rouloGames(){return (await import('./roulo-catalogue')).catalogue();}
 import "server-only";
 import {
@@ -50,6 +52,10 @@ type Entry = {
 type Prediction = { userId: string; username: string; amount: string; createdAt: string };
 type Hunt = {
   currency?: HuntCurrency;
+  equityRate?: string;
+  equityRateSavedAt?: string;
+  equityRateDate?: string;
+  equityRateSource?: string;
   catalogue?: "rainbet"|"roulobets";
   id: string;
   title: string;
@@ -84,10 +90,18 @@ export async function communityState(): Promise<State> {
     .payload;
 }
 
-function start(h: Hunt) {
+function approvedUsd(h: Hunt) {
   return h.members
     .filter((m) => m.status === "accepted")
     .reduce((v, m) => v + money(m.amount), BigInt(0));
+}
+function start(h: Hunt) {
+  // Preserve historical hunts without a saved rate; do not invent an FX rate.
+  return h.equityRate ? communityBankroll(approvedUsd(h), h.equityRate) : approvedUsd(h);
+}
+function requireEquityRate(h: Hunt) {
+  if (huntCurrency(h.currency) !== 'USD' && !h.equityRate)
+    throw Error('An admin must save the USD equity exchange rate in Edit hunt details first.');
 }
 export function communityTracker(h: Hunt) {
   const entries = h.entries.filter((e) => !e.deleted_at);
@@ -100,6 +114,12 @@ export function communityTracker(h: Hunt) {
     casino: h.catalogue==='roulobets'?'Roulobets':'Rainbet',
     currency:h.currency||'USD',
     catalogue:h.catalogue||'rainbet',
+    equityCurrency: 'USD',
+    equityRate: h.equityRate || (huntCurrency(h.currency) === 'USD' ? '1' : null),
+    equityRateSavedAt: h.equityRateSavedAt || null,
+    equityRateDate: h.equityRateDate || null,
+    equityRateSource: h.equityRateSource || null,
+    approvedEquityUsd: Number(approvedUsd(h)) / 1e6,
     startCost: Number(start(h)) / 1e6,
     status: h.phase === "finished" ? "completed" : "open",
     phase: h.phase,
@@ -206,6 +226,8 @@ export async function communityCommand(
             id: randomUUID(),
             title,
             currency:huntCurrency(b.currency),
+            ...await communityFx(b.currency),
+            equityRateSavedAt:new Date().toISOString(),
             catalogue:b.catalogue==='roulobets'?'roulobets':'rainbet',
             ...validateSchedule(b.scheduledAt, b.timeZone),
             phase: "collecting",
@@ -247,6 +269,7 @@ export async function communityCommand(
             staff();
             h.predictionsClosed = b.closed !== false;
           } else if (action === "register") {
+            requireEquityRate(h);
             if (h.phase !== "collecting")
               throw Error("Registration is closed.");
             if (
@@ -280,6 +303,7 @@ export async function communityCommand(
               );
             if (action === "cancelRegistration") m.status = "withdrawn";
             else {
+              requireEquityRate(h);
               const amount = String(b.amount);
               if (
                 money(amount) <= BigInt(0) ||
@@ -296,6 +320,7 @@ export async function communityCommand(
               (m) => m.id === b.userId && m.status === "pending",
             );
             if (!m) throw Error("Registration has already been handled.");
+            if (action === "approve") requireEquityRate(h);
             m.status = action === "approve" ? "accepted" : "declined";
           } else if (action === "submit" || action === "hostCall") {
             if (h.phase !== "collecting") throw Error("Calls are closed.");
@@ -431,6 +456,7 @@ export async function communityCommand(
                 )
               )
                 throw Error("Enter all payouts before finishing.");
+              if (b.phase === "opening") requireEquityRate(h);
               h.phase = String(b.phase);
             } else if (action === "reorder") {
               if (h.phase !== "collecting")
@@ -521,6 +547,14 @@ export async function communityCommand(
                 c.status = "queued";
               }
             } else if (action === "edit") {
+              if (b.refreshEquityRate === true) {
+                if (h.phase === 'finished' || (h.equityRate && (h.phase !== 'collecting' ||
+                  h.entries.some(e => e.payout !== null) || h.members.some(m => m.status === 'accepted'))))
+                  throw Error('The equity exchange rate is locked after approval or opening.');
+                Object.assign(h, await communityFx(h.currency));
+                h.equityRateSavedAt = new Date().toISOString();
+              }
+              if (b.equityRate !== undefined) throw Error('Exchange rates are looked up automatically. Use Update exchange rate.');
               const title = String(b.title || "").trim();
               if (!title || title.length > 160) throw Error("Enter a title");
               h.title = title;

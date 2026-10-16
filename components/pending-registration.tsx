@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { huntMoney } from "@/lib/hunt-currency";
 export default function PendingRegistration({
   amount,
   busy,
@@ -15,7 +16,7 @@ export default function PendingRegistration({
   return (
     <div className="pending-registration">
       <p>
-        <strong>Waiting for approval</strong> · ${Number(amount).toFixed(2)}{" "}
+        <strong>Waiting for approval</strong> · {huntMoney(Number(amount),"USD")}{" "}
         contribution
       </p>
       <p>
@@ -31,7 +32,7 @@ export default function PendingRegistration({
           }}
         >
           <label>
-            Your contribution ($)
+            Your contribution (USD)
             <input
               aria-label="Update pending contribution"
               type="number"

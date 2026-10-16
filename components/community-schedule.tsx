@@ -98,6 +98,11 @@ export function CommunitySettings({
   save,
 }: {
   hunt: {
+    currency?: string;
+    equityRate?: string | null;
+    phase?: string;
+    members?: {status:string}[];
+    entries?: {payout:string|null}[];
     title: string;
     limit: number;
     scheduledAt: string | null;
@@ -109,6 +114,7 @@ export function CommunitySettings({
   const [title, setTitle] = useState(hunt.title),
     [limit, setLimit] = useState(String(hunt.limit)),
     [error, setError] = useState("");
+  const rateLocked = hunt.phase === 'finished' || (!!hunt.equityRate && (hunt.phase !== 'collecting' || !!hunt.entries?.some(e=>e.payout !== null) || !!hunt.members?.some(m=>m.status === 'accepted')));
   return (
     <details className="community-settings">
       <summary>Edit hunt details</summary>
@@ -151,6 +157,13 @@ export function CommunitySettings({
           </label>
         </div>
 
+        {(hunt.currency || 'USD') !== 'USD' && <div className="hunt-create-row">
+          <div className="text-xs text-white/70 self-center">
+            <p>{hunt.equityRate ? `Saved rate · 1 USD = ${Number(hunt.equityRate).toLocaleString('en-US',{maximumFractionDigits:6})} ${hunt.currency}` : 'No saved exchange rate yet.'}</p>
+            <p>{rateLocked ? 'Locked for this hunt.' : 'Latest available rate · locked after the first approval. Existing contributions remain USD.'}</p>
+          </div>
+          {!rateLocked && <button type="button" className="primary-button" disabled={busy} onClick={()=>void save({title,limit:Number(limit),refreshEquityRate:true})}>{busy ? 'Looking up…' : hunt.equityRate ? 'Update exchange rate' : 'Get latest exchange rate'}</button>}
+        </div>}
         {error && (
           <p role="alert" className="form-error">
             {error}

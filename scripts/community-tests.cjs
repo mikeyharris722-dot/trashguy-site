@@ -3,13 +3,54 @@ const repo=path.resolve(__dirname,'..');
 const ts=require(repo+'/node_modules/typescript');
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'trash-community-test-'));
 const cache={};
-function load(name){if(name==='roulo-catalogue')return {catalogue:async()=>[{identifier:'thunderkick:proof',name:'Thunderkick Proof',provider:'thunderkick',artwork_url:null},{identifier:'disabled',name:'Disabled',provider:'test',artwork_url:null,enabled:false}]};if(cache[name])return cache[name].exports;const file=path.join(repo,'lib',name+'.ts');const module={exports:{}};cache[name]=module;const js=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,esModuleInterop:true}}).outputText;vm.runInNewContext(js,{module,exports:module.exports,require:n=>n==='server-only'?{}:n==='@/data/rainbet-community.json'?require(repo+'/data/rainbet-community.json'):n.startsWith('./')?load(n.slice(2)):require(n),process:{...process,env:{...process.env,NODE_ENV:'development',COMMUNITY_HUNT_LOCAL:'1'},cwd:()=>dir},URL,AbortSignal,fetch,console,structuredClone},{filename:file});return module.exports;}
+let exchangeUnavailable=false;
+function load(name){if(name==='community-fx')return {communityFx:async currency=>{if(exchangeUnavailable&&currency&&currency!=='USD')throw Error('Exchange rate unavailable');return {equityRate:({CAD:'1.37',GBP:'0.75',ARS:'1100'})[currency]||'1',equityRateDate:'2026-10-16',equityRateSource:'ExchangeRate-API'}}};if(name==='roulo-catalogue')return {catalogue:async()=>[{identifier:'thunderkick:proof',name:'Thunderkick Proof',provider:'thunderkick',artwork_url:null},{identifier:'disabled',name:'Disabled',provider:'test',artwork_url:null,enabled:false}]};if(cache[name])return cache[name].exports;const file=path.join(repo,'lib',name+'.ts');const module={exports:{}};cache[name]=module;const js=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,esModuleInterop:true}}).outputText;vm.runInNewContext(js,{module,exports:module.exports,require:n=>n==='server-only'?{}:n==='@/data/rainbet-community.json'?require(repo+'/data/rainbet-community.json'):n.startsWith('./')?load(n.slice(2)):require(n),process:{...process,env:{...process.env,NODE_ENV:'development',COMMUNITY_HUNT_LOCAL:'1'},cwd:()=>dir},URL,AbortSignal,fetch,console,structuredClone},{filename:file});return module.exports;}
 (async()=>{
  const c=load('community-local'),a={id:'admin',name:'TEST Admin'},p={id:'player',name:'TEST Player'};
  await assert.rejects(c.communityCommand(p,false,{action:'create',title:'x'}),/Admin/);
- const roulo=await c.communityCommand(a,true,{action:'create',title:'CAD Roulo',currency:'CAD',catalogue:'roulobets',limit:3});
+ const roulo=await c.communityCommand(a,true,{action:'create',title:'CAD Roulo',currency:'CAD',equityRate:'1.37',catalogue:'roulobets',limit:3});
  let chosen=(await c.communityState()).hunts.find(h=>h.id===roulo);assert.equal(c.communityTracker(chosen).currency,'CAD');assert.equal(c.communityTracker(chosen).casino,'Roulobets');assert.equal((await c.rainbetGames('Thunderkick',roulo))[0].identifier,'thunderkick:proof');assert.equal((await c.rainbetGames('Disabled',roulo)).length,0);
  await assert.rejects(c.communityCommand(a,true,{action:'create',title:'Bad',currency:'GPB'}),/Choose USD/);await assert.rejects(c.communityCommand(a,true,{action:'create',title:'Bad',catalogue:'invalid'}),/Choose Rainbet/);
+ const equity=load('community-equity');
+ assert.equal(equity.communityBankroll(BigInt(100000000),'1.37'),BigInt(137000000));
+ assert.equal(equity.communityBankroll(BigInt(10000),'1.5'),BigInt(20000),'round half up to cents');
+ for(const rate of ['','0','-1','NaN','Infinity','0.0000001','1000001'])assert.throws(()=>equity.communityEquityRate('CAD',rate));
+ exchangeUnavailable=true;
+ const beforeOutage=JSON.stringify(await c.communityState());
+ await assert.rejects(c.communityCommand(a,true,{action:'create',title:'Unavailable rate',currency:'CAD'}),/unavailable/);
+ assert.equal(JSON.stringify(await c.communityState()),beforeOutage,'failed FX lookup must not save a hunt');
+ await assert.rejects(c.communityCommand(a,true,{action:'edit',huntId:roulo,title:'CAD Roulo',refreshEquityRate:true}),/unavailable/);
+ assert.equal(JSON.stringify(await c.communityState()),beforeOutage,'failed refresh must preserve the saved rate');
+ await c.communityCommand(a,true,{action:'create',title:'USD still works',currency:'USD'});
+ exchangeUnavailable=false;
+ const automatic=await c.communityCommand(a,true,{action:'create',title:'Automatic rate',currency:'CAD'});assert.equal((await c.communityState()).hunts.find(h=>h.id===automatic).equityRate,'1.37');
+ await assert.rejects(c.communityCommand(p,false,{action:'edit',huntId:roulo,title:'Hack',refreshEquityRate:true}),/Admin/);
+ await c.communityCommand(p,false,{action:'register',huntId:roulo,amount:'100'});
+ chosen=(await c.communityState()).hunts.find(h=>h.id===roulo);assert.equal(c.communityTracker(chosen).startCost,0,'pending equity excluded');
+ await c.communityCommand(a,true,{action:'approve',huntId:roulo,userId:p.id});
+ chosen=(await c.communityState()).hunts.find(h=>h.id===roulo);
+ assert.equal(chosen.members[0].amount,'100','member equity remains USD');assert.equal(c.communityTracker(chosen).approvedEquityUsd,100);assert.equal(c.communityTracker(chosen).startCost,137);assert.equal(c.communityTracker(chosen).stats.profitLoss,-137);
+ await assert.rejects(c.communityCommand(a,true,{action:'edit',huntId:roulo,title:'CAD Roulo',refreshEquityRate:true}),/locked/);
+ const legacy=structuredClone(chosen);delete legacy.equityRate;assert.equal(c.communityTracker(legacy).startCost,100,'historical bankroll preserved without invented rate');assert.equal(c.communityTracker(legacy).equityRate,null);
+ const legacyState=await c.communityState();legacy.id='legacy-cad';legacy.title='Legacy CAD';legacy.phase='opening';legacyState.hunts.push(legacy);fs.writeFileSync(path.join(dir,'.local/community-hunts.json'),JSON.stringify(legacyState));
+ await c.communityCommand(a,true,{action:'edit',huntId:legacy.id,title:legacy.title,refreshEquityRate:true});
+ assert.equal(c.communityTracker((await c.communityState()).hunts.find(h=>h.id===legacy.id)).startCost,137,'one-time explicit setup repairs an existing opening hunt');
+ await assert.rejects(c.communityCommand(a,true,{action:'edit',huntId:legacy.id,title:legacy.title,refreshEquityRate:true}),/locked/);
+ const completedState=await c.communityState();const completed=structuredClone(legacy);completed.id='completed-cad';completed.phase='finished';completedState.hunts.push(completed);fs.writeFileSync(path.join(dir,'.local/community-hunts.json'),JSON.stringify(completedState));
+ await assert.rejects(c.communityCommand(a,true,{action:'edit',huntId:completed.id,title:completed.title,refreshEquityRate:true}),/locked/);
+ const p2={id:'player2',name:'Other Viewer'};
+ await c.communityCommand(p2,false,{action:'register',huntId:roulo,amount:'50'});
+ await c.communityCommand(a,true,{action:'approve',huntId:roulo,userId:p2.id});
+ chosen=(await c.communityState()).hunts.find(h=>h.id===roulo);assert.equal(c.communityTracker(chosen).startCost,205.5);assert.equal(c.communityTracker(chosen).equityRate,'1.37');
+ await c.communityCommand(a,true,{action:'phase',huntId:roulo,phase:'opening'});
+ await assert.rejects(c.communityCommand(a,true,{action:'edit',huntId:roulo,title:'CAD Roulo',refreshEquityRate:true}),/locked/);
+ await c.communityCommand(a,true,{action:'phase',huntId:roulo,phase:'collecting'});
+ for(const [currency,rate,expected] of [['ARS','1100',110000],['GBP','0.75',75]]){
+   const next=await c.communityCommand(a,true,{action:'create',title:currency,currency,equityRate:rate});
+   await c.communityCommand(p,false,{action:'register',huntId:next,amount:'100'});await c.communityCommand(a,true,{action:'approve',huntId:next,userId:p.id});
+   assert.equal(c.communityTracker((await c.communityState()).hunts.find(h=>h.id===next)).startCost,expected);
+ }
+ console.log('PASS USD equity, CAD/ARS/GBP bankroll conversion, saved-rate stability, cent rounding, pending exclusion, historical fallback and server-side rate locks.');
  await c.communityCommand(a,true,{action:'hostCall',huntId:roulo,identifier:'thunderkick:proof'});chosen=(await c.communityState()).hunts.find(h=>h.id===roulo);assert.equal(chosen.calls[0].launch,'https://roulobets.com/casino/slots/thunderkick:proof');
  const rainbet=(await c.rainbetGames('Wanted Dead'))[0];await assert.rejects(c.communityCommand(a,true,{action:'hostCall',huntId:roulo,identifier:rainbet.identifier}),/this hunt/);
  const id=await c.communityCommand(a,true,{action:'create',title:'TEST-COMMUNITY',limit:1});
