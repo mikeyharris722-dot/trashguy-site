@@ -1,0 +1,71 @@
+TWITCH CHANNEL-POINT VIDEO SETUP
+
+Prepared locally on 16 October 2026. Not deployed and no live migration applied.
+
+What is ready
+- Full Scotland Forever video (68.104 seconds, 1920x1080) added as a project asset.
+- Existing /claw-production OBS browser source plays both the normal claw intro and Scotland clip.
+- One shared queue prevents overlap. Duplicate Twitch deliveries do not replay a redemption.
+- Signed EventSub webhooks validate the raw body, timestamp, broadcaster and subscription.
+- Private one-use broadcaster connection links expire after 15 minutes. OAuth state is cookie-bound.
+- Broadcaster access/refresh tokens are encrypted at rest with a key derived from the existing Twitch client secret.
+- Admin Settings > Channel-point videos: connect, repair events, load reward list, choose reward, volume, activation, recent redemptions, stop/clear queue.
+- Deactivating channel-point clips leaves a normal claw intro running. Emergency stop clears both playback and queued clips.
+- Local review saves tests locally and blocks real Twitch connections and redemptions.
+
+Before the call (site operator)
+1. Review/test the local changes at http://localhost:3200/#admin > Settings > Channel-point videos.
+2. In the existing Twitch developer application, retain the existing redirect URLs and ADD:
+   https://trashguy.me/api/twitch-points/callback
+   This developer-console setting cannot be configured through the Twitch Helix API.
+3. Confirm deployment has TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET and TWITCH_CHANNEL_LOGIN=trashguy__.
+   The site already uses these names. No new secret is required.
+   TWITCH_POINTS_SITE_URL is optional; defaults to https://trashguy.me.
+   For another domain, set it to that canonical HTTPS origin and register its callback too.
+4. When publication is approved, apply supabase/migrations/20261016102905_twitch_channel_points_clips.sql with the matching application release. Keep playback OFF.
+5. Deploy the matching code and video. Verify admin access, anonymous denial, transparent overlay, preview media and existing PRODUCTION button.
+6. Do not create a broadcaster invite too early: it expires after 15 minutes.
+
+On the call
+1. Admin opens Settings > Channel-point videos > Create connection link, then sends that private link to Trash.
+2. Trash opens it on HIS computer, signs into trashguy__, and approves channel:read:redemptions.
+   No site admin permission is granted by connecting Twitch. Nobody needs his password.
+3. Trash creates a CUSTOM channel-point reward, e.g. SCOTLAND FOREVER, in the Twitch Creator Dashboard.
+   Choose points cost. Suggested cooldown: 10-15 minutes; the clip is over a minute long.
+4. Admin refreshes the connection, clicks Connect / repair Twitch events, then refreshes until events show enabled.
+5. Admin loads Twitch rewards, selects SCOTLAND FOREVER, chooses volume, checks Enable channel-point videos, and saves.
+6. OBS: keep the existing https://trashguy.me/claw-production Browser Source at 1920x1080 above gameplay.
+   Leave Shutdown source when not visible and Refresh browser when scene becomes active OFF.
+   Enable Control audio via OBS and set the mixer to reach the stream. The track is intentionally loud.
+   Refresh the browser source ONCE after the new code is published so it picks up the new playback support.
+7. Test an actual reward redemption. Check sound, full playback, automatic hiding, repeat redemption and the normal claw production button.
+
+Redemption handling
+- Read-only Twitch reward access is requested. The app does NOT automatically complete or refund rewards.
+- Use Twitch's redemption queue to complete a successful play or refund one that did not play.
+- Queued videos only start when the OBS overlay polls. Admin status reads do not consume them.
+- Queue capacity is 20; clips waiting more than 15 minutes expire to prevent old redemptions playing on a later stream.
+- Recent admin statuses: queued, started, cancelled, expired, queue_full or ignored.
+- Started means the overlay was instructed to play, not a guarantee that the OBS source was visible on stream.
+- The browser may block audible autoplay on a fresh visit. The preview has an Enable sound fallback; OBS audio must be checked in the live test.
+- Stop playback / clear queue cancels the active production and queued videos. Turning the feature off cancels only channel-point videos.
+- Other rewards, giveaways, permissions, hunt results and normal Twitch site login are unchanged.
+
+Maintenance
+- If Twitch access is revoked, playback disables on the revocation webhook; reconnect with a fresh invite and repair events.
+- If the Twitch client secret is rotated, encrypted broadcaster tokens must be reconnected. The webhook secret is derived from that same secret, so delete/recreate this integration's EventSub subscription before enabling again.
+- If events show notification_failures_exceeded, check site/database availability and use Connect / repair Twitch events after recovery.
+- Video source: public/claw-production/scotland-forever-v1.mp4. Default volume 100%, configurable in Admin.
+
+Verification completed locally
+- TypeScript, targeted ESLint, production build.
+- Node tests for signed events, tampering, age limits, encrypted tokens, OAuth state/expiry/replay, admin restrictions and local queue lifecycle.
+- Existing claw-production and request-reliability regression tests.
+- Database migration and queue functions tested as service_role in a rolled-back transaction in the dedicated local test database.
+- Browser test of the actual admin queue triggering Scotland through /claw-production and returning to transparent after playback.
+- Actual broadcaster consent, Twitch webhook handshake and real channel-point redemption remain for the post-deployment call.
+
+Official reference
+https://dev.twitch.tv/docs/eventsub/handling-webhook-events/
+https://dev.twitch.tv/docs/eventsub/manage-subscriptions/
+https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/

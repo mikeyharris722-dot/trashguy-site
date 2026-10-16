@@ -19,14 +19,14 @@ function compile(file,imports,extra={}){
  assert.throws(()=>playback.validProductionRequest('bad'));
  const files=new Map();
  const promises={readFile:async p=>{if(!files.has(p))throw Object.assign(Error('missing'),{code:'ENOENT'});return files.get(p)},mkdir:async()=>{},writeFile:async(p,v)=>files.set(p,v),rename:async(a,b)=>{files.set(b,files.get(a));files.delete(a)}};
- const server=compile('lib/claw-production-server.ts',{'server-only':{},'node:fs':{promises},'node:path':require('node:path').posix,'./community-store':{localCommunity:()=>true},'./site-db':{siteDb:()=>{throw Error('Must never access a live database')}},'./claw-production':playback});
+ const server=compile('lib/claw-production-server.ts',{'server-only':{},'node:fs':{promises},'node:path':require('node:path').posix,'./community-store':{localCommunity:()=>true},'./site-db':{siteDb:()=>{throw Error('Must never access a live database')}},'./claw-production':playback,'node:crypto':require('node:crypto'),'./twitch-points-security':{SCOTLAND_MS:68105}});
  const event=await server.productionCommand('admin','play',id);
  assert.equal(event.durationMs,10000);
  assert.equal((await server.productionState()).id,id);
  assert.equal((await server.productionCommand('admin','play',id)).startedAt,event.startedAt);
  await assert.rejects(server.productionCommand('other-admin','play',id),/another admin/);
  const overlap=await Promise.allSettled([server.productionCommand('admin','play',next),server.productionCommand('admin','play','00000000-0000-4000-8000-000000000003')]);
- assert.ok(overlap.every(v=>v.status==='rejected'&&/already playing/.test(v.reason.message)));
+ assert.ok(overlap.every(v=>v.status==='rejected'&&/playing/.test(v.reason.message)));
  now+=10000;
  assert.equal(playback.productionIsActive(event),false);
  const replay=await server.productionCommand('admin','play',next);

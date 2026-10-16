@@ -2,6 +2,7 @@
 import {defaultWeeklyWager} from "@/lib/weekly-wager";
 import {defaultBossTargets} from "@/lib/trash-bosses";
 
+import TwitchPointsSettings from "./twitch-points-settings";
 import ObsSettings, {ClawObsSettings} from "./obs-settings";
 import LeaderboardTotals from "./leaderboard-totals";
 import {leaderboardPeriods} from "@/lib/leaderboard-data";
@@ -188,7 +189,7 @@ export default function PrizeSettingsEditor({
           </p>
         )}
       </form>
-      <div className="settings-tools"><ObsSettings /><ClawObsSettings /><details className="settings-section"><summary><span><strong>Affiliate totals</strong><small>Monthly totals for every player on the code</small></span><span className="settings-chevron" aria-hidden="true">⌄</span></summary><div className="settings-section-body"><LeaderboardTotals settings={settings} /></div></details></div>
+      <div className="settings-tools"><ObsSettings /><ClawObsSettings /><TwitchPointsSettings /><details className="settings-section"><summary><span><strong>Affiliate totals</strong><small>Monthly totals for every player on the code</small></span><span className="settings-chevron" aria-hidden="true">⌄</span></summary><div className="settings-section-body"><LeaderboardTotals settings={settings} /></div></details></div>
     </section>
   );
 }

@@ -1,0 +1,42 @@
+\set ON_ERROR_STOP on
+BEGIN;
+CREATE TABLE public.claw_production_state(id boolean PRIMARY KEY DEFAULT true CHECK(id),event_id uuid,started_at timestamptz,actor uuid);
+INSERT INTO public.claw_production_state(id) VALUES(true);
+ALTER TABLE public.claw_production_state ENABLE ROW LEVEL SECURITY;
+GRANT SELECT,UPDATE ON public.claw_production_state TO service_role;
+\ir ../supabase/migrations/20261016102905_twitch_channel_points_clips.sql
+SET LOCAL ROLE service_role;
+DO $$DECLARE result text; event jsonb; actor uuid:=gen_random_uuid(); claw uuid:=gen_random_uuid(); first_id uuid:=gen_random_uuid(); second_id uuid:=gen_random_uuid(); blocked boolean:=false; i integer; BEGIN
+ IF has_table_privilege('anon','public.twitch_points_config','SELECT') OR has_table_privilege('authenticated','public.twitch_points_invites','SELECT') OR has_function_privilege('anon','public.twitch_points_next()','EXECUTE') THEN RAISE EXCEPTION 'Private tables or functions exposed';END IF;
+ IF EXISTS(SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'twitch_points_%' AND NOT rowsecurity) THEN RAISE EXCEPTION 'RLS missing';END IF;
+ UPDATE public.twitch_points_config SET enabled=true,broadcaster_id='123',reward_id='reward',volume=0.9;
+ PERFORM public.claw_production_command(actor,'play',claw);
+ result:=public.twitch_points_enqueue('one','viewer','123','reward',first_id);IF result<>'queued' THEN RAISE EXCEPTION 'Did not enqueue';END IF;
+ IF public.twitch_points_enqueue('one','viewer','123','reward',gen_random_uuid())<>'duplicate' THEN RAISE EXCEPTION 'Duplicate replay';END IF;
+ IF public.twitch_points_next() IS NOT NULL THEN RAISE EXCEPTION 'Interrupted claw';END IF;
+ UPDATE public.claw_production_state SET started_at=now()-interval '20 seconds';
+ event:=public.twitch_points_next();IF event->>'id'<>first_id::text OR (event->>'durationMs')::integer<>68105 THEN RAISE EXCEPTION 'Wrong first clip';END IF;
+ IF public.twitch_points_next() IS NOT NULL THEN RAISE EXCEPTION 'Double consumed pending start';END IF;
+ BEGIN PERFORM public.claw_production_command(actor,'play',gen_random_uuid());EXCEPTION WHEN OTHERS THEN blocked:=true;END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Claw interrupted redemption';END IF;
+ PERFORM public.twitch_points_enqueue('two','viewer2','123','reward',second_id);
+ UPDATE public.claw_production_state SET started_at=now()-interval '70 seconds';
+ event:=public.twitch_points_next();IF event->>'id'<>second_id::text THEN RAISE EXCEPTION 'Wrong order';END IF;
+ PERFORM public.claw_production_command(actor,'stop');
+ IF (SELECT jsonb_array_length(queue)<>0 OR event_id IS NOT NULL FROM public.claw_production_state) THEN RAISE EXCEPTION 'Stop failed';END IF;
+ IF public.twitch_points_enqueue('wrong','viewer','456','reward',gen_random_uuid())<>'ignored' THEN RAISE EXCEPTION 'Wrong channel accepted';END IF;
+ PERFORM public.twitch_points_enqueue('stale','viewer','123','reward',gen_random_uuid());
+ UPDATE public.claw_production_state SET queue=jsonb_set(queue,'{0,queuedAt}',to_jsonb(now()-interval '16 minutes'));
+ event:=public.twitch_points_next();
+ IF event IS NOT NULL OR (SELECT status FROM public.twitch_points_receipts WHERE redemption_id='stale')<>'expired' THEN RAISE EXCEPTION 'Expired reward replayed';END IF;
+ PERFORM public.claw_production_command(actor,'play',gen_random_uuid());PERFORM public.twitch_points_disable();
+ IF (SELECT event_id IS NULL FROM public.claw_production_state) THEN RAISE EXCEPTION 'Disabling points stopped claw';END IF;
+ IF public.twitch_points_enqueue('disabled','viewer','123','reward',gen_random_uuid())<>'ignored' THEN RAISE EXCEPTION 'Disabled accepted';END IF;
+ PERFORM public.claw_production_command(actor,'stop');UPDATE public.twitch_points_config SET enabled=true;
+ FOR i IN 1..20 LOOP PERFORM public.twitch_points_enqueue('capacity-'||i,'viewer','123','reward',gen_random_uuid());END LOOP;
+ IF public.twitch_points_enqueue('overflow','viewer','123','reward',gen_random_uuid())<>'queue_full' THEN RAISE EXCEPTION 'Unbounded queue';END IF;
+ PERFORM public.twitch_points_next();PERFORM public.twitch_points_disable();
+ IF (SELECT event_id IS NOT NULL OR jsonb_array_length(queue)<>0 FROM public.claw_production_state) THEN RAISE EXCEPTION 'Disabling did not cancel Scotland';END IF;
+ RAISE NOTICE 'PASS atomic queue, duplicates, ordering, claw exclusion, stop, expiration, disabled/wrong channel and private access';
+END;$$;
+ROLLBACK;

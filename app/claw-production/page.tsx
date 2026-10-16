@@ -3,7 +3,7 @@ import { startPolling } from "@/lib/polling";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { CLAW_PRODUCTION_MS, CLAW_PRODUCTION_MOVIE, productionAge, productionIsActive, type ProductionEvent } from "@/lib/claw-production";
+import { CLAW_PRODUCTION_MS, CLAW_PRODUCTION_MOVIE, SCOTLAND_MS, productionMovie, productionAge, productionIsActive, type ProductionEvent } from "@/lib/claw-production";
 import "./production.css";
 
 const subscribe = () => () => {};
@@ -60,14 +60,16 @@ export default function ClawProductionOverlay() {
     if (timeout.current) clearTimeout(timeout.current);
     element.pause();
     element.muted = false;
-    element.volume = 0.7;
+    element.volume = Math.max(0,Math.min(1,event.volume ?? (event.clip==='scotland'?1:0.7)));
+    const source = productionMovie(event);
+    if (element.getAttribute('src') !== source) { element.src = source; element.load(); }
     setMuted(false);
     setMessage("");
     setActive(true);
     timeout.current = setTimeout(finish, Math.max(0, event.durationMs - age));
     try {
       if (element.readyState < 1) await new Promise<void>((resolve, reject) => {
-        const timer = setTimeout(() => { cleanup(); reject(Error("Movie is not ready.")); }, 2000);
+        const timer = setTimeout(() => { cleanup(); reject(Error("Movie is not ready.")); }, 8000);
         const cleanup = () => {
           clearTimeout(timer);
           element.removeEventListener("loadedmetadata", loaded);
@@ -85,8 +87,9 @@ export default function ClawProductionOverlay() {
       element.currentTime = position;
       await element.play();
       if (token !== generation.current && !current.current) element.pause();
-    } catch {
+    } catch (error) {
       if (token !== generation.current) return;
+      if (!(error instanceof DOMException) || error.name !== "NotAllowedError") { setMessage("Movie unavailable. Check the media source."); finish(); return; }
       try {
         element.muted = true;
         setMuted(true);
@@ -107,13 +110,14 @@ export default function ClawProductionOverlay() {
       if (disposed || busy || preview) return;
       busy = true;
       try {
-        const response = await fetch("/api/claw-production", { cache: "no-store", signal: AbortSignal.any([abort.signal, AbortSignal.timeout(12000)]) });
+        const response = await fetch("/api/claw-production?overlay=1", { cache: "no-store", signal: AbortSignal.any([abort.signal, AbortSignal.timeout(12000)]) });
         if (!response.ok) return false;
         const body = await response.json();
         if (disposed) return;
         const event = body.event as ProductionEvent | null;
         if (!event) { if (current.current) finish(); return; }
         if (event.id === lastSeen.current) return;
+        if (Date.parse(event.startedAt) > body.serverNow) return;
         lastSeen.current = event.id;
         if (productionIsActive(event, body.serverNow)) void start(event, productionAge(event, body.serverNow));
       } catch { return false; /* Back off without replaying a seen event. */ }
@@ -133,6 +137,7 @@ export default function ClawProductionOverlay() {
       <strong>Production overlay test</strong>
       <p>Only this tab plays. This does not trigger OBS or change a giveaway.</p>
       <button disabled={active} onClick={() => void start({ id: crypto.randomUUID(), startedAt: new Date().toISOString(), durationMs: CLAW_PRODUCTION_MS }, 0)}>▶ Play preview with sound</button>
+      <button disabled={active} onClick={() => void start({ id: crypto.randomUUID(), startedAt: new Date().toISOString(), durationMs: SCOTLAND_MS, clip: 'scotland', volume: 1 }, 0)}>▶ Play Scotland with sound</button>
       <button onClick={finish}>Stop / return to transparent</button>
       {muted && <button onClick={() => {
         const element = video.current;

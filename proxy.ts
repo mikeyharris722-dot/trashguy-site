@@ -12,6 +12,7 @@ export async function proxy(request: NextRequest) {
       (localCommunity &&
         [
           "/api/prize-settings",
+          "/api/admin/twitch-points",
           "/api/claw-production",
           "/api/trash-bosses/claim",
           "/api/weekly-wager/claim",
