@@ -1,6 +1,7 @@
 import {huntCurrency,type HuntCurrency} from './hunt-currency';
 import { communityBankroll } from './community-equity';
 import { communityFx } from './community-fx';
+import { providerName } from './slot-providers';
 async function rouloGames(){return (await import('./roulo-catalogue')).catalogue();}
 import "server-only";
 import {
@@ -564,6 +565,38 @@ export async function communityCommand(
                 c.status = "queued";
               }
             } else if (action === "edit") {
+              if (b.catalogue !== undefined) {
+                if (!['rainbet', 'roulobets'].includes(String(b.catalogue))) throw Error('Choose Rainbet or Roulobets.');
+                if (b.catalogue !== (h.catalogue || 'rainbet')) {
+                  if (h.phase === 'finished') throw Error('Reopen the hunt before changing its catalogue.');
+                  const targetCatalogue = b.catalogue as 'rainbet' | 'roulobets';
+                  const targetGames: CommunityGame[] = targetCatalogue === 'roulobets'
+                    ? (await rouloGames()).filter(g => g.enabled !== false) : await localCatalogue();
+                  if (!targetGames.length) throw Error('The new catalogue is unavailable. No calls were changed.');
+                  let kept = 0, removed = 0;
+                  for (const call of h.calls.filter(c => ['queued', 'selected'].includes(c.status))) {
+                    const original = games.find(g => g.identifier === call.identifier);
+                    const candidates = targetGames.filter(g => normaliseSlot(g.name) === normaliseSlot(call.slot_name)
+                      && (!original || normaliseSlot(providerName(g.provider)) === normaliseSlot(providerName(original.provider))));
+                    if (candidates.length !== 1) {
+                      // Retain history but remove unavailable or ambiguous calls from the queue.
+                      call.status = 'withdrawn';
+                      removed++;
+                      continue;
+                    }
+                    const game = candidates[0];
+                    call.identifier = game.identifier;
+                    call.slot_name = game.name;
+                    call.artwork_url = game.artwork_url;
+                    call.launch = targetCatalogue === 'roulobets'
+                      ? 'https://roulobets.com/casino/slots/' + encodeURIComponent(game.identifier).replace(/%3A/gi, ':')
+                      : validLaunch(game.rainbet_launch_url) ? game.rainbet_launch_url : null;
+                    kept++;
+                  }
+                  h.catalogue = targetCatalogue;
+                  result = `Catalogue changed. ${kept} call${kept === 1 ? '' : 's'} kept; ${removed} removed from the queue.`;
+                }
+              }
               if (b.refreshEquityRate === true) {
                 if (h.phase === 'finished' || (h.equityRate && (h.phase !== 'collecting' ||
                   h.entries.some(e => e.payout !== null) || h.members.some(m => m.status === 'accepted'))))

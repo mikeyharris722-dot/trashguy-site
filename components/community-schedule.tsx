@@ -99,6 +99,7 @@ export function CommunitySettings({
 }: {
   hunt: {
     currency?: string;
+    catalogue?: "rainbet" | "roulobets";
     equityRate?: string | null;
     phase?: string;
     members?: {status:string}[];
@@ -111,6 +112,7 @@ export function CommunitySettings({
   busy: boolean;
   save: (body: Record<string, unknown>) => Promise<boolean>;
 }) {
+  const [catalogue, setCatalogue] = useState(hunt.catalogue || "rainbet");
   const [title, setTitle] = useState(hunt.title),
     [limit, setLimit] = useState(String(hunt.limit)),
     [error, setError] = useState("");
@@ -125,6 +127,7 @@ export function CommunitySettings({
           try {
             await save({
               title,
+              catalogue,
               limit: Number(limit),
             });
           } catch (e) {
@@ -155,6 +158,21 @@ export function CommunitySettings({
               onChange={(e) => setLimit(e.target.value)}
             />
           </label>
+        </div>
+
+        <div className="hunt-create-row community-catalogue-row">
+          <label>
+            Slot catalogue
+            <select aria-label="Edit community slot catalogue" value={catalogue}
+              disabled={busy || hunt.phase === 'finished'}
+              onChange={e => setCatalogue(e.target.value as 'rainbet' | 'roulobets')}>
+              <option value="rainbet">Rainbet</option>
+              <option value="roulobets">Roulobets</option>
+            </select>
+          </label>
+          <p className="text-xs text-white/60 self-center">
+            {hunt.phase === 'finished' ? 'Reopen the hunt to change its catalogue.' : 'Matching queued calls stay; unavailable calls are removed when you save. Collected bonuses and contributions stay unchanged.'}
+          </p>
         </div>
 
         {(hunt.currency || 'USD') !== 'USD' && <div className="hunt-create-row">

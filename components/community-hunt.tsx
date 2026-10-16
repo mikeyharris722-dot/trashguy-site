@@ -85,6 +85,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
       Authorization: "Bearer " + (data.session?.access_token || ""),
     };
   }, []);
+  const savedCatalogues = useRef<Record<string, string>>({});
   const load = useCallback(async () => {
     try {
       const r = await fetch("/api/community", {
@@ -95,6 +96,11 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
       const d = await r.json();
       if (!r.ok) throw Error(d.error);
       setLoadError("");
+      if (d.hunts.some((hunt: Hunt) => savedCatalogues.current[hunt.id] && savedCatalogues.current[hunt.id] !== (hunt.catalogue || 'rainbet'))) {
+        setChoice(null);
+        setReset(n => n + 1);
+      }
+      savedCatalogues.current = Object.fromEntries(d.hunts.map((hunt: Hunt) => [hunt.id, hunt.catalogue || 'rainbet']));
       setHunts(d.hunts);
       setId((old) =>
         admin
@@ -162,7 +168,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
           "Your contribution has been updated. It is still waiting for approval.",
         cancelRegistration: "Your registration request has been withdrawn.",
       };
-      setMessage(labels[action] || "Changes saved.");
+      setMessage(action === "edit" && d.result ? d.result : labels[action] || "Changes saved.");
       return true;
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Could not save");
@@ -413,6 +419,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                 Community-only tracker. Regular hunts, slot calls and the regular OBS overlay run independently.
               </p>
               <TrackerAdmin
+                key={id + ":" + (h?.catalogue || "rainbet")}
                 community
                 manual
                 huntId={id}
@@ -541,7 +548,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
 
           {admin && (
             <CommunitySettings
-              key={[h.id, h.title, h.scheduledAt, h.timeZone, h.limit, h.equityRate, h.equityRateSavedAt].join(
+              key={[h.id, h.catalogue, h.title, h.scheduledAt, h.timeZone, h.limit, h.equityRate, h.equityRateSavedAt].join(
                 ":",
               )}
               hunt={h}
