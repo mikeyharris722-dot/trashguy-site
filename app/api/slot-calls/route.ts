@@ -1,4 +1,3 @@
-import { communityEnabled, communityState } from "@/lib/community-local";
 import { reviewNativeSelection } from "@/lib/review-selection";
 import { catalogue } from "@/lib/roulo-catalogue";
 import { matchSlot } from "@/lib/slot-matching";
@@ -22,47 +21,6 @@ const supabase = createClient(
 
 export async function GET() {
   try {
-  if (communityEnabled()) {
-    const state = await communityState();
-    const hunt = state.hunts.find(
-      (h) => h.id === state.activeHuntId && !h.deleted,
-    );
-    if (hunt) {
-      const entries = hunt.entries.filter((e) => !e.deleted_at);
-      const collected = new Set(
-        entries
-          .filter((e) => e.status === "collected")
-          .map((e) => e.identifier),
-      );
-      return NextResponse.json(
-        {
-          calls: hunt.calls
-            .filter(
-              (c) =>
-                (c.status === "queued" || c.status === "selected") &&
-                !collected.has(c.identifier),
-            )
-            .map((c) => ({
-              id: c.id,
-              username: c.username,
-              slot_name: c.slot_name,
-              created_at: hunt.createdAt,
-            })),
-          reviewCalls: [],
-          results: entries.map((e) => ({
-            id: e.id,
-            username: e.username,
-            slot_name: e.slot_name,
-            payout: e.payout,
-            status: e.status,
-            created_at: e.created_at,
-          })),
-        },
-        { headers: { "Cache-Control": "no-store" } },
-      );
-    }
-  }
-
   const [callsRead, settingsRead] = await Promise.all([
     supabase.from("slot_calls").select("*").order("created_at", { ascending: true }),
     supabase.from("site_tracker_settings").select("active_hunt_id").eq("id", true).maybeSingle(),

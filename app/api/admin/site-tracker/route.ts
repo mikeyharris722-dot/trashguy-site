@@ -1,10 +1,5 @@
 import {huntCurrency} from '@/lib/hunt-currency';
 import {payoutFx} from '@/lib/hunt-fx';
-import {
-  communityEnabled,
-  communityState,
-  communityCommand,
-} from "@/lib/community-local";
 import { siteDb, requireTrackerAdmin, apiError } from "@/lib/site-db";
 import { catalogue } from "@/lib/roulo-catalogue";
 import { trackerHunts } from "@/lib/site-tracker";
@@ -15,20 +10,6 @@ export async function POST(request: Request) {
     const actor = await requireTrackerAdmin(request),
       b = await request.json(),
       db = siteDb();
-    const local = communityEnabled() ? await communityState() : null;
-    const localHunt = local?.hunts.find((h) => h.id === b.huntId && !h.deleted);
-    if (localHunt && b.action!=="create") {
-      if (b.action !== "select")
-        throw Error(
-          "Manage community calls from Community Hunt, or use its tracker controls.",
-        );
-      const result = await communityCommand(
-        { id: actor, name: "Host" },
-        true,
-        b,
-      );
-      return Response.json({ ok: true, result });
-    }
     if (process.env.NEXT_PUBLIC_LOCAL_REVIEW === "1") {
       if (b.action !== "select")
         throw Error(
@@ -38,9 +19,6 @@ export async function POST(request: Request) {
       if (id && !(await trackerHunts()).some((h) => h.id === id))
         throw Error("Choose an existing hunt.");
       await saveReviewNativeSelection(id);
-      await communityCommand({ id: actor, name: "Host" }, true, {
-        action: "clearSelection",
-      });
       return Response.json({ ok: true, result: id });
     }
     async function fxFor(huntId?:string,entryId?:string){let id=huntId;let entry:{hunt_id:string;payout:string|null;payout_usd:string|null}|null=null;if(entryId){const r=await db.from('site_tracker_entries').select('hunt_id,payout,payout_usd').eq('id',entryId).single();if(r.error)throw Error('Bonus not found.');entry=r.data;id=entry!.hunt_id;}const r=await db.from('site_tracker_hunts').select('currency').eq('hunt_id',id).single();if(r.error)throw Error('Hunt currency could not be loaded.');if(entry&&entry.payout_usd!==null&&Number(entry.payout)===Number(b.payout))return null;return b.payout===null?null:await payoutFx(r.data.currency);}
@@ -215,10 +193,6 @@ export async function POST(request: Request) {
       });
     } else throw new Error("Unknown action");
     if (result.error) throw new Error(result.error.message);
-    if (local && ["select", "create"].includes(b.action))
-      await communityCommand({ id: actor, name: "Host" }, true, {
-        action: "clearSelection",
-      });
     return Response.json({ ok: true, result: result.data });
   } catch (e) {
     return apiError(e);

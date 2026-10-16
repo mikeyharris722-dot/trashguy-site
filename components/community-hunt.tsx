@@ -410,8 +410,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
             <section className="rounded-xl border border-white/10 bg-black/80 p-4">
               <h2 className="mb-3 text-xl font-black">Bonus Hunt Tracker</h2>
               <p className="mb-3 text-xs text-white/50">
-                Same tracker, opening sequence and OBS layout. Community data
-                stays separate from ordinary wheel hunts.
+                Community-only tracker. Regular hunts, slot calls and the regular OBS overlay run independently.
               </p>
               <TrackerAdmin
                 community

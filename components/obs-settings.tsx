@@ -2,7 +2,7 @@
 import {useState,useSyncExternalStore} from 'react';
 const subscribe=()=>()=>{};
 const getOrigin=()=>window.location.origin;
-export default function ObsSettings(){const origin=useSyncExternalStore(subscribe,getOrigin,()=>''),url=origin+'/overlay';return <details className="lb-admin-totals"><summary>OBS overlay</summary><p>Browser Source: width 435, height 285. Follows the active hunt. Collection scrolls; opening follows the bonus order.</p><label>Overlay URL<input readOnly aria-label="OBS overlay URL" value={url}/></label><a href={url} target="_blank" rel="noopener noreferrer">Preview overlay ↗</a></details>;}
+export default function ObsSettings(){const origin=useSyncExternalStore(subscribe,getOrigin,()=>''),url=origin+'/overlay';return <details className="lb-admin-totals"><summary>OBS overlay</summary><p>Browser Source: width 435, height 285. Follows the active regular hunt. Collection scrolls; opening follows the bonus order.</p><label>Overlay URL<input readOnly aria-label="OBS overlay URL" value={url}/></label><a href={url} target="_blank" rel="noopener noreferrer">Preview regular overlay ↗</a><label>Community overlay URL<input readOnly aria-label="Community OBS overlay URL" value={url+'?community=1'}/></label><a href={url+'?community=1'} target="_blank" rel="noopener noreferrer">Preview community overlay ↗</a><p>Community Hunt uses its own active hunt. The two overlays do not switch each other.</p></details>;}
 
 export function ClawObsSettings() {
   const origin=useSyncExternalStore(subscribe,getOrigin,()=>''),url=origin+'/claw-production';

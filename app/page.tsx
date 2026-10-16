@@ -666,7 +666,6 @@ export default function Home() {
  const [slotData,setCatalogueSlots]=useState<SlotItem[]>(()=>originalSlotData.map(g=>({...g,provider:providerName(g.provider)})));
  const [showMoreProviders,setShowMoreProviders]=useState(false);
  const [trackerHuntId,setTrackerHuntId]=useState("");
- const [communityPredictionId,setCommunityPredictionId]=useState("");
  const [trackerEntryOpen,setTrackerEntryOpen]=useState(false);
  const [trackerBet,setTrackerBet]=useRememberedBet();
 
@@ -4886,8 +4885,8 @@ return (
   <section className="space-y-3 sm:space-y-5">
 
 
-    <HuntPredictionSelector hunts={huntsData} selectedId={communityPredictionId || currentPredictionHunt?.localId || ""} activeId={trackerHuntId} signedIn={isTwitchConnected} admin={adminAllowed} onSelect={(id, community)=>{setCommunityPredictionId(community ? id : "");if(!community){const hunt=huntsData.find(h=>h.localId===id);if(hunt)handleSelectPredictionHunt(hunt);}}} />
-    {!communityPredictionId && <>
+    <HuntPredictionSelector hunts={huntsData} selectedId={currentPredictionHunt?.localId || ""} activeId={trackerHuntId} onSelect={id=>{const hunt=huntsData.find(h=>h.localId===id);if(hunt)handleSelectPredictionHunt(hunt);}} />
+    <>
 
     {/* =========================================================
         HUNT TABS
@@ -5554,7 +5553,7 @@ return (
         </div>
       </div>
     </div>
-    </>}
+    </>
   </section>
 )}
 

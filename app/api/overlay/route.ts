@@ -1,13 +1,9 @@
 import {trackerCaller} from "@/lib/tracker-caller";
-import { communityEnabled, communityState } from "@/lib/community-local";
-import { GET as communityOverlay } from "@/app/api/community/overlay/route";
 import { apiError, siteDb } from "@/lib/site-db";
 import { trackerHunts } from "@/lib/site-tracker";
 import { reviewNativeSelection } from "@/lib/review-selection";
 export async function GET() {
   try {
-    if (communityEnabled() && (await communityState()).activeHuntId)
-      return communityOverlay();
     const settings = await siteDb().from("site_tracker_settings").select("active_hunt_id,opening_queue").eq("id", true).maybeSingle();
     if (settings.error) throw new Error(settings.error.message);
     const selected = (await reviewNativeSelection()) || settings.data?.active_hunt_id;

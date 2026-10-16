@@ -76,8 +76,7 @@ export default function TrackerAdmin({
     [aliases, setAliases] = useState(""),
     [correctedName, setCorrectedName] = useState(""),
     [imageUrl, setImageUrl] = useState("");
-  const communityMode =
-    community || hunts.find((h) => h.id === huntId)?.source === "community";
+  const communityMode = community;
   const trackerApi = communityMode
     ? "/api/community/tracker"
     : "/api/admin/site-tracker";
@@ -98,7 +97,7 @@ export default function TrackerAdmin({
       const data = await response.json();
       if (!response.ok)
         throw Error(data.error || "The tracker could not load. Try again.");
-      setHunts(data.hunts || []);
+      setHunts((data.hunts || []).filter((hunt:Hunt)=>community ? hunt.source === "community" : hunt.source !== "community"));
       setLoaded(true);
     } catch (e) {
       setMessage(
@@ -332,8 +331,7 @@ export default function TrackerAdmin({
           </select>
         </label>
         <p className="mt-2 text-xs text-white/40">
-          Shared by the wheel and tracker. Your selection stays active until you
-          choose or create another hunt.
+          {communityMode ? "This selection only affects Community Hunt and its dedicated overlay." : "Shared by the wheel and tracker. Your selection stays active until you choose or create another hunt."}
         </p>
       </div>
       {!communityMode && (
