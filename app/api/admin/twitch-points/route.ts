@@ -15,7 +15,7 @@ export async function POST(request:Request){try{
  if(body.action==='local-test'){const volume=Number(body.volume);if(!Number.isFinite(volume)||volume<0||volume>1)throw Error('Choose a valid volume.');await queueLocalScotland(volume);return Response.json({ok:true},{headers});}
  if(body.action==='save'){
   const next=pointsSettings(body),config=await pointsConfig();
-  if(next.enabled){if(localCommunity())throw Error('Live activation is disabled in local preview. Use the local queue test.');if(!config.tokens||config.subscription_status!=='enabled')throw Error('Connect Twitch and verify its event subscription first.');const available=await rewards();if(!available.some((reward:{id:string;enabled:boolean})=>reward.id===next.reward_id&&reward.enabled))throw Error('Choose an enabled reward from this Twitch channel.');}
+  if(next.enabled){if(localCommunity())throw Error('Live activation is disabled in local preview. Use the local queue test.');if(!config.tokens||config.subscription_status!=='enabled'||config.chat_subscription_status!=='enabled')throw Error('Connect Twitch and verify reward and chat events first.');const available=await rewards();if(!available.some((reward:{id:string;enabled:boolean})=>reward.id===next.reward_id&&reward.enabled))throw Error('Choose an enabled reward from this Twitch channel.');}
   await savePoints(next);if(!next.enabled)await disablePoints();
   return Response.json({ok:true},{headers});
  }

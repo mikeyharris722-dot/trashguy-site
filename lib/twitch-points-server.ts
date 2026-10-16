@@ -4,9 +4,9 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { siteDb } from './site-db';
 import { localCommunity } from './community-store';
-import { digest, POINTS_SCOPE, REDEMPTION_TYPE, seal, secret, unseal, webhookSecret } from './twitch-points-security';
+import { CHAT_TYPE, digest, POINTS_SCOPES, REDEMPTION_TYPE, seal, secret, unseal, webhookSecret } from './twitch-points-security';
 
-export type PointsConfig = { enabled: boolean; reward_id: string; volume: number; broadcaster_id?: string | null; broadcaster_login?: string | null; tokens?: string | null; subscription_id?: string | null; subscription_status?: string | null };
+export type PointsConfig = { enabled: boolean; reward_id: string; volume: number; broadcaster_id?: string | null; broadcaster_login?: string | null; tokens?: string | null; subscription_id?: string | null; subscription_status?: string | null; chat_subscription_id?: string | null; chat_subscription_status?: string | null };
 type Receipt = {redemption_id: string; viewer: string; status: string; received_at: string};
 type Local = {config: PointsConfig; invites: Record<string, {expires_at: string; consumed_at?: string}>; receipts: Receipt[]};
 const filename = path.join(process.cwd(), '.local', 'twitch-points.json');
@@ -73,8 +73,8 @@ export async function oauthTokens(code:string) {
 export async function connectBroadcaster(code:string) {
   const tokens=await oauthTokens(code);
   const identity=await twitchFetch('https://id.twitch.tv/oauth2/validate',{headers:{Authorization:'OAuth '+tokens.access_token}});
-  if (identity.client_id!==appConfig().clientId || identity.login?.toLowerCase()!==appConfig().expectedLogin || !identity.scopes?.includes(POINTS_SCOPE)) throw Error('Please connect the '+appConfig().expectedLogin+' Twitch account and approve channel-point access.');
-  await savePoints({enabled:false,broadcaster_id:identity.user_id,broadcaster_login:identity.login,tokens:seal({...tokens,expires_at:Date.now()+tokens.expires_in*1000,validated_at:Date.now()}),subscription_id:null,subscription_status:'not_subscribed'});
+  if (identity.client_id!==appConfig().clientId || identity.login?.toLowerCase()!==appConfig().expectedLogin || !POINTS_SCOPES.every(scope=>identity.scopes?.includes(scope))) throw Error('Please connect the '+appConfig().expectedLogin+' Twitch account and approve channel-point and chat access.');
+  await savePoints({enabled:false,broadcaster_id:identity.user_id,broadcaster_login:identity.login,tokens:seal({...tokens,expires_at:Date.now()+tokens.expires_in*1000,validated_at:Date.now()}),subscription_id:null,subscription_status:'not_subscribed',chat_subscription_id:null,chat_subscription_status:'not_subscribed'});
 }
 async function userToken(config:PointsConfig) {
   if (!config.tokens || !config.broadcaster_id) throw Error('Connect the broadcaster first.');
@@ -85,7 +85,7 @@ async function userToken(config:PointsConfig) {
   }
   if (tokens.validated_at<Date.now()-3600000) {
     const identity=await twitchFetch('https://id.twitch.tv/oauth2/validate',{headers:{Authorization:'OAuth '+tokens.access_token}});
-    if (identity.client_id!==appConfig().clientId || identity.user_id!==config.broadcaster_id || !identity.scopes?.includes(POINTS_SCOPE)) throw Error('Twitch channel-point access must be reconnected.');
+    if (identity.client_id!==appConfig().clientId || identity.user_id!==config.broadcaster_id || !POINTS_SCOPES.every(scope=>identity.scopes?.includes(scope))) throw Error('Twitch channel-point and chat access must be reconnected.');
     tokens.validated_at=Date.now();
   }
   await savePoints({tokens:seal(tokens)});
@@ -105,22 +105,26 @@ export async function subscribe() {
   const token=await appToken(),headers={'Client-Id':appConfig().clientId,Authorization:'Bearer '+token};
   // Query by our broadcaster, never delete another application's subscriptions.
   const list=await twitchFetch('https://api.twitch.tv/helix/eventsub/subscriptions?user_id='+config.broadcaster_id,{headers});
-  const existing=(list.data || []).find((item:{id:string;type:string;status:string;transport:{callback?:string}})=>item.type===REDEMPTION_TYPE&&item.transport.callback===appConfig().webhook&&['enabled','webhook_callback_verification_pending'].includes(item.status));
-  if (existing) { await savePoints({subscription_id:existing.id,subscription_status:existing.status}); return existing.status; }
-  const result=await twitchFetch('https://api.twitch.tv/helix/eventsub/subscriptions',{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({type:REDEMPTION_TYPE,version:'1',condition:{broadcaster_user_id:config.broadcaster_id},transport:{method:'webhook',callback:appConfig().webhook,secret:webhookSecret()}})});
-  const current=await pointsConfig();
-  const status=current.subscription_id===result.data[0].id&&current.subscription_status==='enabled'?'enabled':result.data[0].status;
-  await savePoints({subscription_id:result.data[0].id,subscription_status:status}); return status;
+  for(const type of [REDEMPTION_TYPE,CHAT_TYPE]){
+    const chat=type===CHAT_TYPE,idField=chat?'chat_subscription_id':'subscription_id',statusField=chat?'chat_subscription_status':'subscription_status';
+    const existing=(list.data || []).find((item:{id:string;type:string;status:string;condition:{user_id?:string};transport:{callback?:string}})=>item.type===type&&(!chat||item.condition.user_id===config.broadcaster_id)&&item.transport.callback===appConfig().webhook&&['enabled','webhook_callback_verification_pending'].includes(item.status));
+    if(existing){await savePoints({[idField]:existing.id,[statusField]:existing.status});continue;}
+    await savePoints({[statusField]:'webhook_callback_verification_pending'});
+    const result=await twitchFetch('https://api.twitch.tv/helix/eventsub/subscriptions',{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({type,version:'1',condition:{broadcaster_user_id:config.broadcaster_id,...(chat?{user_id:config.broadcaster_id}:{})},transport:{method:'webhook',callback:appConfig().webhook,secret:webhookSecret()}})});
+    // The webhook can verify before this response arrives. Do not overwrite its enabled status.
+    await savePoints({[idField]:result.data[0].id});
+  }
+  return 'requested';
 }
 export async function checkSubscription() {
   if(localCommunity())return;
-  const config=await pointsConfig();if(!config.subscription_id||!config.broadcaster_id)return;
+  const config=await pointsConfig();if(!config.broadcaster_id)return;
   const token=await appToken();
   const list=await twitchFetch('https://api.twitch.tv/helix/eventsub/subscriptions?user_id='+config.broadcaster_id,{headers:{'Client-Id':appConfig().clientId,Authorization:'Bearer '+token}});
-  const item=(list.data||[]).find((subscription:{id:string})=>subscription.id===config.subscription_id);
-  const status=item?.status||'not_subscribed';
-  await savePoints({subscription_status:status});
-  if(!['enabled','webhook_callback_verification_pending'].includes(status))await disablePoints();
+  const status=(id?:string|null)=>(list.data||[]).find((subscription:{id:string})=>subscription.id===id)?.status||'not_subscribed';
+  const redemption=status(config.subscription_id),chat=status(config.chat_subscription_id);
+  await savePoints({subscription_status:redemption,chat_subscription_status:chat});
+  if([redemption,chat].some(value=>!['enabled','webhook_callback_verification_pending'].includes(value)))await disablePoints();
 }
 export async function enqueueRedemption(id:string,viewer:string,broadcaster:string,reward:string) {
   if (localCommunity()) throw Error('Real Twitch events are disabled in local preview.');
@@ -128,5 +132,9 @@ export async function enqueueRedemption(id:string,viewer:string,broadcaster:stri
 }
 export async function pointsStatus() {
   const [config,receipts]=await Promise.all([pointsConfig(),recentReceipts()]);
-  return {local:localCommunity(),configured:Boolean(process.env.TWITCH_CLIENT_ID&&process.env.TWITCH_CLIENT_SECRET),callback:appConfig().callback,expectedLogin:appConfig().expectedLogin,enabled:config.enabled,rewardId:config.reward_id,volume:config.volume,connected:Boolean(config.tokens),login:config.broadcaster_login || null,subscriptionStatus:config.subscription_status || 'not_connected',receipts};
+  return {local:localCommunity(),configured:Boolean(process.env.TWITCH_CLIENT_ID&&process.env.TWITCH_CLIENT_SECRET),callback:appConfig().callback,expectedLogin:appConfig().expectedLogin,enabled:config.enabled,rewardId:config.reward_id,volume:config.volume,connected:Boolean(config.tokens),login:config.broadcaster_login || null,subscriptionStatus:config.subscription_status || 'not_connected',chatStatus:config.chat_subscription_status || 'not_connected',receipts};
+}
+export async function stopFromChat(id:string,viewer:string,broadcaster:string){
+  if(localCommunity())throw Error('Real Twitch commands are disabled in local preview.');
+  const {data,error}=await siteDb().rpc('twitch_points_stop_chat',{p_message:id,p_viewer:viewer,p_broadcaster:broadcaster});dbError(error);return data;
 }

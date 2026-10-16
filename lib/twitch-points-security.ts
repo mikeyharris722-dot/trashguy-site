@@ -2,6 +2,14 @@ import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, 
 
 export const REDEMPTION_TYPE = 'channel.channel_points_custom_reward_redemption.add';
 export const POINTS_SCOPE = 'channel:read:redemptions';
+export const CHAT_TYPE = 'channel.chat.message';
+export const POINTS_SCOPES = [POINTS_SCOPE, 'user:read:chat', 'user:bot', 'channel:bot'];
+type ChatEvent = {broadcaster_user_id?:string;chatter_user_id?:string;source_broadcaster_user_id?:string|null;message?:{text?:string};badges?:{set_id?:string}[]};
+export function isStopCommand(event:ChatEvent) {
+  if (event.message?.text?.trim().toLowerCase() !== '!stop') return false;
+  if (event.source_broadcaster_user_id && event.source_broadcaster_user_id !== event.broadcaster_user_id) return false;
+  return Boolean(event.chatter_user_id && event.broadcaster_user_id && (event.chatter_user_id === event.broadcaster_user_id || event.badges?.some(badge=>badge.set_id==='moderator')));
+}
 export const SCOTLAND_MOVIE = '/claw-production/scotland-forever-v1.mp4';
 export const SCOTLAND_MS = 68105;
 export function digest(value: string) { return createHash('sha256').update(value).digest('hex'); }

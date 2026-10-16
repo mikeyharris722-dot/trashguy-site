@@ -28,11 +28,11 @@ Before the call (site operator)
 
 On the call
 1. Admin opens Settings > Channel-point videos > Create connection link, then sends that private link to Trash.
-2. Trash opens it on HIS computer, signs into trashguy__, and approves channel:read:redemptions.
+2. Trash opens it on HIS computer, signs into trashguy__, and approves reward/chat access (channel:read:redemptions, user:read:chat, user:bot, channel:bot).
    No site admin permission is granted by connecting Twitch. Nobody needs his password.
 3. Trash creates a CUSTOM channel-point reward, e.g. SCOTLAND FOREVER, in the Twitch Creator Dashboard.
    Choose points cost. Suggested cooldown: 10-15 minutes; the clip is over a minute long.
-4. Admin refreshes the connection, clicks Connect / repair Twitch events, then refreshes until events show enabled.
+4. Admin refreshes the connection, clicks Connect / repair Twitch events, then refreshes until both reward events and chat stop command show enabled.
 5. Admin loads Twitch rewards, selects SCOTLAND FOREVER, chooses volume, checks Enable channel-point videos, and saves.
 6. OBS: keep the existing https://trashguy.me/claw-production Browser Source at 1920x1080 above gameplay.
    Leave Shutdown source when not visible and Refresh browser when scene becomes active OFF.
@@ -69,3 +69,13 @@ Official reference
 https://dev.twitch.tv/docs/eventsub/handling-webhook-events/
 https://dev.twitch.tv/docs/eventsub/manage-subscriptions/
 https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
+
+CHAT STOP COMMAND
+- Trash or a moderator in his own Twitch channel can type !stop to stop the current production video and clear queued clips.
+- Viewer/VIP commands and commands from another channel in Shared Chat are ignored.
+- Twitch delivers chat through the same signed webhook connection. There is no separate desktop bot to update or restart.
+- Every non-command chat message is discarded before any database access. Chat text is not stored; a stop receipt stores only the command message ID and moderator login.
+- Twitch retries of a stop command are deduplicated so they cannot interrupt a later video. Commands delayed more than 30 seconds are ignored.
+- Once the code and callback registration are published, broadcaster connection, reward choice, activation and volume are settings-only. No further release is needed for the initial connection.
+- Leave Twitch's Skip Reward Requests Queue option OFF if you want moderators to complete/refund rewards manually.
+- Test !stop using both Trash and a moderator; test that an ordinary viewer cannot stop playback.

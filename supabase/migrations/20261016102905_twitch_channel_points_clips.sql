@@ -3,7 +3,7 @@ CREATE TABLE public.twitch_points_config (
  id boolean PRIMARY KEY DEFAULT true CHECK(id), enabled boolean NOT NULL DEFAULT false,
  reward_id text NOT NULL DEFAULT '', volume numeric NOT NULL DEFAULT 1 CHECK(volume BETWEEN 0 AND 1),
  broadcaster_id text, broadcaster_login text, tokens text,
- subscription_id text, subscription_status text, updated_at timestamptz NOT NULL DEFAULT now()
+ subscription_id text, subscription_status text, chat_subscription_id text, chat_subscription_status text, updated_at timestamptz NOT NULL DEFAULT now()
 );
 INSERT INTO public.twitch_points_config(id) VALUES(true);
 CREATE TABLE public.twitch_points_invites (
@@ -87,3 +87,18 @@ BEGIN
 END;$$;
 REVOKE ALL ON FUNCTION public.twitch_points_disable() FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.twitch_points_disable() TO service_role;
+
+-- Stop commands have their own receipt so Twitch retries cannot stop a later video.
+CREATE FUNCTION public.twitch_points_stop_chat(p_message text,p_viewer text,p_broadcaster text) RETURNS text LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
+DECLARE s public.claw_production_state%rowtype; added integer;
+BEGIN
+ SELECT * INTO STRICT s FROM public.claw_production_state WHERE id=true FOR UPDATE;
+ IF NOT EXISTS(SELECT 1 FROM public.twitch_points_config WHERE id=true AND broadcaster_id=p_broadcaster) THEN RETURN 'ignored'; END IF;
+ INSERT INTO public.twitch_points_receipts(redemption_id,viewer,status) VALUES('chat-stop:'||p_message,left(p_viewer,100),'stopped') ON CONFLICT DO NOTHING;
+ GET DIAGNOSTICS added=ROW_COUNT;IF added=0 THEN RETURN 'duplicate';END IF;
+ UPDATE public.twitch_points_receipts SET status='cancelled' WHERE status='queued' OR (status='started' AND event_id=s.event_id AND s.started_at+s.duration_ms*interval '1 millisecond'>now());
+ UPDATE public.claw_production_state SET event_id=NULL,started_at=NULL,actor=NULL,queue='[]' WHERE id=true;
+ RETURN 'stopped';
+END;$$;
+REVOKE ALL ON FUNCTION public.twitch_points_stop_chat(text,text,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.twitch_points_stop_chat(text,text,text) TO service_role;

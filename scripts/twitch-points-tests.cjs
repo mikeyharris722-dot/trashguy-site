@@ -7,8 +7,8 @@ function signed(text=body,time=stamp,message=id){return new Headers({'twitch-eve
 assert(security.verifyWebhook(signed(),body));assert(!security.verifyWebhook(signed(),body+'x'));assert(!security.verifyWebhook(signed(body,new Date(Date.now()-601000).toISOString()),body));assert(!security.verifyWebhook(signed(body,new Date(Date.now()+120000).toISOString()),body));assert(!security.verifyWebhook(new Headers(),body));
 const token=security.seal({access_token:'test',refresh_token:'test-refresh'});assert(!token.includes('test-refresh'));assert.equal(security.unseal(token).access_token,'test');assert.throws(()=>security.unseal(token.slice(0,-4)+'abcd'));assert.throws(()=>security.pointsSettings({enabled:true,rewardId:'',volume:1}));assert.throws(()=>security.pointsSettings({enabled:false,rewardId:'',volume:2}));assert.equal(security.pointsSettings({enabled:false,rewardId:'',volume:0}).volume,0);
 console.log('PASS webhook signatures, body tampering, stale/future events, token encryption/tampering and settings validation');
-const config={enabled:true,broadcaster_id:'123',reward_id:'reward',subscription_id:'sub'};let enqueued=0,patches=[];
-const webhook=load('app/api/twitch-points/webhook/route.ts',{'@/lib/twitch-points-security':security,'@/lib/twitch-points-server':{pointsConfig:async()=>config,savePoints:async patch=>patches.push(patch),enqueueRedemption:async()=>{enqueued++}}});
+const config={enabled:true,broadcaster_id:'123',reward_id:'reward',subscription_id:'sub',chat_subscription_id:'chat-sub'};let enqueued=0,patches=[],stops=0,reads=0;
+const webhook=load('app/api/twitch-points/webhook/route.ts',{'@/lib/twitch-points-security':security,'@/lib/twitch-points-server':{pointsConfig:async()=>{reads++;return config},savePoints:async patch=>patches.push(patch),disablePoints:async()=>patches.push({enabled:false}),stopFromChat:async()=>{stops++},enqueueRedemption:async()=>{enqueued++}}});
 async function post(payload,type='notification',headers){const text=JSON.stringify(payload);return webhook.POST(new Request('http://local/api/twitch-points/webhook',{method:'POST',body:text,headers:headers||new Headers([...signed(text),['twitch-eventsub-message-type',type]])}));}
 const event={subscription:{id:'sub',type:security.REDEMPTION_TYPE,version:'1',condition:{broadcaster_user_id:'123'}},event:{id:'redeem-1',broadcaster_user_id:'123',user_login:'viewer',reward:{id:'reward'}}};
 (async()=>{
@@ -20,6 +20,17 @@ const event={subscription:{id:'sub',type:security.REDEMPTION_TYPE,version:'1',co
  const challenge=await post({...event,challenge:'raw-challenge'},'webhook_callback_verification');assert.equal(await challenge.text(),'raw-challenge');assert.equal(patches.at(-1).subscription_status,'enabled');
  assert.equal((await post({...event,subscription:{...event.subscription,status:'authorization_revoked'}},'revocation')).status,204);assert.equal(patches.at(-1).enabled,false);
  console.log('PASS real signed webhook route, raw challenge, channel/subscription validation, unrelated reward isolation and revocation');
+ const chatEvent={subscription:{id:'chat-sub',type:security.CHAT_TYPE,version:'1',condition:{broadcaster_user_id:'123',user_id:'123'}},event:{message_id:'msg-1',broadcaster_user_id:'123',chatter_user_id:'mod-1',chatter_user_login:'mod',message:{text:' !STOP '},badges:[{set_id:'moderator'}]}};
+ assert.equal((await post(chatEvent)).status,204);assert.equal(stops,1);
+ assert.equal((await post({...chatEvent,event:{...chatEvent.event,chatter_user_id:'123',badges:[]}})).status,204);assert.equal(stops,2,'broadcaster may stop without moderator badge');
+ let before=reads;
+ for(const patch of [{badges:[]},{badges:[{set_id:'vip'}]},{source_broadcaster_user_id:'other-channel'},{message:{text:'hello'}},{message:{text:'!stop please'}}])assert.equal((await post({...chatEvent,event:{...chatEvent.event,...patch}})).status,204);
+ assert.equal(stops,2);assert.equal(reads,before,'ordinary chat and unauthorized commands do not query the database');
+ assert.equal((await post({...chatEvent,subscription:{...chatEvent.subscription,id:'wrong'}})).status,403);assert.equal(stops,2);
+ const staleBody=JSON.stringify(chatEvent),oldTime=new Date(Date.now()-31000).toISOString();const oldHeaders=new Headers([...signed(staleBody,oldTime),['twitch-eventsub-message-type','notification']]);
+ assert.equal((await post(chatEvent,'notification',oldHeaders)).status,204);assert.equal(stops,2,'delayed commands cannot interrupt a later clip');
+ const chatChallenge=await post({...chatEvent,challenge:'chat-challenge'},'webhook_callback_verification');assert.equal(await chatChallenge.text(),'chat-challenge');assert.equal(patches.at(-1).chat_subscription_status,'enabled');
+ console.log('PASS signed moderator/broadcaster !stop, viewer/VIP/shared-chat denial, exact command, separate subscription and zero database reads for normal chat');
  const production=load('lib/claw-production.ts');
  const state=load('lib/claw-production-server.ts',{'server-only':{},'./community-store':{localCommunity:()=>true},'./site-db':{},'./claw-production':production,'./twitch-points-security':security});
  const claw=await state.productionCommand('admin','play',crypto.randomUUID());await state.queueLocalScotland(.8);await state.queueLocalScotland(.5);

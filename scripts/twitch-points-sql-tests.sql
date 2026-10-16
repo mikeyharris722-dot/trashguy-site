@@ -37,6 +37,14 @@ DO $$DECLARE result text; event jsonb; actor uuid:=gen_random_uuid(); claw uuid:
  IF public.twitch_points_enqueue('overflow','viewer','123','reward',gen_random_uuid())<>'queue_full' THEN RAISE EXCEPTION 'Unbounded queue';END IF;
  PERFORM public.twitch_points_next();PERFORM public.twitch_points_disable();
  IF (SELECT event_id IS NOT NULL OR jsonb_array_length(queue)<>0 FROM public.claw_production_state) THEN RAISE EXCEPTION 'Disabling did not cancel Scotland';END IF;
+ PERFORM public.claw_production_command(actor,'play',gen_random_uuid());
+ IF public.twitch_points_stop_chat('message-1','moderator','123')<>'stopped' THEN RAISE EXCEPTION 'Chat stop failed';END IF;
+ IF (SELECT event_id IS NOT NULL OR jsonb_array_length(queue)<>0 FROM public.claw_production_state) THEN RAISE EXCEPTION 'Chat stop did not clear playback';END IF;
+ PERFORM public.claw_production_command(actor,'play',gen_random_uuid());
+ IF public.twitch_points_stop_chat('message-1','moderator','123')<>'duplicate' THEN RAISE EXCEPTION 'Chat stop replay accepted';END IF;
+ IF (SELECT event_id IS NULL FROM public.claw_production_state) THEN RAISE EXCEPTION 'Duplicate chat stop interrupted a later video';END IF;
+ IF public.twitch_points_stop_chat('wrong-channel','moderator','456')<>'ignored' THEN RAISE EXCEPTION 'Wrong channel stop accepted';END IF;
+ IF has_function_privilege('anon','public.twitch_points_stop_chat(text,text,text)','EXECUTE') THEN RAISE EXCEPTION 'Public chat stop RPC';END IF;
  RAISE NOTICE 'PASS atomic queue, duplicates, ordering, claw exclusion, stop, expiration, disabled/wrong channel and private access';
 END;$$;
 ROLLBACK;

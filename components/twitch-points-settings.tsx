@@ -1,7 +1,7 @@
 "use client";
 import {useState} from 'react';
 import {siteFetch} from '@/lib/site-fetch';
-type Status={local:boolean;configured:boolean;callback:string;expectedLogin:string;enabled:boolean;rewardId:string;volume:number;connected:boolean;login:string|null;subscriptionStatus:string;receipts:{redemption_id:string;viewer:string;status:string;received_at:string}[]};
+type Status={local:boolean;configured:boolean;callback:string;expectedLogin:string;enabled:boolean;rewardId:string;volume:number;connected:boolean;login:string|null;subscriptionStatus:string;chatStatus:string;receipts:{redemption_id:string;viewer:string;status:string;received_at:string}[]};
 type Reward={id:string;title:string;cost:number;enabled:boolean};
 export default function TwitchPointsSettings(){
  const [status,setStatus]=useState<Status|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[link,setLink]=useState(''),[rewardList,setRewards]=useState<Reward[]>([]),[rewardId,setRewardId]=useState(''),[enabled,setEnabled]=useState(false),[volume,setVolume]=useState(1);
@@ -18,7 +18,7 @@ export default function TwitchPointsSettings(){
  <p>Play the full Scotland Forever video through the existing 1920 × 1080 production overlay. Giveaways and their results are unchanged.</p>
  <button type="button" disabled={busy} onClick={()=>void run('refresh')}>Refresh connection</button>
  {status&&<>
- <p><strong>{status.local?'Local preview · live activation blocked':status.connected?'Connected: '+status.login:'Broadcaster not connected'}</strong><br/>Twitch events: {status.subscriptionStatus.replaceAll('_',' ')}</p>
+ <p><strong>{status.local?'Local preview · live activation blocked':status.connected?'Connected: '+status.login:'Broadcaster not connected'}</strong><br/>Reward events: {status.subscriptionStatus.replaceAll('_',' ')}<br/>Chat stop command: {status.chatStatus.replaceAll('_',' ')}</p>
  {!status.configured&&<p>Twitch application credentials must be configured before connecting.</p>}
  {status.local?<p>Test the video and shared queue below. Connection links, Twitch subscriptions and real redemptions stay disabled locally.</p>:<>
  <label>Twitch developer callback URL<input readOnly value={status.callback}/></label>
@@ -29,6 +29,7 @@ export default function TwitchPointsSettings(){
  </>}
  <div className="prize-fields"><label>Twitch reward<select value={rewardId} disabled={busy||status.local} onChange={event=>setRewardId(event.target.value)}><option value="">Select a reward</option>{rewardId&&!rewardList.some(reward=>reward.id===rewardId)&&<option value={rewardId}>Saved reward · load list to view name</option>}{rewardList.map(reward=><option key={reward.id} value={reward.id} disabled={!reward.enabled}>{reward.title} · {reward.cost.toLocaleString()} points{reward.enabled?'':' (paused)'}</option>)}</select></label><label>Video volume · {Math.round(volume*100)}%<input type="range" min="0" max="1" step="0.05" value={volume} onChange={event=>setVolume(Number(event.target.value))}/></label></div>
  <label className="boss-activation"><input type="checkbox" checked={enabled} disabled={busy||status.local} onChange={event=>setEnabled(event.target.checked)}/> Enable channel-point videos</label>
+ <div className="points-stop-command"><strong>Chat command <code>!stop</code></strong><span>Trash and Twitch moderators can stop the current video and clear queued clips. Viewers and VIPs cannot use it.</span></div>
  <div className="points-actions"><button type="button" disabled={busy} onClick={()=>void run('save')}>Save video settings</button>{status.local&&<button type="button" disabled={busy} onClick={()=>void run('local-test')}>Queue Scotland test in local overlay</button>}<button type="button" disabled={busy} onClick={()=>void run('stop')}>Stop playback / clear queue</button></div>
  <div className="points-actions"><a href="/claw-production?preview=1&clip=scotland" target="_blank" rel="noopener noreferrer">Preview Scotland ↗</a><a href="/claw-production" target="_blank" rel="noopener noreferrer">Open shared OBS overlay ↗</a></div>
  <p>The clip is 68 seconds and intentionally loud. Set the reward cost and a suggested 10–15 minute cooldown in Twitch. Clips queue without overlapping the claw intro. Keep OBS open; queued clips expire after 15 minutes.</p>
