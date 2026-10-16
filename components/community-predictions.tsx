@@ -1,7 +1,7 @@
 "use client";
 import {huntMoney} from "@/lib/hunt-currency";
 import UserBadges from "@/components/user-badges";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 type Prediction = {
   username: string;
   amount: string;
@@ -15,7 +15,7 @@ export type PredictionHunt = {
   prediction_status: string;
   predictionPrize: number;
   predictions: Prediction[];
-  stats: { totalWinnings: number };
+  stats: { totalWinnings: number; currentAverageMultiplier?:number; averagePayoutRequired?:number|null; profitLoss?:number };
 };
 
 export default function CommunityPredictions({
@@ -24,7 +24,11 @@ export default function CommunityPredictions({
   signedIn,
   busy,
   command,
+  summary,
+  slots,
 }: {
+  summary: ReactNode;
+  slots?: ReactNode;
   hunt: PredictionHunt;
   admin: boolean;
   signedIn: boolean;
@@ -45,39 +49,18 @@ export default function CommunityPredictions({
       : a.createdAt.localeCompare(b.createdAt),
   );
   return (
-    <section className="workspace-panel community-predictions">
-      <div className="workspace-heading">
-        <div>
-          <p className="eyebrow">Community predictions</p>
-          <h2>Guess the final bonus total</h2>
-          <p>
-            Predict the total returned by all collected bonuses. One prediction
-            per Twitch account; edit yours until predictions close.
-            Equal-distance ties go to the earlier first entry.
-          </p>
-        </div>
-        <span className={`status-chip ${open ? "status-open" : ""}`}>
-          {open ? "Predictions open" : finished ? "Results final" : "Predictions closed"}
-        </span>
-      </div>
-      <div className="prediction-summary">
-        <div>
-          <span>Closest prediction prize</span>
-          <strong>
-            {hunt.predictionPrize > 0
-              ? huntMoney(hunt.predictionPrize,"USD")
-              : "No cash prize"}
-          </strong>
-        </div>
-        <div>
-          <span>Entries</span>
-          <strong>{ranked.length}</strong>
-        </div>
-        <div>
-          <span>{finished ? "Final bonus total" : "Returned so far"}</span>
-          <strong>{money(hunt.stats.totalWinnings)}</strong>
-        </div>
-      </div>
+    <section className="community-predictions overflow-hidden rounded-2xl border border-purple-300/20 bg-[linear-gradient(180deg,rgba(13,5,20,0.72),rgba(4,2,8,0.60))] shadow-[0_18px_55px_rgba(0,0,0,0.28),0_0_30px_rgba(168,85,247,0.06)] backdrop-blur-[9px] sm:rounded-3xl">
+      <div className="grid lg:grid-cols-[1fr_1.05fr]">
+        {summary}
+        <div className="min-w-0 p-3 sm:p-5">
+          <div className="mb-3 text-center sm:mb-4">
+            <h2 className="text-[11px] font-black uppercase tracking-[0.12em] sm:text-[16px]">Guess the end balance</h2>
+            <p className="mt-1 text-[8px] text-white/45 sm:mt-2 sm:text-[11px]">Closest predictions win. One entry per person.</p>
+            <div className="mt-2 flex flex-wrap justify-center gap-1.5 sm:mt-3">
+              <span className="rounded-full border border-purple-300/20 bg-purple-400/10 px-2.5 py-1 text-[8px] font-black text-purple-100 sm:px-4 sm:py-1.5 sm:text-[11px]">{hunt.predictionPrize>0?`Closest prediction ${huntMoney(hunt.predictionPrize,'USD')}`:'Closest prediction wins'}</span>
+              <span className="rounded-full border border-purple-300/20 px-2.5 py-1 text-[8px] font-bold sm:text-[11px]">{ranked.length} {ranked.length===1?'entry':'entries'}</span>
+            </div>
+          </div>
       {admin && (
         <div className="prediction-admin">
           <p>Predictions stay open until you close them here.</p>
@@ -150,7 +133,9 @@ export default function CommunityPredictions({
               : "This hunt has finished. See the final results above."}
         </p>
       )}
-      <div className="prediction-list">
+        </div>
+      </div>
+      <div className="prediction-list border-t border-purple-300/10 px-3 pb-3 sm:px-5 sm:pb-5">
         <h3>{finished ? "Final rankings" : "Saved predictions"}</h3>
         {!ranked.length ? (
           <p className="empty-state">No predictions yet.</p>
@@ -193,6 +178,7 @@ export default function CommunityPredictions({
           </button>
         )}
       </div>
+      <div className="border-t border-purple-300/10 p-3 sm:p-4">{slots}</div>
     </section>
   );
 }

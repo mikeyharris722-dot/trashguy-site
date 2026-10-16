@@ -1,5 +1,6 @@
 import {
   communityState,
+  communityMemberId,
   communityTracker,
   communityCommand,
   rainbetGames,
@@ -20,7 +21,8 @@ async function actor(request: Request) {
       identity?.identity_data?.name ||
       "Viewer",
   );
-  return { id: data.user.id, name };
+  const twitchId = String(identity.identity_data?.provider_id || identity.identity_data?.sub || '');
+  return { id: data.user.id, name, twitchId: /^\d+$/.test(twitchId) ? twitchId : undefined };
 }
 export async function GET(request: Request) {
   try {
@@ -30,7 +32,7 @@ export async function GET(request: Request) {
         games: await rainbetGames(url.searchParams.get("q") || "",url.searchParams.get("huntId")||undefined),
       });
     const s = await communityState();
-    let who: null | { id: string; name: string } = null,
+    let who: null | { id: string; name: string; twitchId?:string } = null,
       admin = false;
     if (request.headers.get("authorization")) {
       try {
@@ -52,12 +54,14 @@ export async function GET(request: Request) {
         limit: h.limit,
         predictionPrize: h.predictionPrize ?? 15,
         predictions: (h.predictions || []).map((p) => ({ username: p.username, amount: p.amount, createdAt: p.createdAt, mine: p.userId === who?.id })),
-        calls: h.calls.filter((c) => c.status !== "withdrawn"),
+        calls: h.calls.filter((c) => c.status !== "withdrawn").map(c=>({
+          ...c, userId: who && c.userId===communityMemberId(h,who) ? who.id : c.userId,
+        })),
         members: h.members
-          .filter((m) => admin || m.status === "accepted" || m.id === who?.id)
+          .filter((m) => admin || m.status === "accepted" || (who && m.id === communityMemberId(h,who)))
           .map((m) =>
-            admin || m.id === who?.id
-              ? m
+            admin || (who && m.id === communityMemberId(h,who))
+              ? { id: who && m.id===communityMemberId(h,who) ? who.id : m.id, name:m.name, status:m.status, amount:m.amount }
               : { id: m.id, name: m.name, status: m.status, amount: null },
           ),
       }));

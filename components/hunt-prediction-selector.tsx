@@ -2,10 +2,12 @@
 import { startPolling } from "@/lib/polling";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { siteFetch } from "@/lib/site-fetch";
+import CommunityBonusList, { type CommunityBonus } from "./community-bonus-list";
+import CommunityHuntSummary from "./community-hunt-summary";
 import CommunityPredictions, {
   type PredictionHunt,
 } from "./community-predictions";
-type Community = PredictionHunt & { title: string };
+type Community = PredictionHunt & { title: string; startCost?:number; casino?:string; bonuses?: CommunityBonus[] };
 export default function HuntPredictionSelector({
   hunts,
   selectedId,
@@ -27,9 +29,12 @@ export default function HuntPredictionSelector({
     [error, setError] = useState("");
   const load = useCallback(async (signal?: AbortSignal) => {
     const r = await siteFetch("/api/community", { cache: "no-store", signal });
+    if (!(r.headers.get('content-type') || '').includes('application/json'))
+      throw Error('Community hunts are temporarily unavailable. Retrying…');
     const d = await r.json();
     if (!r.ok) throw Error(d.error || "Could not load community hunts");
     setCommunity(d.hunts || []);
+    setError("");
   }, []);
   useEffect(() => {
     const c = new AbortController();
@@ -129,6 +134,8 @@ export default function HuntPredictionSelector({
         <CommunityPredictions
           key={selected.id}
           hunt={selected}
+          summary={<CommunityHuntSummary hunt={selected}/>}
+          slots={<CommunityBonusList bonuses={selected.bonuses} currency={selected.currency}/>}
           admin={admin}
           signedIn={signedIn}
           busy={busy}

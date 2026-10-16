@@ -9,6 +9,7 @@ import SlotSearch, { type SlotOption } from "./slot-search";
 import TrackerAdmin from "./tracker-admin";
 import { type PredictionHunt } from "./community-predictions";
 import PendingRegistration from "./pending-registration";
+import CommunityApprovedPlayer from "./community-approved-player";
 import {
   ScheduleCard,
   CommunitySettings,
@@ -148,6 +149,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
         predictionStatus: "Prediction entry status updated.",
         register: "Request sent. Your place will be confirmed after approval.",
         approve: "Contribution approved. The starting bankroll has updated.",
+        addApprovedPlayer: "Player added as approved. Their USD contribution is included in the bankroll.",
         decline: "Registration declined.",
         submit: "Your slot call has been queued.",
         hostCall: "Host call added to the queue.",
@@ -216,6 +218,169 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
       <span>{c.slot_name} · Game link unavailable</span>
     );
   }
+  const slotCalls = h ? (
+    <>
+          {admin && (
+            <div className="rounded-xl border border-purple-300/30 bg-black/85 p-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="flex-1 text-lg font-bold">Slot calls</h2>
+                <button
+                  className={button}
+                  disabled={busy || !!selected || h.phase !== "collecting"}
+                  onClick={() => void command("random")}
+                >
+                  Random call
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-white/60">{h.title} · {h.currency || "USD"}</p>
+              {selected ? (
+                <div className="mt-4 space-y-3">
+                  {game(selected)}
+                  <p className="text-sm text-white/60">
+                    Called by {selected.username}<UserBadges name={selected.username} />
+                  </p>
+                  <label className="block text-sm">
+                    Bet size
+                    <input
+                      aria-label="Selected call bet size"
+                      className={field + " ml-3 w-24"}
+                      inputMode="decimal"
+                      value={bet}
+                      onChange={(e) => setBet(e.target.value)}
+                    />
+                  </label>
+                  <div className="flex gap-3">
+                    <button
+                      className={button + " bg-emerald-500/20"}
+                      disabled={busy}
+                      onClick={() =>
+                        void command("result", {
+                          callId: selected.id,
+                          status: "collected",
+                          bet,
+                        })
+                      }
+                    >
+                      Passed · got bonus
+                    </button>
+                    <button
+                      className={button + " bg-red-500/20"}
+                      disabled={busy}
+                      onClick={() =>
+                        void command("result", {
+                          callId: selected.id,
+                          status: "failed",
+                        })
+                      }
+                    >
+                      Failed · no bonus
+                    </button>
+                  </div>
+                  <p className="text-xs text-white/50">
+                    Opening linked artwork opens the selected casino. Record the result
+                    separately.
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-white/50">
+                  Select a random call to begin.
+                </p>
+              )}
+            </div>
+          )}
+          {h.phase === "collecting" &&
+            (admin || member?.status === "accepted") && (
+              <div className="rounded-xl border border-white/10 bg-black/75 p-4">
+                <SlotSearch
+                  key={reset}
+                  endpoint={"/api/community?huntId="+encodeURIComponent(h.id)}
+                  selected={choice}
+                  onSelect={setChoice}
+                  label={admin ? "Add a host call" : "Choose your slot call"}
+                />
+                <button
+                  className={button + " mt-3"}
+                  disabled={busy || !choice}
+                  onClick={() =>
+                    void command(admin ? "hostCall" : "submit", {
+                      identifier: choice?.identifier,
+                    })
+                  }
+                >
+                  {admin ? "Queue host call" : "Submit slot call"}
+                </button>
+              </div>
+            )}
+          <section className="rounded-xl border border-white/10 bg-black/75 p-4">
+            <div className="mb-3 flex gap-2">
+              {["queued", "collected", "failed"].map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  aria-pressed={tab === t}
+                  className={
+                    button + (tab === t ? " ring-1 ring-purple-300" : "")
+                  }
+                  onClick={() => setTab(t)}
+                >
+                  {t === "queued"
+                    ? "Calls"
+                    : t === "collected"
+                      ? "Bonuses collected"
+                      : "No bonus"}
+                </button>
+              ))}
+            </div>
+            {!h.calls.some((c) =>
+              tab === "queued"
+                ? ["queued", "selected"].includes(c.status)
+                : c.status === tab,
+            ) && (
+              <p className="empty-list">
+                {tab === "queued"
+                  ? "No calls waiting. Approved players can choose a slot above."
+                  : tab === "collected"
+                    ? "Collected bonuses will appear here when the streamer records a successful call."
+                    : "Calls without a bonus will appear here."}
+              </p>
+            )}
+            {h.calls
+              .filter((c) =>
+                tab === "queued"
+                  ? ["queued", "selected"].includes(c.status)
+                  : c.status === tab,
+              )
+              .map((c) => (
+                <div
+                  key={c.id}
+                  className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 py-3"
+                >
+                  {game(c)}
+                  <span className="text-sm text-white/60">
+                    {c.username}<UserBadges name={c.username} /> ·{" "}
+                    {(
+                      {
+                        queued: "Waiting",
+                        selected: "Selected",
+                        collected: "Bonus collected",
+                        failed: "No bonus",
+                      } as Record<string, string>
+                    )[c.status] || c.status}
+                  </span>
+                  {!admin && c.userId === me && c.status === "queued" && (
+                    <button
+                      className={button}
+                      disabled={busy}
+                      onClick={() => void command("withdraw", { callId: c.id })}
+                    >
+                      Withdraw
+                    </button>
+                  )}
+                </div>
+              ))}
+          </section>
+    </>
+  ) : null;
   return (
     <section className={`community-layout w-full space-y-5 text-white ${admin ? "max-w-none" : "mx-auto max-w-7xl"}`}>
       <div className="rounded-2xl border border-purple-300/20 bg-black/80 p-5">
@@ -240,6 +405,23 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
           </button>
         </p>
       )}
+      {admin && slotCalls}
+          {admin && (
+            <section className="rounded-xl border border-white/10 bg-black/80 p-4">
+              <h2 className="mb-3 text-xl font-black">Bonus Hunt Tracker</h2>
+              <p className="mb-3 text-xs text-white/50">
+                Same tracker, opening sequence and OBS layout. Community data
+                stays separate from ordinary wheel hunts.
+              </p>
+              <TrackerAdmin
+                community
+                manual
+                huntId={id}
+                onHunt={(id) => void command("select", { huntId: id })}
+                onChange={() => void load()}
+              />
+            </section>
+          )}
       {admin && (
         <details className="community-create" open={hunts.length === 0}>
           <summary>Create a community hunt</summary>
@@ -504,164 +686,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                 ))}
             </section>
           )}
-          {h.phase === "collecting" &&
-            (admin || member?.status === "accepted") && (
-              <div className="rounded-xl border border-white/10 bg-black/75 p-4">
-                <SlotSearch
-                  key={reset}
-                  endpoint={"/api/community?huntId="+encodeURIComponent(h.id)}
-                  selected={choice}
-                  onSelect={setChoice}
-                  label={admin ? "Add a host call" : "Choose your slot call"}
-                />
-                <button
-                  className={button + " mt-3"}
-                  disabled={busy || !choice}
-                  onClick={() =>
-                    void command(admin ? "hostCall" : "submit", {
-                      identifier: choice?.identifier,
-                    })
-                  }
-                >
-                  {admin ? "Queue host call" : "Submit slot call"}
-                </button>
-              </div>
-            )}
-          {admin && (
-            <div className="rounded-xl border border-purple-300/30 bg-black/85 p-5">
-              <div className="flex flex-wrap items-center gap-3">
-                <h2 className="flex-1 text-lg font-bold">Selected call</h2>
-                <button
-                  className={button}
-                  disabled={busy || !!selected || h.phase !== "collecting"}
-                  onClick={() => void command("random")}
-                >
-                  Random call
-                </button>
-              </div>
-              {selected ? (
-                <div className="mt-4 space-y-3">
-                  {game(selected)}
-                  <p className="text-sm text-white/60">
-                    Called by {selected.username}<UserBadges name={selected.username} />
-                  </p>
-                  <label className="block text-sm">
-                    Bet size
-                    <input
-                      aria-label="Selected call bet size"
-                      className={field + " ml-3 w-24"}
-                      inputMode="decimal"
-                      value={bet}
-                      onChange={(e) => setBet(e.target.value)}
-                    />
-                  </label>
-                  <div className="flex gap-3">
-                    <button
-                      className={button + " bg-emerald-500/20"}
-                      disabled={busy}
-                      onClick={() =>
-                        void command("result", {
-                          callId: selected.id,
-                          status: "collected",
-                          bet,
-                        })
-                      }
-                    >
-                      Passed · got bonus
-                    </button>
-                    <button
-                      className={button + " bg-red-500/20"}
-                      disabled={busy}
-                      onClick={() =>
-                        void command("result", {
-                          callId: selected.id,
-                          status: "failed",
-                        })
-                      }
-                    >
-                      Failed · no bonus
-                    </button>
-                  </div>
-                  <p className="text-xs text-white/50">
-                    Opening linked artwork opens the selected casino. Record the result
-                    separately.
-                  </p>
-                </div>
-              ) : (
-                <p className="mt-3 text-sm text-white/50">
-                  Select a random call to begin.
-                </p>
-              )}
-            </div>
-          )}
-          <section className="rounded-xl border border-white/10 bg-black/75 p-4">
-            <div className="mb-3 flex gap-2">
-              {["queued", "collected", "failed"].map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  aria-pressed={tab === t}
-                  className={
-                    button + (tab === t ? " ring-1 ring-purple-300" : "")
-                  }
-                  onClick={() => setTab(t)}
-                >
-                  {t === "queued"
-                    ? "Calls"
-                    : t === "collected"
-                      ? "Bonuses collected"
-                      : "No bonus"}
-                </button>
-              ))}
-            </div>
-            {!h.calls.some((c) =>
-              tab === "queued"
-                ? ["queued", "selected"].includes(c.status)
-                : c.status === tab,
-            ) && (
-              <p className="empty-list">
-                {tab === "queued"
-                  ? "No calls waiting. Approved players can choose a slot above."
-                  : tab === "collected"
-                    ? "Collected bonuses will appear here when the streamer records a successful call."
-                    : "Calls without a bonus will appear here."}
-              </p>
-            )}
-            {h.calls
-              .filter((c) =>
-                tab === "queued"
-                  ? ["queued", "selected"].includes(c.status)
-                  : c.status === tab,
-              )
-              .map((c) => (
-                <div
-                  key={c.id}
-                  className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 py-3"
-                >
-                  {game(c)}
-                  <span className="text-sm text-white/60">
-                    {c.username}<UserBadges name={c.username} /> ·{" "}
-                    {(
-                      {
-                        queued: "Waiting",
-                        selected: "Selected",
-                        collected: "Bonus collected",
-                        failed: "No bonus",
-                      } as Record<string, string>
-                    )[c.status] || c.status}
-                  </span>
-                  {!admin && c.userId === me && c.status === "queued" && (
-                    <button
-                      className={button}
-                      disabled={busy}
-                      onClick={() => void command("withdraw", { callId: c.id })}
-                    >
-                      Withdraw
-                    </button>
-                  )}
-                </div>
-              ))}
-          </section>
+          {!admin && slotCalls}
           <section className="rounded-xl border border-white/10 bg-black/75 p-4">
             <h2 className="font-bold">
               Approved players ·{" "}
@@ -685,6 +710,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
                   </span>
                 ))}
             </div>
+            {admin && <CommunityApprovedPlayer key={h.id} busy={busy} closed={h.phase !== 'collecting' || ((h.currency || 'USD') !== 'USD' && !h.equityRate)} save={body=>command('addApprovedPlayer',body)}/>}
           </section>
           {admin && (
             <details className="rounded-xl border border-red-400/20 bg-black/75 p-4">
@@ -711,22 +737,7 @@ export default function CommunityHunt({ admin = false }: { admin?: boolean }) {
               </button>
             </details>
           )}
-          {admin && (
-            <section className="rounded-xl border border-white/10 bg-black/80 p-4">
-              <h2 className="mb-3 text-xl font-black">Bonus Hunt Tracker</h2>
-              <p className="mb-3 text-xs text-white/50">
-                Same tracker, opening sequence and OBS layout. Community data
-                stays separate from ordinary wheel hunts.
-              </p>
-              <TrackerAdmin
-                community
-                manual
-                huntId={id}
-                onHunt={(id) => void command("select", { huntId: id })}
-                onChange={() => void load()}
-              />
-            </section>
-          )}
+
         </>
       )}
       {admin && (

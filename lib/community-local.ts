@@ -16,7 +16,10 @@ import { matchSlot, normaliseSlot } from "./slot-matching";
 import { validatePrizeSettings, defaultPrizeSettings, type PrizeSettings } from "./prize-settings";
 import { validateSchedule } from "./community-schedule";
 type CommunityGame={identifier:string;name:string;provider:string;artwork_url:string|null;rainbet_launch_url?:string|null};
-export type CommunityActor = { id: string; name: string };
+export type CommunityActor = { id: string; name: string; twitchId?: string };
+export function communityMemberId(h: {members: {id:string;twitchId?:string}[]}, actor: CommunityActor) {
+  return h.members.find(m=>m.id===actor.id || (!!actor.twitchId && /^\d+$/.test(actor.twitchId) && m.twitchId===actor.twitchId))?.id || actor.id;
+}
 type Member = CommunityActor & {
   amount: string;
   status: "pending" | "accepted" | "declined" | "withdrawn";
@@ -193,6 +196,7 @@ export async function communityCommand(
         const s = snapshot.payload;
         const action = String(b.action);
         let h = s.hunts.find((h) => h.id === b.huntId && !h.deleted);
+        const memberId = h ? communityMemberId(h,actor) : actor.id;
         const games:CommunityGame[]=h?.catalogue==='roulobets'?(await rouloGames()).filter(g=>g.enabled!==false):await localCatalogue();
         let result = "";
         const staff = () => {
@@ -268,6 +272,19 @@ export async function communityCommand(
           } else if (action === "predictionStatus") {
             staff();
             h.predictionsClosed = b.closed !== false;
+          } else if (action === "addApprovedPlayer") {
+            staff();
+            if (h.phase !== 'collecting') throw Error('Players can only be added during registration and collection.');
+            requireEquityRate(h);
+            const amount = String(b.amount ?? '');
+            if (!/^\d+(?:\.\d{1,2})?$/.test(amount) || money(amount) <= BigInt(0) || money(amount) > BigInt('1000000000000000000'))
+              throw Error('Enter a positive USD contribution with up to two decimal places.');
+            const player = await (await import('./community-player')).communityPlayer(b.userId);
+            const existingId = communityMemberId(h,player);
+            if (h.members.some(m=>m.id===existingId && ['pending','accepted'].includes(m.status)))
+              throw Error('This player is already registered. Review their existing request instead.');
+            h.members = h.members.filter(m=>m.id!==existingId);
+            h.members.push({...player, amount, status:'accepted'});
           } else if (action === "register") {
             requireEquityRate(h);
             if (h.phase !== "collecting")
@@ -275,7 +292,7 @@ export async function communityCommand(
             if (
               h.members.some(
                 (m) =>
-                  m.id === actor.id &&
+                  m.id === memberId &&
                   ["pending", "accepted"].includes(m.status),
               )
             )
@@ -286,7 +303,7 @@ export async function communityCommand(
               money(amount) > BigInt("1000000000000000000")
             )
               throw Error("Enter a positive contribution.");
-            h.members = h.members.filter((m) => m.id !== actor.id);
+            h.members = h.members.filter((m) => m.id !== memberId);
             h.members.push({ ...actor, amount, status: "pending" });
           } else if (
             action === "updateContribution" ||
@@ -295,7 +312,7 @@ export async function communityCommand(
             if (h.phase !== "collecting")
               throw Error("Registration is closed.");
             const m = h.members.find(
-              (m) => m.id === actor.id && m.status === "pending",
+              (m) => m.id === memberId && m.status === "pending",
             );
             if (!m)
               throw Error(
@@ -325,7 +342,7 @@ export async function communityCommand(
           } else if (action === "submit" || action === "hostCall") {
             if (h.phase !== "collecting") throw Error("Calls are closed.");
             const member = h.members.find(
-              (m) => m.id === actor.id && m.status === "accepted",
+              (m) => m.id === memberId && m.status === "accepted",
             );
             if (action === "hostCall") staff();
             else if (!member)
@@ -350,7 +367,7 @@ export async function communityCommand(
               action === "submit" &&
               h.calls.filter(
                 (c) =>
-                  c.userId === actor.id &&
+                  c.userId === memberId &&
                   ["queued", "selected"].includes(c.status),
               ).length >= h.limit
             )
@@ -359,7 +376,7 @@ export async function communityCommand(
               );
             h.calls.push({
               id: randomUUID(),
-              userId: actor.id,
+              userId: memberId,
               username: actor.name,
               identifier: game.identifier,
               slot_name: game.name,
@@ -373,7 +390,7 @@ export async function communityCommand(
             if (h.phase !== "collecting")
               throw Error("Calls are closed during opening.");
             const c = h.calls.find((c) => c.id === b.callId);
-            if (!c || c.userId !== actor.id || c.status !== "queued")
+            if (!c || c.userId !== memberId || c.status !== "queued")
               throw Error("Only your queued call can be withdrawn.");
             c.status = "withdrawn";
           } else if (action === "random") {

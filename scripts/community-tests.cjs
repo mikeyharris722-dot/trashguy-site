@@ -4,7 +4,7 @@ const ts=require(repo+'/node_modules/typescript');
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'trash-community-test-'));
 const cache={};
 let exchangeUnavailable=false;
-function load(name){if(name==='community-fx')return {communityFx:async currency=>{if(exchangeUnavailable&&currency&&currency!=='USD')throw Error('Exchange rate unavailable');return {equityRate:({CAD:'1.37',GBP:'0.75',ARS:'1100'})[currency]||'1',equityRateDate:'2026-10-16',equityRateSource:'ExchangeRate-API'}}};if(name==='roulo-catalogue')return {catalogue:async()=>[{identifier:'thunderkick:proof',name:'Thunderkick Proof',provider:'thunderkick',artwork_url:null},{identifier:'disabled',name:'Disabled',provider:'test',artwork_url:null,enabled:false}]};if(cache[name])return cache[name].exports;const file=path.join(repo,'lib',name+'.ts');const module={exports:{}};cache[name]=module;const js=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,esModuleInterop:true}}).outputText;vm.runInNewContext(js,{module,exports:module.exports,require:n=>n==='server-only'?{}:n==='@/data/rainbet-community.json'?require(repo+'/data/rainbet-community.json'):n.startsWith('./')?load(n.slice(2)):require(n),process:{...process,env:{...process.env,NODE_ENV:'development',COMMUNITY_HUNT_LOCAL:'1'},cwd:()=>dir},URL,AbortSignal,fetch,console,structuredClone},{filename:file});return module.exports;}
+function load(name){if(name==='community-player')return {communityPlayer:async id=>{if(id==='legacy-profile'||id==='duplicate-profile')return {id,name:'Stored Site Name',twitchId:'12345'};if(id==='player')return {id,name:'TEST Player',twitchId:'99999'};throw Error('Choose a registered Twitch player.')}};if(name==='community-fx')return {communityFx:async currency=>{if(exchangeUnavailable&&currency&&currency!=='USD')throw Error('Exchange rate unavailable');return {equityRate:({CAD:'1.37',GBP:'0.75',ARS:'1100'})[currency]||'1',equityRateDate:'2026-10-16',equityRateSource:'ExchangeRate-API'}}};if(name==='roulo-catalogue')return {catalogue:async()=>[{identifier:'thunderkick:proof',name:'Thunderkick Proof',provider:'thunderkick',artwork_url:null},{identifier:'disabled',name:'Disabled',provider:'test',artwork_url:null,enabled:false}]};if(cache[name])return cache[name].exports;const file=path.join(repo,'lib',name+'.ts');const module={exports:{}};cache[name]=module;const js=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,esModuleInterop:true}}).outputText;vm.runInNewContext(js,{module,exports:module.exports,require:n=>n==='server-only'?{}:n==='@/data/rainbet-community.json'?require(repo+'/data/rainbet-community.json'):n.startsWith('./')?load(n.slice(2)):require(n),process:{...process,env:{...process.env,NODE_ENV:'development',COMMUNITY_HUNT_LOCAL:'1'},cwd:()=>dir},URL,AbortSignal,fetch,console,structuredClone},{filename:file});return module.exports;}
 (async()=>{
  const c=load('community-local'),a={id:'admin',name:'TEST Admin'},p={id:'player',name:'TEST Player'};
  await assert.rejects(c.communityCommand(p,false,{action:'create',title:'x'}),/Admin/);
@@ -53,6 +53,29 @@ function load(name){if(name==='community-fx')return {communityFx:async currency=
  console.log('PASS USD equity, CAD/ARS/GBP bankroll conversion, saved-rate stability, cent rounding, pending exclusion, historical fallback and server-side rate locks.');
  await c.communityCommand(a,true,{action:'hostCall',huntId:roulo,identifier:'thunderkick:proof'});chosen=(await c.communityState()).hunts.find(h=>h.id===roulo);assert.equal(chosen.calls[0].launch,'https://roulobets.com/casino/slots/thunderkick:proof');
  const rainbet=(await c.rainbetGames('Wanted Dead'))[0];await assert.rejects(c.communityCommand(a,true,{action:'hostCall',huntId:roulo,identifier:rainbet.identifier}),/this hunt/);
+ const staffHunt=await c.communityCommand(a,true,{action:'create',title:'Admin-added players',currency:'CAD'});
+ const addPlayer={action:'addApprovedPlayer',huntId:staffHunt,userId:'legacy-profile',amount:'100'};
+ await assert.rejects(c.communityCommand(p,false,addPlayer),/Admin/);
+ for(const amount of ['0','-1','NaN','100.001'])await assert.rejects(c.communityCommand(a,true,{...addPlayer,amount}),/USD contribution/);
+ await assert.rejects(c.communityCommand(a,true,{...addPlayer,userId:'unknown'}),/registered Twitch/);
+ await c.communityCommand(a,true,{...addPlayer,name:'Forged Name'});
+ let staffState=(await c.communityState()).hunts.find(h=>h.id===staffHunt);
+ assert.equal(staffState.members[0].name,'Stored Site Name');assert.equal(staffState.members[0].status,'accepted');assert.equal(staffState.members[0].amount,'100');assert.equal(c.communityTracker(staffState).startCost,137);
+ await assert.rejects(c.communityCommand(a,true,addPlayer),/already registered/);
+ await assert.rejects(c.communityCommand(a,true,{...addPlayer,userId:'duplicate-profile'}),/already registered/);
+ await c.communityCommand(p,false,{action:'register',huntId:staffHunt,amount:'20'});
+ await assert.rejects(c.communityCommand(a,true,{...addPlayer,userId:p.id}),/already registered/);
+ const signedIn={id:'different-auth-id',name:'Actual Twitch Login',twitchId:'12345'};
+ assert.equal(c.communityMemberId(staffState,signedIn),'legacy-profile');
+ const called=(await c.rainbetGames('Wanted Dead'))[0];
+ await assert.rejects(c.communityCommand({id:'imposter',name:'Stored Site Name'},false,{action:'submit',huntId:staffHunt,identifier:called.identifier}),/approval/);
+ await c.communityCommand(signedIn,false,{action:'submit',huntId:staffHunt,identifier:called.identifier});
+ staffState=(await c.communityState()).hunts.find(h=>h.id===staffHunt);assert.equal(staffState.calls[0].userId,'legacy-profile');
+ await c.communityCommand(signedIn,false,{action:'withdraw',huntId:staffHunt,callId:staffState.calls[0].id});
+ await c.communityCommand(a,true,{action:'phase',huntId:staffHunt,phase:'opening'});
+ await assert.rejects(c.communityCommand(a,true,{...addPlayer,userId:'new-player'}),/only be added/);
+ await assert.rejects(c.communityCommand(a,true,{action:'edit',huntId:staffHunt,title:'Admin-added players',refreshEquityRate:true}),/locked/);
+ console.log('PASS admin-only direct approval, site-stored identity, USD conversion, duplicate/pending guards, collection-only additions and legacy profile ownership for calls.');
  const id=await c.communityCommand(a,true,{action:'create',title:'TEST-COMMUNITY',limit:1});
  await c.communityCommand(p,false,{action:'register',huntId:id,amount:'50'});
  let h=(await c.communityState()).hunts[0];assert.equal(c.communityTracker(h).startCost,0);
