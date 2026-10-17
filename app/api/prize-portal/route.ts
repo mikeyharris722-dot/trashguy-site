@@ -1,4 +1,4 @@
-import {providerRows} from "@/lib/leaderboard-provider";
+import {profileWagerStats} from "@/lib/profile-wagers";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
 import { requireViewer } from "@/lib/viewer-auth";
@@ -11,9 +11,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
 
-const CURRENT_LB_START = "2026-10-05";
-const CURRENT_LB_END = "2026-11-05";
-const LIFETIME_START = "2024-01-01";
 
 const VIP_WAGER_REQUIREMENT = 5000;
 
@@ -39,165 +36,6 @@ function uniqueUsernames(...values: unknown[]) {
         .filter(Boolean)
     )
   );
-}
-
-function getPlayerName(player: any) {
-  return normalize(
-    player?.username ||
-      player?.name ||
-      player?.display_name ||
-      player?.user_name ||
-      player?.player_name ||
-      player?.affiliate_username ||
-      player?.user?.username ||
-      player?.user?.name ||
-      ""
-  );
-}
-
-function getRawWager(player: any) {
-  return Number(
-    player?.wagered_amount ??
-      player?.wageredAmount ??
-      player?.wagered ??
-      player?.amount ??
-      0
-  );
-}
-
-function getWeightedWager(player: any) {
-  return Number(
-    player?.weighted_wagered_amount ??
-      player?.weightedWageredAmount ??
-      player?.weighted_wagered ??
-      player?.wagered_amount ??
-      player?.wageredAmount ??
-      player?.wagered ??
-      0
-  );
-}
-
-
-async function fetchRouloAffiliates({
-  startAt,
-  endAt,
-  weighted,
-}: {
-  startAt: string;
-  endAt: string;
-  weighted: boolean;
-}) {
-  return providerRows(startAt,endAt,{weighted});
-}
-
-function findAffiliate(
-  affiliates: any[],
-  rouloUsername: string
-) {
-  const target = normalize(rouloUsername);
-
-  return (
-    affiliates.find(
-      (player: any) =>
-        getPlayerName(player) === target
-    ) || null
-  );
-}
-
-async function getRouloStats(
-  rouloUsername: string
-) {
-  if (!rouloUsername) {
-    return {
-      lifetimeWagered: 0,
-      leaderboardWagered: 0,
-      leaderboardWeightedWagered: 0,
-    };
-  }
-
-  const today = new Date()
-    .toISOString()
-    .slice(0, 10);
-
-  const [
-    lifetimeAffiliates,
-    leaderboardAffiliates,
-    weightedLeaderboardAffiliates,
-  ] = await Promise.all([
-    /*
-     * Lifetime RAW wager.
-     */
-    fetchRouloAffiliates({
-      startAt: LIFETIME_START,
-      endAt: today,
-      weighted: false,
-    }),
-
-    /*
-     * Current leaderboard RAW wager.
-     */
-    fetchRouloAffiliates({
-      startAt: CURRENT_LB_START,
-      endAt: CURRENT_LB_END,
-      weighted: false,
-    }),
-
-    /*
-     * Current leaderboard WEIGHTED wager.
-     */
-    fetchRouloAffiliates({
-      startAt: CURRENT_LB_START,
-      endAt: CURRENT_LB_END,
-      weighted: true,
-    }),
-  ]);
-
-  const lifetimePlayer = findAffiliate(
-    lifetimeAffiliates,
-    rouloUsername
-  );
-
-  const leaderboardPlayer = findAffiliate(
-    leaderboardAffiliates,
-    rouloUsername
-  );
-
-  const weightedPlayer = findAffiliate(
-    weightedLeaderboardAffiliates,
-    rouloUsername
-  );
-
-  const lifetimeWagered = lifetimePlayer
-    ? getRawWager(lifetimePlayer)
-    : 0;
-
-  const leaderboardWagered = leaderboardPlayer
-    ? getRawWager(leaderboardPlayer)
-    : 0;
-
-  const leaderboardWeightedWagered =
-    weightedPlayer
-      ? getWeightedWager(weightedPlayer)
-      : 0;
-
-  return {
-    lifetimeWagered:
-      Number.isFinite(lifetimeWagered)
-        ? lifetimeWagered
-        : 0,
-
-    leaderboardWagered:
-      Number.isFinite(leaderboardWagered)
-        ? leaderboardWagered
-        : 0,
-
-    leaderboardWeightedWagered:
-      Number.isFinite(
-        leaderboardWeightedWagered
-      )
-        ? leaderboardWeightedWagered
-        : 0,
-  };
 }
 
 async function getPreviousLeaderboardVip(
@@ -344,12 +182,7 @@ export async function GET(
       .limit(1)
       .maybeSingle();
 
-    if (identityError) {
-      console.error(
-        "Prize portal identity lookup failed:",
-        identityError
-      );
-    }
+    if (identityError) return apiError(Error('Profile data is temporarily unavailable. Please retry.'));
 
     /*
      * Build every known Twitch/Kick username
@@ -515,22 +348,25 @@ export async function GET(
       0;
 
     let rouloStatsError = "";
+    let leaderboardStatsAvailable = !hasRoulo;
+    let lifetimeStatsAvailable = !hasRoulo;
+    let lifetimeStatsSaved = false;
 
     if (hasRoulo) {
       try {
         const stats =
-          await getRouloStats(
+          await profileWagerStats(
             rouloUsername
           );
 
-        lifetimeWagered =
-          stats.lifetimeWagered;
-
-        leaderboardWagered =
-          stats.leaderboardWagered;
-
-        leaderboardWeightedWagered =
-          stats.leaderboardWeightedWagered;
+        leaderboardStatsAvailable = stats.leaderboardWagered !== null && stats.leaderboardWeightedWagered !== null;
+        lifetimeStatsAvailable = stats.lifetimeWagered !== null;
+        lifetimeWagered = stats.lifetimeWagered ?? Number(identityRow?.wagered || 0);
+        lifetimeStatsSaved = stats.lifetimeWagered === null && identityRow?.wagered != null;
+        lifetimeStatsAvailable ||= lifetimeStatsSaved;
+        leaderboardWagered = stats.leaderboardWagered ?? 0;
+        leaderboardWeightedWagered = stats.leaderboardWeightedWagered ?? 0;
+        rouloStatsError = stats.warning;
       } catch (error: any) {
         console.error(
           "Prize portal Roulo stats failed:",
@@ -549,6 +385,8 @@ export async function GET(
           Number(
             identityRow?.wagered || 0
           );
+        lifetimeStatsSaved = identityRow?.wagered != null;
+        lifetimeStatsAvailable = lifetimeStatsSaved;
       }
     }
 
@@ -566,13 +404,12 @@ export async function GET(
           )
         : false;
 
-    const currentLeaderboardVip =
-      leaderboardWeightedWagered >=
-      VIP_WAGER_REQUIREMENT;
+    const currentLeaderboardVip = leaderboardStatsAvailable &&
+      leaderboardWeightedWagered >= VIP_WAGER_REQUIREMENT;
 
     const isVip =
-      previousLeaderboardVip ||
-      currentLeaderboardVip;
+      previousLeaderboardVip || currentLeaderboardVip ||
+      (!leaderboardStatsAvailable && identityRow?.role === 'vip');
 
     /*
      * Keep roulo_links updated too.
@@ -582,7 +419,7 @@ export async function GET(
      */
     if (
       identityRow?.id &&
-      hasRoulo && process.env.NEXT_PUBLIC_LOCAL_REVIEW !== "1"
+      hasRoulo && !rouloStatsError && process.env.NEXT_PUBLIC_LOCAL_REVIEW !== "1"
     ) {
       const weight =
         1 +
@@ -787,17 +624,16 @@ export async function GET(
       /*
        * WAGER STATS
        */
-      lifetimeWagered,
+      lifetimeWagered: lifetimeStatsAvailable ? lifetimeWagered : null,
+      leaderboardWagered: leaderboardStatsAvailable ? leaderboardWagered : null,
+      leaderboardWeightedWagered: leaderboardStatsAvailable ? leaderboardWeightedWagered : null,
+      leaderboardStatsAvailable,
+      lifetimeStatsAvailable,
+      lifetimeStatsSaved,
 
-      leaderboardWagered,
-
-      leaderboardWeightedWagered,
-
-      amountUntilVip: Math.max(
-        0,
-        VIP_WAGER_REQUIREMENT -
-          leaderboardWeightedWagered
-      ),
+      amountUntilVip: leaderboardStatsAvailable ? Math.max(
+        0, VIP_WAGER_REQUIREMENT - leaderboardWeightedWagered
+      ) : null,
 
       /*
        * ODDS

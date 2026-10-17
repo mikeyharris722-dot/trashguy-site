@@ -1,4 +1,4 @@
-import {providerRows} from "@/lib/leaderboard-provider";
+import {profileWagerStats} from "@/lib/profile-wagers";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
 
@@ -9,10 +9,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
 
-const CURRENT_LB_START = "2026-10-05";
-const CURRENT_LB_END = "2026-11-05";
 
-const LIFETIME_START = "2024-01-01";
 
 const VIP_WAGER_REQUIREMENT = 5000;
 
@@ -36,172 +33,11 @@ function usernameOptions(value: unknown) {
   ).filter(Boolean);
 }
 
-function getPlayerName(player: any) {
-  return normalize(
-    player?.affiliate_username ||
-      player?.username ||
-      player?.name ||
-      player?.display_name ||
-      player?.user_name ||
-      player?.player_name ||
-      player?.user?.username ||
-      player?.user?.name ||
-      player?.affiliate?.username ||
-      ""
-  );
-}
-
-function getRawWager(player: any) {
-  const value =
-    player?.wagered_amount ??
-    player?.wageredAmount ??
-    player?.wagered ??
-    player?.total_wagered ??
-    player?.totalWagered ??
-    player?.raw_wagered ??
-    player?.rawWagered ??
-    player?.amount ??
-    0;
-
-  const number = Number(value);
-
-  return Number.isFinite(number) ? number : 0;
-}
-
-function getWeightedWager(player: any) {
-  const value =
-    player?.weighted_wagered_amount ??
-    player?.weightedWageredAmount ??
-    player?.weighted_wagered ??
-    player?.weightedWagered ??
-    player?.weighted_amount ??
-    player?.weightedAmount ??
-    player?.wagered_amount ??
-    player?.wageredAmount ??
-    player?.wagered ??
-    0;
-
-  const number = Number(value);
-
-  return Number.isFinite(number) ? number : 0;
-}
-
-
-async function fetchRouloAffiliates({
-  startAt,
-  endAt,
-  weighted,
-}: {
-  startAt: string;
-  endAt: string;
-  weighted: boolean;
-}) {
-  return providerRows(startAt,endAt,{weighted,fresh:true});
-}
-
-function findAffiliate(
-  affiliates: any[],
-  rouloUsername: string
-) {
-  const target = normalize(rouloUsername);
-
-  return (
-    affiliates.find(
-      (player: any) =>
-        getPlayerName(player) === target
-    ) || null
-  );
-}
-
-async function getRouloStats(
-  rouloUsername: string
-) {
-  const today = new Date()
-    .toISOString()
-    .slice(0, 10);
-
-  const [
-    lifetimeAffiliates,
-    leaderboardAffiliates,
-    weightedLeaderboardAffiliates,
-  ] = await Promise.all([
-    fetchRouloAffiliates({
-      startAt: LIFETIME_START,
-      endAt: today,
-      weighted: false,
-    }),
-
-    fetchRouloAffiliates({
-      startAt: CURRENT_LB_START,
-      endAt: CURRENT_LB_END,
-      weighted: false,
-    }),
-
-    fetchRouloAffiliates({
-      startAt: CURRENT_LB_START,
-      endAt: CURRENT_LB_END,
-      weighted: true,
-    }),
-  ]);
-
-  const lifetimePlayer = findAffiliate(
-    lifetimeAffiliates,
-    rouloUsername
-  );
-
-  const leaderboardPlayer = findAffiliate(
-    leaderboardAffiliates,
-    rouloUsername
-  );
-
-  const weightedPlayer = findAffiliate(
-    weightedLeaderboardAffiliates,
-    rouloUsername
-  );
-
-  if (
-    !lifetimePlayer &&
-    !leaderboardPlayer &&
-    !weightedPlayer
-  ) {
-    return null;
-  }
-
-  const lifetimeWagered = lifetimePlayer
-    ? getRawWager(lifetimePlayer)
-    : 0;
-
-  const leaderboardWagered = leaderboardPlayer
-    ? getRawWager(leaderboardPlayer)
-    : 0;
-
-  const leaderboardWeightedWagered =
-    weightedPlayer
-      ? getWeightedWager(weightedPlayer)
-      : 0;
-
-  return {
-    rouloUsername: normalize(rouloUsername),
-
-    lifetimeWagered: Number.isFinite(
-      lifetimeWagered
-    )
-      ? lifetimeWagered
-      : 0,
-
-    leaderboardWagered: Number.isFinite(
-      leaderboardWagered
-    )
-      ? leaderboardWagered
-      : 0,
-
-    leaderboardWeightedWagered:
-      Number.isFinite(
-        leaderboardWeightedWagered
-      )
-        ? leaderboardWeightedWagered
-        : 0,
-  };
+async function getRouloStats(rouloUsername: string) {
+  const stats = await profileWagerStats(rouloUsername);
+  if (stats.warning || stats.lifetimeWagered === null || stats.leaderboardWagered === null || stats.leaderboardWeightedWagered === null)
+    throw Error(stats.warning || 'Wager stats are temporarily unavailable.');
+  return stats.found ? {...stats, lifetimeWagered:stats.lifetimeWagered, leaderboardWagered:stats.leaderboardWagered, leaderboardWeightedWagered:stats.leaderboardWeightedWagered} : null;
 }
 
 async function isPreviousLeaderboardVip(
@@ -458,23 +294,8 @@ export async function GET(
         );
 
       if (!stats) {
-        return NextResponse.json({
-          ok: true,
-          viewer: viewerUsername,
-          platform,
-          link: existingLink,
-
-          stats: {
-            lifetimeWagered: 0,
-            leaderboardWagered: 0,
-            leaderboardWeightedWagered: 0,
-            vipRequirement:
-              VIP_WAGER_REQUIREMENT,
-          },
-
-          warning:
-            "Roulo username was not found during refresh.",
-        });
+        return NextResponse.json({ok:true,viewer:viewerUsername,platform,link:existingLink,stats:null,
+          warning:'Roulo username was not found during refresh. Saved figures were preserved.'});
       }
 
       const {

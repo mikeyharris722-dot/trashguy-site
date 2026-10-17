@@ -958,6 +958,9 @@ const [viewerOdds, setViewerOdds] = useState({
   winCount: 0,
 });
 
+const [profileWagerStatus, setProfileWagerStatus] = useState({lifetimeAvailable:false,currentAvailable:false,lifetimeSaved:false,message:""});
+const formatProfileWager = (amount:number, available:boolean) => available
+  ? '$' + amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
 const [viewerProfileStats, setViewerProfileStats] = useState({
   lifetimeWagered: 0,
   leaderboardWagered: 0,
@@ -1693,6 +1696,7 @@ const loadViewerRewards = useCallback(async () => {
         winCount: 0,
       });
 
+      setProfileWagerStatus({lifetimeAvailable:false,currentAvailable:false,lifetimeSaved:false,message:""});
       setViewerProfileStats({
         lifetimeWagered: 0,
         leaderboardWagered: 0,
@@ -1728,6 +1732,7 @@ const loadViewerRewards = useCallback(async () => {
     const data = await res.json();
 
     if (!res.ok || !data.ok) {
+      setProfileWagerStatus(previous=>({...previous,currentAvailable:false,lifetimeSaved:previous.lifetimeAvailable,message:'Wager stats could not refresh. Retrying automatically.'}));
       setViewerRewards([]);
       setViewerRewardsMessage(
         data.error || "Could not load rewards."
@@ -1756,6 +1761,12 @@ const loadViewerRewards = useCallback(async () => {
       winCount: Number(data.winCount || 0),
     });
 
+    setProfileWagerStatus({
+      lifetimeAvailable:!data.hasRoulo || data.lifetimeStatsAvailable === true,
+      currentAvailable:!data.hasRoulo || data.leaderboardStatsAvailable === true,
+      lifetimeSaved:data.lifetimeStatsSaved === true,
+      message:data.lifetimeStatsSaved ? "Showing a saved lifetime total. Wager refresh delayed; retrying automatically." : data.rouloStatsWarning || "",
+    });
     setViewerProfileStats({
       lifetimeWagered: Number(
         data.lifetimeWagered || 0
@@ -1793,6 +1804,7 @@ const loadViewerRewards = useCallback(async () => {
 
     setViewerRewardsMessage("");
   } catch {
+    setProfileWagerStatus(previous=>({...previous,currentAvailable:false,lifetimeSaved:previous.lifetimeAvailable,message:'Wager stats could not refresh. Retrying automatically.'}));
     setViewerRewardsMessage(
       "Could not load rewards."
     );
@@ -1941,6 +1953,7 @@ const handleLinkRoulo = async () => {
     setRouloLink(data.link || null);
 
     if (data?.stats) {
+      setProfileWagerStatus({lifetimeAvailable:true,currentAvailable:true,lifetimeSaved:false,message:""});
       setViewerProfileStats((current) => ({
         ...current,
 
@@ -2403,6 +2416,11 @@ useEffect(() => {
     resolvedHunt.prediction_status === "open" ? "open" : "locked"
   );
 }, [huntsLoading, huntsData]);
+
+useEffect(() => {
+  if (activeSection !== "profile") return;
+  return startPolling(loadViewerRewards, 60000, {immediate:false});
+}, [activeSection, loadViewerRewards]);
 
 useEffect(() => {
   if (activeSection === "profile") {
@@ -7930,6 +7948,7 @@ onClick={() => {
             </div>
           </div>
 
+          {profileWagerStatus.message && <p role="status" className="px-3 pt-2 text-[9px] text-amber-200/80 sm:px-4 sm:text-xs">{profileWagerStatus.message}</p>}
           {/* STATS */}
 
           <div className="grid grid-cols-3 gap-1.5 p-1.5 sm:gap-3 sm:p-3">
@@ -7952,12 +7971,11 @@ onClick={() => {
               </div>
 
               <div className="mt-1 text-[12px] font-black leading-none text-white sm:mt-2 sm:text-[22px]">
-                $
-                {viewerProfileStats.lifetimeWagered.toLocaleString()}
+                {formatProfileWager(viewerProfileStats.lifetimeWagered, profileWagerStatus.lifetimeAvailable)}
               </div>
 
               <div className="mt-1 hidden text-[8px] text-white/25 sm:block">
-                Total wagered on code
+                {profileWagerStatus.lifetimeSaved ? 'Saved total · refresh delayed' : 'Total wagered on code'}
               </div>
             </div>
 
@@ -7980,8 +7998,7 @@ onClick={() => {
               </div>
 
               <div className="mt-1 text-[12px] font-black leading-none text-purple-200 sm:mt-2 sm:text-[22px]">
-                $
-                {viewerProfileStats.leaderboardWagered.toLocaleString()}
+                {formatProfileWager(viewerProfileStats.leaderboardWagered, profileWagerStatus.currentAvailable)}
               </div>
 
               <div className="mt-1 hidden text-[8px] text-white/25 sm:block">
@@ -8015,8 +8032,7 @@ onClick={() => {
               </div>
 
               <div className="mt-1 text-[12px] font-black leading-none text-yellow-200 sm:mt-2 sm:text-[22px]">
-                $
-                {viewerProfileStats.leaderboardWeightedWagered.toLocaleString()}
+                {formatProfileWager(viewerProfileStats.leaderboardWeightedWagered, profileWagerStatus.currentAvailable)}
               </div>
 
               <div className="mt-1 hidden text-[8px] text-white/30 sm:block">
@@ -8045,7 +8061,9 @@ onClick={() => {
                         : "text-yellow-200"
                     }
                   >
-                    {viewerProfileStats.isVip
+                    {!profileWagerStatus.currentAvailable
+                      ? "REFRESH DELAYED"
+                      : viewerProfileStats.isVip
                       ? "QUALIFIED ✓"
                       : `$${viewerProfileStats.amountUntilVip.toLocaleString()} TO GO`}
                   </span>
@@ -8061,7 +8079,7 @@ onClick={() => {
                       transition-all
                     "
                     style={{
-                      width: `${Math.min(
+                      width: `${profileWagerStatus.currentAvailable ? Math.min(
                         100,
                         Math.max(
                           0,
@@ -8072,7 +8090,7 @@ onClick={() => {
                             )) *
                             100
                         )
-                      )}%`,
+                      ) : 0}%`,
                     }}
                   />
                 </div>
