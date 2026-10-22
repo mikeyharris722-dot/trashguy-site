@@ -11,3 +11,11 @@ const source='229436:(e,t,a)=>{var s={"./hacksaw/Wanted.webp":123};123:(e,t,a)=>
 const nut={identifier:"n2games:NutJob",name:"Nut Job",provider:"n2games",artwork_url:null};assert.equal(match.matchSlot("ntu job",[nut,...games]).game.identifier,nut.identifier);assert.equal(match.matchSlot("nut",[nut,...games]).status,"review");assert.equal(match.matchSlot("ntu job",[nut,{...nut,identifier:"other:NutJob"}]).status,"review");assert.equal(match.matchSlot("unknown mystery slot",[nut,...games]).status,"review");
 
 const thunderSource='229436:(e,t,a)=>{var s={"./ThunderKick/1429UnchartedSeas_tk.webp":123};123:(e,t,a)=>{"use strict";e.exports=a.p+"static/media/1429.abc.webp"}';assert.equal(art.findArtwork(art.artworkIndex(thunderSource),{identifier:'thunderkick:1429UnchartedSeas_tk',provider:'thunderkick'}),'https://roulobets.com/static/media/1429.abc.webp');console.log('PASS mixed-case ThunderKick artwork folder matches lowercase provider');
+
+// Aggregator provider codes must not hide a studio’s slots from its picker filter.
+assert.equal(providers.providerName("n2games","backseatgaming"),"Backseat Gaming");
+assert.equal(providers.providerName("N2 Games","Backseat Gaming"),"Backseat Gaming");
+assert.equal(providers.providerName("n2games","unknown"),"N2 Games");
+assert.equal(providers.providerName("hacksawg","bullsharkgames"),"Bullshark Games");
+assert.equal(providers.providerName("hacksawg","hacksawg"),"Hacksaw Gaming");
+console.log("PASS N2-distributed Backseat slots join Backseat filter; other studios remain unchanged");

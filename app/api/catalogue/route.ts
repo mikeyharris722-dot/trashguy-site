@@ -1,5 +1,6 @@
 import { catalogue } from "@/lib/roulo-catalogue";
 import { matchSlot, normaliseSlot } from "@/lib/slot-matching";
+import { providerName } from "@/lib/slot-providers";
 import { apiError } from "@/lib/site-db";
 export async function GET(request: Request) {
   try {
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
               ...games.filter(
                 (g) =>
                   g.enabled !== false &&
-                  normaliseSlot(`${g.name} ${g.provider}`).includes(
+                  normaliseSlot(`${g.name} ${g.provider} ${g.producer || ""} ${providerName(g.provider, g.producer)}`).includes(
                     normaliseSlot(q),
                   ),
               ),

@@ -66,6 +66,9 @@ const labels: Record<string, string> = {
 export function providerName(provider: string, producer?: string) {
   const p = provider.toLowerCase().replace(/[^a-z0-9]/g, ""),
     studio = (producer || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  // Roulo also distributes Backseat titles through its N2 Games feed.
+  if (p === "n2games" && ["backseat", "backseatgaming"].includes(studio))
+    return "Backseat Gaming";
   if (
     (p === "hacksaw" || p === "hacksawg") &&
     [
