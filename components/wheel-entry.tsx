@@ -1,10 +1,12 @@
 "use client";
-import UserBadges from "@/components/user-badges";
+import SlotCaller from "./slot-caller";
 import { useState } from "react";
 import SlotSearch, { type SlotOption } from "./slot-search";
 export type WheelCall = {
   id: string;
   username: string;
+  platform?: string;
+  avatarUrl?: string;
   slotName: string;
   createdAt: number;
   needsReview?: boolean;
@@ -70,7 +72,7 @@ export default function WheelEntry({
             >
               {call.slotName}
             </h2>
-            <p className="mt-1 text-sm text-white/50">{call.username}<UserBadges name={call.username} /></p>
+            <p className="mt-1 text-sm text-white/50"><SlotCaller name={call.username} avatar={call.avatarUrl} /></p>
           </div>
           <button
             autoFocus

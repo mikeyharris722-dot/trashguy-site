@@ -2,6 +2,7 @@ import {defaultWeeklyWager,validateWeeklyWager,type WeeklyWagerSettings} from ".
 import {defaultBossTargets,type BossTarget} from "./trash-bosses";
 import { leaderboardPeriod } from "./leaderboard-period";
 export type PrizeSettings = {
+  trashClaw?: {prizes:string[];cashEntries:number[]};
   leaderboard: number[];
   weeklyWager?: WeeklyWagerSettings;
   leaderboardArchives?: {start:string;end:string;prizes:number[]}[];
@@ -62,7 +63,10 @@ export function validatePrizeSettings(value: unknown): PrizeSettings {
   if(new Set(checkedArchives.map(p=>p.start)).size!==checkedArchives.length)throw Error('Duplicate leaderboard archive.');
   const weighting=input.leaderboardWeighting??defaultPrizeSettings.leaderboardWeighting??'';
   if(typeof weighting!=='string'||weighting.length>2000)throw Error('Weighting rules must be under 2,000 characters.');
+  const claw=input.trashClaw;
+  if(claw&&(!Array.isArray(claw.prizes)||claw.prizes.length!==10||claw.prizes.some(p=>typeof p!=='string'||p.length>60)||!Array.isArray(claw.cashEntries)||claw.cashEntries.length<2||claw.cashEntries.length>100||claw.cashEntries.some(n=>typeof n!=='number'||!Number.isFinite(n)||n<=0||n>1000000||Math.abs(n*100-Math.round(n*100))>0.00001)))throw Error('Enter 10 prize names and 2–100 positive wheel amounts with up to two decimal places.');
   return {
+    ...(claw?{trashClaw:{prizes:claw.prizes.map(p=>p.trim()),cashEntries:claw.cashEntries}}:{}),
     weeklyWager:validateWeeklyWager(input.weeklyWager??defaultWeeklyWager),
     leaderboardArchives:checkedArchives,
     leaderboardWeighting:weighting.trim(),

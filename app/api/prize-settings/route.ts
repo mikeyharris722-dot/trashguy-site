@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const body = await communityJson(request);
     const previous=(await communityState()).prizeSettings;
     const submitted=body.settings&&typeof body.settings==="object"?body.settings as Partial<PrizeSettings>:{};
-    const requested=validatePrizeSettings({...submitted,weeklyWager:submitted.weeklyWager??previous?.weeklyWager});
+    const requested=validatePrizeSettings({...submitted,trashClaw:submitted.trashClaw??previous?.trashClaw,weeklyWager:submitted.weeklyWager??previous?.weeklyWager});
     if(requested.weeklyWager?.enabled)await ensureWeeklySetup();
     if(requested.trashBossesEnabled)await ensureBossRewardSetup();
     await communityCommand({ id, name: "Admin" }, true, {

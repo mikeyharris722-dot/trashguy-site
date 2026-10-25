@@ -41,7 +41,10 @@ export default function PrizeSettingsEditor({
   const [end, setEnd] = useState(settings.leaderboardEnd);
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
+  const [clawNames,setClawNames]=useState<string[]>(()=>{if(settings.trashClaw)return settings.trashClaw.prizes;try{if(typeof window!=='undefined'){const legacy=JSON.parse(localStorage.getItem('trash_claw_prizes')||'null');if(Array.isArray(legacy)&&legacy.length===10&&legacy.every(p=>typeof p==='string'))return legacy;}}catch{}return ['DOUBLE','-50%','TRASH CALL','MOD CALL','SLOT PICKER','+50%','KENO','LIVE TABLES','ANOTHER GIVEAWAY','TRASH CASH'];});
+  const [cashEntries,setCashEntries]=useState((settings.trashClaw?.cashEntries||Array.from({length:25},(_,i)=>i+1)).join('\n'));
   const preview = {
+    trashClaw:{prizes:clawNames,cashEntries:cashEntries.split(/[\s,]+/).filter(Boolean).map(Number)},
     weeklyWager:{...weekly,targets:weeklyAmounts.map(t=>({id:t.id,target:Number(t.target),reward:Number(t.reward)}))},
     leaderboard: amounts.map(Number),
     leaderboardWeighting:weighting,
@@ -100,7 +103,7 @@ export default function PrizeSettingsEditor({
       </div>
 
       <form onSubmit={submit} onInvalidCapture={event=>{let parent=(event.target as HTMLElement).parentElement;while(parent){if(parent instanceof HTMLDetailsElement)parent.open=true;parent=parent.parentElement;}}}>
-<div className="settings-sections"><details className="settings-section"><summary><span><strong>Monthly leaderboard</strong><small>Competition dates, place prizes and RTP guide</small></span><span className="settings-chevron" aria-hidden="true">⌄</span></summary><div className="settings-section-body"><fieldset disabled={busy} className="competition-settings">
+<div className="settings-sections"><details className="settings-section"><summary><span><strong>Trash Claw</strong><small>Prize names and Trash Cash wheel amounts</small></span><span aria-hidden="true">⌄</span></summary><div className="settings-section-body"><fieldset disabled={busy}><legend>Claw prizes</legend><div className="prize-fields">{clawNames.map((name,index)=><label key={index}>Prize {index+1}<input maxLength={60} value={name} onChange={e=>setClawNames(old=>old.map((p,i)=>i===index?e.target.value:p))}/></label>)}</div><p>Keep the name “TRASH CASH” on the prize that opens the cash wheel.</p><label>Trash Cash amounts<textarea rows={5} value={cashEntries} onChange={e=>setCashEntries(e.target.value)}/></label><p>One amount per line, or separated by commas. Every entry has an equal chance. Repeated amounts add extra entries.</p></fieldset></div></details><details className="settings-section"><summary><span><strong>Monthly leaderboard</strong><small>Competition dates, place prizes and RTP guide</small></span><span className="settings-chevron" aria-hidden="true">⌄</span></summary><div className="settings-section-body"><fieldset disabled={busy} className="competition-settings">
           <legend>Site leaderboard schedule</legend>
           <p>
             Choose Trashguy’s own competition period. The dates control both the

@@ -29,6 +29,7 @@ import {
 import { SiKick } from "react-icons/si";
 import ProviderMark from "@/components/provider-mark";
 import {FEATURED_PROVIDERS,providerName,featuredLogos} from "@/lib/slot-providers";
+import TrashCashWheel from "@/components/trash-cash-wheel";
 import WheelEntry, {type WheelCall} from "@/components/wheel-entry";
 import type {SlotOption} from "@/components/slot-search";
 import TrackerResults from "@/components/tracker-results";
@@ -743,6 +744,8 @@ const [trashClawReel, setTrashClawReel] = useState<string[]>([]);
 const [trashClawReelOffset, setTrashClawReelOffset] = useState(0);
 const [trashClawReelDuration, setTrashClawReelDuration] = useState(0);
 const [trashClawWinnerIndex, setTrashClawWinnerIndex] = useState<number | null>(null);
+const [cashWheelOpen,setCashWheelOpen]=useState(false);
+const [clawSaving,setClawSaving]=useState(false);
 const [trashClawWinner, setTrashClawWinner] = useState<string | null>(null);
 const [trashClawPhase, setTrashClawPhase] = useState<TrashClawPhase>("idle");
 const [trashClawX, setTrashClawX] = useState(50);
@@ -888,6 +891,15 @@ const [slotCallMessage, setSlotCallMessage] = useState("");
 const [isSlotWheelSpinning, setIsSlotWheelSpinning] = useState(false);
 
 const [pickedSlotCall, setPickedSlotCall] = useState<WheelCall | null>(null);
+const [callAvatars,setCallAvatars]=useState<Record<string,string>>({});
+const callAvatarUsers=pickedSlotCall&&pickedSlotCall.platform!=='kick'?pickedSlotCall.username.trim().toLowerCase():'';
+useEffect(()=>{
+ if(activeSection!=='admin'||!callAvatarUsers)return;
+ const control=new AbortController();
+ void siteFetch('/api/slot-call-avatars?users='+encodeURIComponent(callAvatarUsers),{signal:control.signal}).then(async r=>{if(!r.ok)return;const d=await r.json();if(!control.signal.aborted&&d.avatars&&typeof d.avatars==='object')setCallAvatars(current=>({...current,...d.avatars}));}).catch(()=>{});
+ return ()=>control.abort();
+},[activeSection,callAvatarUsers]);
+
 const slotClaimPending = useRef(false);
 
 const [slotWheelRotation, setSlotWheelRotation] = useState(0);
@@ -1376,29 +1388,20 @@ const pickRandomSlot = async () => {
 };
 
 
-useEffect(() => {
-  if (typeof window === "undefined") return;
-  const saved = localStorage.getItem("trash_claw_prizes");
-  if (!saved) return;
-  try {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && parsed.length === 10) {
-      const normalized = parsed.map((item) => String(item ?? ""));
-      setTrashClawPrizes(normalized);
-      setSavedTrashClawPrizes(normalized);
-    }
-  } catch {}
-}, []);
-
-const saveTrashClawPrizes = () => {
-  const normalized = trashClawPrizes.map((prize) => prize.trim());
-  setTrashClawPrizes(normalized);
-  setSavedTrashClawPrizes(normalized);
-  if (typeof window !== "undefined") {
-    localStorage.setItem("trash_claw_prizes", JSON.stringify(normalized));
-  }
-  setTrashClawSaveStatus("saved");
-  window.setTimeout(() => setTrashClawSaveStatus("idle"), 1800);
+useEffect(()=>{
+ if(!prizeSettingsLoaded)return;
+ let names=prizeSettings.trashClaw?.prizes;
+ if(!names){try{const legacy=JSON.parse(localStorage.getItem("trash_claw_prizes")||"null");if(Array.isArray(legacy)&&legacy.length===10&&legacy.every(p=>typeof p==='string'))names=legacy;}catch{}}
+ if(names){setTrashClawPrizes(names);setSavedTrashClawPrizes(names);}
+},[prizeSettingsLoaded,prizeSettings.trashClaw]);
+const saveTrashClawPrizes = async () => {
+ if(clawSaving||!prizeSettingsLoaded||prizeSettingsError)return;
+ setClawSaving(true);
+ try {
+  const response=await siteFetch('/api/prize-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({settings:{...prizeSettings,trashClaw:{prizes:trashClawPrizes.map(p=>p.trim()),cashEntries:prizeSettings.trashClaw?.cashEntries||Array.from({length:25},(_,i)=>i+1)}},requestId:crypto.randomUUID()})});
+  const data=await response.json();if(!response.ok)throw Error(data.error||'Could not save claw prizes');
+  setPrizeSettings(data.settings);setSavedTrashClawPrizes(data.settings.trashClaw.prizes);setTrashClawSaveStatus('saved');
+ }catch(error){setSiteNotice(error instanceof Error?error.message:'Could not save claw prizes');}finally{setClawSaving(false);}
 };
 
 const trashClawHasUnsavedChanges =
@@ -1462,6 +1465,7 @@ const buildTrashClawFinalists = (pool: string[], count = 5) => {
 
 const runTrashClaw = async () => {
   if (isRunningTrashClaw) return;
+  setCashWheelOpen(false);
   const pool = getTrashClawPool();
   if (!pool.length) return;
 
@@ -1548,6 +1552,7 @@ const runTrashClaw = async () => {
   setTrashClawPhase("lifting"); await sleep(580);
   setTrashClawPhase("revealed"); await sleep(200);
   setIsRunningTrashClaw(false);
+  if(winner.trim().toUpperCase()==="TRASH CASH")setCashWheelOpen(true);
 };
 
 useEffect(() => {
@@ -2580,13 +2585,14 @@ const loadSlotCalls = async () => {
 
     if (activeSection === 'admin' && adminAllowed && !slotClaimPending.current && data.pickedCalls?.length) {
       const call=data.pickedCalls[0];
-      setPickedSlotCall(current=>current||{id:call.id,username:call.username,slotName:call.slot_name,needsReview:Boolean(call.needs_review),originalRequest:call.original_request,suggestions:call.suggestions||[],createdAt:new Date(call.created_at).getTime()});
+      setPickedSlotCall(current=>current||{id:call.id,username:call.username,platform:call.platform,slotName:call.slot_name,needsReview:Boolean(call.needs_review),originalRequest:call.original_request,suggestions:call.suggestions||[],createdAt:new Date(call.created_at).getTime()});
     }
     if (Array.isArray(data.calls) && !slotClaimPending.current) {
       setSlotCalls(
         data.calls.map((call: any) => ({
           id: call.id,
           username: call.username,
+          platform: call.platform,
           slotName: call.slot_name,
           needsReview: Boolean(call.needs_review),
           originalRequest: call.original_request,
@@ -8390,7 +8396,7 @@ onClick={() => {
       </div>
       <button
         type="button"
-        disabled={isRunningTrashClaw || !trashClawHasUnsavedChanges}
+        disabled={isRunningTrashClaw || clawSaving || !prizeSettingsLoaded || !!prizeSettingsError || !trashClawHasUnsavedChanges}
         onClick={saveTrashClawPrizes}
         className={`mt-2 rounded-lg border px-4 py-2 text-[9px] font-black uppercase tracking-[0.12em] transition sm:mt-0 sm:text-[10px] ${
           trashClawHasUnsavedChanges
@@ -8404,6 +8410,7 @@ onClick={() => {
 
 
 
+    <div className="mt-3 flex items-center justify-between gap-3 text-[10px] text-white/50"><span>Prize names and cash amounts are also in Admin Settings → Trash Claw.</span><button type="button" disabled={isRunningTrashClaw} onClick={()=>setCashWheelOpen(true)} className="shrink-0 rounded-lg border border-purple-300/25 px-3 py-2 font-bold text-purple-200 disabled:opacity-40">Test cash wheel</button></div>
     <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-5 sm:gap-2">
       {trashClawPrizes.map((prize, index) => (
         <label key={index} className="group min-w-0 rounded-xl border border-purple-300/15 bg-[linear-gradient(145deg,rgba(168,85,247,0.08),rgba(0,0,0,0.5))] p-2 transition hover:border-purple-300/30">
@@ -9940,7 +9947,8 @@ onClick={() => {
 )}
           </main>
 
-{activeSection === "admin" && pickedSlotCall && trackerEntryOpen && <WheelEntry currency={huntsData.find(h=>h.localId===trackerHuntId)?.currency||'USD'} key={pickedSlotCall.id} call={pickedSlotCall} bet={trackerBet} onBet={setTrackerBet} busy={trackerBusy} huntId={trackerHuntId} onClose={()=>setTrackerEntryOpen(false)} onResolve={resolvePickedCall} onRecord={recordPickedCall} />}
+{activeSection === "admin" && activeAdminTab === "trashClaw" && cashWheelOpen && <TrashCashWheel entries={prizeSettings.trashClaw?.cashEntries||Array.from({length:25},(_,i)=>i+1)} onClose={()=>setCashWheelOpen(false)}/>}
+{activeSection === "admin" && pickedSlotCall && trackerEntryOpen && <WheelEntry currency={huntsData.find(h=>h.localId===trackerHuntId)?.currency||'USD'} key={pickedSlotCall.id} call={{...pickedSlotCall,avatarUrl:pickedSlotCall.platform==='kick'?undefined:callAvatars[pickedSlotCall.username.toLowerCase()]}} bet={trackerBet} onBet={setTrackerBet} busy={trackerBusy} huntId={trackerHuntId} onClose={()=>setTrackerEntryOpen(false)} onResolve={resolvePickedCall} onRecord={recordPickedCall} />}
 
 <footer
   className="
