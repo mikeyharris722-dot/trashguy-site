@@ -1,0 +1,37 @@
+const fs=require('fs'),cp=require('child_process');const container=process.argv[2],database=process.argv[3];if(!container||!/^trashguy_read_[a-z0-9_]+$/.test(database||''))throw Error('Supply an isolated trashguy_read_ database.');
+const fixture=fs.readFileSync('scripts/slot-call-reservation-test.sql','utf8').split('do $$ declare a uuid;')[0];
+const migration=fs.readFileSync('supabase/migrations/20261025170224_two_pending_slot_calls.sql','utf8');
+const sql=fixture+'\n'+migration+`
+do $$declare a uuid;b uuid;c uuid;d uuid;e uuid;f uuid;entry uuid;v jsonb;begin
+ v:=public.slot_call_queue('Viewer','twitch','Slot A','{"status":"matched","identifier":"a","suggestions":[]}');a:=(v->'call'->>'id')::uuid;
+ v:=public.slot_call_queue('VIEWER','twitch','Slot B','{"status":"matched","identifier":"b","suggestions":[]}');b:=(v->'call'->>'id')::uuid;
+ if a=b or (v->>'replaced')::boolean or (select count(*) from public.slot_calls)<>2 then raise exception 'Second call replaced first';end if;
+ v:=public.slot_call_queue('viewer','twitch','Slot C','{"status":"matched","identifier":"c","suggestions":[]}');c:=(v->'call'->>'id')::uuid;
+ if not (v->>'replaced')::boolean or (v->>'replacedCallId')::uuid<>a or exists(select 1 from public.slot_calls where id=a) or exists(select 1 from public.roulo_call_matches where call_id=a::text) then raise exception 'Third call did not remove oldest and metadata';end if;
+ if not exists(select 1 from public.slot_calls where id=b) then raise exception 'Second call changed';end if;
+ v:=public.slot_call_queue('viewer','twitch','Slot D','{"status":"review","suggestions":[]}');d:=(v->'call'->>'id')::uuid;
+ if (v->>'replacedCallId')::uuid<>b or exists(select 1 from public.slot_calls where id=b) then raise exception 'Fourth call did not rotate FIFO';end if;
+ begin perform public.slot_call_pick('00000000-0000-4000-8000-000000000002',a,'Slot A');raise exception 'Removed call picked';exception when others then if sqlerrm='Removed call picked' then raise;end if;end;
+ perform public.slot_call_pick('00000000-0000-4000-8000-000000000002',c,'Slot C');
+ v:=public.slot_call_queue('viewer','twitch','Slot E','{"status":"review","suggestions":[]}');e:=(v->'call'->>'id')::uuid;
+ if (v->>'replaced')::boolean or not exists(select 1 from public.slot_calls where id=d) then raise exception 'Picked call counted against pending limit';end if;
+ v:=public.slot_call_queue('viewer','twitch','Slot F','{"status":"review","suggestions":[]}');f:=(v->'call'->>'id')::uuid;
+ if (v->>'replacedCallId')::uuid<>d or not exists(select 1 from public.slot_calls where id=c and slot_name='Slot C' and picked_at is not null) then raise exception 'Picked call overwritten';end if;
+ begin perform public.slot_call_queue('viewer','twitch','Slot C','{"status":"matched","suggestions":[]}');raise exception 'Picked duplicate accepted';exception when others then if sqlerrm='Picked duplicate accepted' then raise;end if;end;
+ begin perform public.slot_call_queue('viewer','twitch','Slot F','{"status":"matched","suggestions":[]}');raise exception 'Pending duplicate accepted';exception when others then if sqlerrm='Pending duplicate accepted' then raise;end if;end;
+ if not exists(select 1 from public.slot_calls where id=e) then raise exception 'Duplicate removed oldest';end if;
+ alter table public.roulo_call_matches add constraint reject_failure_fixture check(identifier is distinct from 'failure_fixture');
+ begin perform public.slot_call_queue('viewer','twitch','Failed metadata','{"status":"matched","identifier":"failure_fixture","suggestions":[]}');raise exception 'Metadata failure accepted';exception when check_violation then null;end;
+ if not exists(select 1 from public.slot_calls where id=e) or not exists(select 1 from public.roulo_call_matches where call_id=e::text) then raise exception 'Failed insert did not roll back replacement';end if;
+ entry:=public.site_tracker_collect('00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001',c::text,'collected',1,0);
+ if (select slot_name from public.site_tracker_entries where id=entry)<>'Slot C' or not exists(select 1 from public.slot_calls where id=e) or not exists(select 1 from public.slot_calls where id=f) then raise exception 'Result removed later calls';end if;
+ if public.site_tracker_collect('00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001',c::text,'collected',1,0)<>entry then raise exception 'Result retry changed';end if;
+ perform public.slot_call_queue('viewer','kick','Kick A','{"status":"review","suggestions":[]}');
+ perform public.slot_call_queue('viewer','kick','Kick B','{"status":"review","suggestions":[]}');
+ if (select count(*) from public.slot_calls where platform='kick')<>2 or (select count(*) from public.slot_calls where platform='twitch')<>2 then raise exception 'Platform queues mixed';end if;
+ perform public.slot_call_queue('Other','twitch','Other A','{"status":"review","suggestions":[]}');
+ if not exists(select 1 from public.slot_calls where id=e) then raise exception 'Other viewer changed queue';end if;
+ if has_function_privilege('anon','public.slot_call_queue(text,text,text,jsonb)','execute') or has_function_privilege('authenticated','public.slot_call_queue(text,text,text,jsonb)','execute') then raise exception 'Public RPC access';end if;
+end;$$;
+rollback;`;
+const r=cp.spawnSync('docker',['exec','-i',container,'psql','-U','postgres','-d',database,'-v','ON_ERROR_STOP=1'],{input:sql,encoding:'utf8'});if(r.status!==0)throw Error(r.stderr);console.log('PASS SQL: two pending calls, FIFO third/fourth replacement, stale picks blocked, picked call protected, duplicates safe, rollback restores metadata, result/retry isolation, per-platform and per-user limits, service-only grants; rolled back.');
