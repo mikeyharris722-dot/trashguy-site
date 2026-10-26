@@ -30,6 +30,7 @@ import { SiKick } from "react-icons/si";
 import ProviderMark from "@/components/provider-mark";
 import {FEATURED_PROVIDERS,providerName,featuredLogos} from "@/lib/slot-providers";
 import TrashCashWheel from "@/components/trash-cash-wheel";
+import ClawPrizeArtwork from "@/components/claw-prize-artwork";
 import WheelEntry, {type WheelCall} from "@/components/wheel-entry";
 import type {SlotOption} from "@/components/slot-search";
 import TrackerResults from "@/components/tracker-results";
@@ -1411,7 +1412,7 @@ const getTrashClawPool = () =>
   savedTrashClawPrizes.map((prize) => prize.trim()).filter(Boolean);
 
 const getTrashClawPrizeLook = (prize: string) => {
-  const key = prize.trim().toUpperCase();
+  const key = prize.trim().toUpperCase().replace(/\s+/g, " ").replace(/\s*\/\s*/g, "/");
   const looks: Record<string, { emoji: string; glow: string; border: string; wash: string; badge: string }> = {
     "DOUBLE": { emoji: "2X", glow: "rgba(244,63,94,.58)", border: "rgba(251,113,133,.78)", wash: "rgba(190,24,93,.34)", badge: "#fb7185" },
     "-50%": { emoji: "⬇️", glow: "rgba(56,189,248,.58)", border: "rgba(125,211,252,.78)", wash: "rgba(3,105,161,.34)", badge: "#7dd3fc" },
@@ -1422,9 +1423,12 @@ const getTrashClawPrizeLook = (prize: string) => {
     "KENO": { emoji: "🎱", glow: "rgba(250,204,21,.60)", border: "rgba(253,224,71,.80)", wash: "rgba(161,98,7,.34)", badge: "#fde047" },
     "LIVE TABLES": { emoji: "🃏", glow: "rgba(239,68,68,.58)", border: "rgba(252,165,165,.80)", wash: "rgba(153,27,27,.34)", badge: "#fca5a5" },
     "ANOTHER GIVEAWAY": { emoji: "🎁", glow: "rgba(236,72,153,.62)", border: "rgba(249,168,212,.82)", wash: "rgba(157,23,77,.34)", badge: "#f9a8d4" },
+    "LIVE TABLES/KENO": { emoji: "🎲", glow: "rgba(250,204,21,.60)", border: "rgba(253,224,71,.80)", wash: "rgba(161,98,7,.34)", badge: "#fde047" },
+    "FEATURE SPINS": { emoji: "🌀", glow: "rgba(56,189,248,.62)", border: "rgba(125,211,252,.82)", wash: "rgba(3,105,161,.34)", badge: "#7dd3fc" },
+    "BEST OF TWO": { emoji: "✌️", glow: "rgba(244,114,182,.62)", border: "rgba(249,168,212,.82)", wash: "rgba(157,23,77,.34)", badge: "#f9a8d4" },
     "TRASH CASH": { emoji: "💵", glow: "rgba(16,185,129,.66)", border: "rgba(110,231,183,.86)", wash: "rgba(6,95,70,.36)", badge: "#6ee7b7" },
   };
-  return looks[key] ?? { emoji: "🎁", glow: "rgba(168,85,247,.55)", border: "rgba(216,180,254,.72)", wash: "rgba(107,33,168,.32)", badge: "#d8b4fe" };
+  return looks[key] ?? { emoji: "⭐", glow: "rgba(168,85,247,.55)", border: "rgba(216,180,254,.72)", wash: "rgba(107,33,168,.32)", badge: "#d8b4fe" };
 };
 
 const TrashClawPrizeCard = ({ prize, number, winner = false }: { prize: string; number: number; winner?: boolean }) => {
@@ -1439,13 +1443,13 @@ const TrashClawPrizeCard = ({ prize, number, winner = false }: { prize: string; 
       }}
     >
       <div className="absolute inset-x-[12%] top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
-      <div className="absolute -right-3 -top-4 text-[38px] opacity-[0.06] sm:text-[52px]">{look.emoji}</div>
+      <div className="absolute -right-3 -top-4 h-20 w-20 opacity-[0.06] sm:h-24 sm:w-24"><ClawPrizeArtwork prize={prize}/></div>
       <div className="absolute left-1.5 top-1.5 rounded-full border border-white/15 bg-black/45 px-1.5 py-0.5 text-[5px] font-black tracking-wider text-white/55 sm:text-[6px]">#{String(number).padStart(2, "0")}</div>
       <div
-        className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-black/25 text-[20px] font-black shadow-lg sm:h-12 sm:w-12 sm:text-[25px] lg:h-14 lg:w-14 lg:text-[29px]"
+        className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl border border-white/20 bg-black/25 text-[20px] font-black shadow-lg sm:h-16 sm:w-16 sm:text-[25px] lg:h-20 lg:w-20 lg:text-[29px]"
         style={{ color: look.badge, textShadow: `0 0 16px ${look.glow}`, boxShadow: `0 0 22px ${look.glow}, inset 0 0 16px rgba(255,255,255,.05)` }}
       >
-        {look.emoji}
+        <ClawPrizeArtwork prize={prize}/>
       </div>
       <div className="max-w-full text-[7px] font-black uppercase leading-[1.05] drop-shadow-[0_2px_3px_rgba(0,0,0,.9)] sm:text-[9px] lg:text-[11px]">{prize}</div>
       <div className="mt-1.5 text-[5px] font-black uppercase tracking-[0.18em] sm:text-[6px]" style={{ color: look.badge, opacity: .72 }}>TRASH CLAW</div>
