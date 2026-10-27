@@ -1,0 +1,52 @@
+Trash Claw reveal effects — recorded foley mixes (v3)
+
+All source audio is Creative Commons Zero 1.0 Universal (CC0).
+Mixed edits: trimming, sequencing, gain, stereo panning and short fades.
+No music, voices or synthesized win jingles.
+
+Kenney Vleugels / Kenney:
+Casino Audio 1.1 — https://kenney.nl/assets/casino-audio
+RPG Audio — https://kenney.nl/assets/rpg-audio
+Impact Sounds — https://kenney.nl/assets/impact-sounds
+
+BennettFilmTeacher: Old Phone Ringing
+https://freesound.org/people/BennettFilmTeacher/sounds/610191/
+Public audio preview: https://cdn.freesound.org/previews/610/610191_7254895-lq.mp3
+
+modusmogulus: Cash Register (imitation with toaster and bells)
+https://freesound.org/people/modusmogulus/sounds/794903/
+Public audio preview: https://cdn.freesound.org/previews/794/794903_15956618-lq.mp3
+
+JovianSounds: Radio Sign Off / Squelch
+https://freesound.org/people/JovianSounds/sounds/524205/
+Public audio preview: https://cdn.freesound.org/previews/524/524205_9561949-lq.mp3
+
+CC0: https://creativecommons.org/publicdomain/zero/1.0/
+
+Source files used in the mixes:
+.local\claw-foley\cash-register.mp3
+.local\claw-foley\casino\Audio\card-fan-1.ogg
+.local\claw-foley\casino\Audio\card-fan-2.ogg
+.local\claw-foley\casino\Audio\card-place-1.ogg
+.local\claw-foley\casino\Audio\card-place-2.ogg
+.local\claw-foley\casino\Audio\card-place-3.ogg
+.local\claw-foley\casino\Audio\card-shuffle.ogg
+.local\claw-foley\casino\Audio\card-slide-1.ogg
+.local\claw-foley\casino\Audio\card-slide-4.ogg
+.local\claw-foley\casino\Audio\cards-pack-open-1.ogg
+.local\claw-foley\casino\Audio\cards-pack-take-out-1.ogg
+.local\claw-foley\casino\Audio\chip-lay-1.ogg
+.local\claw-foley\casino\Audio\chips-handle-2.ogg
+.local\claw-foley\casino\Audio\chips-handle-4.ogg
+.local\claw-foley\casino\Audio\chips-stack-2.ogg
+.local\claw-foley\casino\Audio\chips-stack-3.ogg
+.local\claw-foley\casino\Audio\chips-stack-4.ogg
+.local\claw-foley\casino\Audio\chips-stack-5.ogg
+.local\claw-foley\casino\Audio\dice-throw-2.ogg
+.local\claw-foley\impact\Audio\impactWood_medium_001.ogg
+.local\claw-foley\phone.mp3
+.local\claw-foley\radio.mp3
+.local\claw-foley\rpg\Audio\dropLeather.ogg
+.local\claw-foley\rpg\Audio\handleCoins.ogg
+.local\claw-foley\rpg\Audio\metalClick.ogg
+.local\claw-foley\rpg\Audio\metalLatch.ogg

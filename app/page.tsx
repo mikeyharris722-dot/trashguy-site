@@ -31,6 +31,7 @@ import ProviderMark from "@/components/provider-mark";
 import {FEATURED_PROVIDERS,providerName,featuredLogos} from "@/lib/slot-providers";
 import TrashCashWheel from "@/components/trash-cash-wheel";
 import ClawPrizeArtwork from "@/components/claw-prize-artwork";
+import ClawRevealEffects from "@/components/claw-reveal-effects";
 import WheelEntry, {type WheelCall} from "@/components/wheel-entry";
 import type {SlotOption} from "@/components/slot-search";
 import TrackerResults from "@/components/tracker-results";
@@ -8437,7 +8438,8 @@ onClick={() => {
       ))}
     </div>
 
-    <div className="mt-3 overflow-hidden rounded-xl border border-purple-300/15 bg-[linear-gradient(180deg,#09040e,#030104)]">
+    <div className="relative mt-3 overflow-hidden rounded-xl border border-purple-300/15 bg-[linear-gradient(180deg,#09040e,#030104)]">
+      <div className="flex justify-end px-3 pt-2"><ClawRevealEffects prizes={savedTrashClawPrizes} prize={trashClawWinner||''} active={activeSection==='admin'&&activeAdminTab==='trashClaw'&&trashClawPhase==='revealed'&&!!trashClawWinner}/></div>
       <div className="flex items-center justify-between border-b border-purple-300/10 px-3 py-2 sm:px-4">
         <div className="text-[10px] font-black tracking-[0.12em] text-white sm:text-sm">TRASHGUY TRASH CLAW</div>
         <div className="text-[8px] font-black uppercase tracking-wider text-purple-200/50 sm:text-[9px]">
