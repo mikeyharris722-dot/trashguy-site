@@ -1,4 +1,4 @@
-export const SCOTLAND_MOVIE='/claw-production/scotland-forever-v1.mp4';
+export const SCOTLAND_MOVIE='/claw-production/scotland-forever-v2.mp4';
 export const SCOTLAND_MS=68105;
 export const productionMovie=(event:ProductionEvent)=>event.clip==='scotland'?SCOTLAND_MOVIE:CLAW_PRODUCTION_MOVIE;
 export const CLAW_PRODUCTION_MS=10000;

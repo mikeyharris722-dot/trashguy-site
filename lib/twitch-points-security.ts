@@ -10,7 +10,7 @@ export function isStopCommand(event:ChatEvent) {
   if (event.source_broadcaster_user_id && event.source_broadcaster_user_id !== event.broadcaster_user_id) return false;
   return Boolean(event.chatter_user_id && event.broadcaster_user_id && (event.chatter_user_id === event.broadcaster_user_id || event.badges?.some(badge=>badge.set_id==='moderator')));
 }
-export const SCOTLAND_MOVIE = '/claw-production/scotland-forever-v1.mp4';
+export const SCOTLAND_MOVIE = '/claw-production/scotland-forever-v2.mp4';
 export const SCOTLAND_MS = 68105;
 export function digest(value: string) { return createHash('sha256').update(value).digest('hex'); }
 export function secret() {
