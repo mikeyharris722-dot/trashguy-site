@@ -111,28 +111,26 @@ export async function POST(request: Request) {
     else if (b.action === "collect") {
       money(b.bet);
       money(b.cost);
-      if (b.payout !== undefined && b.payout !== null) {
+      const tier = b.tier ?? "standard";
+      if (!["standard", "super", "super_super"].includes(tier))
+        throw new Error("Choose Normal, Super or Super Super.");
+      const hasPayout = b.payout !== undefined && b.payout !== null;
+      if (hasPayout) {
         money(b.payout);
         if (b.status !== "collected")
           throw new Error("Only collected bonuses can have a payout");
-        result = await db.rpc("site_tracker_record_currency", {
-          p_actor: actor,
-          p_hunt: b.huntId,
-          p_call: b.callId,
-          p_bet: b.bet,
-          p_cost: b.cost,
-          p_payout: b.payout,
-          p_fx:await fxFor(b.huntId),
-        });
-      } else
-        result = await db.rpc("site_tracker_collect", {
-          p_actor: actor,
-          p_hunt: b.huntId,
-          p_call: b.callId,
-          p_status: b.status,
-          p_bet: b.bet,
-          p_cost: b.cost,
-        });
+      }
+      result = await db.rpc("site_tracker_collect_tier", {
+        p_actor: actor,
+        p_hunt: b.huntId,
+        p_call: b.callId,
+        p_status: b.status,
+        p_bet: b.bet,
+        p_cost: b.cost,
+        p_tier: tier,
+        p_payout: hasPayout ? b.payout : null,
+        p_fx: hasPayout ? await fxFor(b.huntId) : null,
+      });
     } else if (b.action === "payout") {
       if (b.payout !== null) money(b.payout);
       money(b.bet);

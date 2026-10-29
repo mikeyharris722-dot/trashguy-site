@@ -32,10 +32,11 @@ export default function WheelEntry({
   huntId: string;
   onClose: () => void;
   onResolve: (game: SlotOption) => Promise<void>;
-  onRecord: (status: "collected" | "failed") => void;
+  onRecord: (status: "collected" | "failed", tier: string) => void;
 }) {
   const [selected, setSelected] = useState<SlotOption | null>(null),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [tier, setTier] = useState("standard");
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
       <section
@@ -48,7 +49,7 @@ export default function WheelEntry({
           if (e.key === "Tab") {
             const items = Array.from(
               e.currentTarget.querySelectorAll<HTMLElement>(
-                "button:not(:disabled),input:not(:disabled)",
+                "button:not(:disabled),input:not(:disabled),select:not(:disabled)",
               ),
             );
             if (e.shiftKey && document.activeElement === items[0]) {
@@ -72,7 +73,7 @@ export default function WheelEntry({
             >
               {call.slotName}
             </h2>
-            <p className="mt-1 text-sm text-white/50"><SlotCaller name={call.username} avatar={call.avatarUrl} /></p>
+            <p className="mt-1 text-sm text-white/50"><SlotCaller name={call.username} avatar={call.avatarUrl} large /></p>
           </div>
           <button
             autoFocus
@@ -128,6 +129,14 @@ export default function WheelEntry({
                 placeholder="0.00"
               />
             </label>
+            <label className="mt-4 block text-sm text-white/70">
+              Bonus type
+              <select aria-label="Selected call bonus type" value={tier} disabled={busy} onChange={(e) => setTier(e.target.value)} className="mt-2 w-full rounded-xl border border-purple-300/20 bg-black p-3 text-sm text-white disabled:opacity-40">
+                <option value="standard">Normal</option>
+                <option value="super">Super</option>
+                <option value="super_super">Super Super</option>
+              </select>
+            </label>
             <div className="mt-5 grid grid-cols-2 gap-3">
               <button
                 disabled={
@@ -137,7 +146,7 @@ export default function WheelEntry({
                   Number(bet) <= 0
                 }
                 className="rounded-xl bg-emerald-500/20 p-3 text-sm font-black text-emerald-200 disabled:opacity-40"
-                onClick={() => onRecord("collected")}
+                onClick={() => onRecord("collected", tier)}
               >
                 GOT IN
               </button>
@@ -149,7 +158,7 @@ export default function WheelEntry({
                   Number(bet) <= 0
                 }
                 className="rounded-xl bg-red-500/20 p-3 text-sm font-black text-red-200 disabled:opacity-40"
-                onClick={() => onRecord("failed")}
+                onClick={() => onRecord("failed", tier)}
               >
                 DIDN’T GET IN
               </button>
