@@ -1,3 +1,4 @@
+import {scheduleSlotBoard} from "@/lib/discord-slot-board";
 import {huntCurrency} from '@/lib/hunt-currency';
 import {payoutFx} from '@/lib/hunt-fx';
 import { siteDb, requireTrackerAdmin, apiError } from "@/lib/site-db";
@@ -180,6 +181,7 @@ export async function POST(request: Request) {
             p_name: game.name,
           });
           if (resolved.error) throw new Error(resolved.error.message);
+          scheduleSlotBoard();
           return Response.json({ ok: true, ignored: true });
         }
       }
@@ -191,6 +193,7 @@ export async function POST(request: Request) {
       });
     } else throw new Error("Unknown action");
     if (result.error) throw new Error(result.error.message);
+    scheduleSlotBoard();
     return Response.json({ ok: true, result: result.data });
   } catch (e) {
     return apiError(e);

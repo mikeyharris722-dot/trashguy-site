@@ -1,3 +1,4 @@
+import {scheduleSlotBoard} from "@/lib/discord-slot-board";
 import { reviewNativeSelection } from "@/lib/review-selection";
 import { catalogue } from "@/lib/roulo-catalogue";
 import { matchSlot } from "@/lib/slot-matching";
@@ -6,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
 
 export const runtime = "nodejs";
+function slotSuccess(body:Record<string,unknown>){scheduleSlotBoard();return NextResponse.json(body);}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -42,6 +44,7 @@ export async function GET() {
   const collected = activeId ? results.filter(e => e.status === "collected") : [];
   const identifiers = new Set(collected.map(e => e.identifier));
   const names = new Set(collected.map(e => e.slot_name.trim().toLowerCase()));
+  scheduleSlotBoard(true);
   return NextResponse.json({
     pickedCalls: calls.filter(c=>c.picked_at).map(c=>{const m=metadata.get(String(c.id));return {...c,needs_review:m?.status==='review',original_request:m?.original_request||c.slot_name,suggestions:m?.suggestions||[]};}),
     calls: calls.filter(c=>!c.picked_at).map(c => {
@@ -73,7 +76,7 @@ export async function POST(req: NextRequest) {
     if (action === 'pick') {
       const {data,error}=await supabase.rpc('slot_call_pick',{p_actor:adminActor,p_call:body.callId,p_expected_slot:body.slotName});
       if(error)return NextResponse.json({error:error.message},{status:409});
-      return NextResponse.json({ok:true,...data});
+      return slotSuccess({ok:true,...data});
     }
 
     /*
@@ -161,8 +164,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      return NextResponse.json({
-        ok: true,
+      return slotSuccess({ok:true,
         result: data,
       });
     }
@@ -254,8 +256,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      return NextResponse.json({
-        ok: true,
+      return slotSuccess({ok:true,
         result: data,
       });
     }
@@ -329,7 +330,7 @@ export async function POST(req: NextRequest) {
       p_match:{original_request:originalSlotName,identifier:matched.game?.identifier||null,status:matched.status,suggestions:matched.suggestions||[]},
     });
     if(error)return NextResponse.json({error:error.message},{status:/already/.test(error.message)?409:503});
-    return NextResponse.json({ok:true,...data});
+    return slotSuccess({ok:true,...data});
   } catch (error: any) {
     if (error?.message?.startsWith("AUTH:"))
       return NextResponse.json({ error: error.message }, { status: 403 });
@@ -396,8 +397,7 @@ export async function DELETE(req: NextRequest) {
         );
       }
 
-      return NextResponse.json({
-        ok: true,
+      return slotSuccess({ok:true,
         cleared: true,
       });
     }
@@ -425,8 +425,7 @@ export async function DELETE(req: NextRequest) {
         );
       }
 
-      return NextResponse.json({
-        ok: true,
+      return slotSuccess({ok:true,
         resultsCleared: true,
       });
     }
@@ -454,8 +453,7 @@ export async function DELETE(req: NextRequest) {
         );
       }
 
-      return NextResponse.json({
-        ok: true,
+      return slotSuccess({ok:true,
         resultDeleted: true,
       });
     }
@@ -500,8 +498,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      ok: true,
+    return slotSuccess({ok:true,
       deleted: true,
     });
   } catch (error: any) {

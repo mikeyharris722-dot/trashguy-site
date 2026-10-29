@@ -6,7 +6,7 @@ const regular={id:'regular',source:'site',title:'Live regular',currency:'USD',ph
 const settings={active_hunt_id:'regular',opening_queue:['bonus']},writes=[];
 const fixtures={site_tracker_settings:[settings],slot_calls:[{id:'normal-call',slot_name:'Regular Call',username:'Viewer'}],roulo_call_matches:[],site_tracker_entries:[],slot_call_results:[]};
 const db={from(table){let single=false;const q={select(){return q},eq(){return q},is(){return q},order(){return q},in(){return q},maybeSingle(){single=true;return q},then(resolve,reject){return Promise.resolve({data:single?(fixtures[table]?.[0]||null):fixtures[table]||[],error:null}).then(resolve,reject)}};return q},async rpc(name,args){writes.push({name,args});return{data:args.p_hunt,error:null}}};
-const site={'@/lib/site-db':{siteDb:()=>db,requireTrackerAdmin:async()=> 'admin',apiError:e=>Response.json({error:e.message},{status:400})}};
+const site={'@/lib/discord-slot-board':{scheduleSlotBoard:()=>{}},'@/lib/site-db':{siteDb:()=>db,requireTrackerAdmin:async()=> 'admin',apiError:e=>Response.json({error:e.message},{status:400})}};
 (async()=>{
  const track=load('app/api/site-tracker/route.ts',{...site,'@/lib/site-tracker':{trackerHunts:async id=>!id||id==='regular'?[regular]:[]},'@/lib/review-selection':{reviewNativeSelection:async()=>''}});
  const list=await(await track.GET(new Request('http://local/api/site-tracker'))).json();assert.equal(list.activeHuntId,'regular');assert.equal(list.hunts.length,1);assert.equal(list.hunts[0].id,'regular');
