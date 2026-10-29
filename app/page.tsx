@@ -124,6 +124,7 @@ const ADMIN_USERS = ["trashguy__", "trashguy", "parz", "parzwz", "gettyyy_"];
 
 type HuntBonusItem = {
   id: string;
+  bonusTier?: string;
   slotName: string;
   provider: string;
   slotImage?: string;
@@ -1651,6 +1652,7 @@ useEffect(() => {
         ? hunt.bonuses.map((bonus: any) => ({
             id: bonus.id,
             slotName: bonus.slotName || "---",
+            bonusTier: bonus.bonusTier || bonus.bonus_tier || "standard",
             provider: bonus.provider || "",
             slotImage: bonus.slotImage || "",
             betSize: Number(bonus.betSize || 0),
@@ -5573,8 +5575,13 @@ return (
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[10px] font-black text-white sm:text-[13px]">
-                          {bonus.slotName}
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                          <div className="min-w-0 truncate text-[10px] font-black text-white sm:text-[13px]">
+                            {bonus.slotName}
+                          </div>
+                          <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wide sm:text-[9px] ${bonus.bonusTier === "super_super" ? "border-amber-300/30 bg-amber-400/10 text-amber-200" : bonus.bonusTier === "super" ? "border-purple-300/30 bg-purple-400/10 text-purple-200" : "border-white/10 bg-white/5 text-white/45"}`}>
+                            {bonus.bonusTier === "super_super" ? "Super Super" : bonus.bonusTier === "super" ? "Super" : "Normal"}
+                          </span>
                         </div>
 
                         <div className="mt-1 flex items-center justify-between gap-2 text-[8px] font-bold sm:text-[10px]">
@@ -8321,10 +8328,10 @@ onClick={() => {
             { id: "giveaway", label: "Giveaways", description: "Chat entries, draws & winners", icon: "🎟" },
             { id: "trashClaw", label: "Trash Claw", description: "On-stream prize reveal", icon: "🎁" },
             { id: "prizePortal", label: "Prize Portal", description: "Claims, rewards & payments", icon: "💳" },
-            { id: "tournament", label: "Tournaments", description: "Brackets, players & results", icon: "🏆" },
-            { id: "snakeDraft", label: "Snake Drafts", description: "Teams & draft order", icon: "↔" },
             { id: "slotWheel", label: "Slot Call Wheel", description: "Viewer calls & live rolls", icon: "🎡" },
             { id: "bonusTracker", label: "Bonus Hunt Tracker", description: "Collect, open & track bonuses", icon: "📋" },
+            { id: "tournament", label: "Tournaments", description: "Brackets, players & results", icon: "🏆" },
+            { id: "snakeDraft", label: "Snake Drafts", description: "Teams & draft order", icon: "↔" },
             {id:"community",label:"Community Hunt",description:"Contributions, calls & bonuses",icon:"👥"},
             {id:"prizes",label:"Prize Settings",description:"Schedule & prize amounts",icon:"$"},
           ].map((tab) => {

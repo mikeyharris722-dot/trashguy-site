@@ -45,6 +45,7 @@ export async function trackerHunts(huntId?: string) {
         .map((e, index) => ({
           id: e.id,
           slotName: e.slot_name,
+          bonusTier: e.bonus_tier || "standard",
           provider: e.provider || "",
           slotImage: e.artwork_url || "",
           betSize: Number(e.bet_size),
