@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { siteFetch } from "@/lib/site-fetch";
 import { productionIsActive, type ProductionEvent } from "@/lib/claw-production";
 
-export default function ClawProductionControls() {
+export default function ClawProductionControls({clip="claw"}:{clip?:"claw"|"halloween"}={}) {
   const [event, setEvent] = useState<ProductionEvent | null>(null);
   const [now, setNow] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -54,7 +54,7 @@ export default function ClawProductionControls() {
       const response = await siteFetch("/api/claw-production", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, requestId: request.current }),
+        body: JSON.stringify({ action, requestId: request.current, clip }),
       });
       const body = await response.json();
       if (!response.ok) throw Error(body.error || "Production could not start.");
@@ -70,10 +70,10 @@ export default function ClawProductionControls() {
   }
 
   return (
-    <div className="giveaway-production-actions" role="group" aria-label="Trash Claw production">
+    <div className="giveaway-production-actions" role="group" aria-label={clip === "halloween" ? "Halloween video playback" : "Trash Claw production"}>
       <button type="button" className="production-launch" disabled={busy || active}
-        onClick={() => void command("play")} title="Play the Trash Claw intro in OBS">
-        {busy ? "SENDING…" : active ? "ON AIR" : "▶ PRODUCTION"}
+        onClick={() => void command("play")} title={clip === "halloween" ? "Play the Halloween dance in OBS" : "Play the Trash Claw intro in OBS"}>
+        {busy ? "SENDING…" : active ? "ON AIR" : clip === "halloween" ? "▶ HALLOWEEN DANCE" : "▶ PRODUCTION"}
       </button>
       {active && <button type="button" className="production-stop" disabled={busy}
         onClick={() => void command("stop")}>Stop</button>}

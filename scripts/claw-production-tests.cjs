@@ -19,7 +19,7 @@ function compile(file,imports,extra={}){
  assert.throws(()=>playback.validProductionRequest('bad'));
  const files=new Map();
  const promises={readFile:async p=>{if(!files.has(p))throw Object.assign(Error('missing'),{code:'ENOENT'});return files.get(p)},mkdir:async()=>{},writeFile:async(p,v)=>files.set(p,v),rename:async(a,b)=>{files.set(b,files.get(a));files.delete(a)}};
- const server=compile('lib/claw-production-server.ts',{'server-only':{},'node:fs':{promises},'node:path':require('node:path').posix,'./community-store':{localCommunity:()=>true},'./site-db':{siteDb:()=>{throw Error('Must never access a live database')}},'./claw-production':playback,'node:crypto':require('node:crypto'),'./twitch-points-security':{SCOTLAND_MS:68105}});
+ const server=compile('lib/claw-production-server.ts',{'server-only':{},'node:fs':{promises},'node:path':require('node:path').posix,'./community-store':{localCommunity:()=>true},'./site-db':{siteDb:()=>{throw Error('Must never access a live database')}},'./claw-production':{...playback,HALLOWEEN_READY:false},'node:crypto':require('node:crypto'),'./twitch-points-security':{SCOTLAND_MS:68105}});
  const event=await server.productionCommand('admin','play',id);
  assert.equal(event.durationMs,10000);
  assert.equal((await server.productionState()).id,id);
@@ -34,6 +34,18 @@ function compile(file,imports,extra={}){
  await server.productionCommand('admin','stop');
  assert.equal(await server.productionState(),null);
  await assert.rejects(server.productionCommand('admin','invalid'),/Choose play or stop/);
+ await assert.rejects(server.productionCommand('admin','play',id,'halloween'),/still being prepared/);
+ const halloweenPlayback={...playback,HALLOWEEN_READY:true};
+ const halloween=compile('lib/claw-production-server.ts',{'server-only':{},'node:fs':{promises},'node:path':require('node:path').posix,'./community-store':{localCommunity:()=>true},'./site-db':{siteDb:()=>{throw Error('Must never access a live database')}},'./claw-production':halloweenPlayback,'node:crypto':require('node:crypto'),'./twitch-points-security':{SCOTLAND_MS:68105}});
+ const dance=await halloween.productionCommand('admin','play',id,'halloween');
+ assert.equal(dance.clip,'halloween');assert.equal(dance.durationMs,30000);assert.equal(playback.productionMovie(dance),playback.HALLOWEEN_MOVIE);
+ assert.equal((await halloween.productionCommand('admin','play',id,'halloween')).startedAt,dance.startedAt);
+ await assert.rejects(halloween.productionCommand('admin','play',id,'claw'),/another clip/);
+ await assert.rejects(halloween.productionCommand('other','play',id,'halloween'),/another admin/);
+ await assert.rejects(halloween.productionCommand('admin','play',next),/playing/);
+ await halloween.productionCommand('admin','stop');assert.equal(await halloween.productionState(),null);
+ await halloween.queueLocalScotland(1);await assert.rejects(halloween.productionCommand('admin','play',next,'halloween'),/queued/);await halloween.productionCommand('admin','stop');
+ console.log('PASS Halloween unavailable until media ready, correct asset/duration, safe retry/ownership, clip isolation, shared overlap/queue guard and stop.');
  const guard=compile('lib/api-access.ts',{});
  assert.equal(guard.requiresAdmin('/api/claw-production','POST'),true);
  assert.equal(guard.requiresAdmin('/api/claw-production','GET'),false);
@@ -41,5 +53,6 @@ function compile(file,imports,extra={}){
  assert.match(source,/actions=\{activeAdminTab === "giveaway" \? <ClawProductionControls/);
  assert.doesNotMatch(source,/activeAdminTab === "trashClaw" && <ClawProductionControls/);
  assert.ok(fs.existsSync('public'+playback.CLAW_PRODUCTION_MOVIE));
+ if(playback.HALLOWEEN_READY)assert.ok(fs.existsSync('public'+playback.HALLOWEEN_MOVIE));
  console.log('PASS local-only trigger, duplicate/overlap protection, expiry, replay, stop, admin POST/public OBS GET, and giveaway-only placement');
 })().catch(e=>{console.error(e);process.exitCode=1});

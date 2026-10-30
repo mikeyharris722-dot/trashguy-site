@@ -4,7 +4,7 @@ import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {localCommunity} from './community-store';
 import {siteDb} from './site-db';
-import {CLAW_PRODUCTION_MS,productionIsActive,validProductionRequest,type ProductionEvent} from './claw-production';
+import {CLAW_PRODUCTION_MS,HALLOWEEN_MS,HALLOWEEN_READY,productionIsActive,validProductionRequest,type ProductionEvent} from './claw-production';
 import {SCOTLAND_MS} from './twitch-points-security';
 
 type Queued={id:string;queuedAt:string;volume:number};
@@ -21,9 +21,10 @@ export async function productionState(advance=false):Promise<ProductionEvent|nul
  if(advance&&data?.queue?.length&&(!event||Date.parse(event.startedAt)+event.durationMs<=Date.now())){const next=await siteDb().rpc('twitch_points_next');if(next.error)throw Error('Production queue is temporarily unavailable.');if(next.data)return next.data as ProductionEvent;}
  return event;
 }
-export async function productionCommand(actor:string,action:string,requestId?:unknown):Promise<ProductionEvent|null>{if(!['play','stop'].includes(action))throw Error('Choose play or stop.');const request=action==='play'?validProductionRequest(requestId):null;
- if(!localCommunity()){const {data,error}=await siteDb().rpc('claw_production_command',{p_actor:actor,p_action:action,p_request:request});if(error)throw Error(error.code==='PGRST202'?'Production overlay database setup is not ready.':error.message);return data as ProductionEvent|null;}
- return localChange(state=>{if(action==='play'&&state.event?.id===request){if(state.actor!==actor)throw Error('Production request belongs to another admin.');return state.event;}
+export async function productionCommand(actor:string,action:string,requestId?:unknown,clip:'claw'|'halloween'='claw'):Promise<ProductionEvent|null>{if(!['play','stop'].includes(action))throw Error('Choose play or stop.');const request=action==='play'?validProductionRequest(requestId):null;
+ if(action==='play'&&clip==='halloween'&&!HALLOWEEN_READY)throw Error('The Halloween video is still being prepared.');
+ if(!localCommunity()){const {data,error}=await siteDb().rpc(action==='play'&&clip==='halloween'?'claw_production_halloween':'claw_production_command',action==='play'&&clip==='halloween'?{p_actor:actor,p_request:request}:{p_actor:actor,p_action:action,p_request:request});if(error)throw Error(error.code==='PGRST202'?'Production overlay database setup is not ready.':error.message);return data as ProductionEvent|null;}
+ return localChange(state=>{if(action==='play'&&state.event?.id===request){if(state.actor!==actor)throw Error('Production request belongs to another admin.');if((state.event.clip||'claw')!==clip)throw Error('Production request belongs to another clip.');return state.event;}
  if(action==='play'&&(productionIsActive(state.event)||(state.event&&Date.parse(state.event.startedAt)>Date.now())||(state.queue||[]).length))throw Error('Production is playing or a channel-point clip is queued. Stop playback to clear the queue.');
- const event=action==='play'?{id:request!,startedAt:new Date().toISOString(),durationMs:CLAW_PRODUCTION_MS,clip:'claw' as const,volume:0.7}:null;state.event=event;state.actor=actor;if(action==='stop')state.queue=[];return event;});
+ const event=action==='play'?{id:request!,startedAt:new Date().toISOString(),durationMs:clip==='halloween'?HALLOWEEN_MS:CLAW_PRODUCTION_MS,clip,volume:clip==='halloween'?0.85:0.7}:null;state.event=event;state.actor=actor;if(action==='stop')state.queue=[];return event;});
 }

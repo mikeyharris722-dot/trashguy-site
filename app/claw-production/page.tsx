@@ -3,7 +3,7 @@ import { startPolling } from "@/lib/polling";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { CLAW_PRODUCTION_MS, CLAW_PRODUCTION_MOVIE, SCOTLAND_MS, productionMovie, productionAge, productionIsActive, type ProductionEvent } from "@/lib/claw-production";
+import { CLAW_PRODUCTION_MS, CLAW_PRODUCTION_MOVIE, HALLOWEEN_MS, HALLOWEEN_READY, SCOTLAND_MS, productionMovie, productionAge, productionIsActive, type ProductionEvent } from "@/lib/claw-production";
 import "./production.css";
 
 const subscribe = () => () => {};
@@ -138,6 +138,7 @@ export default function ClawProductionOverlay() {
       <p>Only this tab plays. This does not trigger OBS or change a giveaway.</p>
       <button disabled={active} onClick={() => void start({ id: crypto.randomUUID(), startedAt: new Date().toISOString(), durationMs: CLAW_PRODUCTION_MS }, 0)}>▶ Play preview with sound</button>
       <button disabled={active} onClick={() => void start({ id: crypto.randomUUID(), startedAt: new Date().toISOString(), durationMs: SCOTLAND_MS, clip: 'scotland', volume: 1 }, 0)}>▶ Play Scotland with sound</button>
+      {HALLOWEEN_READY && <button disabled={active} onClick={() => void start({ id: crypto.randomUUID(), startedAt: new Date().toISOString(), durationMs: HALLOWEEN_MS, clip: 'halloween', volume: 0.85 }, 0)}>▶ Play Halloween with sound</button>}
       <button onClick={finish}>Stop / return to transparent</button>
       {muted && <button onClick={() => {
         const element = video.current;
