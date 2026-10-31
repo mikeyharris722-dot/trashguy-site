@@ -2,6 +2,7 @@ import {defaultWeeklyWager,validateWeeklyWager,type WeeklyWagerSettings} from ".
 import {defaultBossTargets,type BossTarget} from "./trash-bosses";
 import { leaderboardPeriod } from "./leaderboard-period";
 export type PrizeSettings = {
+  navigation?: {tournaments:boolean;community:boolean};
   trashClaw?: {prizes:string[];cashEntries:number[]};
   leaderboard: number[];
   weeklyWager?: WeeklyWagerSettings;
@@ -14,6 +15,7 @@ export type PrizeSettings = {
   leaderboardEnd: string;
 };
 export const defaultPrizeSettings: PrizeSettings = {
+  navigation: {tournaments:true,community:true},
   leaderboard: [525, 425, 325, 250, 175, 125, 100, 75, 0, 0],
   leaderboardArchives: [{start:"2026-09-05",end:"2026-10-05",prizes:[400,350,300,200,150,100,0,0,0,0]}],
   weeklyWager:defaultWeeklyWager,
@@ -28,6 +30,8 @@ export function validatePrizeSettings(value: unknown): PrizeSettings {
   if (!value || typeof value !== "object")
     throw Error("Enter valid prize settings.");
   const input = value as Partial<PrizeSettings>;
+  const navigation=input.navigation??defaultPrizeSettings.navigation!;
+  if(!navigation||typeof navigation.tournaments!=="boolean"||typeof navigation.community!=="boolean")throw Error("Public menu visibility must be on or off.");
   function amount(value: unknown) {
     if (
       typeof value !== "number" ||
@@ -66,6 +70,7 @@ export function validatePrizeSettings(value: unknown): PrizeSettings {
   const claw=input.trashClaw;
   if(claw&&(!Array.isArray(claw.prizes)||claw.prizes.length!==10||claw.prizes.some(p=>typeof p!=='string'||p.length>60)||!Array.isArray(claw.cashEntries)||claw.cashEntries.length<2||claw.cashEntries.length>100||claw.cashEntries.some(n=>typeof n!=='number'||!Number.isFinite(n)||n<=0||n>1000000||Math.abs(n*100-Math.round(n*100))>0.00001)))throw Error('Enter 10 prize names and 2–100 positive wheel amounts with up to two decimal places.');
   return {
+    navigation:{tournaments:navigation.tournaments,community:navigation.community},
     ...(claw?{trashClaw:{prizes:claw.prizes.map(p=>p.trim()),cashEntries:claw.cashEntries}}:{}),
     weeklyWager:validateWeeklyWager(input.weeklyWager??defaultWeeklyWager),
     leaderboardArchives:checkedArchives,

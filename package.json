@@ -11,7 +11,8 @@
     "test:community": "node scripts/community-tests.cjs",
     "test:community:production": "node scripts/community-production-tests.cjs",
     "test:review": "node scripts/site-review-tests.cjs",
-    "review:demo": "node scripts/seed-review-demo.cjs"
+    "review:demo": "node scripts/seed-review-demo.cjs",
+    "test:poker": "node scripts/poker-tests.cjs && node scripts/poker-api-tests.cjs"
   },
   "dependencies": {
     "@retconned/kick-js": "^0.5.4",

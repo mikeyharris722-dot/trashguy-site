@@ -6,6 +6,9 @@ type Props = {
   activeSection: string;
   setActiveSection: (section: string) => void;
   adminAllowed: boolean;
+  pokerEnabled?: boolean;
+  tournamentsEnabled?: boolean;
+  communityHuntsEnabled?: boolean;
   trashBossesEnabled?: boolean;
   weeklyWagerEnabled?: boolean;
   bossAdminPreview?: boolean;
@@ -47,6 +50,7 @@ const navigation = [
   {
     id: "tournaments",label:"Tournaments",icon:"🏅",detail:"Brackets, teams and match results",
   },
+  {id:"poker",label:"Poker Night",icon:"♠",detail:"Community poker, sign-ups and live tables"},
   {id:"slotpicker",label:"Slot picker",icon:"🎰",detail:"Browse the RouloBets collection"},
   {id:"weeklywager",label:"Weekly Trash Cashback",icon:"♻",detail:"Your weekly weighted wager unlocks rewards"},
   {id:"trashbosses",label:"Slot Call Rewards",icon:"👹",detail:"Your slot-call winnings unlock three monsters"},
@@ -88,7 +92,7 @@ export default function SiteHeader(props: Props) {
     props.setActiveSection(id);
     if (details.current) details.current.open = false;
   };
-  const visibleNavigation=navigation.filter(item=>(item.id!=="trashbosses"||props.bossAdminPreview===true||props.trashBossesEnabled===true)&&(item.id!=="weeklywager"||props.bossAdminPreview===true||props.weeklyWagerEnabled===true));
+  const visibleNavigation=navigation.filter(item=>(item.id!=="poker"||props.pokerEnabled===true)&&(item.id!=="tournaments"||props.tournamentsEnabled===true)&&(item.id!=="community"||props.communityHuntsEnabled===true)&&(item.id!=="trashbosses"||props.bossAdminPreview===true||props.trashBossesEnabled===true)&&(item.id!=="weeklywager"||props.bossAdminPreview===true||props.weeklyWagerEnabled===true));
   const items = props.adminAllowed
     ? [
         ...visibleNavigation,

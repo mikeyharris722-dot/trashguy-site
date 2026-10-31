@@ -1,0 +1,532 @@
+.root {
+  width: 100%;
+  min-width: 0;
+  color: #eee7f7;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.header,
+.eventHeading,
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.header {
+  padding: 18px 20px;
+  border: 1px solid #b783e43d;
+  border-radius: 14px;
+  background:
+    radial-gradient(ellipse at top right, #772e953b, transparent 70%), #09060eea;
+}
+.header h2 {
+  font-size: 22px;
+  font-weight: 900;
+  margin: 3px 0;
+}
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #c8a8e3;
+  font-weight: 800;
+}
+.header p,
+.panel p {
+  color: #b4a8c2;
+  font-size: 12px;
+  margin: 5px 0;
+}
+.eventHeading {
+  margin: 18px 0 12px;
+}
+.eventHeading h3 {
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+.status {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #ddc0fa;
+  border: 1px solid #b878f04d;
+  border-radius: 20px;
+  padding: 3px 9px;
+}
+.panel {
+  padding: 16px;
+  margin: 12px 0;
+  border: 1px solid #b783e430;
+  border-radius: 12px;
+  background: #08060ded;
+  min-width: 0;
+}
+.panel h3 {
+  font-size: 14px;
+  font-weight: 800;
+  margin: 0 0 12px;
+}
+.panel h4 {
+  font-size: 12px;
+  margin: 12px 0;
+  font-weight: 700;
+}
+.button,
+.danger {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  border: 1px solid #c28bf557;
+  background: #8e35cf36;
+  color: #efdcff;
+  white-space: nowrap;
+}
+.button:hover {
+  background: #9f4bda66;
+}
+.danger {
+  border-color: #f4779950;
+  background: #85233c29;
+  color: #f5a9bc;
+}
+.button:disabled,
+.danger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.button:focus-visible,
+.danger:focus-visible,
+.root input:focus-visible,
+.root select:focus-visible {
+  outline: 2px solid #d6a3ff;
+  outline-offset: 3px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.stats > div {
+  background: #100919e8;
+  border: 1px solid #b783e429;
+  border-radius: 10px;
+  padding: 11px 14px;
+}
+.stats small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #a494b4;
+  font-weight: 700;
+}
+.stats strong {
+  font-size: 16px;
+  font-weight: 800;
+}
+.tableHeader {
+  margin-bottom: 15px;
+}
+.tableHeader h3 {
+  margin: 0;
+}
+.tableHeader label {
+  font-size: 11px;
+  color: #b4a8c2;
+}
+.root input,
+.root select {
+  background: #0c0813;
+  color: #efe5fc;
+  border: 1px solid #b783e43f;
+  border-radius: 7px;
+  padding: 8px 10px;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 12px;
+}
+.tableHeader select {
+  margin-left: 8px;
+}
+.felt {
+  position: relative;
+  overflow: hidden;
+  border: 5px solid #513465;
+  border-radius: 45px;
+  background: radial-gradient(ellipse at center, #492963, #231432 70%);
+  box-shadow:
+    inset 0 0 60px #0008,
+    0 6px 24px #0007;
+  padding: 30px 18px 20px;
+}
+.tableBrand {
+  text-align: center;
+  font-weight: 900;
+  letter-spacing: 5px;
+  color: #c99fe82e;
+  font-size: 22px;
+}
+.tableBrand span {
+  font-size: 9px;
+  display: block;
+  letter-spacing: 4px;
+}
+.board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 22px 0;
+}
+.cards {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.card {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 44px;
+  height: 62px;
+  border-radius: 6px;
+  background: #f8f4ed;
+  color: #181120;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  border: 1px solid #ffffff80;
+  box-shadow: 0 3px 8px #0006;
+}
+.card:empty {
+  background: #100a1970;
+  border: 1px dashed #cbb4e235;
+  box-shadow: none;
+}
+.card small {
+  font-size: 21px;
+  margin-top: 3px;
+}
+.red {
+  color: #bb2844;
+}
+.back {
+  background: repeating-linear-gradient(45deg, #331d4c 0 3px, #4d2b70 3px 5px);
+  color: #bc8de8;
+  font-size: 25px;
+  border: 1px solid #ba82ec7a;
+}
+.board > strong {
+  font-size: 17px;
+  color: #f2d4a0;
+}
+.board > small {
+  color: #b8a2c8;
+  font-size: 11px;
+}
+.seats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 840px;
+  margin: auto;
+}
+.seat {
+  background: #0a0613b8;
+  border: 1px solid #b783e445;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  min-width: 0;
+}
+.seatTitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.seatTitle > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.seatTitle b {
+  border-radius: 50%;
+  background: #eee4f6;
+  color: #29173d;
+  font-size: 9px;
+  width: 16px;
+  flex-shrink: 0;
+}
+.seat > strong {
+  display: block;
+  color: #dfc38e;
+  font-size: 13px;
+  margin: 3px 0;
+}
+.seat strong small {
+  font-size: 9px;
+  color: #b3a4be;
+  font-weight: 400;
+}
+.seat > small {
+  display: block;
+  min-height: 16px;
+  font-size: 10px;
+  color: #c9afd9;
+}
+.active {
+  border-color: #d4a4fc;
+  box-shadow: 0 0 18px #a55adc50;
+  background: #4a245470;
+}
+.folded {
+  opacity: 0.45;
+}
+.hole {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  margin: 7px 0;
+}
+.hole .card {
+  width: 26px;
+  height: 36px;
+  font-size: 14px;
+  border-radius: 4px;
+}
+.hole .card small {
+  font-size: 12px;
+}
+.result {
+  padding: 14px;
+  background: #a16c2530;
+  border: 1px solid #d3b16d42;
+  border-radius: 8px;
+  margin-top: 14px;
+  text-align: center;
+  color: #efcf9b;
+}
+.result p {
+  color: inherit;
+}
+.result small {
+  font-size: 10px;
+  color: #baa784;
+}
+.actions {
+  border: 1px solid #b783e477;
+  background: #3d1d5147;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 14px;
+}
+.actions > strong {
+  font-size: 12px;
+  color: #e6b4ff;
+}
+.actionButtons,
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+.actionButtons label {
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.actionButtons input {
+  width: 100px;
+}
+.note {
+  text-align: center;
+  margin-top: 12px !important;
+  font-size: 11px !important;
+}
+.lowerGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.playerList {
+  max-height: 340px;
+  overflow: auto;
+}
+.playerList > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #ffffff0c;
+  font-size: 12px;
+}
+.playerList > div > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.playerList strong {
+  color: #dbc391;
+  font-size: 12px;
+}
+.playerList button {
+  font-size: 10px;
+  padding: 4px 7px;
+}
+.log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #b9a9c9;
+  font-size: 11px;
+}
+.log li {
+  padding: 5px 0;
+  border-bottom: 1px solid #ffffff09;
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  color: #c4b1d3;
+}
+.field input,
+.field select {
+  width: 100%;
+}
+.error {
+  padding: 12px;
+  background: #46162c;
+  border: 1px solid #e0679760;
+  border-radius: 9px;
+  color: #ffc0d3;
+  margin: 12px 0;
+  font-size: 12px;
+}
+@media (max-width: 640px) {
+  .header {
+    padding: 14px;
+  }
+  .header h2 {
+    font-size: 19px;
+  }
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stats > div {
+    padding: 9px 12px;
+  }
+  .lowerGrid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .formGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .panel {
+    padding: 12px;
+  }
+  .felt {
+    padding: 20px 8px 14px;
+    border-width: 3px;
+    border-radius: 25px;
+  }
+  .seats {
+    gap: 6px;
+  }
+  .seat {
+    padding: 7px 3px;
+  }
+  .seatTitle {
+    font-size: 9px;
+  }
+  .seat > strong {
+    font-size: 11px;
+  }
+  .seat > small {
+    font-size: 9px;
+  }
+  .tableBrand {
+    font-size: 17px;
+  }
+  .card {
+    width: 36px;
+    height: 51px;
+    font-size: 20px;
+  }
+  .board {
+    margin: 18px 0;
+  }
+  .hole .card {
+    width: 23px;
+    height: 32px;
+    font-size: 12px;
+  }
+  .tableHeader select {
+    max-width: 180px;
+  }
+  .actionButtons {
+    gap: 6px;
+  }
+  .button,
+  .danger {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+}
+
+/* Desktop seats surround the board; phones use the compact card grid above. */
+@media (min-width: 641px) {
+  .felt {
+    height: 480px;
+    border-radius: 160px;
+    padding: 0;
+  }
+  .tableBrand {
+    position: absolute;
+    left: 50%;
+    top: 28%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+  }
+  .board {
+    position: absolute;
+    left: 50%;
+    top: 51%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    width: 265px;
+    z-index: 1;
+  }
+  .seats {
+    position: absolute;
+    inset: 0;
+    display: block;
+    max-width: none;
+    margin: 0;
+  }
+  .seat {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 118px;
+    padding: 8px;
+  }
+}

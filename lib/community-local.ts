@@ -198,18 +198,24 @@ export async function communityCommand(
         const action = String(b.action);
         let h = s.hunts.find((h) => h.id === b.huntId && !h.deleted);
         const memberId = h ? communityMemberId(h,actor) : actor.id;
-        const games:CommunityGame[]=h?.catalogue==='roulobets'?(await rouloGames()).filter(g=>g.enabled!==false):await localCatalogue();
+        const games:CommunityGame[]=action==='navigationVisibility'?[]:h?.catalogue==='roulobets'?(await rouloGames()).filter(g=>g.enabled!==false):await localCatalogue();
         let result = "";
         const staff = () => {
           if (!admin) throw Error("AUTH: Admin access required.");
         };
-        if (action === "prizeSettings") {
+        if(action === "navigationVisibility") {
+          staff();
+          if(!["tournaments","community"].includes(String(b.section))||typeof b.enabled!=="boolean")throw Error("Choose valid public menu visibility.");
+          const previous=s.prizeSettings||defaultPrizeSettings;
+          s.prizeSettings={...previous,navigation:{...defaultPrizeSettings.navigation!,...previous.navigation,[String(b.section)]:b.enabled}};
+        } else if (action === "prizeSettings") {
           staff();
           const previous=s.prizeSettings||defaultPrizeSettings,next=validatePrizeSettings(b.settings);
           next.leaderboardArchives=[...(previous.leaderboardArchives||defaultPrizeSettings.leaderboardArchives||[]).filter(p=>!next.leaderboardArchives?.some(n=>n.start===p.start)),...(next.leaderboardArchives||[])];
           if(previous.leaderboardStart!==next.leaderboardStart||previous.leaderboardEnd!==next.leaderboardEnd){
             next.leaderboardArchives=[...(next.leaderboardArchives||[]).filter(p=>p.start!==previous.leaderboardStart),{start:previous.leaderboardStart,end:previous.leaderboardEnd,prizes:[...previous.leaderboard]}];
           }
+          next.navigation=previous.navigation??defaultPrizeSettings.navigation;
           s.prizeSettings = next;
         } else if (action === "clearSelection") {
           staff();

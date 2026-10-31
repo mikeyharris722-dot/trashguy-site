@@ -8,10 +8,12 @@ export async function proxy(request: NextRequest) {
       process.env.COMMUNITY_HUNT_LOCAL === "1" &&
       process.env.NODE_ENV !== "production";
     const localWrite =
+      (path === "/api/poker" && process.env.POKER_LOCAL === "1" && process.env.NODE_ENV !== "production") ||
       path === "/api/kick/logout" ||
       (localCommunity &&
         [
           "/api/prize-settings",
+          "/api/admin/navigation-visibility",
           "/api/admin/twitch-points",
           "/api/claw-production",
           "/api/trash-bosses/claim",

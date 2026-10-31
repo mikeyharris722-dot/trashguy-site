@@ -9,6 +9,7 @@ import { startPolling } from "@/lib/polling";
 import React, { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import SiteHeader from "@/components/site-header";
+import PublicSectionVisibility from "@/components/public-section-visibility";
 import UserBadges, {UserBadgeProvider} from "@/components/user-badges";
 import TrashBosses from "@/components/trash-bosses";
 import CommunityStats from "@/components/community-stats";
@@ -36,6 +37,8 @@ import WheelEntry, {type WheelCall} from "@/components/wheel-entry";
 import type {SlotOption} from "@/components/slot-search";
 import TrackerResults from "@/components/tracker-results";
 import CommunityHunt from "@/components/community-hunt";
+import dynamic from "next/dynamic";
+import "@/components/poker-night.module.css";
 import HuntPredictionSelector from "@/components/hunt-prediction-selector";
 import Leaderboard from "@/components/leaderboard";
 import PredictionList from "@/components/prediction-list";
@@ -45,6 +48,8 @@ import { defaultPrizeSettings, type PrizeSettings } from "@/lib/prize-settings";
 import TrackerAdmin from "@/components/tracker-admin";
 import { slotData as originalSlotData, providerLogos, type SlotItem } from "./slotData";
 import { Russo_One } from "next/font/google";
+
+const PokerNight = dynamic(() => import("@/components/poker-night"));
 
 const russo = Russo_One({
   subsets: ["latin"],
@@ -946,13 +951,14 @@ const Winner = async (id: string) => {
 
 const [prizeSettings, setPrizeSettings] = useState<PrizeSettings>(defaultPrizeSettings);
 const [prizeSettingsLoaded,setPrizeSettingsLoaded]=useState(false);
+const [pokerEnabled,setPokerEnabled]=useState(false);
 const [bossAccess,setBossAccess]=useState({loaded:false,admin:false,enabled:false,weeklyEnabled:false,viewer:""});
 const hideTrashBosses=useCallback(()=>{setBossAccess(old=>({...old,loaded:true,admin:false,enabled:false}));setPrizeSettings(old=>({...old,trashBossesEnabled:false}));},[]);
 useEffect(()=>{let stopped=false;const controller=new AbortController();async function refreshAccess(){try{const r=await siteFetch('/api/trash-bosses/access',{signal:controller.signal,cache:'no-store'});if(!r.ok)throw Error('Could not check availability');const data=await r.json();if(!stopped)setBossAccess({loaded:true,admin:data.admin===true,enabled:data.enabled===true,weeklyEnabled:data.weeklyEnabled===true,viewer:viewerName});}catch{if(!stopped)setBossAccess({loaded:true,admin:false,enabled:false,weeklyEnabled:false,viewer:viewerName});}}const timer=startPolling(refreshAccess,15000);return()=>{stopped=true;controller.abort();timer();};},[authLoaded,isTwitchConnected,viewerName,prizeSettings.trashBossesEnabled,prizeSettings.weeklyWager?.enabled]);
 const [prizeSettingsError, setPrizeSettingsError] = useState("");
 useEffect(()=>{
  let stopped=false;const controller=new AbortController();
- async function refreshSettings(){try{const r=await siteFetch('/api/prize-settings',{cache:'no-store',signal:controller.signal});const data=await r.json();if(!r.ok)throw Error(data.error||'Could not load settings');if(!stopped){setPrizeSettings(data.settings);setPrizeSettingsLoaded(true);setPrizeSettingsError('');}}catch{if(!stopped){setPrizeSettingsLoaded(true);setPrizeSettingsError('Could not load the saved prize settings. Refresh before editing amounts.');}}}
+ async function refreshSettings(){try{const r=await siteFetch('/api/prize-settings',{cache:'no-store',signal:controller.signal});const data=await r.json();if(!r.ok)throw Error(data.error||'Could not load settings');if(!stopped){setPrizeSettings(data.settings);setPokerEnabled(data.pokerEnabled===true);setPrizeSettingsLoaded(true);setPrizeSettingsError('');}}catch{if(!stopped){setPrizeSettingsLoaded(true);setPrizeSettingsError('Could not load the saved prize settings. Refresh before editing amounts.');}}}
  const timer=startPolling(refreshSettings,30000);return()=>{stopped=true;controller.abort();timer();};
 },[]);
 
@@ -1019,7 +1025,7 @@ const [manualRewardAmount, setManualRewardAmount] = useState("");
 const [manualRewardType, setManualRewardType] = useState("discord_giveaway");
 
 const [activeAdminTab, setActiveAdminTab] = useState<
-  "giveaway" | "trashClaw" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel" | "bonusTracker" | "community" | "prizes"
+  "giveaway" | "trashClaw" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel" | "bonusTracker" | "community" | "prizes" | "poker"
 >(() => {
   if (typeof window === "undefined") return "giveaway";
 
@@ -1032,7 +1038,7 @@ const [activeAdminTab, setActiveAdminTab] = useState<
     saved === "tournament" ||
     saved === "snakeDraft" ||
     saved === "slotWheel" ||
-    saved === "bonusTracker" || saved === "community" || saved === "prizes"
+    saved === "bonusTracker" || saved === "community" || saved === "prizes" || saved === "poker"
   ) {
     return saved;
   }
@@ -3948,6 +3954,9 @@ return (
   activeSection={activeSection}
   setActiveSection={setActiveSection}
   adminAllowed={adminAllowed}
+  pokerEnabled={pokerEnabled}
+  tournamentsEnabled={prizeSettingsLoaded&&!prizeSettingsError&&prizeSettings.navigation?.tournaments!==false}
+  communityHuntsEnabled={prizeSettingsLoaded&&!prizeSettingsError&&prizeSettings.navigation?.community!==false}
   weeklyWagerEnabled={bossAccess.loaded&&bossAccess.weeklyEnabled}
   trashBossesEnabled={bossAccess.loaded&&bossAccess.enabled}
   bossAdminPreview={canPreviewTrashBosses}
@@ -5614,9 +5623,11 @@ return (
   </section>
 )}
 
-<Activity mode={activeSection === "community" ? "visible" : "hidden"}><CommunityHunt key={viewerPlatform+":"+viewerName}/></Activity>
+{((activeSection === "community" && prizeSettings.navigation?.community===false)||(activeSection === "tournaments" && prizeSettings.navigation?.tournaments===false)) && <section className="rounded-xl border border-purple-300/15 bg-black/80 p-4 text-sm text-white/60">This section isn’t open at the moment.</section>}
+{activeSection === "poker" && <PokerNight key={viewerPlatform+":"+viewerName}/>}
+<Activity mode={activeSection === "community" && prizeSettings.navigation?.community!==false ? "visible" : "hidden"}><CommunityHunt key={viewerPlatform+":"+viewerName}/></Activity>
 
-{activeSection === "tournaments" && (
+{activeSection === "tournaments" && prizeSettings.navigation?.tournaments!==false && (
   <section className="space-y-3 sm:space-y-4">
     {/* =========================================================
         TITLE
@@ -8331,6 +8342,7 @@ onClick={() => {
             { id: "slotWheel", label: "Slot Call Wheel", description: "Viewer calls & live rolls", icon: "🎡" },
             { id: "bonusTracker", label: "Bonus Hunt Tracker", description: "Collect, open & track bonuses", icon: "📋" },
             { id: "tournament", label: "Tournaments", description: "Brackets, players & results", icon: "🏆" },
+            { id: "poker", label: "Poker Night", description: "Sign-ups, tables & live play", icon: "♠" },
             { id: "snakeDraft", label: "Snake Drafts", description: "Teams & draft order", icon: "↔" },
             {id:"community",label:"Community Hunt",description:"Contributions, calls & bonuses",icon:"👥"},
             {id:"prizes",label:"Prize Settings",description:"Schedule & prize amounts",icon:"$"},
@@ -8353,7 +8365,7 @@ onClick={() => {
                       | "tournament"
                       | "snakeDraft"
                       | "slotWheel"
-                      | "bonusTracker" | "community" | "prizes"
+                      | "bonusTracker" | "community" | "prizes" | "poker"
                   )
                 }
                 className={`min-w-0 whitespace-normal break-words rounded-xl border px-3 py-3 text-sm font-bold leading-snug transition ${
@@ -8363,7 +8375,7 @@ onClick={() => {
                 }`}
               >
                 <span aria-hidden="true" className="workspace-icon">{tab.icon}</span>
-                <span className="workspace-label"><span className="workspace-desktop-label">{tab.label}</span><span className="workspace-mobile-label">{{giveaway:"Giveaways",trashClaw:"Claw",prizePortal:"Prizes",tournament:"Tournaments",snakeDraft:"Drafts",slotWheel:"Call Wheel",bonusTracker:"Tracker",community:"Community",prizes:"Settings"}[tab.id]}</span></span>
+                <span className="workspace-label"><span className="workspace-desktop-label">{tab.label}</span><span className="workspace-mobile-label">{{giveaway:"Giveaways",trashClaw:"Claw",prizePortal:"Prizes",tournament:"Tournaments",snakeDraft:"Drafts",slotWheel:"Call Wheel",bonusTracker:"Tracker",community:"Community",prizes:"Settings",poker:"Poker"}[tab.id]}</span></span>
                 <small>{tab.description}</small>
               </button>
             );
@@ -8373,7 +8385,8 @@ onClick={() => {
 
 <div className="mt-2 grid w-full min-w-0 max-w-full gap-2 overflow-x-hidden sm:mt-3 sm:gap-3">
   {/* GIVEAWAY ADMIN */}
-  <AdminGuidance tab={activeAdminTab} actions={activeAdminTab === "giveaway" ? <ClawProductionControls /> : undefined} />
+  {activeAdminTab === "poker" && <PokerNight admin onVisibilityChange={setPokerEnabled} key={viewerPlatform+":"+viewerName}/>}
+  <AdminGuidance tab={activeAdminTab} actions={activeAdminTab === "giveaway" ? <ClawProductionControls /> : activeAdminTab === "tournament" ? <PublicSectionVisibility section="tournaments" enabled={prizeSettings.navigation?.tournaments!==false} loaded={prizeSettingsLoaded&&!prizeSettingsError} saved={setPrizeSettings}/> : undefined} />
   {activeAdminTab === "prizes" && (prizeSettingsError ? <p className="form-error" role="alert">{prizeSettingsError}</p> : <PrizeSettingsEditor key={JSON.stringify(prizeSettings)} settings={prizeSettings} saved={(settings) => { setPrizeSettings(settings); setSiteNotice("Prize amounts saved locally. The leaderboard total and prediction banner have updated."); }} />)}
   <details
     open={activeAdminTab === "giveaway"}
@@ -9544,6 +9557,7 @@ onClick={() => {
           </div>
         </details>
 
+        {activeAdminTab === "community" && <div className="rounded-xl border border-purple-300/15 bg-black/80 p-3"><PublicSectionVisibility section="community" enabled={prizeSettings.navigation?.community!==false} loaded={prizeSettingsLoaded&&!prizeSettingsError} saved={setPrizeSettings}/></div>}
         <Activity mode={activeAdminTab === "community" ? "visible" : "hidden"}><CommunityHunt admin key={viewerPlatform+":"+viewerName}/></Activity>
         {activeAdminTab === "bonusTracker" && <section className="rounded-xl border border-purple-300/20 bg-black/80 p-4">
           <h2 className="text-xl font-black text-purple-100">Bonus Hunt Tracker</h2>

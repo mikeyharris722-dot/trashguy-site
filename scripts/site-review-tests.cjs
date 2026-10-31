@@ -98,6 +98,16 @@ function factory(env={},mocks={},globals={}){const cache={};function load(name){
  await c.communityCommand(admin,true,{action:'prizeSettings',settings:{...(await c.communityState()).prizeSettings,leaderboard:Array(10).fill(1)},requestId:crypto.randomUUID()});
  archive=(await c.communityState()).prizeSettings.leaderboardArchives;
  assert.deepEqual(Array.from(archive.find(p=>p.start===oldSettings.leaderboardStart).prizes),Array.from(oldSettings.leaderboard));
+ const beforeVisibility=structuredClone(await c.communityState());
+ await assert.rejects(c.communityCommand(player,false,{action:'navigationVisibility',section:'community',enabled:false}),/Admin/);
+ await c.communityCommand(admin,true,{action:'navigationVisibility',section:'community',enabled:false});
+ let visibilityState=await c.communityState();assert.equal(visibilityState.prizeSettings.navigation.community,false);assert.equal(visibilityState.prizeSettings.navigation.tournaments,true);assert.equal(JSON.stringify(visibilityState.hunts),JSON.stringify(beforeVisibility.hunts));
+ await c.communityCommand(admin,true,{action:'navigationVisibility',section:'tournaments',enabled:false});
+ visibilityState=await c.communityState();assert.equal(visibilityState.prizeSettings.navigation.tournaments,false);assert.equal(visibilityState.prizeSettings.navigation.community,false);
+ await c.communityCommand(admin,true,{action:'prizeSettings',settings:{...visibilityState.prizeSettings,navigation:{community:true,tournaments:true}}});
+ assert.equal((await c.communityState()).prizeSettings.navigation.community,false);
+ await c.communityCommand(admin,true,{action:'navigationVisibility',section:'community',enabled:true});assert.equal((await c.communityState()).prizeSettings.navigation.community,true);
+ console.log('PASS independent public menu switches, admin authorization, hunt preservation and visibility protection against stale prize forms');
  console.log('PASS: prize validation/admin guards, prediction updates/locks/prize snapshots, UTC/DST schedules, invalid/past dates, pending contribution edits/cancellation, approved equity lock, mixed failed/collected reorder, closed-call guard, typo search, local write isolation, admin policy and verified viewer identity.');
  const resolved=path.resolve(dir);if(!resolved.startsWith(path.resolve(os.tmpdir())+path.sep)||!path.basename(resolved).startsWith("trash-site-review-"))throw Error("Unsafe temporary cleanup path");fs.rmSync(resolved,{recursive:true});
 })().catch(e=>{console.error(e);process.exitCode=1});

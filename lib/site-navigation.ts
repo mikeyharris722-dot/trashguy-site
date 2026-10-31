@@ -6,6 +6,7 @@ export const sectionTitles: Record<string, string> = {
   hunts: "Bonus Hunts",
   community: "Community Hunts",
   tournaments: "Tournaments",
+  poker: "Poker Night",
   slotpicker: "Slot picker",
   weeklywager: "Weekly Trash Cashback",
   trashbosses: "Slot Call Rewards",
