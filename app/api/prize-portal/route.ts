@@ -1,3 +1,4 @@
+import { VIP_WAGER_REQUIREMENT } from "@/lib/vip";
 import {profileWagerStats} from "@/lib/profile-wagers";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
@@ -12,7 +13,7 @@ const supabase = createClient(
 );
 
 
-const VIP_WAGER_REQUIREMENT = 5000;
+
 
 function normalize(value: unknown) {
   return String(value || "")
@@ -73,7 +74,7 @@ async function getPreviousLeaderboardVip(
   const { data: vipRow, error: vipError } =
     await supabase
       .from("vip_snapshots")
-      .select("id")
+      .select("id, wagered")
       .eq(
         "roulo_username",
         normalize(rouloUsername)
@@ -98,7 +99,7 @@ async function getPreviousLeaderboardVip(
     return false;
   }
 
-  return Boolean(vipRow);
+  return Number(vipRow?.wagered || 0) >= VIP_WAGER_REQUIREMENT;
 }
 
 export async function GET(
@@ -395,7 +396,7 @@ export async function GET(
      *
      * Previous LB VIP
      * OR
-     * current weighted wager >= $5,000
+     * current weighted wager >= $10,000
      */
     const previousLeaderboardVip =
       hasRoulo

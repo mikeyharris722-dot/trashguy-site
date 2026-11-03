@@ -8,7 +8,7 @@ export const sectionTitles: Record<string, string> = {
   tournaments: "Tournaments",
   poker: "Poker Night",
   slotpicker: "Slot picker",
-  weeklywager: "Weekly Trash Cashback",
+  weeklywager: "Monthly Wager Rewards",
   trashbosses: "Slot Call Rewards",
   profile: "Your profile",
   admin: "Admin workspace",

@@ -1,3 +1,7 @@
+import {serverPrizeSettings} from "@/lib/server-prize-settings";
+import {leaderboardPeriods} from "@/lib/leaderboard-data";
+import {requireTrackerAdmin,apiError} from "@/lib/site-db";
+import { VIP_WAGER_REQUIREMENT } from "@/lib/vip";
 import {providerRows} from "@/lib/leaderboard-provider";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
@@ -36,15 +40,19 @@ function getPlayerWagered(player: any) {
   );
 }
 
-export async function POST() {
+export async function POST(request:Request) {
+  try {await requireTrackerAdmin(request);}catch(error){return apiError(error);}
   const key = process.env.ROULO_API_KEY;
 
   if (!key) {
     return NextResponse.json({ ok: false, error: "Missing ROULO_API_KEY" }, { status: 500 });
   }
 
-  const periodStart = "2026-09-05";
-  const periodEnd = "2026-10-05";
+  const settings=await serverPrizeSettings();
+  const previous=leaderboardPeriods(settings).find(p=>p.end<=settings.leaderboardStart);
+  if(!previous)return NextResponse.json({ok:false,error:"No previous leaderboard period is available."},{status:400});
+  const periodStart=previous.start;
+  const periodEnd=previous.end;
 
   let affiliates:Record<string,unknown>[];
   try { affiliates=await providerRows(periodStart,periodEnd,{fresh:true}); }
@@ -57,7 +65,7 @@ export async function POST() {
       roulo_username: getPlayerName(player),
       wagered: getPlayerWagered(player),
     }))
-    .filter((row: any) => row.roulo_username && row.wagered >= 5000);
+    .filter((row: any) => row.roulo_username && row.wagered >= VIP_WAGER_REQUIREMENT);
 
 const { error: snapshotDeleteError } = await supabase
   .from("vip_snapshots")

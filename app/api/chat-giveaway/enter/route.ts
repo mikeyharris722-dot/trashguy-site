@@ -1,3 +1,5 @@
+import {serverPrizeSettings} from "@/lib/server-prize-settings";
+import { VIP_WAGER_REQUIREMENT } from "@/lib/vip";
 import {providerRows} from "@/lib/leaderboard-provider";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
@@ -9,9 +11,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
 
-const CURRENT_LB_START = "2026-10-05";
-const CURRENT_LB_END = "2026-11-05";
-const VIP_WAGER_REQUIREMENT = 5000;
+
+
 
 function normalize(value: unknown) {
   return String(value || "")
@@ -85,7 +86,8 @@ async function getCurrentWeightedWager(
   }
 
   try {
-    const affiliates = await providerRows(CURRENT_LB_START,CURRENT_LB_END,{fresh:true});
+    const settings=await serverPrizeSettings();
+    const affiliates = await providerRows(settings.leaderboardStart,settings.leaderboardEnd,{fresh:true});
 
     const match =
       affiliates.find(
@@ -165,7 +167,7 @@ async function getPreviousLeaderboardVip(
     error: vipSnapshotError,
   } = await supabase
     .from("vip_snapshots")
-    .select("roulo_username")
+    .select("roulo_username, wagered")
     .eq(
       "period_start",
       latestSnapshotPeriod.period_start
@@ -190,7 +192,7 @@ async function getPreviousLeaderboardVip(
     return false;
   }
 
-  return Boolean(vipSnapshotRow);
+  return Number(vipSnapshotRow?.wagered || 0) >= VIP_WAGER_REQUIREMENT;
 }
 
 /* =========================================================
@@ -294,7 +296,7 @@ async function getSavedRouloBoost(
    *
    * OR
    *
-   * 2. They currently have $5,000+
+   * 2. They currently have $10,000+
    *    weighted wager during this leaderboard.
    */
 

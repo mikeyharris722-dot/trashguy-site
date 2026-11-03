@@ -1,0 +1,1 @@
+export const VIP_WAGER_REQUIREMENT = 10_000;

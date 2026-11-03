@@ -52,7 +52,7 @@ const navigation = [
   },
   {id:"poker",label:"Poker Night",icon:"♠",detail:"Community poker, sign-ups and live tables"},
   {id:"slotpicker",label:"Slot picker",icon:"🎰",detail:"Browse the RouloBets collection"},
-  {id:"weeklywager",label:"Weekly Trash Cashback",icon:"♻",detail:"Your weekly weighted wager unlocks rewards"},
+  {id:"weeklywager",label:"Monthly Wager Rewards",icon:"📅",detail:"Your monthly weighted wager unlocks rewards"},
   {id:"trashbosses",label:"Slot Call Rewards",icon:"👹",detail:"Your slot-call winnings unlock three monsters"},
   {
     id: "profile",

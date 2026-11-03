@@ -1,3 +1,4 @@
+import { VIP_WAGER_REQUIREMENT } from "@/lib/vip";
 import {profileWagerStats} from "@/lib/profile-wagers";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
@@ -11,7 +12,7 @@ const supabase = createClient(
 
 
 
-const VIP_WAGER_REQUIREMENT = 5000;
+
 
 function normalize(value: unknown) {
   return String(value || "")
@@ -109,7 +110,7 @@ async function isPreviousLeaderboardVip(
     return false;
   }
 
-  return Boolean(vipSnapshot);
+  return Number(vipSnapshot?.wagered || 0) >= VIP_WAGER_REQUIREMENT;
 }
 
 async function getRoleAndWeight({

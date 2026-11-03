@@ -1,4 +1,6 @@
 "use client";
+import { VIP_WAGER_REQUIREMENT } from "@/lib/vip";
+
 import ClawProductionControls from "@/components/claw-production-controls";
 import {huntMoney} from "@/lib/hunt-currency";
 import WeeklyWager from "@/components/weekly-wager";
@@ -987,8 +989,8 @@ const [viewerProfileStats, setViewerProfileStats] = useState({
   leaderboardWagered: 0,
   leaderboardWeightedWagered: 0,
 
-  vipRequirement: 5000,
-  amountUntilVip: 5000,
+  vipRequirement: VIP_WAGER_REQUIREMENT,
+  amountUntilVip: VIP_WAGER_REQUIREMENT,
 
   isVip: false,
   previousLeaderboardVip: false,
@@ -1719,8 +1721,8 @@ const loadViewerRewards = useCallback(async () => {
         lifetimeWagered: 0,
         leaderboardWagered: 0,
         leaderboardWeightedWagered: 0,
-        vipRequirement: 5000,
-        amountUntilVip: 5000,
+        vipRequirement: VIP_WAGER_REQUIREMENT,
+        amountUntilVip: VIP_WAGER_REQUIREMENT,
         isVip: false,
         previousLeaderboardVip: false,
         currentLeaderboardVip: false,
@@ -1799,7 +1801,7 @@ const loadViewerRewards = useCallback(async () => {
       ),
 
       vipRequirement: Number(
-        data.vipRequirement || 5000
+        data.vipRequirement || VIP_WAGER_REQUIREMENT
       ),
 
       amountUntilVip: Number(
@@ -1988,13 +1990,13 @@ const handleLinkRoulo = async () => {
         ),
 
         vipRequirement: Number(
-          data.stats.vipRequirement || 5000
+          data.stats.vipRequirement || VIP_WAGER_REQUIREMENT
         ),
 
         amountUntilVip: Math.max(
           0,
           Number(
-            data.stats.vipRequirement || 5000
+            data.stats.vipRequirement || VIP_WAGER_REQUIREMENT
           ) -
             Number(
               data.stats
@@ -4481,7 +4483,7 @@ return (
               sm:text-2xl
             "
           >
-            👑
+            <img src="/vip-rewards-badge.svg" alt="10K VIP rewards" width={48} height={48} />
           </div>
 
           <h3
@@ -4504,7 +4506,7 @@ return (
               sm:text-[10px]
             "
           >
-            $5K+ QUALIFICATION
+            $10K+ QUALIFICATION
           </div>
 
           <div
@@ -4518,7 +4520,7 @@ return (
               sm:text-[12px]
             "
           >
-            $5k+ wagered on previous or current leaderboard
+            $10k+ weighted wagered on previous or current leaderboard
           </div>
 
           <div
@@ -4917,7 +4919,7 @@ return (
                 "
               >
                 {adminMessage ||
-                  "Save $5,000+ wagered players as VIPs for the next leaderboard."}
+                  "Save $10,000+ wagered players as VIPs for the next leaderboard."}
               </div>
             </div>
 

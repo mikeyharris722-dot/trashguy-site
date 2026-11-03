@@ -1,3 +1,5 @@
+import {serverPrizeSettings} from "./server-prize-settings";
+import { VIP_WAGER_REQUIREMENT } from "@/lib/vip";
 import {providerRows} from "./leaderboard-provider";
 import { createClient } from "@/lib/review-client";
 
@@ -16,13 +18,6 @@ function getDateRange() {
   return {
     start_at: "2024-01-01",
     end_at: end.toISOString().slice(0, 10),
-  };
-}
-
-function getCurrentLeaderboardRange() {
-  return {
-    start_at: "2026-10-05",
-    end_at: "2026-11-05",
   };
 }
 
@@ -101,10 +96,11 @@ export async function syncRouloLinks() {
 
   const { start_at, end_at } = getDateRange();
 
-  const currentRange = getCurrentLeaderboardRange();
+  const settings = await serverPrizeSettings();
+  const currentRange = {start_at:settings.leaderboardStart,end_at:settings.leaderboardEnd};
   const [affiliates,currentAffiliates] = await Promise.all([
     providerRows(start_at,end_at,{weighted:false,fresh:true}),
-    providerRows(currentRange.start_at,currentRange.end_at,{weighted:false,fresh:true}),
+    providerRows(currentRange.start_at,currentRange.end_at,{fresh:true}),
   ]);
 
   let updated = 0;
@@ -135,10 +131,10 @@ const currentMatch = currentAffiliates.find((player: any) => {
 });
 
 const currentLeaderboardWagered = currentMatch
-  ? getPlayerWagered(currentMatch)
+  ? Number(currentMatch.weighted_wagered_amount ?? currentMatch.weightedWageredAmount ?? currentMatch.weighted_wagered ?? 0)
   : 0;
 
-const isCurrentVip = currentLeaderboardWagered >= 5000;
+const isCurrentVip = currentLeaderboardWagered >= VIP_WAGER_REQUIREMENT;
 
 const { data: latestSnapshot } = await supabase
   .from("vip_snapshots")
@@ -152,7 +148,7 @@ let vipSnapshot = null;
 if (latestSnapshot) {
   const { data } = await supabase
     .from("vip_snapshots")
-    .select("id")
+    .select("id, wagered")
     .eq("roulo_username", rouloUsername)
     .eq("period_start", latestSnapshot.period_start)
     .eq("period_end", latestSnapshot.period_end)
@@ -164,7 +160,7 @@ if (latestSnapshot) {
 
 const isOnCode = !!rouloUsername;
 const isInDiscord = !!link.is_in_discord;
-const isVipSnapshot = !!vipSnapshot || isCurrentVip;
+const isVipSnapshot = Number(vipSnapshot?.wagered || 0) >= VIP_WAGER_REQUIREMENT || isCurrentVip;
 
 const { role, weight } = getRoleAndWeight({
   isOnCode,

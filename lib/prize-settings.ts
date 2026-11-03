@@ -1,4 +1,4 @@
-import {defaultWeeklyWager,validateWeeklyWager,type WeeklyWagerSettings} from "./weekly-wager";
+import {leaderboardRewards,defaultWeeklyWager,validateWeeklyWager,type WeeklyWagerSettings} from "./weekly-wager";
 import {defaultBossTargets,type BossTarget} from "./trash-bosses";
 import { leaderboardPeriod } from "./leaderboard-period";
 export type PrizeSettings = {
@@ -72,7 +72,7 @@ export function validatePrizeSettings(value: unknown): PrizeSettings {
   return {
     navigation:{tournaments:navigation.tournaments,community:navigation.community},
     ...(claw?{trashClaw:{prizes:claw.prizes.map(p=>p.trim()),cashEntries:claw.cashEntries}}:{}),
-    weeklyWager:validateWeeklyWager(input.weeklyWager??defaultWeeklyWager),
+    weeklyWager:validateWeeklyWager(leaderboardRewards(input.weeklyWager,start,end)),
     leaderboardArchives:checkedArchives,
     leaderboardWeighting:weighting.trim(),
     trashBosses: checked,
@@ -90,5 +90,6 @@ export const prizeTotal = (settings: PrizeSettings) =>
   ) / 100;
 
 export function resolvedPrizeSettings(settings?: PrizeSettings): PrizeSettings {
-  return { ...defaultPrizeSettings, ...settings };
+  const resolved={ ...defaultPrizeSettings, ...settings };
+  return {...resolved,weeklyWager:leaderboardRewards(settings?.weeklyWager,resolved.leaderboardStart,resolved.leaderboardEnd)};
 }
