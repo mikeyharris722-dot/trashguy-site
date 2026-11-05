@@ -1,5 +1,5 @@
 import {serverPrizeSettings} from "./server-prize-settings";
-import { VIP_WAGER_REQUIREMENT } from "@/lib/vip";
+import { VIP_WAGER_REQUIREMENT, previousVipRequirement } from "@/lib/vip";
 import {providerRows} from "./leaderboard-provider";
 import { createClient } from "@/lib/review-client";
 
@@ -160,7 +160,7 @@ if (latestSnapshot) {
 
 const isOnCode = !!rouloUsername;
 const isInDiscord = !!link.is_in_discord;
-const isVipSnapshot = Number(vipSnapshot?.wagered || 0) >= VIP_WAGER_REQUIREMENT || isCurrentVip;
+const isVipSnapshot = !!latestSnapshot && Number(vipSnapshot?.wagered || 0) >= previousVipRequirement(latestSnapshot.period_end) || isCurrentVip;
 
 const { role, weight } = getRoleAndWeight({
   isOnCode,

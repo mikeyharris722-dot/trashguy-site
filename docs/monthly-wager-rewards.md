@@ -11,3 +11,5 @@ VIP eligibility is 10,000 weighted wager in the current leaderboard or a qualify
 Checks: weekly-wager-tests.cjs, monthly-rewards-db-tests.cjs (isolated named Docker Postgres), vip-threshold-tests.cjs, provider-read-tests.cjs, trash-claw-settings-api-tests.cjs, site-review-tests.cjs, tracker-tests.cjs, community-tests.cjs, community-stats-tests.cjs, TypeScript, scoped ESLint and production build.
 
 Launch restriction: only leaderboard periods starting on or after 5 November 2026 qualify. The UI, server and database independently block the current October–November period even if enabled. The date gate uses UTC and is not admin-editable.
+
+VIP transition correction (5 November): preserve the 5,000 weighted wager requirement for VIP earned in periods ending on or before 5 November 2026. The current leaderboard and subsequent completed periods require 10,000. Previous eligibility checks use the period-specific requirement; the snapshot generator uses the same rule and upserts without deleting historical eligibility records.

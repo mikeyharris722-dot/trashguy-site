@@ -1,7 +1,7 @@
 import {serverPrizeSettings} from "@/lib/server-prize-settings";
 import {leaderboardPeriods} from "@/lib/leaderboard-data";
 import {requireTrackerAdmin,apiError} from "@/lib/site-db";
-import { VIP_WAGER_REQUIREMENT } from "@/lib/vip";
+import { previousVipRequirement } from "@/lib/vip";
 import {providerRows} from "@/lib/leaderboard-provider";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
@@ -65,20 +65,7 @@ export async function POST(request:Request) {
       roulo_username: getPlayerName(player),
       wagered: getPlayerWagered(player),
     }))
-    .filter((row: any) => row.roulo_username && row.wagered >= VIP_WAGER_REQUIREMENT);
-
-const { error: snapshotDeleteError } = await supabase
-  .from("vip_snapshots")
-  .delete()
-  .eq("period_start", periodStart)
-  .eq("period_end", periodEnd);
-
-if (snapshotDeleteError) {
-  return NextResponse.json(
-    { ok: false, error: snapshotDeleteError.message },
-    { status: 500 }
-  );
-}
+    .filter((row: any) => row.roulo_username && row.wagered >= previousVipRequirement(periodEnd));
 
 const { error: snapshotUpsertError } = await supabase
   .from("vip_snapshots")

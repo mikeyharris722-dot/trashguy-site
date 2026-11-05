@@ -1,4 +1,4 @@
-import { VIP_WAGER_REQUIREMENT } from "@/lib/vip";
+import { VIP_WAGER_REQUIREMENT, previousVipRequirement } from "@/lib/vip";
 import {profileWagerStats} from "@/lib/profile-wagers";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
@@ -99,7 +99,7 @@ async function getPreviousLeaderboardVip(
     return false;
   }
 
-  return Number(vipRow?.wagered || 0) >= VIP_WAGER_REQUIREMENT;
+  return Number(vipRow?.wagered || 0) >= previousVipRequirement(latestSnapshot.period_end);
 }
 
 export async function GET(
