@@ -19,3 +19,5 @@ assert.equal(providers.providerName("n2games","unknown"),"N2 Games");
 assert.equal(providers.providerName("hacksawg","bullsharkgames"),"Bullshark Games");
 assert.equal(providers.providerName("hacksawg","hacksawg"),"Hacksaw Gaming");
 console.log("PASS N2-distributed Backseat slots join Backseat filter; other studios remain unchanged");
+
+const movedSource=source.replace('229436:','661531:');assert.equal(art.findArtwork(art.artworkIndex(movedSource),{identifier:'hacksawg:Wanted',provider:'hacksawg'}),'https://roulobets.com/static/media/Wanted.abc.webp');assert.equal(art.artworkIndex(thunderSource+';'+movedSource).size,2);assert.throws(()=>art.artworkIndex('661531:(e,t,a)=>{var s={"unrelated":123};'));console.log('PASS upstream module ID changes and multiple asset contexts without executing upstream code');

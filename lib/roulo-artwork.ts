@@ -1,13 +1,12 @@
 // Parse only source JSON and static asset declarations; never execute downloaded JavaScript.
 export function artworkIndex(source: string) {
-  const marker = source.indexOf("229436:(e,t,a)=>{var s=");
-  if (marker < 0) throw new Error("Artwork source format changed");
-  const start = source.indexOf("{", marker + "229436:(e,t,a)=>{var s=".length),
-    end = source.indexOf("};", start);
-  const context = JSON.parse(source.slice(start, end + 1)) as Record<
-    string,
-    number
-  >;
+  // Webpack module IDs change on every upstream build. Find static JSON asset
+  // contexts by their shape, rather than depending on one generated module ID.
+  const contexts = [...source.matchAll(/\d+:\(e,t,a\)=>\{var [a-zA-Z_$][\w$]*=(\{[^{}]+\});/g)]
+    .map(match => {
+      try { return JSON.parse(match[1]) as Record<string, unknown>; }
+      catch { return {}; }
+    });
   const modules = new Map(
     [
       ...source.matchAll(
@@ -16,7 +15,8 @@ export function artworkIndex(source: string) {
     ].map((m) => [m[1], m[2]]),
   );
   const index = new Map<string, string>();
-  for (const [key, module] of Object.entries(context)) {
+  for (const context of contexts) for (const [key, module] of Object.entries(context)) {
+    if (typeof module !== "number") continue;
     const parts = key.replace(/^\.\//, "").split("/");
     if (parts.length < 2) continue;
     const stem = parts[parts.length - 1]
@@ -27,6 +27,7 @@ export function artworkIndex(source: string) {
     if (asset)
       index.set(parts[0].toLowerCase().replace(/[^a-z0-9]/g, "") + ":" + stem, "https://roulobets.com/" + asset);
   }
+  if (!index.size) throw new Error("Artwork source format changed");
   return index;
 }
 export function findArtwork(
