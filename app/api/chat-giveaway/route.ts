@@ -1,3 +1,4 @@
+import {giveawayLuckSelect} from "@/lib/giveaway-luck";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/review-client";
 import { retryLuckRead } from "@/lib/giveaway-luck-retry";
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
     if (usernames.length > 0) {
       const { data, error } = await retryLuckRead(() => supabase
         .from("giveaway_luck")
-        .select("twitch_username, luck, loss_count, win_count")
+        .select(giveawayLuckSelect(giveawayType))
         .in("twitch_username", usernames));
 
       if (error) {

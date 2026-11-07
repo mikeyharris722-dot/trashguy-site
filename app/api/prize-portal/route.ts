@@ -645,6 +645,10 @@ export async function GET(
 
       baseOdds,
       luckOdds,
+      vipLuckOdds:Number(luckRow?.vip_luck??luckRow?.luck??0),
+      vipTotalOdds:Number((baseOdds+Number(luckRow?.vip_luck??luckRow?.luck??0)).toFixed(2)),
+      vipLossCount:Number(luckRow?.vip_loss_count||0),
+      vipWinCount:Number(luckRow?.vip_win_count||0),
       totalOdds,
       nextOdds,
 

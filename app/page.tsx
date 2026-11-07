@@ -975,6 +975,8 @@ const [viewerRewardsPaid, setViewerRewardsPaid] = useState(0);
 const [viewerOdds, setViewerOdds] = useState({
   baseOdds: 1,
   luckOdds: 0,
+  vipLuckOdds: 0,
+  vipTotalOdds: 1,
   totalOdds: 1,
   nextOdds: 1.1,
   lossCount: 0,
@@ -1710,6 +1712,8 @@ const loadViewerRewards = useCallback(async () => {
       setViewerOdds({
         baseOdds: 1,
         luckOdds: 0,
+        vipLuckOdds: 0,
+        vipTotalOdds: 1,
         totalOdds: 1,
         nextOdds: 1.1,
         lossCount: 0,
@@ -1775,6 +1779,8 @@ const loadViewerRewards = useCallback(async () => {
     setViewerOdds({
       baseOdds: Number(data.baseOdds || 1),
       luckOdds: Number(data.luckOdds || 0),
+      vipLuckOdds: Number(data.vipLuckOdds || 0),
+      vipTotalOdds: Number(data.vipTotalOdds || data.baseOdds || 1),
       totalOdds: Number(data.totalOdds || 1),
       nextOdds: Number(data.nextOdds || 1.1),
       lossCount: Number(data.lossCount || 0),
@@ -7534,7 +7540,7 @@ onClick={() => {
 
               <div className="border-t border-purple-300/[0.10] pt-3 sm:pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                 <div className="text-[8px] font-black uppercase tracking-[0.14em] text-purple-200 sm:text-[11px]">
-                  Giveaway Odds
+                  ALL Giveaway Odds
                 </div>
 
                 {/* ODDS */}
@@ -7588,6 +7594,7 @@ onClick={() => {
                   </div>
                 </div>
 
+                <div className="giveaway-mode-summary"><span>ALL luck <strong>+{viewerOdds.luckOdds.toFixed(2)}x</strong></span>{viewerProfileStats.isVip&&<span>VIP luck <strong>+{viewerOdds.vipLuckOdds.toFixed(2)}x</strong> · Total {viewerOdds.vipTotalOdds.toFixed(2)}x</span>}<small>Each giveaway has its own luck. Enter and miss to gain +1 in that mode. Status bonuses stay the same.</small></div>
                 {/* TOTAL PAID */}
 
                 <div className="mt-2.5 flex items-center gap-2.5 border-t border-purple-300/[0.10] pt-2.5 sm:mt-3.5 sm:gap-4 sm:pt-3.5">

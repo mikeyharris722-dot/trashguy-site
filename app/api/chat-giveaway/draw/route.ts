@@ -1,3 +1,4 @@
+import {giveawayLuckFields,giveawayLuckSelect} from "@/lib/giveaway-luck";
 import { NextRequest, NextResponse } from "next/server";
 import { randomInt } from "node:crypto";
 import { retryLuckRead } from "@/lib/giveaway-luck-retry";
@@ -39,6 +40,7 @@ function pickWeightedWinner(entries: any[]) {
 export async function POST(req: NextRequest) {
   try {
     const giveawayType = getGiveawayType(req);
+    const luckFields = giveawayLuckFields(giveawayType);
     const amount = Number(req.nextUrl.searchParams.get("amount") || 0);
 
     const { data: giveaway, error: giveawayError } = await supabase
@@ -99,12 +101,20 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Read every eligible entrant's luck before choosing or changing anything.
+    // Read every eligible entrant's luck before choosing or settling a draw.
     // A missing row is a new entrant; a failed query is not zero luck.
     const usernames = [...new Set(eligibleEntries.map((entry: any) => normalizeUsername(entry.username)))];
+    // Insert only missing accounts; a simultaneous draw in the other mode
+    // cannot overwrite an existing balance or create a duplicate account.
+    const {error:ensureError}=await supabase.from('giveaway_luck').upsert(usernames.map(username=>({
+      twitch_username:username,
+      platform:eligibleEntries.find((entry:any)=>normalizeUsername(entry.username)===username)?.platform==='kick'?'kick':'twitch',
+      luck:0,loss_count:0,win_count:0,vip_luck:0,vip_loss_count:0,vip_win_count:0,luck_modes_split:true,
+    })),{onConflict:'twitch_username',ignoreDuplicates:true});
+    if(ensureError)return NextResponse.json({ok:false,error:'Could not prepare entrant luck. No winner was drawn.'},{status:503});
     const { data: luckRows, error: luckError } = await retryLuckRead(() => supabase
       .from("giveaway_luck")
-      .select("twitch_username, luck")
+      .select(giveawayLuckSelect(giveawayType))
       .in("twitch_username", usernames));
     if (luckError || !Array.isArray(luckRows)) {
       return NextResponse.json({ ok: false, error: "Could not verify entrant luck after three attempts. No winner was drawn. Please try again." }, { status: 503 });
@@ -150,9 +160,10 @@ export async function POST(req: NextRequest) {
       const { error } = await supabase
         .from("giveaway_luck")
         .update({
+          luck_modes_split:true,
           platform: winnerPlatform,
-          luck: 0,
-          win_count: Number(existingWinner.win_count || 0) + 1,
+          [luckFields.luck]: 0,
+          [luckFields.wins]: Number(existingWinner[luckFields.wins] || 0) + 1,
           updated_at: new Date().toISOString(),
         })
         .eq("twitch_username", winnerUsername);
@@ -163,10 +174,11 @@ export async function POST(req: NextRequest) {
     } else {
       const { error } = await supabase.from("giveaway_luck").insert({
         twitch_username: winnerUsername,
+        luck_modes_split:true,
         platform: winnerPlatform,
-        luck: 0,
-        loss_count: 0,
-        win_count: 1,
+        [luckFields.luck]: 0,
+        [luckFields.losses]: 0,
+        [luckFields.wins]: 1,
         updated_at: new Date().toISOString(),
       });
 
@@ -200,13 +212,14 @@ export async function POST(req: NextRequest) {
       }
 
       if (existingLoser) {
-        const nextLuck = Number((Number(existingLoser.luck || 0) + 1).toFixed(1));
+        const nextLuck = Number((Number(existingLoser[luckFields.luck] || 0) + 1).toFixed(2));
         const { error } = await supabase
           .from("giveaway_luck")
           .update({
+            luck_modes_split:true,
             platform,
-            luck: nextLuck,
-            loss_count: Number(existingLoser.loss_count || 0) + 1,
+            [luckFields.luck]: nextLuck,
+            [luckFields.losses]: Number(existingLoser[luckFields.losses] || 0) + 1,
             updated_at: new Date().toISOString(),
           })
           .eq("twitch_username", username);
@@ -217,10 +230,11 @@ export async function POST(req: NextRequest) {
       } else {
         const { error } = await supabase.from("giveaway_luck").insert({
           twitch_username: username,
+          luck_modes_split:true,
           platform,
-          luck: 1,
-          loss_count: 1,
-          win_count: 0,
+          [luckFields.luck]: 1,
+          [luckFields.losses]: 1,
+          [luckFields.wins]: 0,
           updated_at: new Date().toISOString(),
         });
 
