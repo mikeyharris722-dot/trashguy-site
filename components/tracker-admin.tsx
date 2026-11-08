@@ -153,7 +153,9 @@ export default function TrackerAdmin({
       setMessage(
         body.action === "update"
           ? `Updated ${value.total} games; ${value.added} new; ${value.missing} absent records retained. ${value.artworkWarning || ""}`
-          : "Saved",
+          : body.action === "correctCurrency"
+            ? `Currency corrected. ${value.result.corrected} payouts recalculated. ${value.result.claimsToReview ? value.result.claimsToReview + " existing Monster Reward claims need review." : ""}`
+            : "Saved",
       );
       if (body.action === "create") onHunt(value.result);
       if (body.action === "delete") {
@@ -377,7 +379,7 @@ export default function TrackerAdmin({
         <>
           {!communityMode && (
             <HuntSettings
-              key={current.id + ":" + current.title + ":" + current.startCost}
+              key={current.id + ":" + current.title + ":" + current.startCost + ":" + current.currency}
               hunt={current}
               busy={busy}
               save={(body) => action(trackerApi, body)}
@@ -889,6 +891,7 @@ function HuntSettings({
   const [title, setTitle] = useState(hunt.title);
   const [start, setStart] = useState(String(hunt.startCost));
   const [confirmTitle, setConfirmTitle] = useState("");
+  const [correctedCurrency, setCorrectedCurrency] = useState<HuntCurrency>(hunt.currency || "USD");
   const input =
     "w-full rounded-lg border border-purple-300/20 bg-black px-3 py-2 text-sm text-white";
   return (

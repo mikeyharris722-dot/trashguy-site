@@ -24,7 +24,15 @@ export async function POST(request: Request) {
     }
     async function fxFor(huntId?:string,entryId?:string){let id=huntId;let entry:{hunt_id:string;payout:string|null;payout_usd:string|null}|null=null;if(entryId){const r=await db.from('site_tracker_entries').select('hunt_id,payout,payout_usd').eq('id',entryId).single();if(r.error)throw Error('Bonus not found.');entry=r.data;id=entry!.hunt_id;}const r=await db.from('site_tracker_hunts').select('currency').eq('hunt_id',id).single();if(r.error)throw Error('Hunt currency could not be loaded.');if(entry&&entry.payout_usd!==null&&Number(entry.payout)===Number(b.payout))return null;return b.payout===null?null:await payoutFx(r.data.currency);}
     let result;
-    if (b.action === "openingFocus") {
+    if (b.action === "correctCurrency") {
+      if (typeof b.currency !== "string" || typeof b.fromCurrency !== "string")
+        throw Error("Choose a hunt currency.");
+      const currency = huntCurrency(b.currency);
+      result = await db.rpc("site_tracker_correct_currency", {
+        p_actor: actor, p_hunt: b.huntId, p_from: huntCurrency(b.fromCurrency),
+        p_currency: currency, p_fx: await payoutFx(currency),
+      });
+    } else if (b.action === "openingFocus") {
       result = await db.rpc("site_tracker_opening_focus", {
         p_actor: actor,
         p_hunt: b.huntId,
