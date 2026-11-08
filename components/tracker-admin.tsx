@@ -929,6 +929,16 @@ function HuntSettings({
           Save hunt settings
         </button>
         <div className="space-y-2 border-t border-white/10 pt-3">
+          <HuntCurrencySelect value={correctedCurrency} onChange={setCorrectedCurrency}/>
+          <p className="text-xs text-white/60">Entered amounts stay the same. Monster Reward progress is recalculated in USD. Existing claims and payments are kept for review.</p>
+          <button type="button" className="rounded-lg bg-purple-400/20 px-3 py-2 text-sm disabled:opacity-40"
+            disabled={busy || correctedCurrency === (hunt.currency || "USD")}
+            onClick={() => {
+              if (confirm("Correct the hunt currency without changing the entered amounts? Monster Reward progress will be recalculated."))
+                void save({action:"correctCurrency",huntId:hunt.id,fromCurrency:hunt.currency||"USD",currency:correctedCurrency});
+            }}>Correct hunt currency</button>
+        </div>
+        <div className="space-y-2 border-t border-white/10 pt-3">
           <p className="text-xs text-white/60">
             Delete removes this hunt from the website. Saved results are
             retained for recovery. Queued calls and other hunts stay unchanged.
