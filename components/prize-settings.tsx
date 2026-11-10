@@ -4,6 +4,7 @@ import {defaultBossTargets} from "@/lib/trash-bosses";
 
 import DiscordSlotBoardSettings from "./discord-slot-board-settings";
 import TwitchPointsSettings from "./twitch-points-settings";
+import SeafoamVideoSettings from './seafoam-video-settings';
 import HalloweenVideoSettings from "./halloween-video-settings";
 import ObsSettings, {ClawObsSettings} from "./obs-settings";
 import LeaderboardTotals from "./leaderboard-totals";
@@ -194,7 +195,7 @@ export default function PrizeSettingsEditor({
           </p>
         )}
       </form>
-      <div className="settings-tools"><div className="settings-group-heading"><h3>Stream & connections</h3><p>OBS overlays, Twitch redemptions and Discord.</p></div><ObsSettings /><ClawObsSettings /><HalloweenVideoSettings /><TwitchPointsSettings /><DiscordSlotBoardSettings /><div className="settings-group-heading"><h3>Reports</h3><p>View affiliate wager totals.</p></div><details className="settings-section"><summary><span><strong>Affiliate totals</strong><small>Monthly totals for every player on the code</small></span><span className="settings-chevron" aria-hidden="true">⌄</span></summary><div className="settings-section-body"><LeaderboardTotals settings={settings} /></div></details></div>
+      <div className="settings-tools"><div className="settings-group-heading"><h3>Stream & connections</h3><p>OBS overlays, Twitch redemptions and Discord.</p></div><ObsSettings /><ClawObsSettings /><HalloweenVideoSettings /><SeafoamVideoSettings /><TwitchPointsSettings /><DiscordSlotBoardSettings /><div className="settings-group-heading"><h3>Reports</h3><p>View affiliate wager totals.</p></div><details className="settings-section"><summary><span><strong>Affiliate totals</strong><small>Monthly totals for every player on the code</small></span><span className="settings-chevron" aria-hidden="true">⌄</span></summary><div className="settings-section-body"><LeaderboardTotals settings={settings} /></div></details></div>
     </section>
   );
 }

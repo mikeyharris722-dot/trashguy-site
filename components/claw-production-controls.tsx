@@ -3,9 +3,9 @@ import { startPolling } from "@/lib/polling";
 
 import { useEffect, useRef, useState } from "react";
 import { siteFetch } from "@/lib/site-fetch";
-import { productionIsActive, type ProductionEvent } from "@/lib/claw-production";
+import { productionIsActive, type AdminProductionClip, type ProductionEvent } from "@/lib/claw-production";
 
-export default function ClawProductionControls({clip="claw"}:{clip?:"claw"|"halloween"}={}) {
+export default function ClawProductionControls({clip="claw"}:{clip?:AdminProductionClip}={}) {
   const [event, setEvent] = useState<ProductionEvent | null>(null);
   const [now, setNow] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -70,10 +70,10 @@ export default function ClawProductionControls({clip="claw"}:{clip?:"claw"|"hall
   }
 
   return (
-    <div className="giveaway-production-actions" role="group" aria-label={clip === "halloween" ? "Halloween video playback" : "Trash Claw production"}>
+    <div className="giveaway-production-actions" role="group" aria-label={clip === "seafoam" ? "Sea-Foam Spin" : clip === "halloween" ? "Halloween video playback" : "Trash Claw production"}>
       <button type="button" className="production-launch" disabled={busy || active}
-        onClick={() => void command("play")} title={clip === "halloween" ? "Play the Halloween dance in OBS" : "Play the Trash Claw intro in OBS"}>
-        {busy ? "SENDING…" : active ? "ON AIR" : clip === "halloween" ? "▶ HALLOWEEN DANCE" : "▶ PRODUCTION"}
+        onClick={() => void command("play")} title={clip === "seafoam" ? "Sea-Foam Spin" : clip === "halloween" ? "Play the Halloween dance in OBS" : "Play the Trash Claw intro in OBS"}>
+        {busy ? "SENDING…" : active ? "ON AIR" : clip === "seafoam" ? "Sea-Foam Spin" : clip === "halloween" ? "▶ HALLOWEEN DANCE" : "▶ PRODUCTION"}
       </button>
       {active && <button type="button" className="production-stop" disabled={busy}
         onClick={() => void command("stop")}>Stop</button>}
