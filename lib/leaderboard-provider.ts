@@ -43,5 +43,5 @@ export async function leaderboardResults(selected?:string|null){
  if(!period)throw Error('Choose an available leaderboard period.');
  if(!process.env.ROULO_API_KEY)throw Error('The provider leaderboard is not configured.');
  const affiliates=await providerRows(period.start,period.end);
- return {...affiliateStandings(affiliates),affiliates,period,periods,weighting:settings.leaderboardWeighting||'',updatedAt:new Date().toISOString()};
+ return {...affiliateStandings(affiliates),affiliates,period,periods,currentStart:settings.leaderboardStart,weighting:settings.leaderboardWeighting||'',updatedAt:new Date().toISOString()};
 }
