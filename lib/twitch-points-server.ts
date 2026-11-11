@@ -138,3 +138,10 @@ export async function stopFromChat(id:string,viewer:string,broadcaster:string){
   if(localCommunity())throw Error('Real Twitch commands are disabled in local preview.');
   const {data,error}=await siteDb().rpc('twitch_points_stop_chat',{p_message:id,p_viewer:viewer,p_broadcaster:broadcaster});dbError(error);return data;
 }
+
+export async function recordGiveawayEntry(messageId:string,viewer:string){
+  const {error}=await siteDb().from('twitch_points_receipts').upsert({
+    redemption_id:'chat-giveaway:'+messageId,viewer,status:'giveaway_entry_via_website'
+  },{onConflict:'redemption_id',ignoreDuplicates:true});
+  dbError(error);
+}

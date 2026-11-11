@@ -1,5 +1,5 @@
 import {CHAT_TYPE,isStopCommand,REDEMPTION_TYPE,verifyWebhook} from '@/lib/twitch-points-security';
-import {disablePoints,enqueueRedemption,pointsConfig,savePoints,stopFromChat} from '@/lib/twitch-points-server';
+import {disablePoints,enqueueRedemption,pointsConfig,recordGiveawayEntry,savePoints,stopFromChat} from '@/lib/twitch-points-server';
 export const runtime='nodejs';
 export async function POST(request:Request){
  if(Number(request.headers.get('content-length')||0)>65536)return new Response(null,{status:413});
@@ -35,6 +35,7 @@ export async function POST(request:Request){
       typeof event.chatter_user_id!=='string'||!(/^\d+$/).test(event.chatter_user_id))return new Response(null,{status:400});
     const {enterChatGiveaway}=await import('@/lib/chat-giveaway-entry');
     const result=await enterChatGiveaway({username:login,display_name:event.chatter_user_name||login,twitch_id:event.chatter_user_id,platform:'twitch'});
+    if(result.ok)await recordGiveawayEntry(event.message_id,login);
     return new Response(null,{status:result.status>=500?503:204});
    }
    await stopFromChat(event.message_id,String(event.chatter_user_login||'moderator'),event.broadcaster_user_id);

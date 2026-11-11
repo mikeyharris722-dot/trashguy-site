@@ -34,7 +34,7 @@ export default function TwitchPointsSettings(){
  <div className="points-actions"><a href="/claw-production?preview=1&clip=scotland" target="_blank" rel="noopener noreferrer">Preview Scotland ↗</a><a href="/claw-production" target="_blank" rel="noopener noreferrer">Open shared OBS overlay ↗</a></div>
  <p>The clip is 68 seconds and intentionally loud. Set the reward cost and a suggested 10–15 minute cooldown in Twitch. Clips queue without overlapping the claw intro. Keep OBS open; queued clips expire after 15 minutes.</p>
  <p>Redemptions remain in Twitch’s reward queue for manual completion or refund. “Started” means the overlay was instructed to play, not that OBS has confirmed it was on stream. Check expired or full-queue entries before completing them.</p>
- {status.receipts.length>0&&<div className="points-receipts"><strong>Recent redemptions</strong>{status.receipts.map(receipt=><div key={receipt.redemption_id}><span>{receipt.viewer}</span><span>{receipt.status.replaceAll('_',' ')}</span><time>{new Date(receipt.received_at).toLocaleString()}</time></div>)}</div>}
+ {status.receipts.length>0&&<div className="points-receipts"><strong>Recent Twitch activity</strong>{status.receipts.map(receipt=><div key={receipt.redemption_id}><span>{receipt.viewer}</span><span>{receipt.status.replaceAll('_',' ')}</span><time>{new Date(receipt.received_at).toLocaleString()}</time></div>)}</div>}
  </>}
  {message&&<p role="status">{message}</p>}
  </div></details>;
