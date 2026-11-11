@@ -44,7 +44,7 @@ async function main() {
       color: 0x9b5de5,
       description: '**Prize pool** · ' + format(period.prizes.reduce((sum, prize) => sum + prize, 0)) +
         '\n**Ends** · <t:' + end + ':f> · ' + countdown +
-        '\n\n## Leaderboard\n' + (standings.join('\n\u200b\n') || 'No recorded wagers yet.') +
+        '\n\n## Leaderboard\n' + (standings.join('\n') || 'No recorded wagers yet.') +
         '\n\u200b\n## RTP contribution\n' +
         '97% RTP or less → **100%**\n' +
         'Over 97% and under 98% RTP → **50%**\n' +
