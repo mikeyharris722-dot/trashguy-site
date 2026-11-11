@@ -32,7 +32,7 @@ async function main() {
   const standings = players.slice(0, 10).map((player, index) => {
     const rank = ['🥇', '🥈', '🥉'][index] ?? ('#' + (index + 1));
     const prize = period.prizes[index] || 0;
-    return '### ' + rank + '  ' + escapeDiscord(player.username) + '\n' +
+    return rank + '  **' + escapeDiscord(player.username) + '**\n' +
       format(player.wagered) + ' weighted' + (prize ? ' · **' + format(prize) + ' prize**' : '');
   });
   const countdown = end * 1000 <= Date.now() ? 'Ended <t:' + end + ':R>' : '<t:' + end + ':R>';
