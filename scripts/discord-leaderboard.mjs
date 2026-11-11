@@ -30,10 +30,10 @@ async function main() {
   const end = timestamp(period.end);
   if (end <= start) throw new Error('Invalid leaderboard period');
   const standings = players.slice(0, 10).map((player, index) => {
-    const rank = ['🥇', '🥈', '🥉'][index] ?? ('#' + (index + 1));
+    const rank = ['🥇', '🥈', '🥉'][index] ?? String(index + 1);
     const prize = period.prizes[index] || 0;
     return rank + '  **' + escapeDiscord(player.username) + '**\n' +
-      format(player.wagered) + ' weighted' + (prize ? ' · **' + format(prize) + ' prize**' : '');
+      '└ Weighted wager: **' + format(player.wagered) + '**' + (prize ? ' · Prize: **' + format(prize) + '**' : '');
   });
   const countdown = end * 1000 <= Date.now() ? 'Ended <t:' + end + ':R>' : '<t:' + end + ':R>';
   const payload = {
@@ -44,7 +44,7 @@ async function main() {
       color: 0x9b5de5,
       description: '**Prize pool** · ' + format(period.prizes.reduce((sum, prize) => sum + prize, 0)) +
         '\n**Ends** · <t:' + end + ':f> · ' + countdown +
-        '\n\n## Leaderboard\n' + (standings.join('\n') || 'No recorded wagers yet.') +
+        '\n\n## Leaderboard\n' + (standings.join('\n\n') || 'No recorded wagers yet.') +
         '\n\u200b\n## RTP contribution\n' +
         '97% RTP or less → **100%**\n' +
         'Over 97% and under 98% RTP → **50%**\n' +
