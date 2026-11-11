@@ -30,10 +30,13 @@ async function main() {
   const end = timestamp(period.end);
   if (end <= start) throw new Error('Invalid leaderboard period');
   const standings = players.slice(0, 10).map((player, index) => {
-    const rank = ['🥇', '🥈', '🥉'][index] ?? ('**' + (index + 1) + '.**');
+    const rank = ['🥇', '🥈', '🥉'][index] ?? ('#' + (index + 1));
     const prize = period.prizes[index] || 0;
-    return rank + ' **' + escapeDiscord(player.username) + '** · ' + format(player.wagered) +
-      (prize ? ' weighted · **' + format(prize) + ' prize**' : ' weighted');
+    return {
+      name: rank + '  ' + escapeDiscord(player.username),
+      value: 'Weighted wager **' + format(player.wagered) + '**' +
+        (prize ? '  ·  Prize **' + format(prize) + '**' : ''),
+    };
   });
   const countdown = end * 1000 <= Date.now() ? 'Ended <t:' + end + ':R>' : '<t:' + end + ':R>';
   const payload = {
@@ -46,10 +49,10 @@ async function main() {
         '\n**Period** · <t:' + start + ':D> – <t:' + end + ':D>' +
         '\n**Ends** · ' + countdown + ' (<t:' + end + ':f>)',
       fields: [
-        { name: 'Top 10 · Weighted wager', value: standings.join('\n') || 'No recorded wagers yet.' },
+        ...(standings.length ? standings : [{ name: 'Standings', value: 'No recorded wagers yet.' }]),
         { name: 'How wagers are weighted', value:
-          '**97% RTP or less** · 100% of your wager\n' +
-          '**Above 97% and below 98% RTP** · 50% of your wager\n' +
+          '**97% RTP or less** · 100% of your wager\n\n' +
+          '**Above 97% and below 98% RTP** · 50% of your wager\n\n' +
           '**98% RTP or higher** · 10% of your wager' },
       ],
       footer: { text: 'Trashguy.me · Leaderboard refreshed' },
