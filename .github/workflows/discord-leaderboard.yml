@@ -1,0 +1,19 @@
+name: Discord leaderboard
+on:
+  schedule:
+    - cron: '3-58/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: discord-leaderboard
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    env:
+      DISCORD_LEADERBOARD_WEBHOOK: ${{ secrets.DISCORD_LEADERBOARD_WEBHOOK }}
+      DISCORD_LEADERBOARD_MESSAGE_ID: ${{ vars.DISCORD_LEADERBOARD_MESSAGE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/discord-leaderboard.mjs
