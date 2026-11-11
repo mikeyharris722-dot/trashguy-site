@@ -32,11 +32,8 @@ async function main() {
   const standings = players.slice(0, 10).map((player, index) => {
     const rank = ['🥇', '🥈', '🥉'][index] ?? ('#' + (index + 1));
     const prize = period.prizes[index] || 0;
-    return {
-      name: rank + '  ' + escapeDiscord(player.username),
-      value: 'Weighted wager **' + format(player.wagered) + '**' +
-        (prize ? '  ·  Prize **' + format(prize) + '**' : ''),
-    };
+    return '### ' + rank + '  ' + escapeDiscord(player.username) + '\n' +
+      format(player.wagered) + ' weighted' + (prize ? ' · **' + format(prize) + ' prize**' : '');
   });
   const countdown = end * 1000 <= Date.now() ? 'Ended <t:' + end + ':R>' : '<t:' + end + ':R>';
   const payload = {
@@ -46,17 +43,12 @@ async function main() {
       url: siteUrl,
       color: 0x9b5de5,
       description: '**Prize pool** · ' + format(period.prizes.reduce((sum, prize) => sum + prize, 0)) +
-        '\n**Period** · <t:' + start + ':D> – <t:' + end + ':D>' +
-        '\n**Ends** · ' + countdown + ' (<t:' + end + ':f>)',
-      fields: [
-        ...(standings.length ? standings : [{ name: 'Standings', value: 'No recorded wagers yet.' }]),
-        { name: '\u200b', value: '\u200b' },
-        { name: '🎮 RTP and wager contribution', value:
-          '**97% RTP or less**\nCounts **100%** of your wager\n\u200b\n' +
-          '**Over 97% but under 98% RTP**\nCounts **50%** of your wager\n\u200b\n' +
-          '**98% RTP or higher**\nCounts **10%** of your wager\n\u200b' },
-      ],
-      footer: { text: 'Trashguy.me · Leaderboard refreshed' },
+        '\n**Ends** · <t:' + end + ':f> · ' + countdown +
+        '\n\n## Leaderboard\n' + (standings.join('\n\u200b\n') || 'No recorded wagers yet.') +
+        '\n\u200b\n## RTP contribution\n' +
+        '97% RTP or less → **100%**\n' +
+        'Over 97% and under 98% RTP → **50%**\n' +
+        '98% RTP or higher → **10%**',
       timestamp: new Date().toISOString(),
     }],
   };
