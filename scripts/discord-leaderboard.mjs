@@ -50,10 +50,10 @@ async function main() {
         '\n**Ends** · ' + countdown + ' (<t:' + end + ':f>)',
       fields: [
         ...(standings.length ? standings : [{ name: 'Standings', value: 'No recorded wagers yet.' }]),
-        { name: 'How wagers are weighted', value:
-          '**97% RTP or less** · 100% of your wager\n\n' +
-          '**Above 97% and below 98% RTP** · 50% of your wager\n\n' +
-          '**98% RTP or higher** · 10% of your wager' },
+        { name: '🎮 RTP and wager contribution', value:
+          '**97% RTP or less**\nCounts **100%** of your wager\n\n' +
+          '**Over 97% but under 98% RTP**\nCounts **50%** of your wager\n\n' +
+          '**98% RTP or higher**\nCounts **10%** of your wager' },
       ],
       footer: { text: 'Trashguy.me · Leaderboard refreshed' },
       timestamp: new Date().toISOString(),
