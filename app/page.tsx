@@ -735,16 +735,13 @@ type TrashClawPhase =
 
 
 
-const [trashClawPrizes, setTrashClawPrizes] = useState<string[]>(DEFAULT_TRASH_CLAW_PRIZES);
 const [savedTrashClawPrizes, setSavedTrashClawPrizes] = useState<string[]>(DEFAULT_TRASH_CLAW_PRIZES);
-const [trashClawSaveStatus, setTrashClawSaveStatus] = useState<"idle" | "saved">("idle");
 const [trashClawCards, setTrashClawCards] = useState<string[]>([]);
 const [trashClawReel, setTrashClawReel] = useState<string[]>([]);
 const [trashClawReelOffset, setTrashClawReelOffset] = useState(0);
 const [trashClawReelDuration, setTrashClawReelDuration] = useState(0);
 const [trashClawWinnerIndex, setTrashClawWinnerIndex] = useState<number | null>(null);
 const [cashWheelOpen,setCashWheelOpen]=useState(false);
-const [clawSaving,setClawSaving]=useState(false);
 const [trashClawWinner, setTrashClawWinner] = useState<string | null>(null);
 const [trashClawPhase, setTrashClawPhase] = useState<TrashClawPhase>("idle");
 const [trashClawX, setTrashClawX] = useState(50);
@@ -1394,21 +1391,8 @@ useEffect(()=>{
  if(!prizeSettingsLoaded)return;
  let names=prizeSettings.trashClaw?.prizes;
  if(!names){try{const legacy=JSON.parse(localStorage.getItem("trash_claw_prizes")||"null");if(Array.isArray(legacy)&&legacy.length===10&&legacy.every(p=>typeof p==='string'))names=expandTrashClawPrizes(legacy);}catch{}}
- if(names){setTrashClawPrizes(names);setSavedTrashClawPrizes(names);}
+ setSavedTrashClawPrizes(names ?? DEFAULT_TRASH_CLAW_PRIZES);
 },[prizeSettingsLoaded,prizeSettings.trashClaw]);
-const saveTrashClawPrizes = async () => {
- if(clawSaving||!prizeSettingsLoaded||prizeSettingsError)return;
- setClawSaving(true);
- try {
-  const response=await siteFetch('/api/prize-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({settings:{...prizeSettings,trashClaw:{prizes:trashClawPrizes.map(p=>p.trim()),cashEntries:prizeSettings.trashClaw?.cashEntries||Array.from({length:25},(_,i)=>i+1)}},requestId:crypto.randomUUID()})});
-  const data=await response.json();if(!response.ok)throw Error(data.error||'Could not save claw prizes');
-  setPrizeSettings(data.settings);setSavedTrashClawPrizes(data.settings.trashClaw.prizes);setTrashClawSaveStatus('saved');
- }catch(error){setSiteNotice(error instanceof Error?error.message:'Could not save claw prizes');}finally{setClawSaving(false);}
-};
-
-const trashClawHasUnsavedChanges =
-  JSON.stringify(trashClawPrizes) !== JSON.stringify(savedTrashClawPrizes);
-
 const getTrashClawPool = () =>
   savedTrashClawPrizes.map((prize) => prize.trim()).filter(Boolean);
 
@@ -8411,57 +8395,13 @@ onClick={() => {
   >
     <summary className="hidden">Trash Claw</summary>
 
-    <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <div className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-300/60 sm:text-[10px]">Giveaway Bonus Picker</div>
-        <h2 className="mt-1 text-xl font-black tracking-[0.08em] text-white sm:text-3xl">TRASH CLAW</h2>
-        <p className="mt-1 max-w-2xl text-[10px] leading-4 text-white/45 sm:text-xs">
-          Edit your possible extras, press Save Options, then run the claw after a giveaway winner earns a Trash Claw grab.
-        </p>
+    <div className="relative overflow-hidden rounded-xl border border-purple-300/15 bg-[linear-gradient(180deg,#09040e,#030104)]">
+      <div className="flex flex-wrap items-center justify-end gap-2 px-3 pt-2">
+        <button type="button" disabled={isRunningTrashClaw} onClick={()=>setCashWheelOpen(true)} className="rounded-md border border-purple-300/20 px-2 py-1 text-xs text-purple-200 disabled:opacity-40">Test cash wheel</button>
+        <ClawRevealEffects prizes={savedTrashClawPrizes} prize={trashClawWinner||''} active={activeSection==='admin'&&activeAdminTab==='trashClaw'&&trashClawPhase==='revealed'&&!!trashClawWinner}/>
       </div>
-      <button
-        type="button"
-        disabled={isRunningTrashClaw || clawSaving || !prizeSettingsLoaded || !!prizeSettingsError || !trashClawHasUnsavedChanges}
-        onClick={saveTrashClawPrizes}
-        className={`mt-2 rounded-lg border px-4 py-2 text-[9px] font-black uppercase tracking-[0.12em] transition sm:mt-0 sm:text-[10px] ${
-          trashClawHasUnsavedChanges
-            ? "border-purple-300/45 bg-purple-500/15 text-purple-100 shadow-[0_0_18px_rgba(168,85,247,0.14)] hover:border-purple-200/70 hover:bg-purple-500/25"
-            : "border-white/10 bg-white/[0.03] text-white/30"
-        } disabled:cursor-not-allowed`}
-      >
-        {trashClawSaveStatus === "saved" ? "SAVED ✓" : trashClawHasUnsavedChanges ? "SAVE OPTIONS" : "OPTIONS SAVED"}
-      </button>
-    </div>
-
-
-
-    <div className="mt-3 flex items-center justify-between gap-3 text-[10px] text-white/50"><span>Prize names and cash amounts are also in Admin Settings → Trash Claw.</span><button type="button" disabled={isRunningTrashClaw} onClick={()=>setCashWheelOpen(true)} className="shrink-0 rounded-lg border border-purple-300/25 px-3 py-2 font-bold text-purple-200 disabled:opacity-40">Test cash wheel</button></div>
-    <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-5 sm:gap-2">
-      {trashClawPrizes.map((prize, index) => (
-        <label key={index} className="group min-w-0 rounded-xl border border-purple-300/15 bg-[linear-gradient(145deg,rgba(168,85,247,0.08),rgba(0,0,0,0.5))] p-2 transition hover:border-purple-300/30">
-          <span className="mb-1.5 flex items-center justify-between text-[7px] font-black uppercase tracking-wider text-purple-200/45 sm:text-[8px]">
-            <span>Option {index + 1}</span>
-            <span className="rounded-full border border-purple-300/15 bg-purple-500/10 px-1.5 py-0.5 text-purple-200/55">#{String(index + 1).padStart(2, "0")}</span>
-          </span>
-          <input
-            value={prize}
-            disabled={isRunningTrashClaw}
-            onChange={(e) => {
-              const next = [...trashClawPrizes];
-              next[index] = e.target.value;
-              setTrashClawPrizes(next);
-            }}
-            className="w-full rounded-md border border-white/10 bg-black/55 px-2 py-1.5 text-[9px] font-bold text-white outline-none transition placeholder:text-white/20 focus:border-purple-300/40 sm:text-[10px]"
-            placeholder={`Prize ${index + 1}`}
-          />
-        </label>
-      ))}
-    </div>
-
-    <div className="relative mt-3 overflow-hidden rounded-xl border border-purple-300/15 bg-[linear-gradient(180deg,#09040e,#030104)]">
-      <div className="flex justify-end px-3 pt-2"><ClawRevealEffects prizes={savedTrashClawPrizes} prize={trashClawWinner||''} active={activeSection==='admin'&&activeAdminTab==='trashClaw'&&trashClawPhase==='revealed'&&!!trashClawWinner}/></div>
       <div className="flex items-center justify-between border-b border-purple-300/10 px-3 py-2 sm:px-4">
-        <div className="text-[10px] font-black tracking-[0.12em] text-white sm:text-sm">TRASHGUY TRASH CLAW</div>
+        <div className="text-sm font-black tracking-[0.12em] text-white sm:text-xl">TRASH CLAW</div>
         <div className="text-[8px] font-black uppercase tracking-wider text-purple-200/50 sm:text-[9px]">
           {trashClawPhase === "spinning" ? "MIXING PRIZES..." : trashClawPhase === "targeting" ? "TARGETING..." : trashClawPhase === "opening" ? "TARGET LOCKED" : trashClawPhase === "dropping" ? "DROPPING..." : trashClawPhase === "grabbing" ? "GRABBED!" : trashClawPhase === "lifting" ? "PULLING IT OUT..." : trashClawPhase === "revealed" ? "WINNER" : `${getTrashClawPool().length} PRIZES`}
         </div>
@@ -8538,7 +8478,7 @@ onClick={() => {
         {trashClawWinner && trashClawPhase === "revealed" && (
           <div className="mt-2.5 rounded-xl border border-purple-300/20 bg-purple-400/[0.06] px-3 py-2.5 text-center">
             <div className="text-[8px] font-black uppercase tracking-[0.16em] text-purple-200/50">Trash Claw Grabbed</div>
-            <div className="mt-1 text-sm font-black text-purple-100 sm:text-lg">{trashClawWinner}</div>
+            <div className="mt-1 text-lg font-black text-purple-100 sm:text-2xl">{trashClawWinner}</div>
           </div>
         )}
 
