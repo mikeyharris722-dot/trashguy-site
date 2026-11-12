@@ -1,6 +1,26 @@
 import {leaderboardRewards,defaultWeeklyWager,validateWeeklyWager,type WeeklyWagerSettings} from "./weekly-wager";
 import {defaultBossTargets,type BossTarget} from "./trash-bosses";
 import { leaderboardPeriod } from "./leaderboard-period";
+const additionalClawPrizes = ["+25%", "-25%"];
+const legacyClawPrizeCount = 10;
+export function expandTrashClawPrizes(prizes: string[]) {
+  return prizes.length === legacyClawPrizeCount ? [...prizes, ...additionalClawPrizes] : prizes;
+}
+
+export const DEFAULT_TRASH_CLAW_PRIZES = [
+  "DOUBLE",
+  "-50%",
+  "TRASH CALL",
+  "MOD CALL",
+  "SLOT PICKER",
+  "+50%",
+  "KENO",
+  "LIVE TABLES",
+  "ANOTHER GIVEAWAY",
+  "TRASH CASH",
+  ...additionalClawPrizes,
+];
+
 export type PrizeSettings = {
   navigation?: {tournaments:boolean;community:boolean};
   trashClaw?: {prizes:string[];cashEntries:number[]};
@@ -68,10 +88,10 @@ export function validatePrizeSettings(value: unknown): PrizeSettings {
   const weighting=input.leaderboardWeighting??defaultPrizeSettings.leaderboardWeighting??'';
   if(typeof weighting!=='string'||weighting.length>2000)throw Error('Weighting rules must be under 2,000 characters.');
   const claw=input.trashClaw;
-  if(claw&&(!Array.isArray(claw.prizes)||claw.prizes.length!==10||claw.prizes.some(p=>typeof p!=='string'||p.length>60)||!Array.isArray(claw.cashEntries)||claw.cashEntries.length<2||claw.cashEntries.length>100||claw.cashEntries.some(n=>typeof n!=='number'||!Number.isFinite(n)||n<=0||n>1000000||Math.abs(n*100-Math.round(n*100))>0.00001)))throw Error('Enter 10 prize names and 2–100 positive wheel amounts with up to two decimal places.');
+  if(claw&&(!Array.isArray(claw.prizes)||![legacyClawPrizeCount, DEFAULT_TRASH_CLAW_PRIZES.length].includes(claw.prizes.length)||claw.prizes.some(p=>typeof p!=='string'||p.length>60)||!Array.isArray(claw.cashEntries)||claw.cashEntries.length<2||claw.cashEntries.length>100||claw.cashEntries.some(n=>typeof n!=='number'||!Number.isFinite(n)||n<=0||n>1000000||Math.abs(n*100-Math.round(n*100))>0.00001)))throw Error('Enter 12 prize names and 2–100 positive wheel amounts with up to two decimal places.');
   return {
     navigation:{tournaments:navigation.tournaments,community:navigation.community},
-    ...(claw?{trashClaw:{prizes:claw.prizes.map(p=>p.trim()),cashEntries:claw.cashEntries}}:{}),
+    ...(claw?{trashClaw:{prizes:expandTrashClawPrizes(claw.prizes.map(p=>p.trim())),cashEntries:claw.cashEntries}}:{}),
     weeklyWager:validateWeeklyWager(leaderboardRewards(input.weeklyWager,start,end)),
     leaderboardArchives:checkedArchives,
     leaderboardWeighting:weighting.trim(),
@@ -91,5 +111,9 @@ export const prizeTotal = (settings: PrizeSettings) =>
 
 export function resolvedPrizeSettings(settings?: PrizeSettings): PrizeSettings {
   const resolved={ ...defaultPrizeSettings, ...settings };
-  return {...resolved,weeklyWager:leaderboardRewards(settings?.weeklyWager,resolved.leaderboardStart,resolved.leaderboardEnd)};
+  const claw = resolved.trashClaw;
+  return {
+    ...resolved,
+    ...(claw ? {trashClaw: {...claw, prizes: expandTrashClawPrizes(claw.prizes)}} : {}),
+    weeklyWager:leaderboardRewards(settings?.weeklyWager,resolved.leaderboardStart,resolved.leaderboardEnd)};
 }

@@ -46,7 +46,7 @@ import Leaderboard from "@/components/leaderboard";
 import PredictionList from "@/components/prediction-list";
 import PrizeSettingsEditor from "@/components/prize-settings";
 import RewardAmountEditor from "@/components/reward-amount-editor";
-import { defaultPrizeSettings, type PrizeSettings } from "@/lib/prize-settings";
+import { DEFAULT_TRASH_CLAW_PRIZES, expandTrashClawPrizes, defaultPrizeSettings, type PrizeSettings } from "@/lib/prize-settings";
 import TrackerAdmin from "@/components/tracker-admin";
 import { slotData as originalSlotData, providerLogos, type SlotItem } from "./slotData";
 import { Russo_One } from "next/font/google";
@@ -733,18 +733,7 @@ type TrashClawPhase =
   | "lifting"
   | "revealed";
 
-const DEFAULT_TRASH_CLAW_PRIZES = [
-  "DOUBLE",
-  "-50%",
-  "TRASH CALL",
-  "MOD CALL",
-  "SLOT PICKER",
-  "+50%",
-  "KENO",
-  "LIVE TABLES",
-  "ANOTHER GIVEAWAY",
-  "TRASH CASH",
-];
+
 
 const [trashClawPrizes, setTrashClawPrizes] = useState<string[]>(DEFAULT_TRASH_CLAW_PRIZES);
 const [savedTrashClawPrizes, setSavedTrashClawPrizes] = useState<string[]>(DEFAULT_TRASH_CLAW_PRIZES);
@@ -1404,7 +1393,7 @@ const pickRandomSlot = async () => {
 useEffect(()=>{
  if(!prizeSettingsLoaded)return;
  let names=prizeSettings.trashClaw?.prizes;
- if(!names){try{const legacy=JSON.parse(localStorage.getItem("trash_claw_prizes")||"null");if(Array.isArray(legacy)&&legacy.length===10&&legacy.every(p=>typeof p==='string'))names=legacy;}catch{}}
+ if(!names){try{const legacy=JSON.parse(localStorage.getItem("trash_claw_prizes")||"null");if(Array.isArray(legacy)&&legacy.length===10&&legacy.every(p=>typeof p==='string'))names=expandTrashClawPrizes(legacy);}catch{}}
  if(names){setTrashClawPrizes(names);setSavedTrashClawPrizes(names);}
 },[prizeSettingsLoaded,prizeSettings.trashClaw]);
 const saveTrashClawPrizes = async () => {
@@ -1428,10 +1417,12 @@ const getTrashClawPrizeLook = (prize: string) => {
   const looks: Record<string, { emoji: string; glow: string; border: string; wash: string; badge: string }> = {
     "DOUBLE": { emoji: "2X", glow: "rgba(244,63,94,.58)", border: "rgba(251,113,133,.78)", wash: "rgba(190,24,93,.34)", badge: "#fb7185" },
     "-50%": { emoji: "⬇️", glow: "rgba(56,189,248,.58)", border: "rgba(125,211,252,.78)", wash: "rgba(3,105,161,.34)", badge: "#7dd3fc" },
+    "-25%": { emoji: "⬇️", glow: "rgba(56,189,248,.58)", border: "rgba(125,211,252,.78)", wash: "rgba(3,105,161,.34)", badge: "#7dd3fc" },
     "TRASH CALL": { emoji: "📞", glow: "rgba(34,197,94,.58)", border: "rgba(74,222,128,.78)", wash: "rgba(21,128,61,.32)", badge: "#4ade80" },
     "MOD CALL": { emoji: "🛡️", glow: "rgba(96,165,250,.58)", border: "rgba(147,197,253,.78)", wash: "rgba(30,64,175,.34)", badge: "#93c5fd" },
     "SLOT PICKER": { emoji: "🎰", glow: "rgba(249,115,22,.62)", border: "rgba(253,186,116,.82)", wash: "rgba(194,65,12,.34)", badge: "#fdba74" },
     "+50%": { emoji: "📈", glow: "rgba(34,197,94,.60)", border: "rgba(134,239,172,.80)", wash: "rgba(22,101,52,.34)", badge: "#86efac" },
+    "+25%": { emoji: "📈", glow: "rgba(34,197,94,.60)", border: "rgba(134,239,172,.80)", wash: "rgba(22,101,52,.34)", badge: "#86efac" },
     "KENO": { emoji: "🎱", glow: "rgba(250,204,21,.60)", border: "rgba(253,224,71,.80)", wash: "rgba(161,98,7,.34)", badge: "#fde047" },
     "LIVE TABLES": { emoji: "🃏", glow: "rgba(239,68,68,.58)", border: "rgba(252,165,165,.80)", wash: "rgba(153,27,27,.34)", badge: "#fca5a5" },
     "ANOTHER GIVEAWAY": { emoji: "🎁", glow: "rgba(236,72,153,.62)", border: "rgba(249,168,212,.82)", wash: "rgba(157,23,77,.34)", badge: "#f9a8d4" },
@@ -8425,7 +8416,7 @@ onClick={() => {
         <div className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-300/60 sm:text-[10px]">Giveaway Bonus Picker</div>
         <h2 className="mt-1 text-xl font-black tracking-[0.08em] text-white sm:text-3xl">TRASH CLAW</h2>
         <p className="mt-1 max-w-2xl text-[10px] leading-4 text-white/45 sm:text-xs">
-          Edit your 10 possible extras, press Save 10 Options, then run the claw after a giveaway winner earns a Trash Claw grab.
+          Edit your possible extras, press Save Options, then run the claw after a giveaway winner earns a Trash Claw grab.
         </p>
       </div>
       <button
@@ -8438,7 +8429,7 @@ onClick={() => {
             : "border-white/10 bg-white/[0.03] text-white/30"
         } disabled:cursor-not-allowed`}
       >
-        {trashClawSaveStatus === "saved" ? "SAVED ✓" : trashClawHasUnsavedChanges ? "SAVE 10 OPTIONS" : "OPTIONS SAVED"}
+        {trashClawSaveStatus === "saved" ? "SAVED ✓" : trashClawHasUnsavedChanges ? "SAVE OPTIONS" : "OPTIONS SAVED"}
       </button>
     </div>
 

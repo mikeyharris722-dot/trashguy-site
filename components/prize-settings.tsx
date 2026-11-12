@@ -13,6 +13,8 @@ import {periodLabel} from "./leaderboard";
 import { useState } from "react";
 import { siteFetch } from "@/lib/site-fetch";
 import {
+  DEFAULT_TRASH_CLAW_PRIZES,
+  expandTrashClawPrizes,
   prizeTotal,
   validatePrizeSettings,
   type PrizeSettings,
@@ -44,7 +46,7 @@ export default function PrizeSettingsEditor({
   const [end, setEnd] = useState(settings.leaderboardEnd);
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
-  const [clawNames,setClawNames]=useState<string[]>(()=>{if(settings.trashClaw)return settings.trashClaw.prizes;try{if(typeof window!=='undefined'){const legacy=JSON.parse(localStorage.getItem('trash_claw_prizes')||'null');if(Array.isArray(legacy)&&legacy.length===10&&legacy.every(p=>typeof p==='string'))return legacy;}}catch{}return ['DOUBLE','-50%','TRASH CALL','MOD CALL','SLOT PICKER','+50%','KENO','LIVE TABLES','ANOTHER GIVEAWAY','TRASH CASH'];});
+  const [clawNames,setClawNames]=useState<string[]>(()=>{if(settings.trashClaw)return settings.trashClaw.prizes;try{if(typeof window!=='undefined'){const legacy=JSON.parse(localStorage.getItem('trash_claw_prizes')||'null');if(Array.isArray(legacy)&&legacy.length===10&&legacy.every(p=>typeof p==='string'))return expandTrashClawPrizes(legacy);}}catch{}return DEFAULT_TRASH_CLAW_PRIZES;});
   const [cashEntries,setCashEntries]=useState((settings.trashClaw?.cashEntries||Array.from({length:25},(_,i)=>i+1)).join('\n'));
   const preview = {
     trashClaw:{prizes:clawNames,cashEntries:cashEntries.split(/[\s,]+/).filter(Boolean).map(Number)},
