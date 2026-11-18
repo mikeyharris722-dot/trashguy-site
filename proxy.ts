@@ -8,6 +8,7 @@ export async function proxy(request: NextRequest) {
       process.env.COMMUNITY_HUNT_LOCAL === "1" &&
       process.env.NODE_ENV !== "production";
     const localWrite =
+      (path === "/api/admin/x-giveaways" && process.env.NODE_ENV !== "production") ||
       (path === "/api/poker" && process.env.POKER_LOCAL === "1" && process.env.NODE_ENV !== "production") ||
       path === "/api/kick/logout" ||
       (localCommunity &&

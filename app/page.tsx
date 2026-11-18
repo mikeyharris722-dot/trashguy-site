@@ -32,6 +32,7 @@ import {
 import { SiKick } from "react-icons/si";
 import ProviderMark from "@/components/provider-mark";
 import {FEATURED_PROVIDERS,providerName,featuredLogos} from "@/lib/slot-providers";
+import XGiveawayAdmin from "@/components/x-giveaway-admin";
 import TrashCashWheel from "@/components/trash-cash-wheel";
 import ClawPrizeArtwork from "@/components/claw-prize-artwork";
 import ClawRevealEffects from "@/components/claw-reveal-effects";
@@ -1015,14 +1016,14 @@ const [manualRewardAmount, setManualRewardAmount] = useState("");
 const [manualRewardType, setManualRewardType] = useState("discord_giveaway");
 
 const [activeAdminTab, setActiveAdminTab] = useState<
-  "giveaway" | "trashClaw" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel" | "bonusTracker" | "community" | "prizes" | "poker"
+  "giveaway" | "xGiveaway" | "trashClaw" | "prizePortal" | "tournament" | "snakeDraft" | "slotWheel" | "bonusTracker" | "community" | "prizes" | "poker"
 >(() => {
   if (typeof window === "undefined") return "giveaway";
 
   const saved = localStorage.getItem("active_admin_tab");
 
   if (
-    saved === "giveaway" ||
+    saved === "giveaway" || saved === "xGiveaway" ||
     saved === "trashClaw" ||
     saved === "prizePortal" ||
     saved === "tournament" ||
@@ -8321,6 +8322,7 @@ onClick={() => {
         <div className="admin-workspaces">
           {[
             { id: "giveaway", label: "Giveaways", description: "Chat entries, draws & winners", icon: "🎟" },
+            { id: "xGiveaway", label: "Twitter/X Giveaway", description: "Import replies & spin usernames", icon: "𝕏" },
             { id: "trashClaw", label: "Trash Claw", description: "On-stream prize reveal", icon: "🎁" },
             { id: "prizePortal", label: "Prize Portal", description: "Claims, rewards & payments", icon: "💳" },
             { id: "slotWheel", label: "Slot Call Wheel", description: "Viewer calls & live rolls", icon: "🎡" },
@@ -8344,6 +8346,7 @@ onClick={() => {
                   setActiveAdminTab(
                     tab.id as
                       | "giveaway"
+                      | "xGiveaway"
                       | "trashClaw"
                       | "prizePortal"
                       | "tournament"
@@ -8359,7 +8362,7 @@ onClick={() => {
                 }`}
               >
                 <span aria-hidden="true" className="workspace-icon">{tab.icon}</span>
-                <span className="workspace-label"><span className="workspace-desktop-label">{tab.label}</span><span className="workspace-mobile-label">{{giveaway:"Giveaways",trashClaw:"Claw",prizePortal:"Prizes",tournament:"Tournaments",snakeDraft:"Drafts",slotWheel:"Call Wheel",bonusTracker:"Tracker",community:"Community",prizes:"Settings",poker:"Poker"}[tab.id]}</span></span>
+                <span className="workspace-label"><span className="workspace-desktop-label">{tab.label}</span><span className="workspace-mobile-label">{{giveaway:"Giveaways",xGiveaway:"X Giveaway",trashClaw:"Claw",prizePortal:"Prizes",tournament:"Tournaments",snakeDraft:"Drafts",slotWheel:"Call Wheel",bonusTracker:"Tracker",community:"Community",prizes:"Settings",poker:"Poker"}[tab.id]}</span></span>
                 <small>{tab.description}</small>
               </button>
             );
@@ -8368,6 +8371,7 @@ onClick={() => {
       </div>
 
 <div className="mt-2 grid w-full min-w-0 max-w-full gap-2 overflow-x-hidden sm:mt-3 sm:gap-3">
+  {activeAdminTab === "xGiveaway" && <XGiveawayAdmin />}
   {/* GIVEAWAY ADMIN */}
   {activeAdminTab === "poker" && <PokerNight admin onVisibilityChange={setPokerEnabled} key={viewerPlatform+":"+viewerName}/>}
   <AdminGuidance tab={activeAdminTab} actions={activeAdminTab === "giveaway" ? <ClawProductionControls /> : activeAdminTab === "tournament" ? <PublicSectionVisibility section="tournaments" enabled={prizeSettings.navigation?.tournaments!==false} loaded={prizeSettingsLoaded&&!prizeSettingsError} saved={setPrizeSettings}/> : undefined} />
