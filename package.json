@@ -14,7 +14,7 @@
     "review:demo": "node scripts/seed-review-demo.cjs",
     "test:poker": "node scripts/poker-tests.cjs && node scripts/poker-api-tests.cjs",
     "test:x-giveaway": "node scripts/x-giveaway-tests.cjs",
-    "test:x-collection": "node scripts/x-collection-tests.cjs"
+    "test:x-collection": "node scripts/x-collection-tests.cjs && node scripts/x-collector-config-tests.cjs"
   },
   "dependencies": {
     "@retconned/kick-js": "^0.5.4",

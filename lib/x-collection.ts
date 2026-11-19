@@ -1,6 +1,7 @@
 import 'server-only';
 import {randomUUID} from 'node:crypto';
 import {readX,saveX} from './x-giveaway-store';
+import {siteDb} from './site-db';
 import {postInfo,username,type XEntry} from './x-giveaway';
 
 export type XCollection={id:string;postUrl:string;startedAt:string;status:'starting'|'running'|'succeeded'|'failed';runId?:string;entries?:XEntry[];raw?:number;limited?:boolean;message?:string;costUsd?:number};
@@ -16,9 +17,14 @@ export function collectedEntries(rows:ReplyRow[],postId:string){
     }
     return entries;
 }
+export async function collectorConfig():Promise<{token:string;freePlanConfirmed:boolean}>{
+    if(process.env.APIFY_API_TOKEN)return {token:process.env.APIFY_API_TOKEN,freePlanConfirmed:process.env.APIFY_FREE_PLAN_CONFIRMED==='1'};
+    const {data,error}=await siteDb().rpc('x_collector_config');
+    if(error||!data||typeof data.token!=='string'||!data.token.trim())throw Error('Automatic collection is awaiting the server API connection. CSV import still works.');
+    return {token:data.token,freePlanConfirmed:data.freePlanConfirmed===true};
+}
 async function apify(path:string,body?:object){
-    const token=process.env.APIFY_API_TOKEN;
-    if(!token)throw Error('Automatic collection is awaiting the server API connection. CSV import still works.');
+    const {token}=await collectorConfig();
     let response:Response;
     try{response=await fetch('https://api.apify.com/v2/'+path,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(20000),cache:'no-store'});}catch{throw Error('Collector connection timed out. Retry to check the saved job; no automatic duplicate run will be started.');}
     if(!response.ok)throw Error(response.status===401||response.status===403?'Collector API access is unavailable.':'Collector request failed ('+response.status+'). No paid fallback was used.');
@@ -27,7 +33,7 @@ async function apify(path:string,body?:object){
 export async function freeBudget(){
     // This flag is set only after confirming the no-card Free account in Console.
     // A resource-scoped token cannot read billing or change account plans.
-    if(process.env.APIFY_FREE_PLAN_CONFIRMED!=='1')throw Error('Verify the Apify Free plan before enabling collection.');
+    if(!(await collectorConfig()).freePlanConfirmed)throw Error('Verify the Apify Free plan before enabling collection.');
     const month=new Date().toISOString().slice(0,7)+'-01T00:00:00.000Z';
     const runs=await apify('acts/bB9gzR3JDmTp5pnoz/runs?limit=100&desc=true&startedAfter='+encodeURIComponent(month));
     if(!Array.isArray(runs.data?.items)||typeof runs.data?.total!=='number')throw Error('Could not verify collector usage. Collection paused.');
