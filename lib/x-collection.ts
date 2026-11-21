@@ -4,7 +4,7 @@ import {readX,saveX} from './x-giveaway-store';
 import {siteDb} from './site-db';
 import {postInfo,username,type XEntry} from './x-giveaway';
 
-export type XCollection={id:string;postUrl:string;startedAt:string;status:'starting'|'running'|'succeeded'|'failed';runId?:string;entries?:XEntry[];raw?:number;limited?:boolean;message?:string;costUsd?:number};
+export type XCollection={id:string;postUrl:string;startedAt:string;status:'starting'|'running'|'succeeded'|'failed';runId?:string;entries?:XEntry[];raw?:number;limited?:boolean;message?:string;costUsd?:number;retryable?:boolean};
 type ReplyRow={resultType?:string;sourceTarget?:string;inReplyToId?:string;author?:{id?:string;username?:string}};
 export function collectedEntries(rows:ReplyRow[],postId:string){
     if(!Array.isArray(rows))throw Error('Collector returned invalid reply data.');
@@ -45,14 +45,17 @@ export async function freeBudget(){
 async function patchJob(id:string,change:Partial<XCollection>){for(let i=0;i<8;i++){const {state,version}=await readX();const job=state.collections?.find(j=>j.id===id);if(!job)throw Error('Collection not found.');Object.assign(job,change);if(await saveX(state,version))return job;}throw Error('Collection is busy. Check again.');}
 export async function startCollection(url:string):Promise<XCollection>{
     const {postUrl}=postInfo(url);if(!postUrl)throw Error('Enter an X post URL.');
+    const recentFor=(jobs:XCollection[])=>jobs.slice().reverse().find(j=>j.postUrl===postUrl&&!(j.status==='failed'&&j.retryable===true)&&Date.now()-Date.parse(j.startedAt)<(j.status==='succeeded'?300000:86400000));
+    const existing=recentFor((await readX()).state.collections||[]);
+    if(existing){if(existing.status==='starting'&&!existing.runId)throw Error('This post already has a pending start. Check Apify before trying another run.');return existing.status==='running'?pollCollection(existing.id):existing;}
     // Do not reserve a job if API access/budget cannot be verified.
     await freeBudget();
     const now=new Date();let job:XCollection|undefined;
     for(let i=0;i<8;i++){
         const {state,version}=await readX();const jobs=state.collections ||= [];
-        const recent=jobs.slice().reverse().find(j=>j.postUrl===postUrl&&Date.now()-Date.parse(j.startedAt)<(j.status==='succeeded'?300000:86400000));
+        const recent=recentFor(jobs);
         if(recent){if(recent.status==='starting'&&!recent.runId)throw Error('This post already has a pending start. Check Apify before trying another run.');return recent;}
-        if(jobs.some(j=>['starting','running'].includes(j.status)&&Date.now()-Date.parse(j.startedAt)<120000))throw Error('Another collection is in progress. Please wait.');
+        if(jobs.some(j=>['starting','running'].includes(j.status)&&Date.now()-Date.parse(j.startedAt)<240000))throw Error('Another collection is in progress. Please wait.');
         if(jobs.filter(j=>j.startedAt.slice(0,7)===now.toISOString().slice(0,7)).length>=60)throw Error('The free site limit of 60 collections this month has been reached.');
         job={id:randomUUID(),postUrl,startedAt:now.toISOString(),status:'starting'};jobs.push(job);
         if(await saveX(state,version))break;job=undefined;
@@ -60,7 +63,7 @@ export async function startCollection(url:string):Promise<XCollection>{
     if(!job)throw Error('Collection is busy. Try again.');
     // Reserve durably before making a billable call. Ambiguous failures are never retried automatically.
     try{
-        const result=await apify('acts/xquik~x-engagement-scraper/runs?timeout=90&memory=256&maxTotalChargeUsd=0.05',{
+        const result=await apify('acts/xquik~x-engagement-scraper/runs?timeout=180&memory=256&maxTotalChargeUsd=0.05',{
             startUrls:[postUrl],engagementTypes:['replies'],maxItems:20,maxItemsPerTarget:20,scope:'direct',includeOriginalPost:false,
         });
         if(!/^[a-z0-9]+$/i.test(result.data?.id||''))throw Error('Collector returned no run ID.');
@@ -71,8 +74,9 @@ export async function pollCollection(id:string):Promise<XCollection>{
     const {state}=await readX();const job=state.collections?.find(j=>j.id===id);if(!job)throw Error('Collection not found.');
     if(job.status!=='running'||!job.runId)return job;
     const {data:run}=await apify('actor-runs/'+encodeURIComponent(job.runId));
-    if(['READY','RUNNING','TIMING-OUT','ABORTING'].includes(run.status))return job;
-    if(run.status!=='SUCCEEDED')return patchJob(id,{status:'failed',message:'Collection stopped without a successful result. No entries were loaded.'});
+    if(['READY','RUNNING','TIMING-OUT','ABORTING'].includes(run.status))return {...job,message:'Collecting replies. X can respond slowly; allow up to three minutes. Checking the same run without starting another.'};
+    if(['FAILED','TIMED-OUT','ABORTED'].includes(run.status))return patchJob(id,{status:'failed',retryable:true,message:'The collector '+(run.status==='ABORTED'?'was cancelled':run.status==='TIMED-OUT'?'timed out':'failed')+'. No partial list was loaded. Click Save & fetch replies to try again.'});
+    if(run.status!=='SUCCEEDED')throw Error('Collector returned an unknown status. Check the same run again.');
     if(!/^[a-z0-9]+$/i.test(run.defaultDatasetId||''))throw Error('Collector returned no dataset.');
     const rows=await apify('datasets/'+run.defaultDatasetId+'/items?clean=true&limit=21');
     const entries=collectedEntries(rows,postInfo(job.postUrl).postUrl.split('/').pop()!);

@@ -52,7 +52,12 @@ export default function XGiveawayAdmin() {
             // Clear stale names before starting a different post, including on failure.
             if(info.postUrl!==postUrl){setEntries([]);setSnapshot(null);setWinner(null);setFetchLimited(false);setCollectionId(undefined);}
             let job=await request({action:'fetch',postUrl:info.postUrl});
-            for(let i=0;i<65&&job.status==='running';i++){await new Promise(r=>setTimeout(r,2000));job=await request({action:'fetchStatus',id:job.id});}
+            let pollFailures=0;
+            for(let i=0;i<110&&job.status==='running';i++){
+                await new Promise(r=>setTimeout(r,2000));
+                try{job=await request({action:'fetchStatus',id:job.id});pollFailures=0;setMessage(job.message||'Collecting replies. Checking the same saved run…');}
+                catch(e){if(++pollFailures>=3)throw e;setMessage('Connection interrupted. Checking the same saved run; no duplicate collection is started…');}
+            }
             if(job.status!=='succeeded')throw Error(job.message||'Collection is still running. Click Fetch replies again to check it without starting a duplicate.');
             const saved:XSnapshot=await request({action:'snapshot',requestId:crypto.randomUUID(),postUrl:info.postUrl,entries:job.entries,excluded:preview.blocked,collectionId:job.id});
             setHistory(h=>[...h,saved]);setCollectionId(job.id);

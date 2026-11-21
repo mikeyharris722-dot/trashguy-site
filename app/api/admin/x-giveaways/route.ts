@@ -3,6 +3,7 @@ import { readX } from '@/lib/x-giveaway-store';
 import {startCollection,pollCollection} from '@/lib/x-collection';
 import { xCommand } from '@/lib/x-giveaway-server';
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 export async function GET(request: Request) { try {
     await requireTrackerAdmin(request);
     return Response.json((await readX()).state, { headers: { 'Cache-Control': 'private, no-store' } });
