@@ -25,6 +25,15 @@ blocks drawing until a complete CSV is imported. Results cache for five minutes;
 ambiguous starts are not repeated automatically. Hidden or unavailable replies
 may be missing. No claim of complete coverage is made.
 
+Runs have a three-minute deadline. When polling reaches that deadline it requests
+an abort; Apify's own 180-second run timeout also applies if the page is closed.
+Only after the actor is terminal do TIMED-OUT runs (or deadline-stopped ABORTED
+runs) import validated dataset rows as partial results. The partial warning is
+stored on the collection and snapshot and remains visible after reload, in
+history, and in stream view. It never triggers a draw. Zero-row timeouts remain
+retryable, malformed/off-post replies are rejected, and the 20-row safety limit
+still blocks draws. Failed/ambiguous starts never automatically create a new run.
+
 Token renewal is required before its 17 February 2027 expiry. Update the dedicated
 Vault secret through the UI; no redeployment is needed. Keep free-plan settings
 and token scope unchanged unless separately authorized.

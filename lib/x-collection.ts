@@ -4,7 +4,7 @@ import {readX,saveX} from './x-giveaway-store';
 import {siteDb} from './site-db';
 import {postInfo,username,type XEntry} from './x-giveaway';
 
-export type XCollection={id:string;postUrl:string;startedAt:string;status:'starting'|'running'|'succeeded'|'failed';runId?:string;entries?:XEntry[];raw?:number;limited?:boolean;message?:string;costUsd?:number;retryable?:boolean};
+export type XCollection={id:string;postUrl:string;startedAt:string;status:'starting'|'running'|'succeeded'|'failed';runId?:string;entries?:XEntry[];raw?:number;limited?:boolean;partial?:boolean;stopRequested?:boolean;message?:string;costUsd?:number;retryable?:boolean};
 type ReplyRow={resultType?:string;sourceTarget?:string;inReplyToId?:string;author?:{id?:string;username?:string}};
 export function collectedEntries(rows:ReplyRow[],postId:string){
     if(!Array.isArray(rows))throw Error('Collector returned invalid reply data.');
@@ -73,13 +73,25 @@ export async function startCollection(url:string):Promise<XCollection>{
 export async function pollCollection(id:string):Promise<XCollection>{
     const {state}=await readX();const job=state.collections?.find(j=>j.id===id);if(!job)throw Error('Collection not found.');
     if(job.status!=='running'||!job.runId)return job;
-    const {data:run}=await apify('actor-runs/'+encodeURIComponent(job.runId));
-    if(['READY','RUNNING','TIMING-OUT','ABORTING'].includes(run.status))return {...job,message:'Collecting replies. X can respond slowly; allow up to three minutes. Checking the same run without starting another.'};
-    if(['FAILED','TIMED-OUT','ABORTED'].includes(run.status))return patchJob(id,{status:'failed',retryable:true,message:'The collector '+(run.status==='ABORTED'?'was cancelled':run.status==='TIMED-OUT'?'timed out':'failed')+'. No partial list was loaded. Click Save & fetch replies to try again.'});
-    if(run.status!=='SUCCEEDED')throw Error('Collector returned an unknown status. Check the same run again.');
+    let {data:run}=await apify('actor-runs/'+encodeURIComponent(job.runId));
+    const expired=Date.now()-Date.parse(job.startedAt)>=180000;
+    if(expired&&['READY','RUNNING','TIMING-OUT'].includes(run.status)&&!job.stopRequested){
+        await patchJob(id,{stopRequested:true});
+        job.stopRequested=true;
+        // Explicitly stop at the deadline. The actor also has its own 180s timeout.
+        // Never import a dataset while the actor can still append to it.
+        try{const stopped=await apify('actor-runs/'+encodeURIComponent(job.runId)+'/abort',{});run=stopped.data;}catch{
+            return {...job,message:'Three-minute limit reached. Waiting for the collector to stop before loading the replies already found.'};
+        }
+    }
+    if(['READY','RUNNING','TIMING-OUT','ABORTING'].includes(run?.status))return {...job,message:expired?'Three-minute limit reached. Finalising the replies already collected…':'Collecting replies. X can respond slowly; after three minutes the replies found so far will be loaded.'};
+    const partial=run?.status==='TIMED-OUT'||(run?.status==='ABORTED'&&(job.stopRequested===true||expired));
+    if(!partial&&['FAILED','ABORTED'].includes(run?.status))return patchJob(id,{status:'failed',retryable:true,message:'The collector '+(run.status==='ABORTED'?'was cancelled':'failed')+'. No list was loaded. Click Save & fetch replies to try again.'});
+    if(run?.status!=='SUCCEEDED'&&!partial)throw Error('Collector returned an unknown status. Check the same run again.');
     if(!/^[a-z0-9]+$/i.test(run.defaultDatasetId||''))throw Error('Collector returned no dataset.');
     const rows=await apify('datasets/'+run.defaultDatasetId+'/items?clean=true&limit=21');
     const entries=collectedEntries(rows,postInfo(job.postUrl).postUrl.split('/').pop()!);
+    if(partial&&!entries.length)return patchJob(id,{status:'failed',retryable:true,partial:true,raw:0,message:'The three-minute limit was reached before any replies were collected. Try again or import a CSV.'});
     const limited=rows.length>=20;
-    return patchJob(id,{status:'succeeded',entries,raw:rows.length,limited,costUsd:typeof run.usageTotalUsd==='number'?run.usageTotalUsd:undefined,message:limited?'The 20-reply safety limit was reached. This list may be incomplete; import a full CSV before drawing.':'Available direct replies retrieved. Hidden, deleted or unavailable replies may be missing.'});
+    return patchJob(id,{status:'succeeded',entries,raw:rows.length,limited,partial,costUsd:typeof run.usageTotalUsd==='number'?run.usageTotalUsd:undefined,message:limited?'The 20-reply safety limit was reached. This list may be incomplete; import a full CSV before drawing.':partial?'Partial results — some replies may be missing. The collector reached the three-minute limit; review the collected accounts before spinning.':'Available direct replies retrieved. Hidden, deleted or unavailable replies may be missing.'});
 }

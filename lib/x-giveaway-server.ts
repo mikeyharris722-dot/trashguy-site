@@ -35,6 +35,7 @@ export async function xCommand(actor: string, body: Command): Promise<XSnapshot>
             const { entries } = eligibleEntries(body.entries || [], author, excluded);
             if(body.collectionId){const collection=state.collections?.find(c=>c.id===body.collectionId);if(!collection||collection.status!=='succeeded'||collection.postUrl!==info.postUrl)throw Error('Invalid reply collection.');}
             snapshot = { id: randomUUID(), requestId: body.requestId!, fingerprint, postUrl: info.postUrl, author, excluded, entries, createdAt: new Date().toISOString(), createdBy: actor, ...(body.collectionId?{collectionId:body.collectionId}:{}) };
+            if(body.collectionId){const collection=state.collections?.find(c=>c.id===body.collectionId);if(collection?.partial)snapshot.collectionWarning=collection.message||'Partial results — some replies may be missing.';}
             state.snapshots.push(snapshot);
         }
         else {

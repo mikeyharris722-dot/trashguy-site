@@ -19,6 +19,7 @@ export type XSnapshot = {
     createdBy: string;
     draw?: XDraw;
     collectionId?: string;
+    collectionWarning?: string;
 };
 export type XState = {
     snapshots: XSnapshot[];

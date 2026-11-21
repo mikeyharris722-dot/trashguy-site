@@ -12,6 +12,7 @@ export default function XGiveawayAdmin() {
     const [entries, setEntries] = useState<XEntry[]>([]), [postUrl, setPostUrl] = useState(''), [author, setAuthor] = useState('trashguy__'), [excluded, setExcluded] = useState(''), [manual, setManual] = useState('');
     const [fetchLimited,setFetchLimited]=useState(false),[collectionId,setCollectionId]=useState<string|undefined>();
     const [urlDraft, setUrlDraft] = useState('');
+    const [partialNotice,setPartialNotice]=useState('');
     const [snapshot, setSnapshot] = useState<XSnapshot | null>(null), [history, setHistory] = useState<XSnapshot[]>([]), [winner, setWinner] = useState<XEntry | null>(null);
     const [busy, setBusy] = useState(false), [loading, setLoading] = useState(true), [spinning, setSpinning] = useState(false), [rotation, setRotation] = useState(0), [message, setMessage] = useState(''), [modal, setModal] = useState(false);
     const dialog = useRef<HTMLElement>(null);
@@ -23,7 +24,7 @@ export default function XGiveawayAdmin() {
     }) => { if (!active)
         return; setHistory(data.snapshots); const last = data.snapshots.at(-1); if (last) {
         setSnapshot(last.draw ? last : null);
-        setEntries(last.entries);setCollectionId(last.collectionId);setFetchLimited(!!data.collections?.find((c:{id:string;limited?:boolean})=>c.id===last.collectionId)?.limited);
+        setPartialNotice(last.collectionWarning||'');setEntries(last.entries);setCollectionId(last.collectionId);setFetchLimited(!!data.collections?.find((c:{id:string;limited?:boolean})=>c.id===last.collectionId)?.limited);
         setPostUrl(last.postUrl);
         setUrlDraft(last.postUrl);
         setAuthor(last.author);
@@ -43,14 +44,14 @@ export default function XGiveawayAdmin() {
     } }, [entries, postUrl, author, excluded]);
     const frozen = !!snapshot, disabled = loading || busy || spinning || frozen;
     function edit() { setSnapshot(null); setWinner(null); setRotation(0); pending.current = null; setMessage('Entries unlocked. The previous snapshot and result remain in history.'); }
-    function replace(next: XEntry[]) { setEntries(next); setFetchLimited(false); setCollectionId(undefined); pending.current = null; setWinner(null); setMessage('Import ready for review.'); }
+    function replace(next: XEntry[]) { setPartialNotice('');setEntries(next); setFetchLimited(false); setCollectionId(undefined); pending.current = null; setWinner(null); setMessage('Import ready for review.'); }
     async function fetchReplies(){
         if(lock.current||loading||busy||spinning)return;
         lock.current=true;setBusy(true);setMessage('Fetching reply usernames…');
         try{
             const info=postInfo(urlDraft);if(!info.postUrl)throw Error('Enter an X post URL.');
             // Clear stale names before starting a different post, including on failure.
-            if(info.postUrl!==postUrl){setEntries([]);setSnapshot(null);setWinner(null);setFetchLimited(false);setCollectionId(undefined);}
+            if(info.postUrl!==postUrl){setPartialNotice('');setEntries([]);setSnapshot(null);setWinner(null);setFetchLimited(false);setCollectionId(undefined);}
             let job=await request({action:'fetch',postUrl:info.postUrl});
             let pollFailures=0;
             for(let i=0;i<110&&job.status==='running';i++){
@@ -60,7 +61,7 @@ export default function XGiveawayAdmin() {
             }
             if(job.status!=='succeeded')throw Error(job.message||'Collection is still running. Click Fetch replies again to check it without starting a duplicate.');
             const saved:XSnapshot=await request({action:'snapshot',requestId:crypto.randomUUID(),postUrl:info.postUrl,entries:job.entries,excluded:preview.blocked,collectionId:job.id});
-            setHistory(h=>[...h,saved]);setCollectionId(job.id);
+            setHistory(h=>[...h,saved]);setCollectionId(job.id);setPartialNotice(saved.collectionWarning||'');
             setEntries(job.entries);setPostUrl(info.postUrl);setUrlDraft(info.postUrl);setAuthor(info.author);setSnapshot(null);setWinner(null);setRotation(0);pending.current=null;setFetchLimited(job.limited===true);
             setMessage(job.raw+' replies retrieved · '+new Date(job.startedAt).toLocaleString()+'. '+job.message+' Results are cached for 5 minutes.');
         }catch(e){setMessage((e as Error).message);}finally{lock.current=false;setBusy(false);}
@@ -113,6 +114,7 @@ export default function XGiveawayAdmin() {
     {urlDraft !== postUrl && <p className="mt-1 text-xs text-amber-200">New URL — fetch replies to load its accounts.</p>}
     {snapshot && <button disabled={busy || spinning} className={button + ' mt-3'} onClick={edit}>Edit / start a new snapshot</button>}
     <p role="alert" className="my-3 text-sm text-amber-200">{loading ? 'Loading saved giveaways…' : preview.error || message}</p>
+    {partialNotice&&<p role="status" className="mb-3 rounded-lg border border-amber-300/40 bg-amber-900/20 p-3 text-sm text-amber-100">{partialNotice}</p>}
     <div className="grid min-w-0 gap-4 lg:grid-cols-2">
       <div className="min-w-0 rounded-xl border border-purple-300/20 bg-[#100817] p-3"><h3 className="text-sm font-black">{names.length} eligible participants</h3><p className="mt-1 text-xs text-white/50">{snapshot ? 'Frozen snapshot' : `${preview.raw} imported rows · ${preview.duplicates} duplicates · ${preview.exclusions} excluded`} · Trash is always excluded</p>
         {names.length > 0 ? <CashWheelFace labels={names} rotation={rotation} spinning={spinning} usernames label="Twitter username giveaway wheel"/> : <p className="py-12 text-center text-white/40">Import accounts to fill the wheel.</p>}
@@ -143,7 +145,7 @@ export default function XGiveawayAdmin() {
     } }}>Add usernames</button></label>
     </fieldset>
     </div></details>
-    <div className="mt-4 border-t border-white/10 pt-3"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-bold">Saved draws & snapshots</h3><button className={button} disabled={!history.length} onClick={download}>Export record (JSON)</button></div><ul className="mt-2 max-h-48 overflow-auto text-xs text-white/60">{history.slice().reverse().map(s => <li key={s.id} className="flex flex-wrap justify-between gap-2 border-b border-white/10 py-2"><span>{new Date(s.draw?.createdAt || s.createdAt).toLocaleString()} · {s.entries.length} accounts · {s.draw ? '@' + s.draw.winner.username : 'Not drawn'}</span><button className="text-purple-300 underline" disabled={busy || spinning} onClick={() => { setSnapshot(s); setEntries(s.entries);setCollectionId(s.collectionId);setFetchLimited(false); setPostUrl(s.postUrl); setUrlDraft(s.postUrl); setAuthor(s.author); setExcluded(s.excluded.join(', ')); setWinner(s.draw?.winner || null); setRotation(savedAngle(s)); pending.current = null; }}>View snapshot</button></li>)}</ul></div>
+    <div className="mt-4 border-t border-white/10 pt-3"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-bold">Saved draws & snapshots</h3><button className={button} disabled={!history.length} onClick={download}>Export record (JSON)</button></div><ul className="mt-2 max-h-48 overflow-auto text-xs text-white/60">{history.slice().reverse().map(s => <li key={s.id} className="flex flex-wrap justify-between gap-2 border-b border-white/10 py-2"><span>{new Date(s.draw?.createdAt || s.createdAt).toLocaleString()} · {s.entries.length} accounts · {s.draw ? '@' + s.draw.winner.username : 'Not drawn'}</span><button className="text-purple-300 underline" disabled={busy || spinning} onClick={() => { setSnapshot(s);setPartialNotice(s.collectionWarning||''); setEntries(s.entries);setCollectionId(s.collectionId);setFetchLimited(false); setPostUrl(s.postUrl); setUrlDraft(s.postUrl); setAuthor(s.author); setExcluded(s.excluded.join(', ')); setWinner(s.draw?.winner || null); setRotation(savedAngle(s)); pending.current = null; }}>View snapshot</button></li>)}</ul></div>
     {modal && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm"><section ref={dialog} tabIndex={-1} onKeyDown={e => { if (e.key === 'Escape' && !spinning)
         setModal(false); if (e.key === 'Tab') {
         const nodes = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),a[href]'));
@@ -159,6 +161,6 @@ export default function XGiveawayAdmin() {
             e.preventDefault();
             nodes[0]?.focus();
         }
-    } }} role="dialog" aria-modal="true" aria-label="Twitter giveaway wheel" className="max-h-[94vh] w-full max-w-lg overflow-auto rounded-2xl border border-purple-300/30 bg-[#100817] p-4 shadow-2xl"><div className="flex justify-between gap-3"><h2 className="text-lg font-black">𝕏 TWITTER GIVEAWAY</h2><button autoFocus className={button} disabled={spinning} onClick={() => setModal(false)}>Close</button></div><CashWheelFace labels={names} rotation={rotation} spinning={spinning} usernames label="Twitter username giveaway wheel"/>{winnerPanel}{controls}</section></div>}
+    } }} role="dialog" aria-modal="true" aria-label="Twitter giveaway wheel" className="max-h-[94vh] w-full max-w-lg overflow-auto rounded-2xl border border-purple-300/30 bg-[#100817] p-4 shadow-2xl"><div className="flex justify-between gap-3"><h2 className="text-lg font-black">𝕏 TWITTER GIVEAWAY</h2><button autoFocus className={button} disabled={spinning} onClick={() => setModal(false)}>Close</button></div><CashWheelFace labels={names} rotation={rotation} spinning={spinning} usernames label="Twitter username giveaway wheel"/>{partialNotice&&<p className="mt-2 text-xs text-amber-200">{partialNotice}</p>}{winnerPanel}{controls}</section></div>}
   </section>;
 }
