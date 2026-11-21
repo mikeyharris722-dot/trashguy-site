@@ -2,15 +2,18 @@ import {trackerCaller} from "@/lib/tracker-caller";
 import { apiError, siteDb } from "@/lib/site-db";
 import { trackerHunts } from "@/lib/site-tracker";
 import { reviewNativeSelection } from "@/lib/review-selection";
+import {serverPrizeSettings} from '@/lib/server-prize-settings';
+import {DEFAULT_OVERLAY_ACCENT} from '@/lib/overlay-theme';
 export async function GET() {
   try {
+    const accentColor=(await serverPrizeSettings()).overlayAccent||DEFAULT_OVERLAY_ACCENT;
     const settings = await siteDb().from("site_tracker_settings").select("active_hunt_id,opening_queue").eq("id", true).maybeSingle();
     if (settings.error) throw new Error(settings.error.message);
     const selected = (await reviewNativeSelection()) || settings.data?.active_hunt_id;
-    if (!selected) return Response.json({hunt:null});
+    if (!selected) return Response.json({hunt:null,accentColor},{headers:{'Cache-Control':'no-store'}});
     const hunts = await trackerHunts(selected);
     const h = hunts.find((h) => h.id === selected);
-    if (!h) return Response.json({ hunt: null });
+    if (!h) return Response.json({ hunt: null,accentColor },{headers:{'Cache-Control':'no-store'}});
     const queue: string[] =
       h.id === settings.data?.active_hunt_id
         ? settings.data?.opening_queue || []
@@ -39,6 +42,7 @@ export async function GET() {
     });
     return Response.json(
       {
+        accentColor,
         hunt: {
           id: h.id,
           title: h.title,

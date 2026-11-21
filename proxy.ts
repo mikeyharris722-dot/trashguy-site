@@ -15,6 +15,7 @@ export async function proxy(request: NextRequest) {
         [
           "/api/prize-settings",
           "/api/admin/navigation-visibility",
+          "/api/admin/overlay-settings",
           "/api/admin/twitch-points",
           "/api/claw-production",
           "/api/trash-bosses/claim",

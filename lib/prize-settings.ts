@@ -1,5 +1,6 @@
 import {leaderboardRewards,defaultWeeklyWager,validateWeeklyWager,type WeeklyWagerSettings} from "./weekly-wager";
 import {defaultBossTargets,type BossTarget} from "./trash-bosses";
+import {overlayAccent, DEFAULT_OVERLAY_ACCENT} from './overlay-theme';
 import { leaderboardPeriod } from "./leaderboard-period";
 const additionalClawPrizes = ["+25%", "-25%"];
 const legacyClawPrizeCount = 10;
@@ -22,6 +23,7 @@ export const DEFAULT_TRASH_CLAW_PRIZES = [
 ];
 
 export type PrizeSettings = {
+  overlayAccent?: string;
   navigation?: {tournaments:boolean;community:boolean};
   trashClaw?: {prizes:string[];cashEntries:number[]};
   leaderboard: number[];
@@ -91,6 +93,7 @@ export function validatePrizeSettings(value: unknown): PrizeSettings {
   if(claw&&(!Array.isArray(claw.prizes)||![legacyClawPrizeCount, DEFAULT_TRASH_CLAW_PRIZES.length].includes(claw.prizes.length)||claw.prizes.some(p=>typeof p!=='string'||p.length>60)||!Array.isArray(claw.cashEntries)||claw.cashEntries.length<2||claw.cashEntries.length>100||claw.cashEntries.some(n=>typeof n!=='number'||!Number.isFinite(n)||n<=0||n>1000000||Math.abs(n*100-Math.round(n*100))>0.00001)))throw Error('Enter 12 prize names and 2–100 positive wheel amounts with up to two decimal places.');
   return {
     navigation:{tournaments:navigation.tournaments,community:navigation.community},
+    overlayAccent: input.overlayAccent ? overlayAccent(input.overlayAccent) : DEFAULT_OVERLAY_ACCENT,
     ...(claw?{trashClaw:{prizes:expandTrashClawPrizes(claw.prizes.map(p=>p.trim())),cashEntries:claw.cashEntries}}:{}),
     weeklyWager:validateWeeklyWager(leaderboardRewards(input.weeklyWager,start,end)),
     leaderboardArchives:checkedArchives,

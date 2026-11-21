@@ -8375,7 +8375,7 @@ onClick={() => {
   {/* GIVEAWAY ADMIN */}
   {activeAdminTab === "poker" && <PokerNight admin onVisibilityChange={setPokerEnabled} key={viewerPlatform+":"+viewerName}/>}
   <AdminGuidance tab={activeAdminTab} actions={activeAdminTab === "giveaway" ? <ClawProductionControls /> : activeAdminTab === "tournament" ? <PublicSectionVisibility section="tournaments" enabled={prizeSettings.navigation?.tournaments!==false} loaded={prizeSettingsLoaded&&!prizeSettingsError} saved={setPrizeSettings}/> : undefined} />
-  {activeAdminTab === "prizes" && (prizeSettingsError ? <p className="form-error" role="alert">{prizeSettingsError}</p> : <PrizeSettingsEditor key={JSON.stringify(prizeSettings)} settings={prizeSettings} saved={(settings) => { setPrizeSettings(settings); setSiteNotice("Prize amounts saved locally. The leaderboard total and prediction banner have updated."); }} />)}
+  {activeAdminTab === "prizes" && (prizeSettingsError ? <p className="form-error" role="alert">{prizeSettingsError}</p> : <PrizeSettingsEditor key={JSON.stringify({...prizeSettings,overlayAccent:undefined})} settings={prizeSettings} saved={(settings) => { setPrizeSettings(settings); setSiteNotice("Prize amounts saved locally. The leaderboard total and prediction banner have updated."); }} />)}
   <details
     open={activeAdminTab === "giveaway"}
     className={`${

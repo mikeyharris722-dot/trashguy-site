@@ -221,3 +221,13 @@ body:has(.hunt-overlay) nextjs-portal {
 .overlay-row>span:not(:first-child){white-space:nowrap;font-size:9px}.overlay-summary strong{white-space:nowrap}
 
 .overlay-columns,.overlay-row{grid-template-columns:minmax(0,1fr) 65px 83px}.overlay-stats b{font-size:10px;white-space:nowrap}
+
+/* Configurable OBS accent; original teal remains the default. */
+.hunt-overlay { border-color: var(--hunt-accent, #075d5e); }
+.hunt-overlay header { background: var(--hunt-accent, #075d5e); color: var(--hunt-header-text, #f7ffff); }
+.hunt-overlay header span { color: var(--hunt-header-text, #9ce3dd); }
+.overlay-stats,.overlay-awards,.overlay-table { border-color: var(--hunt-border, #105153); }
+.overlay-current { background: var(--hunt-current, #095254); border-left-color: var(--hunt-highlight, #7ef5e7); }
+.overlay-latest { background: var(--hunt-latest, #0b3a37); border-color: var(--hunt-highlight, #59bbaa); }
+.overlay-latest > span { color: var(--hunt-highlight, #8af5d5); }
+.overlay-caller { color: var(--hunt-highlight, #9ce3dd); }

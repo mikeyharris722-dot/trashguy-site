@@ -2,6 +2,8 @@
 import { startPolling } from "@/lib/polling";
 import {huntMoney} from "@/lib/hunt-currency";
 import { useEffect, useState } from "react";
+import type {CSSProperties} from 'react';
+import {DEFAULT_OVERLAY_ACCENT,overlayTheme} from '@/lib/overlay-theme';
 import "./overlay.css";
 type Bonus = {
   id: string;
@@ -33,6 +35,7 @@ type Hunt = {
 export default function Overlay() {
   const [hunt, setHunt] = useState<Hunt | null>(null),
     [error, setError] = useState(false);
+  const [accentColor,setAccentColor]=useState(DEFAULT_OVERLAY_ACCENT);
   useEffect(() => {
     let live = true;
     const abort = new AbortController();
@@ -51,6 +54,7 @@ export default function Overlay() {
         const d = await r.json();
         if (live) {
           setHunt(d.hunt);
+          setAccentColor(d.accentColor||DEFAULT_OVERLAY_ACCENT);
           setError(false);
         }
       } catch {
@@ -67,7 +71,7 @@ export default function Overlay() {
   }, []);
   if (!hunt)
     return (
-      <main className="hunt-overlay">
+      <main className="hunt-overlay" style={overlayTheme(accentColor) as CSSProperties}>
         <header>Bonus Hunt</header>
         <p className="overlay-empty">
           {error
@@ -102,7 +106,7 @@ export default function Overlay() {
     </div>
   );
   return (
-    <main className="hunt-overlay" aria-label="Bonus hunt stream overlay">
+    <main className="hunt-overlay" style={overlayTheme(accentColor) as CSSProperties} aria-label="Bonus hunt stream overlay">
       <header>
         <strong>{hunt.title} · {hunt.currency||"USD"}</strong>
         <span>

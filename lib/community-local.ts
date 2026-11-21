@@ -4,6 +4,7 @@ import { communityFx } from './community-fx';
 import { providerName } from './slot-providers';
 async function rouloGames(){return (await import('./roulo-catalogue')).catalogue();}
 import "server-only";
+import {overlayAccent} from './overlay-theme';
 import {
   readDocument,
   commitDocument,
@@ -198,12 +199,15 @@ export async function communityCommand(
         const action = String(b.action);
         let h = s.hunts.find((h) => h.id === b.huntId && !h.deleted);
         const memberId = h ? communityMemberId(h,actor) : actor.id;
-        const games:CommunityGame[]=action==='navigationVisibility'?[]:h?.catalogue==='roulobets'?(await rouloGames()).filter(g=>g.enabled!==false):await localCatalogue();
+        const games:CommunityGame[]=['navigationVisibility','overlayAppearance'].includes(action)?[]:h?.catalogue==='roulobets'?(await rouloGames()).filter(g=>g.enabled!==false):await localCatalogue();
         let result = "";
         const staff = () => {
           if (!admin) throw Error("AUTH: Admin access required.");
         };
-        if(action === "navigationVisibility") {
+        if(action === 'overlayAppearance') {
+          staff();
+          s.prizeSettings={...(s.prizeSettings||defaultPrizeSettings),overlayAccent:overlayAccent(b.accentColor)};
+        } else if(action === "navigationVisibility") {
           staff();
           if(!["tournaments","community"].includes(String(b.section))||typeof b.enabled!=="boolean")throw Error("Choose valid public menu visibility.");
           const previous=s.prizeSettings||defaultPrizeSettings;
@@ -216,6 +220,7 @@ export async function communityCommand(
             next.leaderboardArchives=[...(next.leaderboardArchives||[]).filter(p=>p.start!==previous.leaderboardStart),{start:previous.leaderboardStart,end:previous.leaderboardEnd,prizes:[...previous.leaderboard]}];
           }
           next.navigation=previous.navigation??defaultPrizeSettings.navigation;
+          next.overlayAccent=previous.overlayAccent;
           s.prizeSettings = next;
         } else if (action === "clearSelection") {
           staff();

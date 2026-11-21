@@ -1,10 +1,12 @@
 import { communityState, communityTracker } from "@/lib/community-local";
 import { apiError } from "@/lib/site-db";
+import {DEFAULT_OVERLAY_ACCENT} from '@/lib/overlay-theme';
 export async function GET() {
   try {
     const s = await communityState(),
       h = s.hunts.find((h) => h.id === s.activeHuntId && !h.deleted);
-    if (!h) return Response.json({ hunt: null });
+    const accentColor=s.prizeSettings?.overlayAccent||DEFAULT_OVERLAY_ACCENT;
+    if (!h) return Response.json({ hunt: null,accentColor },{headers:{'Cache-Control':'no-store'}});
     const dto = communityTracker(h);
     const rows = h.entries
       .filter((e) => !e.deleted_at && e.status === "collected")
@@ -30,6 +32,7 @@ export async function GET() {
       .sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0];
     return Response.json(
       {
+        accentColor,
         hunt: {
           id: h.id,
           title: h.title,
