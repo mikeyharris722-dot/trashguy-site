@@ -68,6 +68,8 @@ export async function fetchRouloCatalogue() {
       typeof v.provider !== "string"
     )
       continue;
+    // Generic table lobbies are navigation destinations, not individual games.
+    if (!known.has(v.identifier) && /lobby$/i.test(v.identifier)) continue;
     const candidate = {
       identifier: v.identifier,
       identifier2: v.identifier2,

@@ -21,3 +21,9 @@ assert.equal(providers.providerName("hacksawg","hacksawg"),"Hacksaw Gaming");
 console.log("PASS N2-distributed Backseat slots join Backseat filter; other studios remain unchanged");
 
 const movedSource=source.replace('229436:','661531:');assert.equal(art.findArtwork(art.artworkIndex(movedSource),{identifier:'hacksawg:Wanted',provider:'hacksawg'}),'https://roulobets.com/static/media/Wanted.abc.webp');assert.equal(art.artworkIndex(thunderSource+';'+movedSource).size,2);assert.throws(()=>art.artworkIndex('661531:(e,t,a)=>{var s={"unrelated":123};'));console.log('PASS upstream module ID changes and multiple asset contexts without executing upstream code');
+const mixedArtwork=new Map([['pragmatic:chronossandsofeternity','https://roulobets.com/chronos.webp'],['smartsoft:smartsoftrollx','https://roulobets.com/rollx.webp'],['pragmatic:vs20known','https://roulobets.com/vendor-code.webp'],['pragmatic:known','https://roulobets.com/name.webp']]);
+assert.equal(art.findArtwork(mixedArtwork,{identifier:'pragmaticexternal:ChronosSandsofEternity',identifier2:'vs20clock',provider:'pragmaticexternal'}),'https://roulobets.com/chronos.webp');
+assert.equal(art.findArtwork(mixedArtwork,{identifier:'smartsoft:RollX',provider:'smartsoft'}),'https://roulobets.com/rollx.webp');
+assert.equal(art.findArtwork(mixedArtwork,{identifier:'pragmaticexternal:Known',identifier2:'vs20known',provider:'pragmaticexternal'}),'https://roulobets.com/vendor-code.webp');
+assert.equal(art.findArtwork(mixedArtwork,{identifier:'other:RollX',provider:'other'}),null);
+console.log('PASS game-name fallback, provider-prefixed artwork, vendor-code precedence and cross-provider rejection');

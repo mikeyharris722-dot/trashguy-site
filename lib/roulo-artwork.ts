@@ -55,12 +55,18 @@ export function findArtwork(
     const v = p.toLowerCase().replace(/[^a-z0-9]/g, "");
     return aliases[v] || v;
   });
-  const id =
-    providers.includes("pragmatic") && game.identifier2
-      ? String(game.identifier2)
-      : game.identifier.split(":").pop() || "";
-  const key = id.toLowerCase().replace(/[^a-z0-9]/g, "");
-  return providers.map((p) => index.get(p + ":" + key)).find(Boolean) || null;
+  const primary=game.identifier.split(":").pop() || "";
+  const ids=[...(providers.includes('pragmatic')&&game.identifier2?[String(game.identifier2)]:[]),primary];
+  for(const id of ids){
+    const key=id.toLowerCase().replace(/[^a-z0-9]/g,'');
+    for(const p of providers){
+      // Roulo mixes vendor codes, game names and provider-prefixed filenames.
+      // Match only exact normalized keys within the same provider.
+      const image=index.get(p+':'+key)||index.get(p+':'+p+key);
+      if(image)return image;
+    }
+  }
+  return null;
 }
 export async function refreshArtworkIndex() {
   const response = await fetch("https://roulobets.com/casino/slots", {
