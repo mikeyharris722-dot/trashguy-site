@@ -2552,7 +2552,7 @@ useEffect(() => {
 }, []);
 
 async function slotFetch(url:string,options:RequestInit={}){const headers=new Headers(options.headers);if(options.method&&options.method!=="GET")headers.set("Authorization","Bearer "+await getAccessToken());return siteFetch(url,{...options,headers});}
-const refreshCatalogue=useCallback(async()=>{const r=await siteFetch("/api/catalogue?all=true");const d=await r.json();if(Array.isArray(d.games)&&d.games.length){const unique=new Map<string,SlotItem>();for(const g of d.games){if(g.enabled===false)continue;const displayProvider=providerName(g.provider,g.producer);const key=g.name.toLowerCase()+"|"+displayProvider.toLowerCase();if(!unique.has(key))unique.set(key,{name:g.name,provider:displayProvider,image:g.artwork_url||undefined});}setCatalogueSlots([...unique.values()]);}},[]);
+const refreshCatalogue=useCallback(async()=>{const r=await siteFetch("/api/catalogue?all=true");const d=await r.json();if(Array.isArray(d.games)&&d.games.length){const unique=new Map<string,SlotItem>();for(const g of d.games){if(g.enabled===false)continue;const studioProvider=providerName(g.provider,g.producer);const displayProvider=g.identifier?.startsWith("engine:")?"Engine":studioProvider;const key=g.identifier?.startsWith("engine:")?g.identifier:g.name.toLowerCase()+"|"+studioProvider.toLowerCase();if(!unique.has(key))unique.set(key,{name:g.name,provider:displayProvider,image:g.artwork_url||undefined});}setCatalogueSlots([...unique.values()]);}},[]);
 useEffect(()=>{void refreshCatalogue()},[refreshCatalogue]);
 const trackerSelectionPending = useRef(false);
 useEffect(() => {
